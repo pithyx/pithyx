@@ -19,6 +19,12 @@ public static class EncryptionCommands
     /// <summary>Loads the key, after which the datasets can be mounted.</summary>
     public static CommandRequest LoadKey(string root, string hexKey) => new("zfs", ["load-key", root], StandardInput: Input(hexKey));
 
+    /// <summary>
+    /// Checks a key without loading it (<c>zfs load-key -n</c>); unlike a load it also answers while the key is loaded, so
+    /// a key can be checked on an unlocked pool before it goes into the vault or onto a stick.
+    /// </summary>
+    public static CommandRequest CheckKey(string root, string hexKey) => new("zfs", ["load-key", "-n", root], StandardInput: Input(hexKey));
+
     /// <summary>Wraps the pool's data key with a new key; the old key stops working. Needs the key loaded.</summary>
     public static CommandRequest ChangeKey(string root, string hexKey) =>
         new("zfs", ["change-key", "-o", "keyformat=hex", "-o", "keylocation=prompt", root], StandardInput: Input(hexKey));
@@ -34,24 +40,37 @@ public static class EncryptionCommands
 
     /// <summary>
     /// Adds <see cref="Pool.Encryption"/> to every pool whose <c>&lt;pool&gt;/pithyx</c> is an encryption root. Pure: the
-    /// caller says which pool GUIDs the key vault holds and which of those keys failed.
+    /// caller says what the box knows about each pool's keys, by pool GUID.
     /// </summary>
-    public static PoolList Apply(PoolList pools, Func<string, bool> inVault, Func<string, bool>? vaultFailed = null)
+    public static PoolList Apply(PoolList pools, Func<string, KeySources> sources)
     {
         ArgumentNullException.ThrowIfNull(pools);
-        ArgumentNullException.ThrowIfNull(inVault);
-        vaultFailed ??= _ => false;
+        ArgumentNullException.ThrowIfNull(sources);
         var roots = pools.Datasets
             .Where(dataset => dataset.Encryption != "off" && dataset.EncryptionRoot == dataset.Name && dataset.Name == Root(dataset.Pool))
             .ToDictionary(dataset => dataset.Pool, StringComparer.Ordinal);
         return pools with
         {
             Pools = [.. pools.Pools.Select(pool => roots.TryGetValue(pool.Name, out var root)
-                ? pool with { Encryption = Encryption(root.KeyStatus != "available", inVault(pool.PoolGuid), vaultFailed(pool.PoolGuid)) }
+                ? pool with { Encryption = Encryption(root.KeyStatus != "available", sources(pool.PoolGuid)) }
                 : pool with { Encryption = null })],
         };
     }
 
-    // An unlocked pool has no failed vault key, whatever was tried before it was unlocked by hand.
-    private static PoolEncryption Encryption(bool locked, bool inVault, bool failed) => new(locked, inVault, locked && inVault && failed);
+    // A failure is only one while the pool is locked, and an unlock from a stick only while it is unlocked.
+    private static PoolEncryption Encryption(bool locked, KeySources sources) => new(
+        locked,
+        sources.InVault,
+        locked && sources.InVault && sources.VaultFailed,
+        sources.Usb,
+        !locked && sources.UnlockedFromUsb,
+        locked && sources.UsbFailed);
 }
+
+/// <summary>What the box knows about one pool's keys (D384, D385).</summary>
+/// <param name="InVault">The key vault holds its key.</param>
+/// <param name="VaultFailed">The vault's key was tried and failed.</param>
+/// <param name="Usb">The stick its key was last written to.</param>
+/// <param name="UnlockedFromUsb">A stick unlocked it since the start.</param>
+/// <param name="UsbFailed">A key file on a stick was tried and failed.</param>
+public readonly record struct KeySources(bool InVault, bool VaultFailed, PoolUsbKey? Usb = null, bool UnlockedFromUsb = false, bool UsbFailed = false);

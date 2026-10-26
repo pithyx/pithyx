@@ -112,7 +112,8 @@ public sealed class EncryptionIntegrationTests
             var facts = new StorageFacts(disks, pools, DeploymentEnvironment.Prod, SystemFiles.Host);
             var hub = new TopicHub(new TopicRegistry([disks.Definition(), pools.Definition()]), TimeProvider.System, Options.Create(new JsonOptions()), NullLogger<TopicHub>.Instance);
             using var state = new SystemStateService(vdevs.Commands, disks, pools, new ZfsBackend(vdevs.Commands), new DiskProbe(vdevs.Commands), facts, hub, TimeProvider.System, NullLogger<SystemStateService>.Instance, vault: vault);
-            using var encryption = new PoolEncryptionService(vdevs.Commands, pools, state, facts, vault, NullLogger<PoolEncryptionService>.Instance);
+            var drive = new UsbKeyDrive(vdevs.Commands, Path.Combine(vdevs.Directory, "usb-key"), NullLogger<UsbKeyDrive>.Instance);
+            using var encryption = new PoolEncryptionService(vdevs.Commands, pools, disks, state, facts, vault, drive, TimeProvider.System, NullLogger<PoolEncryptionService>.Instance);
             Pool Pool() => pools.Current.Pools.Single(pool => pool.Name == vdevs.PoolName);
 
             // A damaged vault file: nothing is loaded or changed, and the pool says why it waits.
@@ -146,7 +147,7 @@ public sealed class EncryptionIntegrationTests
         }
     }
 
-    private static async Task<PoolList> ReadAsync(FileVdevs vdevs) => EncryptionCommands.Apply(await new ZfsBackend(vdevs.Commands).ReadAsync(Token), _ => false);
+    private static async Task<PoolList> ReadAsync(FileVdevs vdevs) => EncryptionCommands.Apply(await new ZfsBackend(vdevs.Commands).ReadAsync(Token), _ => default);
 
     private static async Task RecordAsync(FileVdevs vdevs, string scenario)
     {

@@ -4729,6 +4729,81 @@
         }
       }
     },
+    "/api/storage/usb-sticks": {
+      "get": {
+        "tags": [
+          "Storage"
+        ],
+        "description": "Administrators only. The file systems on USB sticks and other removable disks a pool key can be written to (D385): FAT, exFAT or ext, on a disk nothing has mounted and no pool uses. From memory; reads no disk.",
+        "operationId": "ListUsbSticks",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UsbStickList"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/storage/pools/{pool}/key/usb": {
+      "post": {
+        "tags": [
+          "Storage"
+        ],
+        "description": "Administrators only. Writes the pool's key to a USB stick as pithyx-keys/<pool GUID>.key (D385); the box then unlocks the pool whenever the stick is plugged in, and the stick may be pulled afterwards. The key is the typed one or the key vault's, which needs the password again and, with two-factor sign-in on, a current authenticator code (failures count like failed sign-ins). The key is checked against the pool first and read back from the stick. Logged without the key.",
+        "operationId": "WritePoolKeyToUsb",
+        "parameters": [
+          {
+            "name": "pool",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PoolKeyUsbRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/storage/pools/{pool}/key/vault": {
       "delete": {
         "tags": [
@@ -13248,6 +13323,10 @@
           "storage.snapshot.not_found",
           "storage.snapshot.not_pithyx",
           "storage.snapshot.schedule_invalid",
+          "storage.usb.not_found",
+          "storage.usb.read_only",
+          "storage.usb.unreadable",
+          "storage.usb.write_failed",
           "storage.vdev.not_found",
           "storage.vdev.not_raidz",
           "storage.volume.size_invalid",
@@ -16926,7 +17005,7 @@
                 "type": "null"
               },
               {
-                "description": "For a pool Pithyx encrypted (its `&lt;pool&gt;/pithyx` is an encryption root, D384): whether it is locked and whether the key vault holds its key; null for an unencrypted pool.",
+                "description": "For a pool Pithyx encrypted (its `&lt;pool&gt;/pithyx` is an encryption root, D384): whether it is locked and where its key is kept; null for an unencrypted pool.",
                 "$ref": "#/components/schemas/PoolEncryption"
               }
             ]
@@ -16951,6 +17030,27 @@
           "vaultFailed": {
             "type": "boolean",
             "description": "True when the vault's key was tried and did not unlock the pool (wrong, unreadable or damaged): the pool waits for its key to be typed.",
+            "default": false
+          },
+          "usbKey": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "The USB stick its key was last written to on this box (D385), or null; the box also unlocks it from any other stick that holds its key.",
+                "$ref": "#/components/schemas/PoolUsbKey"
+              }
+            ]
+          },
+          "unlockedFromUsb": {
+            "type": "boolean",
+            "description": "True when the key on a USB stick unlocked it since the last start: the stick may be pulled, the pool stays unlocked until the next start.",
+            "default": false
+          },
+          "usbFailed": {
+            "type": "boolean",
+            "description": "True when a key file on a USB stick was tried and did not unlock the pool (an older key or damaged): the pool waits for another stick or the typed key.",
             "default": false
           }
         }
@@ -17049,6 +17149,45 @@
         },
         "description": "Request of `POST /api/storage/pools/{pool}/key/reveal`: the signed-in administrator's credentials again."
       },
+      "PoolKeyUsbRequest": {
+        "required": [
+          "device"
+        ],
+        "type": "object",
+        "properties": {
+          "device": {
+            "type": "string",
+            "description": "The stick's file system, `device` of `GET /api/storage/usb-sticks`."
+          },
+          "key": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The pool's key as typed, or null to take it from the key vault, which needs `password` again."
+          },
+          "password": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Without a typed key: the administrator's password."
+          },
+          "totpCode": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Without a typed key: a current authenticator code, required when the administrator has two-factor sign-in on."
+          },
+          "removeFromVault": {
+            "type": "boolean",
+            "description": "Afterwards take the key out of the key vault, so the stick (or the typed key) unlocks the pool at start.",
+            "default": false
+          }
+        },
+        "description": "Request of `POST /api/storage/pools/{pool}/key/usb` (D385)."
+      },
       "PoolList": {
         "required": [
           "pools",
@@ -17141,11 +17280,38 @@
           },
           "keepInVault": {
             "type": "boolean",
-            "description": "With a typed key: keep it in the key vault once it opened the pool, so the box unlocks the pool at start.",
+            "description": "With a typed key: keep it in the key vault once it opened the pool (on an unlocked pool once it is checked), so the box unlocks the pool at start.",
             "default": false
           }
         },
         "description": "Request of `POST /api/storage/pools/{pool}/unlock`."
+      },
+      "PoolUsbKey": {
+        "required": [
+          "stick",
+          "serial",
+          "writtenAt"
+        ],
+        "type": "object",
+        "properties": {
+          "stick": {
+            "type": "string",
+            "description": "How the stick was named then: its label, else vendor and model."
+          },
+          "serial": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The stick's serial number, if it has one."
+          },
+          "writtenAt": {
+            "type": "string",
+            "description": "When the key was written.",
+            "format": "date-time"
+          }
+        },
+        "description": "Where a pool's key was written to a USB stick; no secret, kept beside the key vault and never in a backup."
       },
       "PowerAction": {
         "enum": [
@@ -22109,6 +22275,87 @@
           }
         },
         "description": "Settings &gt; UPS: the settings, the UPS's state and whether this box can drive a UPS on USB."
+      },
+      "UsbStick": {
+        "required": [
+          "device",
+          "diskId",
+          "fileSystem",
+          "label",
+          "vendor",
+          "model",
+          "serial",
+          "sizeBytes",
+          "readOnly"
+        ],
+        "type": "object",
+        "properties": {
+          "device": {
+            "type": "string",
+            "description": "The partition's device node, or the disk's when the file system covers the whole disk."
+          },
+          "diskId": {
+            "type": "string",
+            "description": "The disk's stable id, see string Disk.Id."
+          },
+          "fileSystem": {
+            "type": "string",
+            "description": "`vfat`, `exfat`, `ext2`, `ext3` or `ext4`."
+          },
+          "label": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The file system's label, if any."
+          },
+          "vendor": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The disk's vendor, if any."
+          },
+          "model": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The disk's model, if any."
+          },
+          "serial": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The disk's serial number, if any."
+          },
+          "sizeBytes": {
+            "type": "integer",
+            "description": "Size of the file system's partition or disk.",
+            "format": "int64"
+          },
+          "readOnly": {
+            "type": "boolean",
+            "description": "True when the disk is write-protected: keys can be read from it, not written."
+          }
+        },
+        "description": "A file system on a USB stick or another removable disk that can carry pool keys (D385)."
+      },
+      "UsbStickList": {
+        "required": [
+          "sticks"
+        ],
+        "type": "object",
+        "properties": {
+          "sticks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UsbStick"
+            }
+          }
+        },
+        "description": "Response of `GET /api/storage/usb-sticks`: the file systems a pool key can be written to."
       },
       "UserDeletion": {
         "required": [

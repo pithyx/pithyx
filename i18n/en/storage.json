@@ -588,7 +588,8 @@
     "keep": "Keep the key in the key vault and unlock the pool automatically at every start",
     "cancel": "Cancel",
     "submit": "Unlock",
-    "mountFailed": "The key opened the pool, but not every dataset could be mounted (the log has the details). Press Unlock again to mount what is missing."
+    "mountFailed": "The key opened the pool, but not every dataset could be mounted (the log has the details). Press Unlock again to mount what is missing.",
+    "introUsbFailed": "The key file on the USB stick did not unlock this pool. Type the key you stored."
   },
   "changeKey": {
     "title": "Change the key of {pool}",
@@ -596,7 +597,8 @@
     "create": "Create a new key",
     "submit": "Change key",
     "cancel": "Cancel",
-    "keep": "Keep the new key in the key vault and unlock the pool automatically at every start"
+    "keep": "Keep the new key in the key vault and unlock the pool automatically at every start",
+    "usbOld": "The USB stick {stick} holds the current key. After the change it opens nothing; write the new key to it afterwards."
   },
   "forgetKey": {
     "title": "Remove the key of {pool} from the key vault?",
@@ -616,7 +618,13 @@
     "change": "Change key…",
     "forget": "Remove key from vault…",
     "opening": "This pool is being unlocked with the key from the key vault.",
-    "reveal": "Show key…"
+    "reveal": "Show key…",
+    "lockedUsbHint": "This pool is locked and waits for its USB stick {stick}. Plug the stick in, or unlock the pool with its key.",
+    "lockedUsbFailedHint": "This pool is locked: the key file on the USB stick did not unlock it (an older key or a damaged file). Unlock it with its key, then write the key to the stick again.",
+    "unlockedFromUsb": "Unlocked from the USB stick. You can pull the stick now and keep it safe: the pool stays unlocked until the box restarts, and then needs the stick again.",
+    "onStick": "Encrypted; unlocks whenever the USB stick {stick} with its key is plugged in, or with the typed key.",
+    "alsoOnStick": "Its key is also on the USB stick {stick}.",
+    "writeUsb": "Write key to USB stick…"
   },
   "reveal": {
     "title": "Show the key of {pool}",
@@ -627,5 +635,27 @@
     "cancel": "Cancel",
     "submit": "Show key",
     "close": "Close"
+  },
+  "usb": {
+    "title": "Write the key of {pool} to a USB stick",
+    "intro": "Pithyx writes the key into the folder pithyx-keys on the stick and leaves everything else on it as it is. Whenever the stick is plugged in, the box unlocks the pool. Afterwards the stick can be pulled: the pool stays unlocked until the next restart.",
+    "warning": "Whoever has this stick and the pool's disks can read its data. Keep the stick apart from the box when it is not needed, and keep the key you stored as well: a stick can break.",
+    "stick": "USB stick",
+    "stickOption": "{name} · {size} · {fileSystem}",
+    "readOnly": "write-protected",
+    "none": "No USB stick found. Plug in a stick with a FAT, exFAT or ext file system; Pithyx never formats it. A stick that is in use elsewhere is not offered.",
+    "source": "Key",
+    "sourceVault": "The key from the key vault",
+    "sourceTyped": "Type the key",
+    "vaultHint": "The vault's key leaves the box on the stick, so your password is asked again.",
+    "password": "Your password",
+    "code": "Code from your authenticator app",
+    "key": "Pool key",
+    "keyHint": "The key you stored, starting with PXPK. It is checked against the pool before it is written.",
+    "removeFromVault": "Remove the key from the key vault afterwards, so only the stick or the typed key unlocks the pool at start",
+    "cancel": "Cancel",
+    "submit": "Write key",
+    "close": "Close",
+    "done": "The key is on {stick}. You can pull the stick now. Plug it in after a restart to unlock {pool}."
   }
 }

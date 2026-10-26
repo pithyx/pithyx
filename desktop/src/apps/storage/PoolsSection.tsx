@@ -18,7 +18,13 @@ import { PoolActionDialog, type PoolAction } from './PoolActionDialog';
 import { PoolChangeDialog, type PoolChange } from './PoolChangeDialog';
 import { isFinished } from './PlanRun';
 import { PoolWizard } from './PoolWizard';
-import { ChangeKeyDialog, ForgetKeyDialog, RevealKeyDialog, UnlockDialog } from './PoolEncryption';
+import {
+  ChangeKeyDialog,
+  ForgetKeyDialog,
+  RevealKeyDialog,
+  UnlockDialog,
+  WriteUsbKeyDialog,
+} from './PoolEncryption';
 import {
   describeProblem,
   formatDate,
@@ -140,6 +146,15 @@ export function PoolsSection({ app }: { app: PithyxApp }) {
           }}
         />
       )}
+      {keyAction?.action === 'usb' && (
+        <WriteUsbKeyDialog
+          app={app}
+          pool={keyAction.pool}
+          onClose={() => {
+            setKeyAction(null);
+          }}
+        />
+      )}
       {keyAction?.action === 'forget' && (
         <ForgetKeyDialog
           app={app}
@@ -184,7 +199,23 @@ export function PoolsSection({ app }: { app: PithyxApp }) {
 
 type OnAction = (action: PoolAction, vdev?: Vdev) => void;
 type OnChange = (action: PoolChange, vdev?: Vdev) => void;
-type KeyAction = 'unlock' | 'change' | 'forget' | 'reveal';
+type KeyAction = 'unlock' | 'change' | 'forget' | 'reveal' | 'usb';
+
+/** Why a locked pool waits: a stored key that failed, its USB stick, the vault still at work, or the typed key. */
+function lockedHint(t: Translate, encryption: NonNullable<Pool['encryption']>): string {
+  if (encryption.vaultFailed) {
+    return t('encryption.lockedVaultHint');
+  }
+  if (encryption.usbFailed) {
+    return t('encryption.lockedUsbFailedHint');
+  }
+  if (encryption.keyInVault) {
+    return t('encryption.opening');
+  }
+  return encryption.usbKey != null
+    ? t('encryption.lockedUsbHint', { stick: encryption.usbKey.stick })
+    : t('encryption.lockedHint');
+}
 
 function PoolCard({
   pool,
@@ -229,15 +260,7 @@ function PoolCard({
       {pool.readOnly && <p className={styles.notice}>{t('pools.readOnlyHint')}</p>}
       {encryption?.locked === true && !pool.readOnly && (
         <div className={cx(styles.notice, styles.lockedNotice)}>
-          <p>
-            {t(
-              encryption.vaultFailed
-                ? 'encryption.lockedVaultHint'
-                : encryption.keyInVault
-                  ? 'encryption.opening'
-                  : 'encryption.lockedHint',
-            )}
-          </p>
+          <p>{lockedHint(t, encryption)}</p>
           <Button
             size="sm"
             variant="primary"
@@ -263,9 +286,21 @@ function PoolCard({
       <p className={styles.muted}>
         {t('pools.layout', { layout: data.map((vdev) => vdevLabel(t, vdev)).join(' + ') })}
       </p>
+      {encryption?.unlockedFromUsb === true && (
+        <p className={styles.notice} role="status">
+          {t('encryption.unlockedFromUsb')}
+        </p>
+      )}
       {encryption !== null && (
         <p className={styles.muted}>
-          {t(encryption.keyInVault ? 'encryption.inVault' : 'encryption.byHand')}
+          {encryption.keyInVault
+            ? t('encryption.inVault')
+            : encryption.usbKey != null
+              ? t('encryption.onStick', { stick: encryption.usbKey.stick })
+              : t('encryption.byHand')}
+          {encryption.keyInVault && encryption.usbKey != null && (
+            <> {t('encryption.alsoOnStick', { stick: encryption.usbKey.stick })}</>
+          )}
         </p>
       )}
       {pool.scan !== null && <p className={styles.muted}>{scanText(t, pool, locale)}</p>}
@@ -348,6 +383,16 @@ function PoolCard({
                 }}
               >
                 {t('encryption.change')}
+              </Button>
+            )}
+            {encryption !== null && (
+              <Button
+                size="sm"
+                onPress={() => {
+                  onKey('usb');
+                }}
+              >
+                {t('encryption.writeUsb')}
               </Button>
             )}
             {encryption?.keyInVault === true && (

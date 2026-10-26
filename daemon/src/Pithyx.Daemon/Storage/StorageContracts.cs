@@ -148,9 +148,17 @@ public sealed record NewPoolKey(string Key, string Hex);
 /// <param name="TotpCode">A current code of the authenticator app, required when the administrator has two-factor sign-in on.</param>
 public sealed record PoolKeyRevealRequest(string Password, string? TotpCode = null);
 
+/// <summary>Request of <c>POST /api/storage/pools/{pool}/key/usb</c> (D385).</summary>
+/// <param name="Device">The stick's file system, <c>device</c> of <c>GET /api/storage/usb-sticks</c>.</param>
+/// <param name="Key">The pool's key as typed, or null to take it from the key vault, which needs <c>password</c> again.</param>
+/// <param name="Password">Without a typed key: the administrator's password.</param>
+/// <param name="TotpCode">Without a typed key: a current authenticator code, required when the administrator has two-factor sign-in on.</param>
+/// <param name="RemoveFromVault">Afterwards take the key out of the key vault, so the stick (or the typed key) unlocks the pool at start.</param>
+public sealed record PoolKeyUsbRequest(string Device, string? Key = null, string? Password = null, string? TotpCode = null, bool RemoveFromVault = false);
+
 /// <summary>Request of <c>POST /api/storage/pools/{pool}/unlock</c>.</summary>
 /// <param name="Key">The pool's key as typed, or null to take it from the key vault.</param>
-/// <param name="KeepInVault">With a typed key: keep it in the key vault once it opened the pool, so the box unlocks the pool at start.</param>
+/// <param name="KeepInVault">With a typed key: keep it in the key vault once it opened the pool (on an unlocked pool once it is checked), so the box unlocks the pool at start.</param>
 public sealed record PoolUnlockRequest(string? Key = null, bool KeepInVault = false);
 
 /// <summary>Request of <c>POST /api/storage/pools/{pool}/key</c>.</summary>

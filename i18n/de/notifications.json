@@ -74,9 +74,26 @@
         "body": "Der Schlüssel im Schlüsseltresor hat {pool} nicht entsperrt. Seine Daten sind unberührt, aber seine freigegebenen Ordner, Home-Ordner und Apps sind nicht verfügbar, bis ein Administrator ihn in Speicher mit dem aufbewahrten Schlüssel entsperrt.",
         "action": "Speicher öffnen"
       },
+      "poolLockedUsb": {
+        "title": "Pool {pool} wartet auf seinen USB-Stick",
+        "body": "Stecke den USB-Stick {stick} mit dem Schlüssel von {pool} ein oder entsperre ihn in Speicher mit dem aufbewahrten Schlüssel. Bis dahin sind seine freigegebenen Ordner, Home-Ordner und Apps nicht verfügbar.",
+        "action": "Speicher öffnen"
+      },
+      "poolLockedUsbFailed": {
+        "title": "Pool {pool} ließ sich nicht vom USB-Stick entsperren",
+        "body": "Die Schlüsseldatei auf dem USB-Stick hat {pool} nicht entsperrt: Sie enthält einen älteren Schlüssel oder ist beschädigt. Seine Daten sind unberührt. Entsperre ihn in Speicher mit dem aufbewahrten Schlüssel und schreibe den Schlüssel danach erneut auf den Stick.",
+        "action": "Speicher öffnen"
+      },
       "resolved": {
         "title": "Behoben: {problem}",
         "body": "Das Speicherproblem besteht nicht mehr.",
+        "action": "Speicher öffnen"
+      }
+    },
+    "usb": {
+      "unlocked": {
+        "title": "Pool {pool} vom USB-Stick entsperrt",
+        "body": "Der Schlüssel auf {stick} hat {pool} entsperrt. Du kannst den Stick jetzt abziehen und sicher aufbewahren: {pool} bleibt entsperrt, bis die Box neu startet, und braucht dann wieder den Stick.",
         "action": "Speicher öffnen"
       }
     }

@@ -93,7 +93,8 @@ test('the pool wizard compares layouts, encrypts with a stored key and lists the
   const asked = dialog.getByRole('textbox', { name: /^Group \d+$/ });
   await expect(asked).toHaveCount(2);
   for (const [index, group] of groups.entries()) {
-    const field = dialog.getByRole('textbox', { name: `Group ${String(index + 1)}`, exact: true });
+    // PXPK is group 1.
+    const field = dialog.getByRole('textbox', { name: `Group ${String(index + 2)}`, exact: true });
     if ((await field.count()) === 0) {
       continue;
     }
