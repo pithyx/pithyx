@@ -100,15 +100,33 @@
       },
       "expected": "The app's Compose file cannot be read: /services/server/init appears twice."
     },
+    "app.device.unavailable": {
+      "params": {
+        "path": "/dev/ttyUSB0"
+      },
+      "expected": "The device /dev/ttyUSB0 the app needs is not there or cannot be given to an app, so its background service does not start."
+    },
     "app.docker.unavailable": {
       "params": {},
       "expected": "The container service does not answer, so app backends cannot run right now."
+    },
+    "app.elevated.root_conflict": {
+      "params": {
+        "right": "host.network"
+      },
+      "expected": "The app runs its background service as root and asks for host.network. That right runs the service directly on the box, where root would control the whole box, so Pithyx refuses the combination."
+    },
+    "app.elevated.root_required": {
+      "params": {
+        "right": "capability:NET_ADMIN"
+      },
+      "expected": "The app asks for capability:NET_ADMIN, but only a background service that runs as root can use a capability."
     },
     "app.elevated.unsupported": {
       "params": {
         "right": "docker.socket"
       },
-      "expected": "The app asks for the right docker.socket, which this version of Pithyx does not grant."
+      "expected": "The app asks for the right docker.socket, which Pithyx does not grant to any app."
     },
     "app.icon.invalid": {
       "params": {
@@ -396,6 +414,10 @@
     "auth.setup.already_done": {
       "params": {},
       "expected": "This system has already been set up."
+    },
+    "auth.step_up.required": {
+      "params": {},
+      "expected": "Confirm with your password first. The confirmation holds for five minutes."
     },
     "auth.totp.already_enabled": {
       "params": {},

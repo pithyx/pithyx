@@ -157,7 +157,8 @@ public sealed class DockerIntegrationTests
             Assert.Contains("lo", granted, StringComparison.Ordinal);
             Assert.DoesNotContain("No such file", granted, StringComparison.Ordinal);
             var kvmGroup = (await vdevs.RunAsync("stat", ["-c", "%g", "/dev/kvm"])).Trim();
-            Assert.Contains($"groups={Uid},{kvmGroup}", granted.Replace("(", "", StringComparison.Ordinal), StringComparison.Ordinal);
+            var groups = granted.Split('\n').Single(line => line.StartsWith("uid=", StringComparison.Ordinal)).Split("groups=")[1].Split(',').Select(group => group.Split('(')[0].Trim());
+            Assert.Contains(kvmGroup, groups);
             Assert.Contains("kvm opened", granted, StringComparison.Ordinal);
             await runtime.StopAsync(AppId, pool, Token);
             await runtime.StartAsync(pool, three with { Elevated = new HashSet<string>(StringComparer.Ordinal) }, null, Token);
@@ -221,7 +222,7 @@ public sealed class DockerIntegrationTests
             ? $$"""
               probe:
                 image: localhost/pithyx-probe/web:1@sha256:{{new string('a', 64)}}
-                command: ["/bin/sh", "-c", "rm -f /data/probe.txt; { busybox cat /proc/self/uid_map; busybox id; busybox ls /sys/class/net; busybox ls /dev/net/tun /dev/kvm; exec 3<>/dev/kvm && echo kvm opened; } > /data/probe.tmp 2>&1; busybox mv /data/probe.tmp /data/probe.txt; exec busybox sleep 3600"]
+                command: ["/bin/sh", "-c", "rm -f /data/probe.txt; { busybox cat /proc/self/uid_map; busybox id; busybox ls /sys/class/net; busybox ls /dev/net/tun /dev/kvm; ( exec 3<>/dev/kvm ) && echo kvm opened; } > /data/probe.tmp 2>&1; busybox mv /data/probe.tmp /data/probe.txt; exec busybox sleep 3600"]
                 network_mode: host
                 devices: ['/dev/net/tun', '/dev/kvm']
                 volumes:
