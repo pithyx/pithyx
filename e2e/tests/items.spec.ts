@@ -237,7 +237,7 @@ test('a right-click on another item of the shell replaces the open menu, and the
   });
 
   await test.step('the desktop menu gives way to a title bar, whose window menu gives way to the taskbar', async () => {
-    await icon(page, 'About').dblclick();
+    await icon(page, 'About Pithyx').dblclick();
     const about = appWindow(page, 'About Pithyx');
     await expect(about).toBeVisible();
     // A corner of the desktop that neither the icons nor the window cover.
