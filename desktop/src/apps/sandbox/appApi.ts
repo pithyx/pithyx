@@ -1,4 +1,10 @@
-import { CSRF_HEADER, PithyxApiError, unwrap, type components } from '@pithyx/api-client';
+import {
+  CSRF_HEADER,
+  PithyxApiError,
+  unreachableError,
+  unwrap,
+  type components,
+} from '@pithyx/api-client';
 import type { BackendToken, FileLocation, FileOperation } from '@pithyx/sdk';
 import { PithyxError } from '@pithyx/sdk/host';
 import { api } from '../../api/client';
@@ -104,6 +110,8 @@ export function appApiFor(app: string, instance: string) {
           Authorization: `Bearer ${(await host.get(fresh)).token}`,
           [CSRF_HEADER]: '1',
         },
+      }).catch((error: unknown) => {
+        throw unreachableError(error);
       });
     let response = await send(false);
     if (response.status === 401) {

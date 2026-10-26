@@ -1,8 +1,9 @@
-import { PithyxApiError, unwrap, type components, type ErrorCode } from '@pithyx/api-client';
+import { unwrap, type components, type ErrorCode } from '@pithyx/api-client';
 import type { MethodName, PithyxApp } from '@pithyx/sdk';
-import { PithyxError, type HostExtensions } from '@pithyx/sdk/host';
+import { type HostExtensions } from '@pithyx/sdk/host';
 import { api } from '../../api/client';
 import type { DescribedError } from '../../errors/describe';
+import { daemon } from './daemonError';
 
 export type UserSummary = components['schemas']['UserSummary'];
 export type NewUser = components['schemas']['NewUser'];
@@ -90,21 +91,6 @@ const hasGrants = (value: Record<string, unknown>): boolean =>
 
 const hasUserId = (value: unknown): value is Record<string, unknown> & { userId: number } =>
   isRecord(value) && Number.isSafeInteger(value.userId);
-
-async function daemon<T>(call: () => Promise<T>): Promise<T> {
-  try {
-    return await call();
-  } catch (error) {
-    throw error instanceof PithyxApiError
-      ? new PithyxError({
-          code: error.code,
-          params: error.params,
-          detail: error.message,
-          requestId: error.requestId,
-        })
-      : error;
-  }
-}
 
 /**
  * The host side of the Users page, for the window that shows it (the Settings app, once its new shell is in dev).

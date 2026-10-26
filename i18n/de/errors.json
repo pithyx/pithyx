@@ -516,6 +516,9 @@
       "endpoint_unknown": "Die App hat eine Backend-Verbindung angefragt, die sie nicht hat ({endpoint}).",
       "unreachable": "Die App hat ihr Backend nicht erreicht ({endpoint}). Prüf die Verbindung zur Box."
     },
+    "box": {
+      "unreachable": "Die Box ist nicht erreichbar. Prüf die Verbindung und versuch es erneut."
+    },
     "method": {
       "unknown": "Diese Pithyx-Version unterstützt nicht, was die App angefragt hat ({method})."
     },
