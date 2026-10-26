@@ -34,7 +34,7 @@ Der Fenstermanager ist ein zustand-Store (`useDesktop`). Jede Änderung läuft �
 - **Tastatur.** Alle Fenster-Shortcuts nutzen Alt+Umschalt, weil Browser und Betriebssysteme sie nicht belegen: Leertaste für das Fenstermenü, Links und Rechts zum Einrasten, Hoch zum Maximieren, Runter zum Wiederherstellen oder Minimieren, Bild auf und Bild ab zum Wechseln zwischen Fenstern.
 - **Layout-Gedächtnis.** Das Layout (Fenster, Positionen, Reihenfolge, Taskleiste) wird pro Benutzer und Gerät im Daemon gespeichert (`PUT /api/desktop/layout` mit `If-Match`), um 1 Sekunde entprellt, nur vom sichtbaren Tab, und geschrieben, wenn die Seite ausgeblendet wird. Fenster von Apps, die du nicht mehr öffnen darfst, werden beim Wiederherstellen übersprungen. Limits: 50 Fenster, 16 KB Fensterargumente, 48 KB für das gesamte Layout. "Desktop holen von" kopiert das Layout eines anderen Geräts.
 - **Darstellung.** Akzent und Hintergrundbild werden pro Benutzer gespeichert und über Geräte hinweg geteilt; die Wahl zwischen hell und dunkel wird pro Browser gespeichert.
-- **Desktop-Elemente** (Verknüpfungen und Notizen) werden pro Benutzer über `/api/desktop/items` gespeichert.
+- **Desktop-Elemente** (Verknüpfungen zu Apps, Dateien und Ordnern sowie Notizen) werden pro Benutzer über `/api/desktop/items` gespeichert; Verknüpfungen zu Dateien folgen dem Umbenennen und Verschieben über den Daemon (D382).
 
 ## Kern-Apps
 

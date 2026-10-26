@@ -4,15 +4,18 @@ import {
   useEffectEvent,
   useRef,
   useState,
+  type DragEvent,
   type KeyboardEvent,
   type PointerEvent as ReactPointerEvent,
 } from 'react';
 import { flushSync } from 'react-dom';
 import { ListBox, ListBoxItem, type Selection } from 'react-aria-components';
 import { useTranslation } from 'react-i18next';
+import { ENTRIES_TYPE, parseDragged } from '../apps/files/drop';
 import { useAppName } from '../apps/names';
 import { findApp } from '../apps/registry';
-import { DesktopItemFace } from '../shell/DesktopIcon';
+import { DesktopItemFace, type DesktopItemKind } from '../shell/DesktopIcon';
+import type { OpenWith } from '../apps/files/defaultAction';
 import iconStyles from '../shell/DesktopIcon.module.css';
 import { cx } from '@pithyx/ui';
 import { announce } from '../wm/announce';
@@ -35,6 +38,7 @@ import {
   type Cell,
   type Direction,
 } from './grid';
+import { baseName, fileIcon, openTarget, showInFiles, showTargetInFiles } from './fileTargets';
 import { ItemMenu, RenameDialog, type ItemAction } from './ItemMenus';
 import styles from './ItemsLayer.module.css';
 import { Note } from './Note';
@@ -80,10 +84,15 @@ interface KeyboardMove {
   delta: Cell;
 }
 
-/** A shortcut whose app is gone (for example an uninstalled app) is kept on the daemon but not shown. */
-function visibleShortcuts(items: readonly DesktopItem[]): DesktopItem[] {
+/**
+ * The icons on the grid: shortcuts to apps and to files and folders. A shortcut whose app is gone (for example an
+ * uninstalled app) is kept on the daemon but not shown; one whose file is gone shows as missing.
+ */
+function visibleIcons(items: readonly DesktopItem[]): DesktopItem[] {
   return items.filter(
-    (item) => item.kind === 'shortcut' && item.app !== null && findApp(item.app) !== undefined,
+    (item) =>
+      item.kind === 'file' ||
+      (item.kind === 'shortcut' && item.app !== null && findApp(item.app) !== undefined),
   );
 }
 
@@ -91,8 +100,36 @@ function visibleShortcuts(items: readonly DesktopItem[]): DesktopItem[] {
 export function addShortcut(client: QueryClient, app: string): void {
   const items = client.getQueryData<DesktopItem[]>(itemsKey) ?? [];
   const size = gridSize(useDesktop.getState().workspace);
-  const cell = firstFreeCell(placeIcons(visibleShortcuts(items), size), size);
+  const cell = firstFreeCell(placeIcons(visibleIcons(items), size), size);
   createItem(client, { kind: 'shortcut', app, ...cell });
+}
+
+/**
+ * Puts shortcuts to files and folders of one share on the desktop, from `start` on (or the first free cell), each in
+ * the next free cell. `folders` names the paths known to be folders, for their icon until the daemon answers.
+ */
+export function addFileShortcuts(
+  client: QueryClient,
+  share: number,
+  paths: readonly string[],
+  options: { start?: Cell; folders?: ReadonlySet<string> } = {},
+): number[] {
+  const items = client.getQueryData<DesktopItem[]>(itemsKey) ?? [];
+  const size = gridSize(useDesktop.getState().workspace);
+  const placed = new Map(placeIcons(visibleIcons(items), size));
+  const taken = (cell: Cell) =>
+    [...placed.values()].some((other) => other.column === cell.column && other.row === cell.row);
+  return paths.map((path, index) => {
+    const start = options.start;
+    const cell =
+      start !== undefined && start.column < size.columns && start.row < size.rows && !taken(start)
+        ? start
+        : firstFreeCell(placed, size);
+    placed.set(-1 - index, cell);
+    const target =
+      options.folders === undefined ? null : options.folders.has(path) ? 'folder' : 'file';
+    return createItem(client, { kind: 'file', share, path, ...cell }, target);
+  });
 }
 
 /**
@@ -128,7 +165,7 @@ export function ItemsLayer() {
   const dragging = useRef(false);
   const longPress = useRef<ReturnType<typeof setTimeout>>(undefined);
 
-  const shortcuts = visibleShortcuts(items);
+  const shortcuts = visibleIcons(items);
   const notes = items.filter((item) => item.kind === 'note');
   const placed = placeIcons(shortcuts, size);
   const shown =
@@ -138,13 +175,47 @@ export function ItemsLayer() {
   const ordered = [...shortcuts].sort(
     (a, b) => compareCells(shown.get(a.id) ?? a, shown.get(b.id) ?? b) || a.id - b.id,
   );
-  const labelOf = (item: DesktopItem) => item.name ?? appName(item.app ?? '');
+  const labelOf = (item: DesktopItem) =>
+    item.name ?? (item.kind === 'file' ? baseName(item.path ?? '') : appName(item.app ?? ''));
 
   function open(id: number) {
     const item = shortcuts.find((entry) => entry.id === id);
-    if (item?.app != null) {
+    if (item?.kind === 'file') {
+      if (item.share == null || item.path == null || item.target === 'missing') {
+        announce(t('items.targetMissing', { name: labelOf(item) }));
+      } else if (item.target === 'folder') {
+        showInFiles(item.share, item.path);
+      } else {
+        void openTarget(item.share, item.path);
+      }
+    } else if (item?.app != null) {
       openApp(item.app);
     }
+  }
+
+  /** Files dragged from a Files window become shortcuts where they are dropped. */
+  function onDragOver(event: DragEvent<HTMLDivElement>) {
+    if (free && event.dataTransfer.types.includes(ENTRIES_TYPE)) {
+      event.preventDefault();
+      event.dataTransfer.dropEffect = 'link';
+    }
+  }
+
+  function onDrop(event: DragEvent<HTMLDivElement>) {
+    const dragged = parseDragged(event.dataTransfer.getData(ENTRIES_TYPE));
+    if (dragged?.share == null || !('names' in dragged.items)) {
+      return;
+    }
+    event.preventDefault();
+    const folder = dragged.folder;
+    const ids = addFileShortcuts(
+      client,
+      Number(dragged.share),
+      dragged.items.names.map((name) => (folder === '' ? name : `${folder}/${name}`)),
+      { start: cellAt(workspacePoint(event.clientX, event.clientY)) },
+    );
+    select(ids);
+    announce(t('items.added', { count: ids.length }));
   }
 
   function select(ids: Iterable<number>) {
@@ -435,6 +506,12 @@ export function ItemsLayer() {
       }
     } else if (action === 'rename') {
       setRenaming(shortcuts.find((item) => selected.has(item.id)) ?? null);
+    } else if (action === 'originalName' && single !== undefined) {
+      void changeItems(client, [{ id: single.id, name: '' }]);
+    } else if (action === 'showInFiles' && single?.share != null && single.path != null) {
+      showTargetInFiles(single.share, single.path);
+    } else if (action.startsWith('openWith:') && single?.share != null && single.path != null) {
+      void openTarget(single.share, single.path, action.slice('openWith:'.length) as OpenWith);
     } else if (action === 'delete') {
       removeSelected();
     } else {
@@ -473,6 +550,8 @@ export function ItemsLayer() {
         }}
         onKeyDownCapture={onKeyDownCapture}
         onKeyDown={onKeyDown}
+        onDragOver={onDragOver}
+        onDrop={onDrop}
       >
         <ListBox
           ref={list}
@@ -507,11 +586,27 @@ export function ItemsLayer() {
             const origin = cellOrigin(cell);
             const name = labelOf(item);
             const app = findApp(item.app ?? '');
+            const face: DesktopItemKind | undefined =
+              item.kind !== 'file'
+                ? app === undefined
+                  ? undefined
+                  : { kind: 'shortcut', app }
+                : item.target === 'missing'
+                  ? { kind: 'missing' }
+                  : item.target === 'folder'
+                    ? { kind: 'folder', link: true }
+                    : { kind: 'file', icon: fileIcon(baseName(item.path ?? '')), link: true };
             return (
               <ListBoxItem
                 id={item.id}
                 textValue={name}
-                aria-label={t('items.shortcut', { name })}
+                aria-label={
+                  item.kind !== 'file'
+                    ? t('items.shortcut', { name })
+                    : item.target === 'missing'
+                      ? t('items.missingShortcut', { name })
+                      : t('items.fileShortcut', { name })
+                }
                 className={cx(
                   iconStyles.icon,
                   styles.icon,
@@ -519,9 +614,7 @@ export function ItemsLayer() {
                 )}
                 {...(free ? { style: { left: origin.x, top: origin.y } } : {})}
               >
-                {app !== undefined && (
-                  <DesktopItemFace name={name} item={{ kind: 'shortcut', app }} />
-                )}
+                {face !== undefined && <DesktopItemFace name={name} item={face} />}
               </ListBoxItem>
             );
           }}
@@ -552,7 +645,19 @@ export function ItemsLayer() {
           y={menu.y}
           kind={menu.kind}
           count={selected.size}
-          canRename={single !== undefined}
+          canRename={
+            single !== undefined && !(single.kind === 'file' && single.target === 'missing')
+          }
+          file={
+            single?.kind === 'file'
+              ? {
+                  missing: single.target === 'missing',
+                  folder: single.target === 'folder',
+                  named: single.name !== null,
+                  name: baseName(single.path ?? ''),
+                }
+              : undefined
+          }
           onAction={onMenuAction}
           onClose={() => {
             setMenu(null);
@@ -562,7 +667,10 @@ export function ItemsLayer() {
       {renaming !== null && (
         <RenameDialog
           name={renaming.name}
-          appName={appName(renaming.app ?? '')}
+          appName={
+            renaming.kind === 'file' ? baseName(renaming.path ?? '') : appName(renaming.app ?? '')
+          }
+          file={renaming.kind === 'file'}
           onRename={(name) => {
             void changeItems(client, [{ id: renaming.id, name }]);
             setRenaming(null);

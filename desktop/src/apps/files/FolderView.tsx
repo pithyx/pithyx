@@ -14,6 +14,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { cx } from '@pithyx/ui';
 import { IconArrowDown, IconArrowUp, IconFile, IconFolder, IconLink } from '../../ui/icons';
+import { ENTRIES_TYPE } from './drop';
 import styles from './FilesApp.module.css';
 import {
   isSelected,
@@ -24,9 +25,6 @@ import {
   toggle,
   type Selection,
 } from './selection';
-
-/** Drag data of entries dragged inside the Files app. */
-export const ENTRIES_TYPE = 'application/x-pithyx-files';
 
 /** Whether a drag carries entries of a Files window, files of the device, or neither. */
 export function dragKindOf(transfer: DataTransfer): 'files' | 'entries' | null {
@@ -380,7 +378,8 @@ export function FolderView(props: FolderViewProps) {
           onSelect(dragged);
         }
         event.dataTransfer.setData(ENTRIES_TYPE, props.dragData(toItems(dragged)));
-        event.dataTransfer.effectAllowed = 'copyMove';
+        // Link: the desktop takes a drop as shortcuts.
+        event.dataTransfer.effectAllowed = 'all';
       },
       onDragOver: isFolder
         ? (event: DragEvent) => {
