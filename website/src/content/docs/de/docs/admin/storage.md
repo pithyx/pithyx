@@ -120,11 +120,23 @@ Ein verschlüsselter Pool von einer anderen Box oder nach einer Neuinstallation 
 
 **Schlüssel ändern…** auf einem entsperrten Pool erzeugt einen neuen Schlüssel, zeigt ihn wie der Assistent und ändert den Schlüssel des Pools erst, wenn du bestätigt hast, dass du ihn aufbewahrt hast; der alte Schlüssel funktioniert sofort nicht mehr. Die Daten werden nicht neu geschrieben. Der Dialog entscheidet auch, ob der neue Schlüssel in den Tresor kommt.
 
-**Schlüssel aus dem Tresor entfernen…** löscht den Schlüssel des Pools aus dem Tresor. Der Pool bleibt entsperrt, bis die Box neu startet, und wartet dann auf seinen Schlüssel. Wird ein Pool zerstört, löscht das auch seinen Schlüssel aus dem Tresor. Um einen Schlüssel in den Tresor zu legen, entsperre den Pool mit der Option zum Aufbewahren oder ändere den Schlüssel: ZFS kann einen eingegebenen Schlüssel nicht an einem Pool prüfen, der schon entsperrt ist ([`storage.pool.not_locked`](/de/docs/reference/errors/#storage.pool.not_locked)).
+**Schlüssel aus dem Tresor entfernen…** löscht den Schlüssel des Pools aus dem Tresor. Der Pool bleibt entsperrt, bis die Box neu startet, und wartet dann auf seinen Schlüssel. Wird ein Pool zerstört, löscht das auch seinen Schlüssel aus dem Tresor. Um einen Schlüssel in den Tresor zu legen, wähle **Entsperren…**, gib den Schlüssel ein und hake die Tresor-Option an: Der Schlüssel wird zuerst am Pool geprüft, auch wenn der Pool schon entsperrt ist. Auch das Ändern des Schlüssels legt den neuen in den Tresor.
 
 **Schlüssel anzeigen…** zeigt den Schlüssel aus dem Tresor erneut, nach deinem Passwort und, wenn die Zwei-Faktor-Anmeldung an ist, einem Authenticator-Code; nutze das, wenn deine Kopie verloren ist.
 
-Schlüssel gehen über die Standardeingabe an ZFS, nie als Befehlsargument, und erscheinen nie in einem Log, einem Plan oder auf dem Pool selbst. Administratoren bekommen eine Speicherwarnung, solange ein Pool auf seinen Schlüssel wartet. Was zu tun ist, wenn etwas schiefgeht, auch wie sich ein Pool ohne Pithyx öffnen lässt: [Verschlüsselte Pools: wenn etwas schiefgeht](/de/docs/admin/encryption-emergencies/).
+### USB-Stick
+
+**Schlüssel auf USB-Stick schreiben…** auf der Karte eines verschlüsselten Pools schreibt seinen Schlüssel auf einen USB-Stick, eine Speicherkarte oder eine andere Wechselplatte mit FAT-, exFAT- oder ext-Dateisystem: eine Datei `pithyx-keys/<Pool-GUID>.key`, die den Schlüssel in Hex-Form enthält, neben allem anderen auf dem Stick. Pithyx formatiert nie einen Stick und bietet nur Sticks an, die nichts anderes benutzt (keiner, der anderweitig eingehängt ist, keiner, der zu einem Pool gehört). Der Schlüssel ist der, den du eingibst, oder der aus dem Tresor nach deinem Passwort und, wenn die Zwei-Faktor-Anmeldung an ist, einem Authenticator-Code. Beide werden am Pool geprüft, bevor sie geschrieben werden, und die Datei wird zurückgelesen, bevor der Dialog meldet, dass es fertig ist. **Schlüssel danach aus dem Schlüsseltresor entfernen** ist angehakt: Mit dem Schlüssel im Tresor würde die Box den Pool auch ohne den Stick entsperren.
+
+Sobald ein Stick mit dem Schlüssel steckt, beim Start oder später, entsperrt die Box den Pool, der auf ihn wartet; sie hängt den Stick nur schreibgeschützt ein, solange sie die Datei liest. Danach kann der Stick abgezogen werden: **Der Pool bleibt entsperrt, bis die Box neu startet**, und die Karte und eine Benachrichtigung sagen das. Nach einem Neustart wartet der Pool wieder auf den Stick. Jeder Stick mit der Datei funktioniert, ein zweiter Stick kann also Ersatz sein.
+
+:::caution[Wer den Stick und die Platten hat, hat die Daten]
+Wie der Tresor schützt ein Stick die Daten auf gestohlenen Platten; die Daten auf einer gestohlenen Box schützt er nur, solange der Stick nicht bei der Box ist. Bewahre ihn getrennt von der Box auf und behalte auch deine Kopie des Schlüssels: Ein Stick kann kaputtgehen.
+:::
+
+Ein Stick, dessen Schlüssel den Pool nicht öffnet (ein älterer Schlüssel nach **Schlüssel ändern…** oder eine beschädigte Datei), lässt den Pool gesperrt und unberührt, mit einer kritischen Speicherwarnung: Entsperre ihn mit dem Schlüssel und schreibe den Schlüssel danach erneut auf den Stick. **Schlüssel ändern…** warnt, wenn ein Stick den aktuellen Schlüssel enthält.
+
+Schlüssel gehen über die Standardeingabe an ZFS, nie als Befehlsargument, und erscheinen nie in einem Log, einem Plan oder auf dem Pool selbst. Administratoren bekommen eine Speicherwarnung, solange ein Pool auf seinen Schlüssel oder seinen Stick wartet. Was zu tun ist, wenn etwas schiefgeht, auch wie sich ein Pool ohne Pithyx öffnen lässt: [Verschlüsselte Pools: wenn etwas schiefgeht](/de/docs/admin/encryption-emergencies/).
 
 ## Zustand und Warnungen
 

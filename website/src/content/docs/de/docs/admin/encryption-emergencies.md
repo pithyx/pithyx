@@ -1,6 +1,6 @@
 ---
 title: 'Verschlüsselte Pools: wenn etwas schiefgeht'
-description: 'Was zu tun ist, wenn ein verschlüsselter Pool gesperrt bleibt, das Einhängen scheitert, die Kopie des Schlüssels verloren ist, die Systemplatte fehlt oder die Box selbst kaputt ist.'
+description: 'Was zu tun ist, wenn ein verschlüsselter Pool gesperrt bleibt, das Einhängen scheitert, die Kopie des Schlüssels oder der USB-Stick verloren ist, die Systemplatte fehlt oder die Box selbst kaputt ist.'
 status: ready
 audience: admin
 since: '1.2.0'
@@ -8,7 +8,7 @@ sidebar:
   order: 4
 ---
 
-Ein verschlüsselter Pool lässt sich nur mit seinem Schlüssel lesen ([Verschlüsselung](/de/docs/admin/storage/#verschlüsselung)). Diese Seite listet, was schiefgehen kann und wie du an die Daten kommst. Jeder Weg zurück braucht den Schlüssel: aus dem Schlüsseltresor, solange die Box läuft, oder aus der Kopie, die du beim Anlegen des Pools oder beim Ändern seines Schlüssels aufbewahrt hast. Ohne beides kann niemand die Daten lesen, auch Pithyx nicht.
+Ein verschlüsselter Pool lässt sich nur mit seinem Schlüssel lesen ([Verschlüsselung](/de/docs/admin/storage/#verschlüsselung)). Diese Seite listet, was schiefgehen kann und wie du an die Daten kommst. Jeder Weg zurück braucht den Schlüssel: aus dem Schlüsseltresor, solange die Box läuft, von einem USB-Stick mit dem Schlüssel oder aus der Kopie, die du beim Anlegen des Pools oder beim Ändern seines Schlüssels aufbewahrt hast. Ohne beides kann niemand die Daten lesen, auch Pithyx nicht.
 
 ## Der Pool bleibt nach einem Start gesperrt
 
@@ -16,6 +16,8 @@ Die Pool-Karte zeigt **Gesperrt**, und Administratoren bekommen die Benachrichti
 
 - **Nach jedem Start von Hand entsperrt**: Das ist so gewollt. Wähle **Entsperren…** und gib den Schlüssel ein.
 - **Schlüssel im Schlüsseltresor, aber er hat den Pool nicht entsperrt**: Die Tresordatei ist beschädigt oder enthält einen älteren Schlüssel (zum Beispiel, nachdem der Schlüssel auf einer anderen Box geändert wurde). Am Pool wurde nichts verändert. Wähle **Entsperren…**, gib den Schlüssel aus deiner Kopie ein und lass **Schlüssel im Schlüsseltresor aufbewahren und den Pool bei jedem Start automatisch entsperren** angehakt: Der Tresor bekommt den richtigen Schlüssel, und der Pool entsperrt sich ab dem nächsten Start wieder von selbst.
+- **Entsperrt sich vom USB-Stick**: Stecke den Stick ein; die Box liest ihn nach wenigen Augenblicken und entsperrt den Pool. Passiert nichts, braucht der Stick ein FAT-, exFAT- oder ext-Dateisystem, das sonst nichts eingehängt hat, und das Protokoll nennt einen Stick, den sie nicht lesen konnte ([`storage.usb.unreadable`](/de/docs/reference/errors/#storage.usb.unreadable)). Du kannst den Schlüssel immer auch eingeben.
+- **Der USB-Stick hat ihn nicht entsperrt** (Karte und Warnung sagen das): Der Stick enthält einen älteren Schlüssel, weil der Schlüssel nach dem Schreiben geändert wurde, oder die Datei ist beschädigt. Am Pool wurde nichts verändert. Entsperre ihn mit dem Schlüssel aus deiner Kopie und schreibe den Schlüssel danach erneut auf den Stick.
 - **Ein abgelehnter Schlüssel** mit [`storage.encryption.key_invalid`](/de/docs/reference/errors/#storage.encryption.key_invalid) hat einen Tippfehler: Die letzten Zeichen eines Schlüssels prüfen die übrigen. Bindestriche, Leerzeichen, Groß- oder Kleinschreibung und O für 0 oder I und L für 1 spielen keine Rolle. [`storage.encryption.key_wrong`](/de/docs/reference/errors/#storage.encryption.key_wrong) heißt, der Schlüssel ist gültig, gehört aber zu einem anderen Pool oder ist ein älterer Schlüssel dieses Pools.
 
 ## Entsperren hat geklappt, aber ein Ordner fehlt
@@ -31,6 +33,12 @@ Solange der Schlüssel im Schlüsseltresor liegt und die Box läuft, wähle **Sc
 Noch besser: Gib dem Pool einen neuen Schlüssel. **Schlüssel ändern…** erzeugt einen, zeigt ihn und ändert den Schlüssel erst, wenn du zwei seiner Gruppen aus deiner aufbewahrten Kopie eingegeben hast.
 
 Liegt der Schlüssel nicht im Tresor und ist die Kopie verloren, lassen sich die Daten nicht wieder lesen. Kopiere alles, was du brauchst, vom Pool, solange er noch entsperrt ist, und lege ihn dann neu an.
+
+## Der USB-Stick ist verloren oder kaputt
+
+Ein kaputter Stick ändert nichts am Pool: Entsperre ihn mit dem Schlüssel aus deiner Kopie (oder lass das den Tresor tun) und wähle dann **Schlüssel auf USB-Stick schreiben…** mit einem neuen Stick.
+
+Ein verlorener oder gestohlener Stick öffnet den Pool zusammen mit seinen Platten. Gib dem Pool sofort einen neuen Schlüssel: Entsperre ihn, falls er gesperrt ist, und wähle dann **Schlüssel ändern…**. Der verlorene Stick öffnet danach nichts mehr. Schreibe den neuen Schlüssel auf einen neuen Stick.
 
 ## Der Schlüsseltresor lässt sich nicht beschreiben
 
@@ -51,6 +59,12 @@ zfs mount -a
 ```
 
 Ersetze `tank` durch den Namen des Pools. `zfs load-key` fragt nach dem Schlüssel: Füge die Hex-Form ein. `-f` ist nötig, weil der Pool zuletzt von einem anderen System benutzt wurde; `-N` importiert ohne Einhängen, sodass du die Einhängepunkte vorher mit `zfs list -o name,mountpoint` prüfen kannst.
+
+Mit dem USB-Stick statt des Blatts hängst du den Stick ein und zeigst ZFS seine Datei; `zpool import` zeigt die GUID des Pools als `id`:
+
+```sh
+zfs load-key -L file:///mnt/stick/pithyx-keys/<GUID>.key tank/pithyx
+```
 
 Dort funktioniert nur die Hex-Form; ZFS kennt die Form mit `PXPK-` nicht. Hast du nur diese Form, rechnet eine Box mit Pithyx sie um: **Entsperren…** nimmt sie, wie sie ist.
 
