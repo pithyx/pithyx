@@ -120,7 +120,7 @@ Ein verschlüsselter Pool von einer anderen Box oder nach einer Neuinstallation 
 
 **Schlüssel ändern…** auf einem entsperrten Pool erzeugt einen neuen Schlüssel, zeigt ihn wie der Assistent und ändert den Schlüssel des Pools erst, wenn du bestätigt hast, dass du ihn aufbewahrt hast; der alte Schlüssel funktioniert sofort nicht mehr. Die Daten werden nicht neu geschrieben. Der Dialog entscheidet auch, ob der neue Schlüssel in den Tresor kommt.
 
-**Schlüssel aus dem Tresor entfernen…** löscht den Schlüssel des Pools aus dem Tresor. Der Pool bleibt entsperrt, bis die Box neu startet, und wartet dann auf seinen Schlüssel. Um einen Schlüssel in den Tresor zu legen, entsperre den Pool mit der Option zum Aufbewahren oder ändere den Schlüssel: ZFS kann einen eingegebenen Schlüssel nicht an einem Pool prüfen, der schon entsperrt ist ([`storage.pool.not_locked`](/de/docs/reference/errors/#storage.pool.not_locked)).
+**Schlüssel aus dem Tresor entfernen…** löscht den Schlüssel des Pools aus dem Tresor. Der Pool bleibt entsperrt, bis die Box neu startet, und wartet dann auf seinen Schlüssel. Wird ein Pool zerstört, löscht das auch seinen Schlüssel aus dem Tresor. Um einen Schlüssel in den Tresor zu legen, entsperre den Pool mit der Option zum Aufbewahren oder ändere den Schlüssel: ZFS kann einen eingegebenen Schlüssel nicht an einem Pool prüfen, der schon entsperrt ist ([`storage.pool.not_locked`](/de/docs/reference/errors/#storage.pool.not_locked)).
 
 Schlüssel gehen über die Standardeingabe an ZFS, nie als Befehlsargument, und erscheinen nie in einem Log, einem Plan oder auf dem Pool selbst.
 

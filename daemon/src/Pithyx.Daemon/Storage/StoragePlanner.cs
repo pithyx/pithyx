@@ -84,7 +84,8 @@ public sealed class StoragePlanner(
                         throw new PithyxException(ErrorCodes.StoragePoolNameMismatch, new Dictionary<string, object?> { ["name"] = pool.Name });
                     }
                     var datasets = pools.Current.Datasets.Where(dataset => dataset.Pool == pool.Name).Select(dataset => dataset.Name).ToList();
-                    return Releasing(Plan(request, ZfsPlans.DestroyPool(pool.Name)) with { Datasets = datasets, RequiresConfirmName = true });
+                    // A destroyed pool's key opens nothing any more, so it leaves the vault with the pool.
+                    return Releasing(Plan(request, ZfsPlans.DestroyPool(pool.Name)) with { Datasets = datasets, RequiresConfirmName = true }, () => vault?.Remove(pool.PoolGuid));
                 }
             case "pool.export":
                 {
@@ -294,7 +295,7 @@ public sealed class StoragePlanner(
     }
 
     // Exporting or destroying a pool unmounts every dataset it lists; the empty folders of its mount points go afterwards.
-    private Result Releasing(Result result)
+    private Result Releasing(Result result, Action? afterwards = null)
     {
         if (result.Plan is null)
         {
@@ -310,6 +311,7 @@ public sealed class StoragePlanner(
                 AfterRun = _ =>
                 {
                     LeftoverMountPoints.Remove(leftovers);
+                    afterwards?.Invoke();
                     return Task.CompletedTask;
                 },
             },

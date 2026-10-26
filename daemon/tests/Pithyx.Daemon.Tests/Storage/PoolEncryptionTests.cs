@@ -292,6 +292,22 @@ public sealed partial class PoolEncryptionTests : IDisposable
     }
 
     [Fact]
+    public async Task ADestroyedPoolTakesItsKeyOutOfTheVault()
+    {
+        _vault.Save(Guid, PoolKey.ToHex(_key));
+        Pools("zfs-encrypted");
+        await PoolAsync();
+        await _state.RefreshDisksAsync([], Token);
+        var planner = new StoragePlanner(_state, _facts, _pools, new PoolImportScanner(_commands, _state, _facts, _pools), Datasets(), _commands, _time, _vault);
+        var plan = (await planner.PlanAsync(new StoragePlanRequest("pool.destroy", PoolName, ConfirmName: PoolName), Token)).Plan!;
+
+        Pools("zfs-empty");
+        await new CommandPlanRunner(_commands, _state, _facts, _time).RunAsync(plan, null, Token);
+
+        Assert.False(_vault.Has(Guid));
+    }
+
+    [Fact]
     public async Task AnEncryptedPoolIsCreatedWithTheKeyOnStdinAndKeepsItInTheVaultWhenAsked()
     {
         Pools("zfs-empty");

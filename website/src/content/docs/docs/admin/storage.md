@@ -120,7 +120,7 @@ An encrypted pool on another box, or after a reinstall, is imported like any oth
 
 **Change key…** on an unlocked pool makes a new key, shows it like the wizard and changes the pool's key only after you confirmed you stored it; the old key stops working at once. The data is not rewritten. The dialog also decides whether the new key goes into the vault.
 
-**Remove key from vault…** deletes the pool's key from the vault. The pool stays unlocked until the box restarts and then waits for its key. To put a key into the vault, unlock the pool with the box set to keep it, or change the key: ZFS cannot check a typed key against a pool that is unlocked already ([`storage.pool.not_locked`](/docs/reference/errors/#storage.pool.not_locked)).
+**Remove key from vault…** deletes the pool's key from the vault. The pool stays unlocked until the box restarts and then waits for its key. Destroying a pool also deletes its key from the vault. To put a key into the vault, unlock the pool with the box set to keep it, or change the key: ZFS cannot check a typed key against a pool that is unlocked already ([`storage.pool.not_locked`](/docs/reference/errors/#storage.pool.not_locked)).
 
 Keys go to ZFS on standard input, never as a command argument, and never appear in a log, a plan or the pool itself.
 
