@@ -55,7 +55,8 @@
     "deletePermanent": "Endgültig löschen",
     "selectAll": "Alles auswählen",
     "versions": "Frühere Versionen",
-    "openWith": "Öffnen mit …"
+    "openWith": "Öffnen mit …",
+    "addToDesktop": "Zum Desktop hinzufügen"
   },
   "dialog": {
     "cancel": "Abbrechen",
@@ -111,7 +112,8 @@
   },
   "announce": {
     "copied": "{count, plural, one {# Element} other {# Elemente}} in die Zwischenablage kopiert",
-    "cut": "{count, plural, one {# Element} other {# Elemente}} ausgeschnitten"
+    "cut": "{count, plural, one {# Element} other {# Elemente}} ausgeschnitten",
+    "addedToDesktop": "{count, plural, one {# Verknüpfung} other {# Verknüpfungen}} zum Desktop hinzugefügt"
   },
   "loadFailed": "Dieser Ordner konnte nicht geladen werden.",
   "details": "Details",

@@ -1729,6 +1729,7 @@
         "tags": [
           "Desktop"
         ],
+        "description": "The user's desktop items. A shortcut to a file or folder says in target whether its target is a file, a folder or missing (gone, moved past the daemon, or no longer readable for the user).",
         "operationId": "ListDesktopItems",
         "responses": {
           "200": {
@@ -1760,7 +1761,7 @@
         "tags": [
           "Desktop"
         ],
-        "description": "Creates an item. The answer is 201 with the item, its URL as Location and its version as ETag.",
+        "description": "Creates an item. The answer is 201 with the item, its URL as Location and its version as ETag. A shortcut to a file or folder needs read access to it; otherwise the answer is the file error (for example fs.entry.not_found).",
         "operationId": "CreateDesktopItem",
         "requestBody": {
           "content": {
@@ -12030,6 +12031,14 @@
         },
         "description": "The Debian updates apt offers; the kernel and ZFS never come from Debian (D338)."
       },
+      "DesktopFileTarget": {
+        "enum": [
+          "file",
+          "folder",
+          "missing",
+          null
+        ]
+      },
       "DesktopItem": {
         "required": [
           "id",
@@ -12064,7 +12073,7 @@
               "null",
               "string"
             ],
-            "description": "Shortcuts: the label the user gave it, or null for the app's name in the user's language."
+            "description": "Shortcuts and files: the label the user gave it, or null for the app's or the target's own name."
           },
           "text": {
             "type": [
@@ -12087,9 +12096,35 @@
             "type": "integer",
             "description": "Increments with every change. Send it as `If-Match: \"n\"` with the next change of this item.",
             "format": "int64"
+          },
+          "share": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "Files: the shared folder or home of the target.",
+            "format": "int64"
+          },
+          "path": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Files: the target's path in the share; it follows renames and moves made through the daemon."
+          },
+          "target": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Files: whether the target is a file or a folder, or missing for this user.",
+                "$ref": "#/components/schemas/DesktopFileTarget"
+              }
+            ]
           }
         },
-        "description": "An app shortcut or a sticky note on the desktop, shared across the user's devices."
+        "description": "An app shortcut, a shortcut to a file or folder, or a sticky note on the desktop, shared across the user's devices."
       },
       "DesktopItemChange": {
         "type": "object",
@@ -12099,7 +12134,7 @@
               "null",
               "string"
             ],
-            "description": "Shortcuts: the new label; an empty string goes back to the app's name."
+            "description": "Shortcuts and files: the new label; an empty string goes back to the app's or the target's name."
           },
           "text": {
             "type": [
@@ -12130,7 +12165,8 @@
       "DesktopItemKind": {
         "enum": [
           "shortcut",
-          "note"
+          "note",
+          "file"
         ]
       },
       "DesktopState": {
@@ -15722,21 +15758,36 @@
               "null",
               "string"
             ],
-            "description": "Shortcuts: the id of the app to open. Required for shortcuts, not allowed for notes."
+            "description": "Shortcuts: the id of the app to open. Required for shortcuts, not allowed otherwise."
           },
           "name": {
             "type": [
               "null",
               "string"
             ],
-            "description": "Shortcuts: an own label, or null for the app's name."
+            "description": "Shortcuts and files: an own label, or null for the app's or the target's name."
           },
           "text": {
             "type": [
               "null",
               "string"
             ],
-            "description": "Notes: the text, at most 4000 characters. Required for notes, not allowed for shortcuts."
+            "description": "Notes: the text, at most 4000 characters. Required for notes, not allowed otherwise."
+          },
+          "share": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "Files: the shared folder or home of the target. Required for files, not allowed otherwise.",
+            "format": "int64"
+          },
+          "path": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Files: the target's path in the share; the user must be able to read it."
           }
         }
       },

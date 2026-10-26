@@ -939,9 +939,10 @@ export type paths = {
             path?: never;
             cookie?: never;
         };
+        /** @description The user's desktop items. A shortcut to a file or folder says in target whether its target is a file, a folder or missing (gone, moved past the daemon, or no longer readable for the user). */
         get: operations["ListDesktopItems"];
         put?: never;
-        /** @description Creates an item. The answer is 201 with the item, its URL as Location and its version as ETag. */
+        /** @description Creates an item. The answer is 201 with the item, its URL as Location and its version as ETag. A shortcut to a file or folder needs read access to it; otherwise the answer is the file error (for example fs.entry.not_found). */
         post: operations["CreateDesktopItem"];
         delete?: never;
         options?: never;
@@ -4210,7 +4211,9 @@ export type components = {
             /** Format: int32 */
             security: number;
         };
-        /** @description An app shortcut or a sticky note on the desktop, shared across the user's devices. */
+        /** @enum {unknown} */
+        DesktopFileTarget: "file" | "folder" | "missing" | null;
+        /** @description An app shortcut, a shortcut to a file or folder, or a sticky note on the desktop, shared across the user's devices. */
         DesktopItem: {
             /** @description Shortcuts: the id of the app it opens. */
             app: null | string;
@@ -4226,13 +4229,21 @@ export type components = {
             id: number;
             /** @description What the item is. */
             kind: components["schemas"]["DesktopItemKind"];
-            /** @description Shortcuts: the label the user gave it, or null for the app's name in the user's language. */
+            /** @description Shortcuts and files: the label the user gave it, or null for the app's or the target's own name. */
             name: null | string;
+            /** @description Files: the target's path in the share; it follows renames and moves made through the daemon. */
+            path?: null | string;
             /**
              * Format: int32
              * @description Grid row of the item.
              */
             row: number;
+            /**
+             * Format: int64
+             * @description Files: the shared folder or home of the target.
+             */
+            share?: null | number;
+            target?: null | components["schemas"]["DesktopFileTarget"];
             /** @description Notes: the text. */
             text: null | string;
             /**
@@ -4248,7 +4259,7 @@ export type components = {
              * @description New grid column.
              */
             column?: null | number;
-            /** @description Shortcuts: the new label; an empty string goes back to the app's name. */
+            /** @description Shortcuts and files: the new label; an empty string goes back to the app's or the target's name. */
             name?: null | string;
             /**
              * Format: int32
@@ -4259,7 +4270,7 @@ export type components = {
             text?: null | string;
         };
         /** @enum {unknown} */
-        DesktopItemKind: "shortcut" | "note";
+        DesktopItemKind: "shortcut" | "note" | "file";
         DesktopState: {
             /** @description Accent color and wallpaper of the user, the same on every device. */
             appearance: components["schemas"]["Appearance"];
@@ -5478,7 +5489,7 @@ export type components = {
             running: boolean;
         };
         NewDesktopItem: {
-            /** @description Shortcuts: the id of the app to open. Required for shortcuts, not allowed for notes. */
+            /** @description Shortcuts: the id of the app to open. Required for shortcuts, not allowed otherwise. */
             app?: null | string;
             /**
              * Format: int32
@@ -5487,14 +5498,21 @@ export type components = {
             column: number;
             /** @description What to create. */
             kind: components["schemas"]["DesktopItemKind"];
-            /** @description Shortcuts: an own label, or null for the app's name. */
+            /** @description Shortcuts and files: an own label, or null for the app's or the target's name. */
             name?: null | string;
+            /** @description Files: the target's path in the share; the user must be able to read it. */
+            path?: null | string;
             /**
              * Format: int32
              * @description Grid row.
              */
             row: number;
-            /** @description Notes: the text, at most 4000 characters. Required for notes, not allowed for shortcuts. */
+            /**
+             * Format: int64
+             * @description Files: the shared folder or home of the target. Required for files, not allowed otherwise.
+             */
+            share?: null | number;
+            /** @description Notes: the text, at most 4000 characters. Required for notes, not allowed otherwise. */
             text?: null | string;
         };
         NewFolderRequest: {

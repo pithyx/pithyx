@@ -1,8 +1,8 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { Locator, Page } from '@playwright/test';
 import { expect, test } from './fixtures';
-import { openFilesInShared, openFromStart, signInAsAdmin } from './session';
+import { openFilesInShared, openFromStart, resetDesktopItems, signInAsAdmin } from './session';
 
 // The simulated share "Shared" lives in the daemon's data directory (playwright.config.ts).
 const shared = join(process.env.PITHYX_E2E_DATA ?? '', 'shares', 'shared');
@@ -377,4 +377,51 @@ test('administrators find every other home in one list under homes', async ({ pa
 
   await files.getByRole('button', { name: 'Up one level' }).click();
   await expect(home).toBeVisible();
+});
+
+test('a file put on the desktop follows a rename, shows in Files and goes missing when it is gone', async ({
+  page,
+}) => {
+  prepare('e2e-shortcuts', { 'plan.txt': 'x' });
+  await openFolder(page, 'e2e-shortcuts');
+  const shortcut = (name: string) =>
+    page.getByRole('option', { name: `${name}, shortcut to a file or folder` });
+
+  await test.step('Add to desktop puts a shortcut there', async () => {
+    await row(page, 'plan.txt').click({ button: 'right' });
+    await page.getByRole('menuitem', { name: 'Add to desktop' }).click();
+    await expect(shortcut('plan.txt')).toBeVisible();
+  });
+
+  await test.step('a rename in Files renames the shortcut', async () => {
+    await row(page, 'plan.txt').click();
+    await page.keyboard.press('F2');
+    await filesWindow(page).getByRole('textbox', { name: 'Rename plan.txt' }).fill('plan-2.txt');
+    await page.keyboard.press('Enter');
+    await expect(row(page, 'plan-2.txt')).toBeVisible();
+    await expect(shortcut('plan-2.txt')).toBeVisible();
+  });
+
+  await test.step('Show in Files opens its folder with it selected', async () => {
+    await filesWindow(page).getByRole('button', { name: 'Close' }).click();
+    await shortcut('plan-2.txt').click({ button: 'right' });
+    await page.getByRole('menuitem', { name: 'Show in Files' }).click();
+    await expect(row(page, 'plan-2.txt')).toHaveAttribute('aria-selected', 'true');
+    await filesWindow(page).getByRole('button', { name: 'Close' }).click();
+  });
+
+  await test.step('a target removed past the daemon leaves a missing shortcut to remove', async () => {
+    rmSync(join(shared, 'e2e-shortcuts', 'plan-2.txt'));
+    await page.reload();
+    const missing = page.getByRole('option', {
+      name: 'plan-2.txt, shortcut whose target is missing',
+    });
+    await missing.click({ button: 'right' });
+    const menu = page.getByRole('menu');
+    await expect(menu.getByRole('menuitem')).toHaveText(['Remove from desktop']);
+    await menu.getByRole('menuitem').click();
+    await expect(missing).toHaveCount(0);
+  });
+
+  await resetDesktopItems(page);
 });

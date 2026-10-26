@@ -20,19 +20,45 @@ import {
 } from '@pithyx/ui';
 import {
   IconArrowsMove,
+  IconDownload,
   IconExternalLink,
+  IconEye,
+  IconFolderSearch,
   IconNote,
   IconPencil,
   IconPlus,
+  IconRestore,
   IconTrash,
 } from '../ui/icons';
+import { openWithFor } from './fileTargets';
 import { SubmenuTrigger } from 'react-aria-components';
 
-export type ItemAction = 'open' | 'rename' | 'move' | 'delete' | 'note' | `shortcut:${string}`;
+export type ItemAction =
+  | 'open'
+  | 'rename'
+  | 'originalName'
+  | 'showInFiles'
+  | 'move'
+  | 'delete'
+  | 'note'
+  | `shortcut:${string}`
+  | `openWith:${string}`;
+
+/** The one selected shortcut to a file or folder, for its own entries in the menu. */
+export interface FileShortcutInfo {
+  /** Gone or no longer readable: only removing it is offered. */
+  missing: boolean;
+  folder: boolean;
+  /** It has an own label, which "Use original name" clears. */
+  named: boolean;
+  /** The target's own name, for "Open with". */
+  name: string;
+}
 
 /**
  * The context menu of the desktop, at the pointer or the focused icon: for selected icons (open, rename, move,
- * remove) or for the empty desktop (new note, new shortcut).
+ * remove; for a file or folder also open with, show in Files and use original name) or for the empty desktop (new
+ * note, new shortcut).
  */
 export function ItemMenu({
   x,
@@ -40,6 +66,7 @@ export function ItemMenu({
   kind,
   count,
   canRename,
+  file,
   onAction,
   onClose,
 }: {
@@ -48,6 +75,7 @@ export function ItemMenu({
   kind: 'desktop' | 'items';
   count: number;
   canRename: boolean;
+  file?: FileShortcutInfo | undefined;
   onAction: (action: ItemAction) => void;
   onClose: () => void;
 }) {
@@ -66,16 +94,67 @@ export function ItemMenu({
         }}
         onClose={onClose}
       >
-        {kind === 'items' ? (
+        {kind === 'items' && file?.missing === true ? (
+          <MenuItem id="delete" icon={<IconTrash {...icon} />} tone="danger">
+            {t('items.remove', { count })}
+          </MenuItem>
+        ) : kind === 'items' ? (
           <>
             {count === 1 && (
               <MenuItem id="open" icon={<IconExternalLink {...icon} />}>
                 {t('items.open')}
               </MenuItem>
             )}
+            {file !== undefined && !file.folder && (
+              <SubmenuTrigger>
+                <MenuItem id="openWith" icon={<IconExternalLink {...icon} />}>
+                  {t('items.openWith')}
+                </MenuItem>
+                <MenuPopover>
+                  <Menu
+                    aria-label={t('items.openWith')}
+                    onAction={(key) => {
+                      onAction(`openWith:${String(key)}`);
+                    }}
+                  >
+                    {openWithFor(file.name).map((choice) => (
+                      <MenuItem
+                        key={choice}
+                        id={choice}
+                        icon={
+                          choice === 'viewer' ? (
+                            <IconEye {...icon} />
+                          ) : choice === 'download' ? (
+                            <IconDownload {...icon} />
+                          ) : (
+                            <IconExternalLink {...icon} />
+                          )
+                        }
+                      >
+                        {choice === 'viewer'
+                          ? t('items.viewer')
+                          : choice === 'download'
+                            ? t('items.download')
+                            : appName(choice.slice('app:'.length))}
+                      </MenuItem>
+                    ))}
+                  </Menu>
+                </MenuPopover>
+              </SubmenuTrigger>
+            )}
+            {file !== undefined && (
+              <MenuItem id="showInFiles" icon={<IconFolderSearch {...icon} />}>
+                {t('items.showInFiles')}
+              </MenuItem>
+            )}
             {canRename && (
               <MenuItem id="rename" icon={<IconPencil {...icon} />} shortcut="F2">
                 {t('items.rename')}
+              </MenuItem>
+            )}
+            {file?.named === true && (
+              <MenuItem id="originalName" icon={<IconRestore {...icon} />}>
+                {t('items.originalName')}
               </MenuItem>
             )}
             <MenuItem id="move" icon={<IconArrowsMove {...icon} />}>
@@ -122,15 +201,18 @@ export function ItemMenu({
   );
 }
 
-/** Renames a shortcut. An empty name goes back to the app's own name. */
+/** Renames a shortcut. An empty name goes back to the app's or the target's own name. */
 export function RenameDialog({
   name,
   appName,
+  file = false,
   onRename,
   onClose,
 }: {
   name: string | null;
+  /** The app's name, or the target's for a shortcut to a file or folder. */
   appName: string;
+  file?: boolean;
   onRename: (name: string) => void;
   onClose: () => void;
 }) {
@@ -166,7 +248,7 @@ export function RenameDialog({
       >
         <TextField
           label={t('items.name')}
-          description={t('items.nameHint', { app: appName })}
+          description={t(file ? 'items.nameHintFile' : 'items.nameHint', { app: appName })}
           value={value}
           onChange={setValue}
           maxLength={100}

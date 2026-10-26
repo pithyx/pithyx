@@ -97,9 +97,10 @@ At the bottom of the Pithyx menu, next to your name, are the **Sign out** button
 
 _Two shortcuts and a sticky note next to two open windows._
 
-The desktop holds shortcuts to apps and sticky notes. They belong to your account and appear on every device.
+The desktop holds shortcuts to apps, files and folders, and sticky notes. They belong to your account and appear on every device. The desktop only holds links: removing a shortcut never touches the file.
 
 - To add a shortcut, right-click an empty spot and choose **New shortcut**, then an app. Or right-click a running app in the taskbar and choose **Add to desktop**.
+- To put a file or folder on the desktop, right-click it in Files and choose **Add to desktop**, or drag it from Files onto the desktop. Its shortcut opens it as a double click in Files does; its menu adds **Open with**, **Show in Files** (Files opens its folder with it selected) and, after a rename, **Use original name**. It follows renames and moves made in Files, apps, WebDAV and FTP. A change made over SMB or SFTP, a deleted file, or a shared folder you may no longer read leaves the shortcut greyed out with a broken link, and its menu only offers **Remove from desktop**.
 - To add a note, right-click an empty spot and choose **New note**. A note holds up to 4000 characters and saves itself shortly after you stop typing.
 - Open a shortcut with a double-click (a single tap on a touch screen), or select it and press **Enter**.
 - Right-click a shortcut for **Open**, **Rename**, **Move** and **Remove from desktop**. **F2** renames, **Del** removes.

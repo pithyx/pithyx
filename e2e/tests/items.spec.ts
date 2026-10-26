@@ -408,8 +408,30 @@ test('sticky notes keep their text on the daemon, move, stay under windows and a
     await expect.poll(() => cellOf(page, note)).toEqual({ column: 3, row: 1 });
     const bar = await box(note.getByRole('button', { name: 'Move note', exact: true }));
     const from = { x: bar.x + bar.width / 2, y: bar.y + bar.height / 2 };
-    await drag(page, from, { x: from.x + 2 * CELL.width, y: from.y });
+    const before = await box(note);
+    await page.mouse.move(from.x, from.y);
+    await page.mouse.down();
+    await page.mouse.move(from.x + 10, from.y + 10);
+    await page.mouse.move(from.x + 2 * CELL.width, from.y, { steps: 5 });
+    // Where the note is drawn in every frame from just before the drop on.
+    await note.evaluate((element) => {
+      const lefts: number[] = [];
+      Object.assign(window, { noteLefts: lefts });
+      const frame = () => {
+        lefts.push(element.getBoundingClientRect().x);
+        if (lefts.length < 30) {
+          requestAnimationFrame(frame);
+        }
+      };
+      requestAnimationFrame(frame);
+    });
+    await page.mouse.up();
     await expect.poll(() => cellOf(page, note)).toEqual({ column: 5, row: 1 });
+    // The dropped note never shows in its old cell again on its way to the new one.
+    const lefts = await page.evaluate(
+      () => (window as unknown as { noteLefts: number[] }).noteLefts,
+    );
+    expect(lefts.filter((left) => Math.abs(left - before.x) < 2)).toEqual([]);
   });
 
   await test.step('windows cover notes', async () => {
