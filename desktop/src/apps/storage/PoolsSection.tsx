@@ -511,21 +511,6 @@ function VdevItem({
                 </Button>
               ) : (
                 <>
-                  {!leaf.missing && (
-                    <Button
-                      size="sm"
-                      variant="quiet"
-                      onPress={() => {
-                        onAction(leaf.state === 'OFFLINE' ? 'pool.online' : 'pool.offline', leaf);
-                      }}
-                    >
-                      {t(
-                        leaf.state === 'OFFLINE'
-                          ? 'actions.online.button'
-                          : 'actions.offline.button',
-                      )}
-                    </Button>
-                  )}
                   <Button
                     size="sm"
                     variant="quiet"

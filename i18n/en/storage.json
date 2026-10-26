@@ -222,18 +222,6 @@
       "explain": "{device} stops being a hot spare of {pool}.",
       "run": "Remove"
     },
-    "offline": {
-      "button": "Take offline",
-      "title": "Take {device} offline",
-      "explain": "{pool} stops using {device}, for example to swap it. The pool stays usable if it has protection left.",
-      "run": "Take offline"
-    },
-    "online": {
-      "button": "Bring online",
-      "title": "Bring {device} online",
-      "explain": "{pool} uses {device} again and rebuilds what it missed.",
-      "run": "Bring online"
-    },
     "destroy": {
       "button": "Destroy pool…",
       "title": "Destroy {pool}",

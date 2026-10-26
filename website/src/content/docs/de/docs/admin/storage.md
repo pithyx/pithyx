@@ -55,7 +55,7 @@ Der Pool-Name beginnt mit einem Kleinbuchstaben, danach folgen Kleinbuchstaben, 
 
 Jeder neue Pool bekommt dieselben Optionen: `ashift=12`, `compression=lz4`, `xattr=sa`, `acltype=posixacl`, `atime=off`, `normalization=formD`. Danach legt Pithyx seine Dataset-Struktur unter `<pool>/pithyx` an: `shares`, `homes`, `apps`, `system` und `cache` (Kontingent 2,5 GiB, keine Kompression, keine automatischen Snapshots). Ein Pool, den Pithyx nicht angelegt hat, hat kein Dataset `pithyx`, und Pithyx legt darauf nichts an ([`storage.pool.not_prepared`](/de/docs/reference/errors/#storage.pool.not_prepared)).
 
-Weitere Pool-Aktionen: **Ersetzen…** (fragt immer nach der Seriennummer), **Hot Spare hinzufügen…**, **Spare entfernen**, **Offline nehmen**, **Online bringen** und **Pool löschen…**.
+Weitere Pool-Aktionen: **Ersetzen…** (fragt immer nach der Seriennummer), **Hot Spare hinzufügen…**, **Spare entfernen** und **Pool löschen…**.
 
 :::danger[Einen Pool löschen]
 **Pool löschen…** listet jedes Dataset auf, das mit dem Pool verschwindet, und verlangt die Eingabe des Pool-Namens ([`storage.pool.name_mismatch`](/de/docs/reference/errors/#storage.pool.name_mismatch), wenn er abweicht). Löschen und Exportieren werden abgelehnt, solange Platten fehlen ([`storage.pool.disks_missing`](/de/docs/reference/errors/#storage.pool.disks_missing)) oder der Pool angehalten ist.

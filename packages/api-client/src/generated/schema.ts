@@ -7430,7 +7430,7 @@ export type components = {
          * @description A destructive storage action to plan. Which fields an action needs: `pool.create` Pool, Layout, DiskIds,
          *     Encryption (with EncryptionKey and KeepKeyInVault for `key`, and Confirmations for disks that are not empty); `pool.destroy` Pool and ConfirmName;
          *     `pool.replace` Pool, Vdev and one disk in DiskIds with its serial in Confirmations; `pool.spare.add` Pool
-         *     and one disk; `pool.spare.remove`, `pool.offline` and `pool.online` Pool and Vdev;
+         *     and one disk; `pool.spare.remove` Pool and Vdev;
          *     `pool.import.readonly` PoolGuid from the import scan, NewName when the name is taken, and Force with the pool
          *     name in ConfirmName when the scan says `needsForce`; `pool.import` Pool (imported read-only), and Force with
          *     ConfirmName to force it; `pool.export` Pool; `pool.vdev.add` Pool, Layout (`single`, `mirror`,
@@ -7442,7 +7442,7 @@ export type components = {
          *     Name; `snapshot.rollback` Pool, Dataset, the snapshot's Name and the dataset's full name in ConfirmName.
          */
         StoragePlanRequest: {
-            /** @description `pool.create`, `pool.destroy`, `pool.replace`, `pool.spare.add`, `pool.spare.remove`, `pool.offline`, `pool.online`, `pool.import.readonly`, `pool.import`, `pool.export`, `pool.vdev.add`, `pool.raidz.expand`, `dataset.rename`, `dataset.set`, `dataset.destroy`, `volume.create`, `snapshot.destroy` or `snapshot.rollback`. */
+            /** @description `pool.create`, `pool.destroy`, `pool.replace`, `pool.spare.add`, `pool.spare.remove`, `pool.import.readonly`, `pool.import`, `pool.export`, `pool.vdev.add`, `pool.raidz.expand`, `dataset.rename`, `dataset.set`, `dataset.destroy`, `volume.create`, `snapshot.destroy` or `snapshot.rollback`. */
             action: string;
             /** @description New compression: `off`, `lz4`, `zle`, `zstd`, `zstd-1` to `zstd-19`, `gzip`, `gzip-1` to `gzip-9`; null leaves it. */
             compression?: null | string;
@@ -7496,7 +7496,7 @@ export type components = {
             sizeBytes?: null | number;
             /** @description True for a volume that reserves no space up front. */
             sparse?: null | boolean;
-            /** @description GUID of the device to replace, take offline, bring online or remove, or of the raidz vdev to expand. */
+            /** @description GUID of the device to replace or remove, or of the raidz vdev to expand. */
             vdev?: null | string;
         };
         StorageSchedule: {

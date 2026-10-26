@@ -11,20 +11,12 @@ import styles from './Storage.module.css';
 import { describeProblem, guardReason } from './shared';
 import { useFormatLocale } from '../../i18n';
 
-export type PoolAction =
-  | 'pool.replace'
-  | 'pool.spare.add'
-  | 'pool.spare.remove'
-  | 'pool.offline'
-  | 'pool.online'
-  | 'pool.destroy';
+export type PoolAction = 'pool.replace' | 'pool.spare.add' | 'pool.spare.remove' | 'pool.destroy';
 
 const actionKey = {
   'pool.replace': 'replace',
   'pool.spare.add': 'spareAdd',
   'pool.spare.remove': 'spareRemove',
-  'pool.offline': 'offline',
-  'pool.online': 'online',
   'pool.destroy': 'destroy',
 } as const;
 

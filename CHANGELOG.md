@@ -28,6 +28,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 - The favicon of the desktop and of pithyx.org is transparent and fills its square, with lighter faces on a dark tab bar, instead of a light tile.
 
+### Removed
+
+- Storage: **Take offline** and **Bring online** on the disks of a pool are gone, with the plan actions `pool.offline` and `pool.online` (now `storage.plan.action_invalid`). **Replace…** swaps a disk without taking it offline, and a disk that comes back after it was pulled is brought online by the box itself (D386, #304).
+
 ### Fixed
 
 - A request that does not reach the box (the connection is lost or the box restarts) says the box could not be reached and to try again; it said there was an error on the server with the details in the logs, where there is none. Apps get it as the new SDK code `sdk.box.unreachable` for calls the desktop passes on to the box (#302).

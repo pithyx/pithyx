@@ -222,18 +222,6 @@
       "explain": "{device} ist dann kein Hot Spare von {pool} mehr.",
       "run": "Entfernen"
     },
-    "offline": {
-      "button": "Offline nehmen",
-      "title": "{device} offline nehmen",
-      "explain": "{pool} verwendet {device} nicht mehr, zum Beispiel zum Tauschen. Der Pool bleibt nutzbar, solange Schutz übrig ist.",
-      "run": "Offline nehmen"
-    },
-    "online": {
-      "button": "Online bringen",
-      "title": "{device} online bringen",
-      "explain": "{pool} verwendet {device} wieder und stellt nach, was gefehlt hat.",
-      "run": "Online bringen"
-    },
     "destroy": {
       "button": "Pool löschen…",
       "title": "{pool} löschen",
