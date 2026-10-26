@@ -1,16 +1,17 @@
 import type { PithyxApp } from '@pithyx/sdk';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ErrorNotice } from '../../errors/ErrorNotice';
+import { formatBytes } from '../../desktop/format';
 import { useFormatLocale } from '../../i18n';
 import { copyText } from '../../platform/browser';
 import { IconCheck, IconCopy, IconDownload, IconKey, IconPrinter } from '../../ui/icons';
 import { Button, cx, Dialog, PasswordField, TextField } from '@pithyx/ui';
-import { internalCall, type NewPoolKey, type Pool } from '../sdk/internal';
+import { internalCall, type NewPoolKey, type Pool, type UsbStick } from '../sdk/internal';
 import styles from './Storage.module.css';
-import { describeProblem, formatDate } from './shared';
-import { keyGroups, keySheet, normalizeGroup, pickTwo } from './poolKey';
+import { describeProblem, formatDate, storageKey } from './shared';
+import { keyGroups, keySheet, normalizeGroup, pickTwo, stickName } from './poolKey';
 
 /**
  * A pool key (D384): copy it, download it as a text file or print it. The sheet also carries the key in hex with the
@@ -216,7 +217,15 @@ export function UnlockDialog({
           }
         }}
       >
-        <p>{t(pool.encryption?.vaultFailed ? 'unlock.introVaultFailed' : 'unlock.intro')}</p>
+        <p>
+          {t(
+            pool.encryption?.vaultFailed
+              ? 'unlock.introVaultFailed'
+              : pool.encryption?.usbFailed
+                ? 'unlock.introUsbFailed'
+                : 'unlock.intro',
+          )}
+        </p>
         <TextField
           label={t('unlock.key')}
           description={t('unlock.keyHint')}
@@ -418,6 +427,11 @@ export function ChangeKeyDialog({
     >
       <div className={styles.form}>
         <p>{t('changeKey.intro')}</p>
+        {pool.encryption?.usbKey != null && (
+          <p className={styles.notice}>
+            {t('changeKey.usbOld', { stick: pool.encryption.usbKey.stick })}
+          </p>
+        )}
         {newKey !== undefined && (
           <>
             <PoolKeyCard poolKey={newKey} pool={pool.name} onStoredChange={setStored} />
@@ -485,6 +499,209 @@ export function ForgetKeyDialog({
         <p className={styles.notice}>{t('forgetKey.warning')}</p>
         {forget.isError && <ErrorNotice error={describeProblem(forget.error)} />}
       </div>
+    </Dialog>
+  );
+}
+
+/**
+ * Writes the pool's key to a USB stick (D385): the typed key, or the vault's after the password and, with two-factor
+ * sign-in on, a current code. The box then unlocks the pool whenever the stick is plugged in; afterwards the stick may be
+ * pulled and the pool stays unlocked until the next restart, which the dialog says plainly.
+ */
+export function WriteUsbKeyDialog({
+  app,
+  pool,
+  onClose,
+}: {
+  app: PithyxApp;
+  pool: Pool;
+  onClose: () => void;
+}) {
+  const { t } = useTranslation('storage');
+  const locale = useFormatLocale();
+  const twoFactor = app.context.user.twoFactor;
+  const inVault = pool.encryption?.keyInVault ?? false;
+  const [device, setDevice] = useState<string | null>(null);
+  const [source, setSource] = useState<'vault' | 'typed'>(inVault ? 'vault' : 'typed');
+  const [key, setKey] = useState('');
+  const [password, setPassword] = useState('');
+  const [code, setCode] = useState('');
+  const [removeFromVault, setRemoveFromVault] = useState(true);
+  const sticks = useQuery({
+    queryKey: [...storageKey, 'usbSticks'],
+    queryFn: () => internalCall(app, 'internal.admin.storage.usbSticks', {}),
+  });
+  const writable = (sticks.data ?? []).filter((stick) => !stick.readOnly);
+  // A single stick that can take the key is chosen without asking.
+  const chosen =
+    (sticks.data ?? []).find((stick) => stick.device === device) ??
+    (device === null && writable.length === 1 ? writable[0] : undefined);
+  const write = useMutation({
+    mutationFn: (stick: UsbStick) =>
+      internalCall(app, 'internal.admin.storage.writeKeyToUsb', {
+        pool: pool.name,
+        device: stick.device,
+        ...(source === 'typed'
+          ? { key: key.trim() }
+          : { password, ...(twoFactor ? { totpCode: code.trim() } : {}) }),
+        removeFromVault: inVault && removeFromVault,
+      }),
+  });
+  const ready =
+    chosen !== undefined &&
+    !chosen.readOnly &&
+    (source === 'typed'
+      ? key.trim() !== ''
+      : password !== '' && (!twoFactor || code.trim() !== ''));
+  const submit = () => {
+    if (ready && !write.isPending) {
+      write.mutate(chosen);
+    }
+  };
+  return (
+    <Dialog
+      isOpen
+      onOpenChange={(open) => {
+        if (!open) {
+          onClose();
+        }
+      }}
+      title={t('usb.title', { pool: pool.name })}
+      actions={
+        write.isSuccess ? (
+          <Button variant="primary" onPress={onClose}>
+            {t('usb.close')}
+          </Button>
+        ) : (
+          <>
+            <Button onPress={onClose}>{t('usb.cancel')}</Button>
+            <Button variant="primary" isDisabled={!ready || write.isPending} onPress={submit}>
+              {t('usb.submit')}
+            </Button>
+          </>
+        )
+      }
+    >
+      {write.isSuccess ? (
+        <p className={styles.notice} role="status">
+          {t('usb.done', { stick: stickName(write.variables), pool: pool.name })}
+        </p>
+      ) : (
+        <form
+          className={styles.form}
+          onSubmit={(event) => {
+            event.preventDefault();
+            submit();
+          }}
+        >
+          <p>{t('usb.intro')}</p>
+          <p className={styles.notice}>{t('usb.warning')}</p>
+          <fieldset className={styles.diskChoice}>
+            <legend className={styles.fieldLabel}>{t('usb.stick')}</legend>
+            {sticks.data?.length === 0 && <p className={styles.muted}>{t('usb.none')}</p>}
+            {(sticks.data ?? []).map((stick) => (
+              <label key={stick.device} className={styles.check}>
+                <input
+                  type="radio"
+                  name="usbStick"
+                  checked={chosen?.device === stick.device}
+                  disabled={stick.readOnly}
+                  onChange={() => {
+                    setDevice(stick.device);
+                    write.reset();
+                  }}
+                />
+                <span>
+                  {t('usb.stickOption', {
+                    name: stickName(stick),
+                    size: formatBytes(stick.sizeBytes, locale),
+                    fileSystem: stick.fileSystem,
+                  })}
+                  {stick.readOnly && <span className={styles.muted}> · {t('usb.readOnly')}</span>}
+                </span>
+              </label>
+            ))}
+          </fieldset>
+          {inVault && (
+            <fieldset className={styles.diskChoice}>
+              <legend className={styles.fieldLabel}>{t('usb.source')}</legend>
+              <label className={styles.check}>
+                <input
+                  type="radio"
+                  name="usbKeySource"
+                  checked={source === 'vault'}
+                  onChange={() => {
+                    setSource('vault');
+                    write.reset();
+                  }}
+                />
+                <span>{t('usb.sourceVault')}</span>
+              </label>
+              <label className={styles.check}>
+                <input
+                  type="radio"
+                  name="usbKeySource"
+                  checked={source === 'typed'}
+                  onChange={() => {
+                    setSource('typed');
+                    write.reset();
+                  }}
+                />
+                <span>{t('usb.sourceTyped')}</span>
+              </label>
+            </fieldset>
+          )}
+          {source === 'vault' ? (
+            <>
+              <p className={styles.muted}>{t('usb.vaultHint')}</p>
+              <PasswordField
+                label={t('usb.password')}
+                value={password}
+                onChange={(value) => {
+                  setPassword(value);
+                  write.reset();
+                }}
+                autoComplete="current-password"
+              />
+              {twoFactor && (
+                <TextField
+                  label={t('usb.code')}
+                  value={code}
+                  onChange={setCode}
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                />
+              )}
+            </>
+          ) : (
+            <TextField
+              label={t('usb.key')}
+              description={t('usb.keyHint')}
+              value={key}
+              onChange={(value) => {
+                setKey(value);
+                write.reset();
+              }}
+              autoCapitalize="characters"
+              autoComplete="off"
+              spellCheck="false"
+            />
+          )}
+          {inVault && (
+            <label className={styles.check}>
+              <input
+                type="checkbox"
+                checked={removeFromVault}
+                onChange={(event) => {
+                  setRemoveFromVault(event.target.checked);
+                }}
+              />
+              <span>{t('usb.removeFromVault')}</span>
+            </label>
+          )}
+          {write.isError && <ErrorNotice error={describeProblem(write.error)} />}
+        </form>
+      )}
     </Dialog>
   );
 }

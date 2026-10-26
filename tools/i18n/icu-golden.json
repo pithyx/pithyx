@@ -2218,7 +2218,7 @@
       "params": {
         "name": "tank"
       },
-      "expected": "Pool tank is unlocked already. To keep its key in the key vault, change the key: the new key goes into the vault."
+      "expected": "Pool tank is unlocked already. To keep its key in the key vault, type the key: it is checked and then kept."
     },
     "storage.encryption.vault_failed": {
       "params": {
@@ -2231,6 +2231,32 @@
         "name": "tank"
       },
       "expected": "The key vault holds no key of pool tank. Only the key you stored yourself can open it."
+    },
+    "storage.usb.not_found": {
+      "params": {
+        "device": "/dev/sdh1"
+      },
+      "expected": "This USB stick cannot take a pool key (/dev/sdh1): it is gone, or nothing on it is a FAT, exFAT or ext file system that is free to use. Plug it in again, or use another stick."
+    },
+    "storage.usb.read_only": {
+      "params": {
+        "stick": "PXKEYS"
+      },
+      "expected": "The USB stick PXKEYS is write-protected. Switch its write protection off or use another stick."
+    },
+    "storage.usb.unreadable": {
+      "params": {
+        "stick": "PXKEYS",
+        "reason": "wrong fs type"
+      },
+      "expected": "The USB stick PXKEYS could not be opened (wrong fs type). Nothing on it was changed. Check the stick on a computer, or use another one."
+    },
+    "storage.usb.write_failed": {
+      "params": {
+        "stick": "PXKEYS",
+        "reason": "No space left on device"
+      },
+      "expected": "The key could not be written to the USB stick PXKEYS (No space left on device). Do not rely on this stick: check it on a computer, or use another one, and keep the key you stored."
     }
   },
   "cases": [

@@ -146,6 +146,10 @@ builder.Services.AddSingleton<StoragePlanner>();
 builder.Services.AddSingleton<CommandPlanStore>();
 builder.Services.AddSingleton<CommandPlanRunner>();
 builder.Services.AddSingleton(new KeyVault(Path.Combine(Path.GetDirectoryName(paths.DatabasePath) ?? ".", "pool-keys")));
+builder.Services.AddSingleton(services => new UsbKeyDrive(
+    services.GetRequiredService<ICommandRunner>(),
+    mode == DaemonMode.Real ? "/run/pithyx/usb-key" : Path.Combine(Path.GetDirectoryName(paths.DatabasePath) ?? ".", "usb-key"),
+    services.GetRequiredService<ILogger<UsbKeyDrive>>()));
 builder.Services.AddSingleton<PoolEncryptionService>();
 builder.Services.AddSingleton<SystemStateService>();
 builder.Services.AddPithyxSnapshots();

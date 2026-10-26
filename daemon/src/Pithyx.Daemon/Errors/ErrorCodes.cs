@@ -1197,6 +1197,32 @@ public static class ErrorCodes
     [ErrorStatus(HttpStatusCode.NotFound)]
     public const string StorageEncryptionNotInVault = "storage.encryption.not_in_vault";
 
+    /// <summary>
+    /// The USB stick is gone, or it is not one a pool key can be written to: a stick or other removable disk with a FAT,
+    /// exFAT or ext file system that nothing has mounted. <c>params.device</c> names it.
+    /// </summary>
+    [ErrorStatus(HttpStatusCode.NotFound)]
+    public const string StorageUsbNotFound = "storage.usb.not_found";
+
+    /// <summary>The USB stick is write-protected, so the key cannot be written to it; <c>params.stick</c> names it.</summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string StorageUsbReadOnly = "storage.usb.read_only";
+
+    /// <summary>
+    /// The USB stick could not be mounted (a damaged file system, or the stick was pulled); <c>params.stick</c> names it and
+    /// <c>params.reason</c> is what <c>mount</c> said. Nothing on the stick was changed.
+    /// </summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string StorageUsbUnreadable = "storage.usb.unreadable";
+
+    /// <summary>
+    /// The key could not be written to the USB stick, or not read back the same (the stick is full, write-protected by its
+    /// file system, broken or was pulled). Do not rely on this stick; <c>params.stick</c> names it and
+    /// <c>params.reason</c> says what failed.
+    /// </summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string StorageUsbWriteFailed = "storage.usb.write_failed";
+
     /// <summary>The pool is not encrypted by Pithyx (its <c>&lt;pool&gt;/pithyx</c> has no key of its own); <c>params.name</c> is the pool.</summary>
     [ErrorStatus(HttpStatusCode.Conflict)]
     public const string StoragePoolNotEncrypted = "storage.pool.not_encrypted";
@@ -1206,8 +1232,8 @@ public static class ErrorCodes
     public const string StoragePoolLocked = "storage.pool.locked";
 
     /// <summary>
-    /// The pool is unlocked already, so ZFS cannot check a key against it: to keep the key in the key vault, change the
-    /// key, which stores the new one. <c>params.name</c> is the pool.
+    /// The pool is unlocked already and no key was given to keep in the key vault: type the key to keep it there (it is
+    /// checked first), or change the key, which stores the new one. <c>params.name</c> is the pool.
     /// </summary>
     [ErrorStatus(HttpStatusCode.Conflict)]
     public const string StoragePoolNotLocked = "storage.pool.not_locked";

@@ -569,6 +569,12 @@
       "vault_failed": "The key of pool {name} could not be stored in the key vault on the system disk. The pool is unlocked now; after the next start it waits for its key, so keep the key you stored. Check the system disk in the log, then unlock or change the key again to keep it in the vault.",
       "not_in_vault": "The key vault holds no key of pool {name}. Only the key you stored yourself can open it."
     },
+    "usb": {
+      "not_found": "This USB stick cannot take a pool key ({device}): it is gone, or nothing on it is a FAT, exFAT or ext file system that is free to use. Plug it in again, or use another stick.",
+      "read_only": "The USB stick {stick} is write-protected. Switch its write protection off or use another stick.",
+      "unreadable": "The USB stick {stick} could not be opened ({reason}). Nothing on it was changed. Check the stick on a computer, or use another one.",
+      "write_failed": "The key could not be written to the USB stick {stick} ({reason}). Do not rely on this stick: check it on a computer, or use another one, and keep the key you stored."
+    },
     "plan": {
       "action_invalid": "Unknown storage action.",
       "expired": "This plan is more than 10 minutes old. Show it again to check the disks once more.",
@@ -590,7 +596,7 @@
       "suspended": "{name} has stopped all reads and writes because too many of its disks are gone. Destroying or exporting it now would hang until the box restarts. Connect the disks again; Pithyx then resumes the pool on its own.",
       "not_encrypted": "Pool {name} is not encrypted.",
       "locked": "Pool {name} is locked. Unlock it with its key first.",
-      "not_locked": "Pool {name} is unlocked already. To keep its key in the key vault, change the key: the new key goes into the vault."
+      "not_locked": "Pool {name} is unlocked already. To keep its key in the key vault, type the key: it is checked and then kept."
     },
     "schedule": {
       "invalid": "This schedule cannot be set. Choose Off, Weekly or Monthly for an existing pool."

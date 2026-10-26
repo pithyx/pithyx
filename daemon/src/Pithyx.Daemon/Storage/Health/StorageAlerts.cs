@@ -63,12 +63,21 @@ public static class StorageAlerts
             {
                 Add($"pool.faulted:{pool.Name}", Critical, "storage.alert.poolFaulted", new() { ["pool"] = pool.Name, ["state"] = pool.State });
             }
-            // A pool that waits for its key, by choice or because the vault's key failed; one in the vault and not tried yet is opening.
+            // A pool that waits for its key, by choice, for its USB stick or because a stored key failed; one in the vault and
+            // not tried yet is opening.
             if (pool.Encryption is { Locked: true } encryption && !pool.ReadOnly)
             {
                 if (encryption.VaultFailed)
                 {
                     Add($"pool.locked:{pool.Name}", Critical, "storage.alert.poolLockedVault", name);
+                }
+                else if (encryption.UsbFailed)
+                {
+                    Add($"pool.locked:{pool.Name}", Critical, "storage.alert.poolLockedUsbFailed", name);
+                }
+                else if (!encryption.KeyInVault && encryption.UsbKey is { } usb)
+                {
+                    Add($"pool.locked:{pool.Name}", Warning, "storage.alert.poolLockedUsb", new() { ["pool"] = pool.Name, ["stick"] = usb.Stick });
                 }
                 else if (!encryption.KeyInVault)
                 {

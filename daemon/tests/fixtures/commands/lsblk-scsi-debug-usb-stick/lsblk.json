@@ -1,0 +1,9 @@
+{
+  "command": "lsblk",
+  "args": [
+    "-J",
+    "-b",
+    "-O"
+  ],
+  "exitCode": 0
+}

@@ -17,6 +17,7 @@ namespace Pithyx.Daemon.Tests.Storage.Integration;
 /// devbox: ZFS notices nothing until its next write, and the daemon must see the disk go on its own.
 /// </summary>
 [Trait("Category", FileVdevs.Category)]
+[Collection(ScsiDebug.Name)]
 public sealed class DiskFailureIntegrationTests
 {
     private static CancellationToken Token => TestContext.Current.CancellationToken;
