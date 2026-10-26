@@ -43,8 +43,6 @@
     "storage_pool_replace": "Replacing a disk",
     "storage_pool_spare_add": "Adding a hot spare",
     "storage_pool_spare_remove": "Removing a hot spare",
-    "storage_pool_offline": "Taking a disk offline",
-    "storage_pool_online": "Bringing a disk online",
     "storage_pool_import": "Importing a pool",
     "storage_pool_import_readonly": "Importing a pool read-only",
     "storage_pool_export": "Exporting a pool",

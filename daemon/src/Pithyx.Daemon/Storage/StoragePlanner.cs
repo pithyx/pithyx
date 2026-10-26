@@ -72,10 +72,6 @@ public sealed class StoragePlanner(
                     }
                     return Plan(request, ZfsPlans.RemoveSpare(request.Pool, spare.VdevGuid));
                 }
-            case "pool.offline":
-                return Plan(request, ZfsPlans.Offline(request.Pool, Leaf(Pool(request.Pool), request.Vdev).VdevGuid));
-            case "pool.online":
-                return Plan(request, ZfsPlans.Online(request.Pool, Leaf(Pool(request.Pool), request.Vdev).VdevGuid));
             case "pool.destroy":
                 {
                     var pool = Reachable(Pool(request.Pool));

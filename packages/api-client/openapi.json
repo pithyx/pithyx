@@ -20299,7 +20299,7 @@
         "properties": {
           "action": {
             "type": "string",
-            "description": "`pool.create`, `pool.destroy`, `pool.replace`, `pool.spare.add`, `pool.spare.remove`, `pool.offline`, `pool.online`, `pool.import.readonly`, `pool.import`, `pool.export`, `pool.vdev.add`, `pool.raidz.expand`, `dataset.rename`, `dataset.set`, `dataset.destroy`, `volume.create`, `snapshot.destroy` or `snapshot.rollback`."
+            "description": "`pool.create`, `pool.destroy`, `pool.replace`, `pool.spare.add`, `pool.spare.remove`, `pool.import.readonly`, `pool.import`, `pool.export`, `pool.vdev.add`, `pool.raidz.expand`, `dataset.rename`, `dataset.set`, `dataset.destroy`, `volume.create`, `snapshot.destroy` or `snapshot.rollback`."
           },
           "pool": {
             "type": "string",
@@ -20334,7 +20334,7 @@
               "null",
               "string"
             ],
-            "description": "GUID of the device to replace, take offline, bring online or remove, or of the raidz vdev to expand."
+            "description": "GUID of the device to replace or remove, or of the raidz vdev to expand."
           },
           "encryption": {
             "type": [
@@ -20449,7 +20449,7 @@
             "description": "For `encryption: key`: true to keep the key in the key vault on the system disk, so the box unlocks the pool at start; false to unlock it by hand after every start."
           }
         },
-        "description": "A destructive storage action to plan. Which fields an action needs: `pool.create` Pool, Layout, DiskIds,\nEncryption (with EncryptionKey and KeepKeyInVault for `key`, and Confirmations for disks that are not empty); `pool.destroy` Pool and ConfirmName;\n`pool.replace` Pool, Vdev and one disk in DiskIds with its serial in Confirmations; `pool.spare.add` Pool\nand one disk; `pool.spare.remove`, `pool.offline` and `pool.online` Pool and Vdev;\n`pool.import.readonly` PoolGuid from the import scan, NewName when the name is taken, and Force with the pool\nname in ConfirmName when the scan says `needsForce`; `pool.import` Pool (imported read-only), and Force with\nConfirmName to force it; `pool.export` Pool; `pool.vdev.add` Pool, Layout (`single`, `mirror`,\n`raidz1` to `raidz3`), DiskIds, Confirmations, and ConfirmName when the preview says so;\n`pool.raidz.expand` Pool, Vdev (the raidz vdev), one disk and ConfirmName;\n`dataset.rename` Pool, Dataset and NewName; `dataset.set` Pool, Dataset and at least one of QuotaBytes,\nReservationBytes, Compression and RecordSizeBytes; `dataset.destroy` Pool, Dataset and ConfirmName;\n`volume.create` Pool, Name, SizeBytes and Sparse; `snapshot.destroy` Pool, Dataset and the snapshot's\nName; `snapshot.rollback` Pool, Dataset, the snapshot's Name and the dataset's full name in ConfirmName."
+        "description": "A destructive storage action to plan. Which fields an action needs: `pool.create` Pool, Layout, DiskIds,\nEncryption (with EncryptionKey and KeepKeyInVault for `key`, and Confirmations for disks that are not empty); `pool.destroy` Pool and ConfirmName;\n`pool.replace` Pool, Vdev and one disk in DiskIds with its serial in Confirmations; `pool.spare.add` Pool\nand one disk; `pool.spare.remove` Pool and Vdev;\n`pool.import.readonly` PoolGuid from the import scan, NewName when the name is taken, and Force with the pool\nname in ConfirmName when the scan says `needsForce`; `pool.import` Pool (imported read-only), and Force with\nConfirmName to force it; `pool.export` Pool; `pool.vdev.add` Pool, Layout (`single`, `mirror`,\n`raidz1` to `raidz3`), DiskIds, Confirmations, and ConfirmName when the preview says so;\n`pool.raidz.expand` Pool, Vdev (the raidz vdev), one disk and ConfirmName;\n`dataset.rename` Pool, Dataset and NewName; `dataset.set` Pool, Dataset and at least one of QuotaBytes,\nReservationBytes, Compression and RecordSizeBytes; `dataset.destroy` Pool, Dataset and ConfirmName;\n`volume.create` Pool, Name, SizeBytes and Sparse; `snapshot.destroy` Pool, Dataset and the snapshot's\nName; `snapshot.rollback` Pool, Dataset, the snapshot's Name and the dataset's full name in ConfirmName."
       },
       "StorageSchedule": {
         "required": [

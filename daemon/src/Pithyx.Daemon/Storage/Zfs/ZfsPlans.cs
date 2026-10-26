@@ -170,9 +170,6 @@ public static partial class ZfsPlans
     public static IReadOnlyList<PlanStep> RemoveSpare(string pool, string vdevGuid) =>
         [new PlanStep(new CommandRequest("zpool", ["remove", pool, vdevGuid]), [])];
 
-    public static IReadOnlyList<PlanStep> Offline(string pool, string vdevGuid) =>
-        [new PlanStep(new CommandRequest("zpool", ["offline", pool, vdevGuid]), [])];
-
     /// <summary>
     /// The only pool commands the daemon runs without a plan the user saw (D204): they bring back a pool's own disk after
     /// it was unplugged and connected again (<see cref="PoolHealth.Reconnects"/>). <c>zpool online</c> reopens the leaf's
@@ -185,10 +182,6 @@ public static partial class ZfsPlans
 
     /// <summary>A reconnect that waits longer waits in the kernel; the daemon gives up on it and reads the pools on.</summary>
     public static readonly TimeSpan ReconnectTimeout = TimeSpan.FromSeconds(30);
-
-    /// <summary>Brings a device back; ZFS resilvers what it missed on its own.</summary>
-    public static IReadOnlyList<PlanStep> Online(string pool, string vdevGuid) =>
-        [new PlanStep(new CommandRequest("zpool", ["online", pool, vdevGuid]), [])];
 
     /// <summary>A dataset for a share, mounted at <c>/&lt;pool&gt;/&lt;name&gt;</c> through the <c>shares</c> dataset.</summary>
     public static IReadOnlyList<PlanStep> CreateShareDataset(string pool, string name)
