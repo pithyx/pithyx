@@ -36,7 +36,9 @@
   display: inline-flex;
   align-items: center;
   gap: 2px;
-  min-width: 0;
+  /* A touch target never shrinks below 24 px, also when the toolbar is crowded on a phone. */
+  min-width: 24px;
+  min-height: 24px;
   padding: 2px 4px;
   border: 0;
   border-radius: var(--pithyx-radius);
