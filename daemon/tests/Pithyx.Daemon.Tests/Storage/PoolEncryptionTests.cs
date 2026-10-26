@@ -165,6 +165,9 @@ public sealed partial class PoolEncryptionTests : IDisposable
         var hex = PoolKey.ToHex(_key);
         Assert.False(_vault.Has(Guid));
         Assert.Null(_vault.Read(Guid));
+        // A box that never stored a key has no vault folder yet.
+        _vault.Remove(Guid);
+        Assert.False(Directory.Exists(_vault.Directory));
 
         _vault.Save(Guid, hex);
         Assert.Equal(hex, _vault.Read(Guid));
@@ -316,10 +319,15 @@ public sealed partial class PoolEncryptionTests : IDisposable
         Assert.DoesNotContain(_commands.Calls, call => call.Arguments is ["unload-key" or "unmount", ..]);
     }
 
-    [Fact]
-    public async Task ADestroyedPoolTakesItsKeyOutOfTheVault()
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task ADestroyedPoolTakesItsKeyOutOfTheVault(bool keyStored)
     {
-        _vault.Save(Guid, PoolKey.ToHex(_key));
+        if (keyStored)
+        {
+            _vault.Save(Guid, PoolKey.ToHex(_key));
+        }
         Pools("zfs-encrypted");
         await PoolAsync();
         await _state.RefreshDisksAsync([], Token);

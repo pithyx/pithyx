@@ -70,7 +70,11 @@ public sealed partial class KeyVault(string directory)
     /// <summary>Deletes the pool's key; nothing happens when the vault has none.</summary>
     public void Remove(string poolGuid)
     {
-        File.Delete(PathOf(poolGuid));
+        var path = PathOf(poolGuid);
+        if (File.Exists(path))
+        {
+            File.Delete(path);
+        }
         ClearFailed(poolGuid);
     }
 
