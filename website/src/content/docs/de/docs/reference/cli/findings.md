@@ -53,7 +53,9 @@ Gemeldet von [`validate`](/de/docs/reference/cli/validate/) und [`pack`](/de/doc
   - `reason` = `merge_key`: sie nutzt unter {path} einen Merge-Schlüssel
   - `reason` = `key_not_string`: ein Schlüssel unter {path} ist kein Text
   - `reason` = `other`: sie verletzt eine Regel für Compose-Dateien
-- [`app.elevated.unsupported`](/de/docs/reference/errors/#app.elevated.unsupported) (Fehler): Die App verlangt das Recht {right}, das diese Version von Pithyx nicht vergibt.
+- [`app.elevated.root_conflict`](/de/docs/reference/errors/#app.elevated.root_conflict) (Fehler): Die App führt ihren Hintergrunddienst als root aus und verlangt {right}. Mit diesem Recht läuft der Dienst direkt auf der Box, wo root die ganze Box beherrschen würde, deshalb lehnt Pithyx die Kombination ab.
+- [`app.elevated.root_required`](/de/docs/reference/errors/#app.elevated.root_required) (Fehler): Die App verlangt {right}, aber nur ein Hintergrunddienst, der als root läuft, kann eine Capability nutzen.
+- [`app.elevated.unsupported`](/de/docs/reference/errors/#app.elevated.unsupported) (Fehler): Die App verlangt das Recht {right}, das Pithyx keiner App gibt.
 - [`app.icon.invalid`](/de/docs/reference/errors/#app.icon.invalid) (Fehler): Das Symbol der App ist nicht verwendbar: {reason}.
   - `reason` = `too_large`: es ist größer als 64 KB
   - `reason` = `malformed`: es ist keine gültige SVG-Datei

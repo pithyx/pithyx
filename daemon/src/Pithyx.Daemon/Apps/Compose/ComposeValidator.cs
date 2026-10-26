@@ -1195,6 +1195,10 @@ internal sealed class ComposeRules
         DockerSocketRight = mount.GetProperty("dockerSocketRight").GetString()!;
         DependsOnKeys = KeyRules(root.GetProperty("dependsOn").GetProperty("keys"));
         ReservedLabelPrefixes = Strings(root.GetProperty("reservedLabelPrefixes"));
+        var elevated = root.GetProperty("elevated");
+        BlockedCapabilities = Strings(elevated.GetProperty("blockedCapabilities"));
+        HostNamespaceRights = Strings(elevated.GetProperty("hostNamespaceRights"));
+        NamespacedDevices = Strings(elevated.GetProperty("namespacedDevices"));
         Version = root.GetProperty("rulesVersion").GetInt32();
     }
 
@@ -1220,6 +1224,15 @@ internal sealed class ComposeRules
     public string DockerSocketRight { get; }
 
     public IReadOnlyList<string> ReservedLabelPrefixes { get; }
+
+    /// <summary>Capabilities no app gets (D311).</summary>
+    public IReadOnlyList<string> BlockedCapabilities { get; }
+
+    /// <summary>Rights whose service runs in the host's user namespace, so never together with <c>backend.root</c>.</summary>
+    public IReadOnlyList<string> HostNamespaceRights { get; }
+
+    /// <summary>Devices a service can use inside the box's user namespace; every other device needs the host's.</summary>
+    public IReadOnlyList<string> NamespacedDevices { get; }
 
     public double Limit(string name) => _limits[name];
 

@@ -61,7 +61,7 @@ Ein Ordner ohne `pithyx.json` scheitert mit dem Fehler `cli.manifest.missing` un
 
 ## Befunde
 
-Fehler mit den Codes der Box `app.manifest.*`, `app.icon.invalid`, `app.package.invalid`, `app.package.layout_invalid`, `app.compose.*` und `app.elevated.unsupported`, dazu die eigenen der CLI `cli.manifest.missing`, `cli.frontend.*`, `cli.icon.template` und `cli.lock.*`. Jeder mit seiner Meldung steht unter [Befunde](/de/docs/reference/cli/findings/).
+Fehler mit den Codes der Box `app.manifest.*`, `app.icon.invalid`, `app.package.invalid`, `app.package.layout_invalid`, `app.compose.*` und `app.elevated.*`, dazu die eigenen der CLI `cli.manifest.missing`, `cli.frontend.*`, `cli.icon.template` und `cli.lock.*`. Jeder mit seiner Meldung steht unter [Befunde](/de/docs/reference/cli/findings/).
 
 ## Beispiele
 

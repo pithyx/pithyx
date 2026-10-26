@@ -1046,6 +1046,11 @@ interface ComposeRules {
   dependsOn: { keys: Record<string, KeyRule> };
   dev: { service: Record<string, KeyRule>; build: { keys: Record<string, KeyRule> } };
   reservedLabelPrefixes: string[];
+  elevated: {
+    blockedCapabilities: string[];
+    hostNamespaceRights: string[];
+    namespacedDevices: string[];
+  };
   refused: Record<string, Record<string, string>>;
   descriptions?: {
     types?: Record<string, string>;
@@ -1173,6 +1178,12 @@ function composePart(part: string, locale: Locale): string {
         `- ${rules.mount.reservedTargets.map(code).join(', ')}`,
         `- ${rules.mount.dockerSockets.map(code).join(', ')}: ${code(rules.mount.dockerSocketRight)}`,
         `- ${rules.reservedLabelPrefixes.map(code).join(', ')}`,
+      ].join('\n');
+    case 'elevated':
+      return [
+        `- ${rules.elevated.blockedCapabilities.map(code).join(', ')}`,
+        `- ${rules.elevated.hostNamespaceRights.map(code).join(', ')}`,
+        `- ${rules.elevated.namespacedDevices.map(code).join(', ')}`,
       ].join('\n');
     case 'types':
       return table(

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { PoolList } from '../sdk/store';
-import { accessOf, appPools, folderPath, manifestFacts, withSubject } from './model';
+import { accessOf, appPools, elevatedKind, folderPath, manifestFacts, withSubject } from './model';
 
 describe('manifestFacts', () => {
   it('reads what the install dialog shows', () => {
@@ -82,5 +82,21 @@ describe('folderPath', () => {
     expect(folderPath('Photos\\2026')).toBe('Photos/2026');
     expect(folderPath('  ')).toBe('');
     expect(folderPath('a//b')).toBe('a/b');
+  });
+});
+
+describe('elevatedKind', () => {
+  it('tells the rights apart for their risk texts', () => {
+    expect(elevatedKind('host.network')).toEqual({ kind: 'hostNetwork' });
+    expect(elevatedKind('host.pid')).toEqual({ kind: 'hostPid' });
+    expect(elevatedKind('device:/dev/dri/renderD128')).toEqual({
+      kind: 'device',
+      value: '/dev/dri/renderD128',
+    });
+    expect(elevatedKind('capability:NET_ADMIN')).toEqual({
+      kind: 'capability',
+      value: 'NET_ADMIN',
+    });
+    expect(elevatedKind('docker.socket')).toEqual({ kind: 'unknown', value: 'docker.socket' });
   });
 });

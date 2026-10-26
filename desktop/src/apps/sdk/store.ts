@@ -11,6 +11,7 @@ export type AdminAppList = components['schemas']['AdminAppList'];
 export type AppDetails = components['schemas']['AppDetails'];
 export type AppPackagePreview = components['schemas']['AppPackagePreview'];
 export type AppAccess = components['schemas']['AppAccess'];
+export type AppElevatedState = components['schemas']['AppElevatedState'];
 export type AppGrants = components['schemas']['AppGrants'];
 export type AppStorageAccess = components['schemas']['AppStorageAccess'];
 export type AppLogLevel = components['schemas']['AppLogLevel'];
@@ -34,8 +35,19 @@ interface StoreMethods {
   /** Uploads a package file with its progress in the taskbar; the daemon checks it and answers what installing does. */
   'internal.admin.apps.upload': { params: { file: Blob; name: string }; result: AppPackagePreview };
   'internal.admin.apps.discard': { params: { packageId: string }; result: null };
+  /**
+   * Installs a checked package. New elevated rights are granted with a step-up (the password and code, or one of this
+   * session from the last five minutes), or left revoked with `elevated: false` (D311).
+   */
   'internal.admin.apps.install': {
-    params: { packageId: string; pool?: string; access?: AppAccess };
+    params: {
+      packageId: string;
+      pool?: string;
+      access?: AppAccess;
+      password?: string;
+      totpCode?: string;
+      elevated?: boolean;
+    };
     result: Job;
   };
   'internal.admin.apps.uninstall': {
@@ -50,6 +62,18 @@ interface StoreMethods {
     params: { appId: string; permission: string; granted: boolean };
     result: AppDetails;
   };
+  /** Grants or revokes elevated rights; granting needs a step-up like an install (D311). */
+  'internal.admin.apps.setElevated': {
+    params: {
+      appId: string;
+      rights: AppElevatedState[];
+      password?: string;
+      totpCode?: string;
+    };
+    result: AppDetails;
+  };
+  /** Until when this session holds a step-up, or null. */
+  'internal.admin.auth.stepUp': { params: Record<string, never>; result: string | null };
   'internal.admin.apps.mapStorage': {
     params: {
       appId: string;
@@ -245,10 +269,13 @@ export function storeHost(emit: (event: string, data?: unknown) => void): {
         isRecord(value) &&
         hasText(value, 'packageId') &&
         (value.pool === undefined || typeof value.pool === 'string') &&
-        (value.access === undefined || value.access === 'everybody' || value.access === 'admins'),
+        (value.access === undefined || value.access === 'everybody' || value.access === 'admins') &&
+        (value.password === undefined || typeof value.password === 'string') &&
+        (value.totpCode === undefined || typeof value.totpCode === 'string') &&
+        (value.elevated === undefined || typeof value.elevated === 'boolean'),
       handle: (params) =>
         daemon(async () => {
-          const { packageId, pool, access } =
+          const { packageId, pool, access, password, totpCode, elevated } =
             params as StoreMethods['internal.admin.apps.install']['params'];
           return follow(
             unwrap(
@@ -257,11 +284,44 @@ export function storeHost(emit: (event: string, data?: unknown) => void): {
                 body: {
                   ...(pool === undefined ? {} : { pool }),
                   ...(access === undefined ? {} : { access }),
+                  ...(password === undefined ? {} : { password }),
+                  ...(totpCode === undefined ? {} : { totpCode }),
+                  ...(elevated === undefined ? {} : { elevated }),
                 },
               }),
             ),
           );
         }),
+    },
+    'internal.admin.apps.setElevated': {
+      validate: (value) =>
+        hasApp(value) &&
+        Array.isArray(value.rights) &&
+        value.rights.every(
+          (entry) =>
+            isRecord(entry) && hasText(entry, 'right') && typeof entry.granted === 'boolean',
+        ) &&
+        (value.password === undefined || typeof value.password === 'string') &&
+        (value.totpCode === undefined || typeof value.totpCode === 'string'),
+      handle: (params) =>
+        daemon(async () => {
+          const { appId, rights, password, totpCode } =
+            params as StoreMethods['internal.admin.apps.setElevated']['params'];
+          return unwrap(
+            await api.PUT('/api/apps/{appId}/elevated', {
+              ...appPath(appId),
+              body: {
+                rights,
+                ...(password === undefined ? {} : { password }),
+                ...(totpCode === undefined ? {} : { totpCode }),
+              },
+            }),
+          );
+        }),
+    },
+    'internal.admin.auth.stepUp': {
+      validate: isRecord,
+      handle: () => daemon(async () => unwrap(await api.GET('/api/auth/step-up')).until ?? null),
     },
     'internal.admin.apps.uninstall': {
       validate: (value) => hasApp(value) && (value.data === 'keep' || value.data === 'delete'),

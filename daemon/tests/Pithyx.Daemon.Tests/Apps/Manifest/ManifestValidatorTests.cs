@@ -68,10 +68,21 @@ public sealed class ManifestValidatorTests
     [InlineData("docker.socket")]
     [InlineData("host.full")]
     [InlineData("capability:BPF")]
+    [InlineData("capability:SYS_ADMIN")]
+    [InlineData("device:/dev/sda")]
+    [InlineData("device:/dev/mem")]
+    [InlineData("device:/dev/tty1")]
+    [InlineData("device:/dev/zfs")]
+    public void RightsThatReachTheBoxAreRefused(string right) =>
+        Assert.False(ManifestValidator.IsSupportedElevatedRight(right));
+
+    [Theory]
     [InlineData("capability:NET_ADMIN")]
     [InlineData("device:/dev/dri/renderD128")]
+    [InlineData("device:/dev/ttyUSB0")]
+    [InlineData("device:/dev/net/tun")]
     [InlineData("host.network")]
     [InlineData("host.pid")]
-    public void NoElevatedRightIsGrantedInThisVersion(string right) =>
-        Assert.False(ManifestValidator.IsSupportedElevatedRight(right));
+    public void RightsOfD311AreGranted(string right) =>
+        Assert.True(ManifestValidator.IsSupportedElevatedRight(right));
 }

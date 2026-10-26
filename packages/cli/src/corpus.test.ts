@@ -81,12 +81,24 @@ describe('manifest corpus', () => {
     'docker.socket',
     'host.full',
     'capability:BPF',
-    'capability:NET_ADMIN',
-    'device:/dev/dri/renderD128',
-    'host.network',
-    'host.pid',
+    'capability:SYS_ADMIN',
+    'device:/dev/sda',
+    'device:/dev/mem',
+    'device:/dev/tty1',
+    'device:/dev/zfs',
   ])('refuses the elevated right %s', (right) => {
     expect(isSupportedElevatedRight(right)).toBe(false);
+  });
+
+  it.each([
+    'capability:NET_ADMIN',
+    'device:/dev/dri/renderD128',
+    'device:/dev/ttyUSB0',
+    'device:/dev/net/tun',
+    'host.network',
+    'host.pid',
+  ])('grants the elevated right %s', (right) => {
+    expect(isSupportedElevatedRight(right)).toBe(true);
   });
 });
 

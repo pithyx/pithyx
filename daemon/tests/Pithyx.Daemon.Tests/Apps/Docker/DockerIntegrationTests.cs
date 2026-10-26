@@ -146,6 +146,26 @@ public sealed class DockerIntegrationTests
             await events.DisposeAsync();
             Assert.Equal("web", died!.Service);
 
+            // Version 3 adds a service with the host's network, the tun device and /dev/kvm, whose group exists only on the
+            // host (D311): it runs in the host's user namespace as the app uid with that group. Revoked, the same file runs
+            // the service on the app's network without the devices.
+            await runtime.StopAsync(AppId, pool, Token);
+            var three = await InstallAsync(storage, runtime, pool, staging, imageId, imageBytes, "3.0.0", "three", update: true, elevated: true);
+            var granted = await ProbeAsync(http, backends);
+            Assert.Contains($"uid={Uid}", granted, StringComparison.Ordinal);
+            Assert.Contains("0          0 4294967295", granted, StringComparison.Ordinal);
+            Assert.Contains("lo", granted, StringComparison.Ordinal);
+            Assert.DoesNotContain("No such file", granted, StringComparison.Ordinal);
+            var kvmGroup = (await vdevs.RunAsync("stat", ["-c", "%g", "/dev/kvm"])).Trim();
+            Assert.Contains($"groups={Uid},{kvmGroup}", granted.Replace("(", "", StringComparison.Ordinal), StringComparison.Ordinal);
+            Assert.Contains("kvm opened", granted, StringComparison.Ordinal);
+            await runtime.StopAsync(AppId, pool, Token);
+            await runtime.StartAsync(pool, three with { Elevated = new HashSet<string>(StringComparer.Ordinal) }, null, Token);
+            var revoked = await ProbeAsync(http, backends);
+            Assert.DoesNotContain("0          0 4294967295", revoked, StringComparison.Ordinal);
+            Assert.Contains("/dev/kvm", revoked, StringComparison.Ordinal);
+            Assert.DoesNotContain("kvm opened", revoked, StringComparison.Ordinal);
+
             await runtime.StopAsync(AppId, pool, Token);
             await runtime.ForgetAsync(ImagesLock.HostImages(Encoding.UTF8.GetBytes(Lock(imageId))), new HashSet<string>(), lastBackend: true, Token);
             Assert.False(await engine.PingAsync(Token));
@@ -171,11 +191,44 @@ public sealed class DockerIntegrationTests
         { "lockVersion": 1, "images": { "localhost/pithyx-probe/web:1@sha256:{{new string('a', 64)}}": { "{{ImagesLock.HostArchitecture}}": { "manifest": "sha256:{{new string('b', 64)}}", "config": "{{imageId}}" } } } }
         """;
 
-    private static async Task<BackendApp> InstallAsync(
-        AppStorage storage, AppBackendRuntime runtime, string pool, string staging, string imageId, byte[] image, string version, string text, bool update, bool healthy = true)
+    /// <summary>What the elevated probe of version 3 wrote, once it is there.</summary>
+    private static async Task<string> ProbeAsync(HttpClient http, AppBackends backends)
     {
-        var manifest = TarBuilder.Manifest(AppId, version, "", TarBuilder.BackendManifest);
+        for (var attempt = 0; ; attempt++)
+        {
+            try
+            {
+                return await http.GetStringAsync(new Uri(backends.Find(AppId, "api")!, "probe.txt"), Token);
+            }
+            catch (HttpRequestException) when (attempt < 40)
+            {
+                await Task.Delay(250, Token);
+            }
+        }
+    }
+
+    private const string ElevatedRights = "\"host.network\", \"device:/dev/net/tun\", \"device:/dev/kvm\"";
+
+    private static async Task<BackendApp> InstallAsync(
+        AppStorage storage, AppBackendRuntime runtime, string pool, string staging, string imageId, byte[] image, string version, string text, bool update, bool healthy = true,
+        bool elevated = false)
+    {
+        var manifest = TarBuilder.Manifest(AppId, version, "", elevated
+            ? TarBuilder.BackendManifest.Replace("\"lifecycle\": \"onDemand\"", "\"lifecycle\": \"onDemand\", \"elevated\": [" + ElevatedRights + "]", StringComparison.Ordinal)
+            : TarBuilder.BackendManifest);
         var check = healthy ? "hello.txt" : "missing.txt";
+        var probe = elevated
+            ? $$"""
+              probe:
+                image: localhost/pithyx-probe/web:1@sha256:{{new string('a', 64)}}
+                command: ["/bin/sh", "-c", "rm -f /data/probe.txt; { busybox cat /proc/self/uid_map; busybox id; busybox ls /sys/class/net; busybox ls /dev/net/tun /dev/kvm; exec 3<>/dev/kvm && echo kvm opened; } > /data/probe.tmp 2>&1; busybox mv /data/probe.tmp /data/probe.txt; exec busybox sleep 3600"]
+                network_mode: host
+                devices: ['/dev/net/tun', '/dev/kvm']
+                volumes:
+                  - data:/data
+
+            """
+            : "";
         var compose = $$"""
             services:
               web:
@@ -188,7 +241,7 @@ public sealed class DockerIntegrationTests
                   interval: 1s
                   timeout: 2s
                   retries: 5
-            volumes:
+            {{probe}}volumes:
               data:
             """;
         var bytes = TarBuilder.MinimalPackage(AppId, version, manifest)
@@ -198,7 +251,8 @@ public sealed class DockerIntegrationTests
             .End().Gzip();
         var package = await PackageReader.UnpackAsync(new MemoryStream(bytes), Path.Combine(staging, "package-" + version + "-" + Guid.NewGuid().ToString("N")), PackageLimits.Default, Token);
         var (checkedManifest, _) = AppPackages.Check(package);
-        var app = new BackendApp(AppId, version, checkedManifest, Uid, false, false, []);
+        var app = new BackendApp(AppId, version, checkedManifest, Uid, false, false, [],
+            elevated ? new HashSet<string>(["host.network", "device:/dev/net/tun", "device:/dev/kvm"], StringComparer.Ordinal) : null);
         // As AppService does it: a backend that fails goes before the dataset rolls back.
         await AppVersions.InstallAsync(storage, pool, AppId, package, version, update, async (_, token) =>
         {

@@ -21,6 +21,8 @@ export interface Issue {
     | 'app.compose.right_missing'
     | 'app.compose.right_unused'
     | 'app.elevated.unsupported'
+    | 'app.elevated.root_conflict'
+    | 'app.elevated.root_required'
     | 'app.icon.invalid'
     | 'app.package.invalid'
     | 'app.package.layout_invalid'

@@ -1176,6 +1176,76 @@
         }
       }
     },
+    "/api/auth/step-up": {
+      "get": {
+        "tags": [
+          "Auth"
+        ],
+        "description": "Until when this session holds a step-up (D311), or null.",
+        "operationId": "GetStepUp",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StepUpState"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "description": "Confirms the password and, with two-factor sign-in on, an authenticator code again; holds for five minutes in this session.",
+        "operationId": "StepUp",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StepUpRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StepUpState"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/auth/passkeys/sign-in/options": {
       "post": {
         "tags": [
@@ -7660,7 +7730,7 @@
         "tags": [
           "Apps"
         ],
-        "description": "Administrators only. Installs or updates the app from an uploaded package as a job and answers 202 with it. The first app needs pool, the pool for every app's data; access (everybody by default) decides who may use a newly installed app. An update takes a snapshot of the app's dataset first and returns to it when a step fails.",
+        "description": "Administrators only. Installs or updates the app from an uploaded package as a job and answers 202 with it. The first app needs pool, the pool for every app's data; access (everybody by default) decides who may use a newly installed app. An update takes a snapshot of the app's dataset first and returns to it when a step fails. A package with elevated rights the app does not hold yet needs a step-up (password and TOTP in the request, or one of this session made in the last five minutes; auth.step_up.required otherwise), or elevated false to install it with them revoked (D311).",
         "operationId": "InstallAppPackage",
         "parameters": [
           {
@@ -7826,6 +7896,57 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/AppPermissionsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/apps/{appId}/elevated": {
+      "put": {
+        "tags": [
+          "Apps"
+        ],
+        "description": "Administrators only. Grants or revokes elevated rights of the app's manifest (D311); granting needs a step-up with the password and, with two-factor sign-in on, an authenticator code (auth.step_up.required otherwise), which then holds for five minutes. A running backend restarts with the rights it holds. Every change goes to the audit log.",
+        "operationId": "SetAppElevatedRights",
+        "parameters": [
+          {
+            "name": "appId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AppElevatedRequest"
               }
             }
           },
@@ -10274,7 +10395,8 @@
           "storage",
           "catalog",
           "updatePolicy",
-          "previousVersion"
+          "previousVersion",
+          "elevated"
         ],
         "type": "object",
         "properties": {
@@ -10367,9 +10489,62 @@
               "string"
             ],
             "description": "The version before its last update, which a rollback restores with its data; null when there is none."
+          },
+          "elevated": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AppElevatedState"
+            },
+            "description": "Each elevated right of the manifest's `backend.elevated` with whether it is granted (D311)."
           }
         },
         "description": "An installed app for administrators (topic `apps/admin` and `GET /api/apps`)."
+      },
+      "AppElevatedRequest": {
+        "required": [
+          "rights"
+        ],
+        "type": "object",
+        "properties": {
+          "rights": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AppElevatedState"
+            },
+            "description": "Elevated rights of the app's manifest with whether the app keeps them; the others stay as they are."
+          },
+          "password": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The administrator's password; granting needs a step-up (D311), unless an earlier one of this session is valid."
+          },
+          "totpCode": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "A current authenticator code with the password, when two-factor sign-in is on."
+          }
+        }
+      },
+      "AppElevatedState": {
+        "required": [
+          "right",
+          "granted"
+        ],
+        "type": "object",
+        "properties": {
+          "right": {
+            "type": "string",
+            "description": "For example `host.network` or `device:/dev/dri/renderD128`."
+          },
+          "granted": {
+            "type": "boolean",
+            "description": "False until an administrator grants it after a step-up, and after one revoked it; the backend then runs without it."
+          }
+        }
       },
       "AppFileEntry": {
         "required": [
@@ -11135,6 +11310,26 @@
             "type": "boolean",
             "description": "For an install: an earlier installation was removed with \"Keep the data\", and the app gets its data and its user id again.",
             "default": false
+          },
+          "addedElevated": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "description": "Elevated rights the package asks for that the app does not hold or had revoked (D311): installing grants them, so it needs a step-up with password and TOTP."
+          },
+          "removedElevated": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "description": "Elevated rights the installed version had that the package no longer asks for."
           }
         },
         "description": "A checked package, kept for 15 minutes for its installation by the administrator who uploaded it."
@@ -13031,7 +13226,10 @@
           "app.compose.storage_mismatch",
           "app.compose.value_invalid",
           "app.compose.yaml_invalid",
+          "app.device.unavailable",
           "app.docker.unavailable",
+          "app.elevated.root_conflict",
+          "app.elevated.root_required",
           "app.elevated.unsupported",
           "app.icon.invalid",
           "app.image.mismatch",
@@ -13084,6 +13282,7 @@
           "auth.recovery.invalid",
           "auth.session.expired",
           "auth.setup.already_done",
+          "auth.step_up.required",
           "auth.totp.already_enabled",
           "auth.totp.invalid",
           "auth.totp.not_enrolled",
@@ -14688,6 +14887,27 @@
                 "$ref": "#/components/schemas/AppAccess"
               }
             ]
+          },
+          "password": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The administrator's password, for a package that asks for elevated rights it would get newly (D311); not needed while an earlier step-up of this session is valid."
+          },
+          "totpCode": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "A current authenticator code with the password, when two-factor sign-in is on."
+          },
+          "elevated": {
+            "type": [
+              "null",
+              "boolean"
+            ],
+            "description": "For a package whose new elevated rights need a step-up: false installs it with them revoked instead."
           }
         }
       },
@@ -20119,6 +20339,41 @@
           }
         },
         "description": "The apps the user opens after signing in (D373); the same on every device."
+      },
+      "StepUpRequest": {
+        "required": [
+          "password"
+        ],
+        "type": "object",
+        "properties": {
+          "password": {
+            "type": "string",
+            "description": "The signed-in user's password."
+          },
+          "totpCode": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "A current authenticator code, when two-factor sign-in is on."
+          }
+        }
+      },
+      "StepUpState": {
+        "required": [
+          "until"
+        ],
+        "type": "object",
+        "properties": {
+          "until": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Until when the session holds a step-up (UTC), or null.",
+            "format": "date-time"
+          }
+        }
       },
       "StorageAlert": {
         "required": [

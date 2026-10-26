@@ -22,13 +22,24 @@ public sealed record StorageMapping(string HostPath, bool ReadOnly, int? Gid);
 /// (<c>px-i&lt;n&gt;</c>), which the services named in the manifest's <c>backend.network</c> (all without it) join as well; the
 /// box's firewall decides where it leads (D358). Null keeps the backend without a way out.
 /// </param>
+/// <param name="Elevated">
+/// The elevated rights an administrator granted (D311). A Compose key whose right is not among them is left out: a
+/// service without <c>host.network</c> joins the app's network instead, devices and capabilities without their right are
+/// dropped.
+/// </param>
+/// <param name="DeviceGroups">The group a granted device node needs, by its host path, added to the services that use it.</param>
 public sealed record ComposeHost(
     int Uid,
     string AppDirectory,
     string BridgeName,
     IReadOnlyDictionary<string, string> ImageIds,
     IReadOnlyDictionary<string, StorageMapping> Storage,
-    string? InternetBridgeName = null);
+    string? InternetBridgeName = null,
+    IReadOnlySet<string>? Elevated = null,
+    IReadOnlyDictionary<string, int>? DeviceGroups = null)
+{
+    public bool Holds(string right) => Elevated?.Contains(right) == true;
+}
 
 /// <summary>
 /// Turns a Compose file that <see cref="ComposeValidator"/> accepted into the file the box runs (D310), as JSON (which
@@ -85,7 +96,7 @@ public static class ComposeRewriter
                 writer.WritePropertyName(name);
                 var goesOut = outside is null || outside.Contains(name);
                 attached |= Service(writer, name, (ComposeMap)node, appId, version, root, goesOut, storage, host);
-                leaves |= goesOut && ((ComposeMap)node).Get("network_mode") is null;
+                leaves |= goesOut && !HostNetwork((ComposeMap)node, host);
             }
             writer.WriteEndObject();
             if (attached)
@@ -145,6 +156,9 @@ public static class ComposeRewriter
         return requests;
     }
 
+    /// <summary>Whether the service runs in the host's network: it asks for it and holds <c>host.network</c>.</summary>
+    private static bool HostNetwork(ComposeMap service, ComposeHost host) => service.Get("network_mode") is not null && host.Holds("host.network");
+
     /// <summary>Writes one service; returns whether it joins the app's network.</summary>
     private static bool Service(
         Utf8JsonWriter writer,
@@ -158,6 +172,9 @@ public static class ComposeRewriter
         ComposeHost host)
     {
         var groups = new SortedSet<int>();
+        // Docker refuses the host's network and processes inside the box's user namespace, and a device's group exists
+        // only on the host, so such a service runs in the host's; without root (D311) its user is the app's uid there too.
+        var hostNamespace = false;
         writer.WriteStartObject();
         foreach (var (key, value) in service.Entries)
         {
@@ -177,6 +194,50 @@ public static class ComposeRewriter
                     break;
                 case "cap_drop" when !root:
                     break;
+                case "network_mode" or "pid":
+                    if (host.Holds(key == "pid" ? "host.pid" : "host.network"))
+                    {
+                        hostNamespace = true;
+                        writer.WritePropertyName(key);
+                        Node(writer, value);
+                    }
+                    break;
+                case "devices":
+                    var devices = ((ComposeSequence)value).Items.Select(item => ((ComposeScalar)item).Value)
+                        .Where(device => host.Holds(Manifest.ManifestValidator.DevicePrefix + device.Split(':')[0]))
+                        .ToList();
+                    if (devices.Count > 0)
+                    {
+                        writer.WritePropertyName("devices");
+                        writer.WriteStartArray();
+                        foreach (var device in devices)
+                        {
+                            var path = device.Split(':')[0];
+                            hostNamespace |= Manifest.ManifestValidator.NeedsHostNamespace(Manifest.ManifestValidator.DevicePrefix + path);
+                            if (host.DeviceGroups?.GetValueOrDefault(path) is { } gid and > 0)
+                            {
+                                groups.Add(gid);
+                            }
+                            writer.WriteStringValue(device);
+                        }
+                        writer.WriteEndArray();
+                    }
+                    break;
+                case "cap_add":
+                    var capabilities = ((ComposeSequence)value).Items.Select(item => ((ComposeScalar)item).Value)
+                        .Where(capability => host.Holds(Manifest.ManifestValidator.CapabilityPrefix + capability))
+                        .ToList();
+                    if (capabilities.Count > 0)
+                    {
+                        writer.WritePropertyName("cap_add");
+                        writer.WriteStartArray();
+                        foreach (var capability in capabilities)
+                        {
+                            writer.WriteStringValue(capability);
+                        }
+                        writer.WriteEndArray();
+                    }
+                    break;
                 case "cpus":
                     writer.WriteNumber("cpus", double.Parse(((ComposeScalar)value).Value, CultureInfo.InvariantCulture));
                     break;
@@ -189,6 +250,10 @@ public static class ComposeRewriter
 
         writer.WriteString("pull_policy", "never");
         writer.WriteString("user", root ? "0:0" : $"{host.Uid}:{host.Uid}");
+        if (hostNamespace)
+        {
+            writer.WriteString("userns_mode", "host");
+        }
         if (groups.Count > 0)
         {
             writer.WritePropertyName("group_add");
@@ -199,7 +264,7 @@ public static class ComposeRewriter
             }
             writer.WriteEndArray();
         }
-        var attached = service.Get("network_mode") is null;
+        var attached = !HostNetwork(service, host);
         if (attached)
         {
             writer.WritePropertyName("networks");

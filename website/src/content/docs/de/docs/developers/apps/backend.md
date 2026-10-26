@@ -21,7 +21,7 @@ Die Datei ist `backend/compose.yaml`. Die Regeln stehen in `sdk/schema/compose.v
 
 - `image` ist Pflicht und per Digest festgelegt (`name@sha256:...`).
 - Erlaubt: `command`, `entrypoint`, `environment`, `working_dir`, `volumes`, `tmpfs`, `depends_on`, `healthcheck`, `expose`, `read_only`, `init`, `stop_signal`, `stop_grace_period`, `shm_size`, `mem_limit`, `cpus`, `cap_drop` und `labels` (nicht mit den Präfixen `com.pithyx` oder `com.docker`).
-- Braucht ein erhöhtes Recht, das diese Version nicht vergibt (abgelehnt mit `app.elevated.unsupported`): `network_mode: host`, `pid: host`, `devices`, `cap_add` und `privileged`.
+- Braucht das passende erhöhte Recht in `backend.elevated` (seit Pithyx 1.2.0): `network_mode: host` (`host.network`), `pid: host` (`host.pid`), `devices` (`device:<Host-Pfad>` je Gerät) und `cap_add` (`capability:<NAME>` je Capability, nur mit `root: true`). `privileged` wird mit `app.elevated.unsupported` abgelehnt. Siehe [Erhöhte Rechte](/de/docs/reference/compose-rules/#erhöhte-rechte).
 - Mounts sind benannte Volumes oder `tmpfs`. Bind-Mounts werden abgelehnt, weil Host-Pfade nie eingehängt werden. Die Ziele `/proc`, `/sys` und `/dev` sowie die Docker-Sockets werden abgelehnt.
 - Mit einer Begründung im Fehlertext abgelehnt: `ports` (Backends sind nur über den Proxy erreichbar), `build` (die Box baut nie), `networks`, `links`, `env_file`, `secrets`, `configs`, `user` (die Box setzt die Benutzer-ID), `restart` (die Box steuert den Lebenszyklus), `logging`, `deploy` (nutze `mem_limit` und `cpus`), `security_opt`, `sysctls`, `ulimits`, `container_name`, `extends`, `profiles` und mehr.
 
@@ -118,7 +118,8 @@ Was das Backend in einem solchen Ordner sieht:
 - Auf dem Host werden keine Ports veröffentlicht, und eine nftables-Regel verwirft neue Verbindungen aus den App-Netzwerken zum Host, auch mit `network.lan`.
 - Jede App hat ihre eigene Benutzer-ID (und Gruppen-ID) von 40000 bis 49999. Mit `root: true` ist der Benutzer im Container root, aber die Remapping-Funktion der User-Namespaces hält ihn auf dem Host ohne Rechte.
 - Die Härtung ist immer aktiv: `no-new-privileges`, ein Prozesslimit von 1024, ein erhöhter Out-of-Memory-Score und keine Linux-Capabilities für Services, die nicht als root laufen.
-- Docker-Socket und `privileged` (die Rechte `docker.socket` und `host.full`) werden in dieser Version abgelehnt. Host-Netzwerk, Host-PID, Geräte und Capabilities brauchen das passende erhöhte Recht, das der Installationsdialog anzeigt.
+- Docker-Socket und `privileged` (die Rechte `docker.socket` und `host.full`) werden abgelehnt. Host-Netzwerk, Host-PID, Geräte und Capabilities brauchen das passende erhöhte Recht, das ein Administrator nach einer Bestätigung gibt und entziehen kann; die Box lässt den Schlüssel dann weg, das Backend muss also ohne ihn starten (ein Dienst ohne `host.network` kommt ins Netzwerk der App, ein fehlendes Gerät oder eine fehlende Capability ist einfach nicht da).
+- Ein Dienst mit `network_mode: host`, `pid: host` oder einem Gerät außer `/dev/net/tun` läuft im User-Namespace des Hosts (`userns_mode: host`) mit der uid der App und, bei einem Gerät, mit der Gruppe des Geräts; eine solche App kann daher nicht `root: true` nutzen. Eine Capability wirkt nur für root, das durch den User-Namespace auf dem Host ohne Rechte bleibt.
 
 ## Lebenszyklus
 

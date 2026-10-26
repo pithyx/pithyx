@@ -188,7 +188,6 @@
       "no": "Runs in the browser only, without a background service."
     },
     "root": "A container of this app runs as root. Pithyx keeps it without rights on the box itself, but install it only if you trust the developer.",
-    "elevated": "It asks for special rights: {rights}",
     "access": "Who may use it",
     "accessSuggested": "Suggested for this app: administrators only, because it may see every user, runs as root in a container or asks for special rights.",
     "pool": "Pool for app data",
@@ -207,7 +206,8 @@
     "updated": "{name} is updated.",
     "stopped": "The installation stopped.",
     "fromCatalog": "From the catalog {catalog}, checked against its signature.",
-    "fromCustomCatalog": "From the catalog {catalog}, which is not verified: only install apps from catalogs you trust."
+    "fromCustomCatalog": "From the catalog {catalog}, which is not verified: only install apps from catalogs you trust.",
+    "internet": "This app may connect to servers on the internet."
   },
   "uninstall": {
     "title": "Uninstall {name}?",
@@ -349,5 +349,37 @@
       "title": "Install from a file",
       "intro": "Install an app from its package file (.pithyxapp). Such apps are not verified."
     }
+  },
+  "elevated": {
+    "section": "Special rights",
+    "warning": "These rights reach past the sandbox of the app's background service. Grant them only to apps you trust.",
+    "sectionIntro": "Rights beyond the sandbox of the app's background service. Revoking one restarts the service without it; granting one again needs your password.",
+    "hostNetwork": {
+      "title": "The box's network",
+      "risk": "Its background service uses the box's own network instead of its own: it sees every connection of the box and can offer services on any port of every network card."
+    },
+    "hostPid": {
+      "title": "The box's processes",
+      "risk": "Its background service sees every process running on the box with its command line, which can contain passwords."
+    },
+    "device": {
+      "title": "Device {path}",
+      "risk": "Its background service reads and writes this device directly, for example a graphics card or a radio stick for home automation."
+    },
+    "capability": {
+      "title": "Linux capability {name}",
+      "risk": "Root in the app's container gets the capability {name}, which lets it do things a container normally cannot, such as changing its own network. It stays separated from the box itself."
+    },
+    "unknown": "A special right this version of Pithyx does not explain.",
+    "badge": "Special rights",
+    "grant": "{count, plural, one {Grant this right} other {Grant these rights}}",
+    "grantLater": "The app is installed without them; its background service runs without these rights until you grant them on its page.",
+    "stepUp": "To grant special rights, confirm with your password{twoFactor, select, true { and a code from your authenticator app} other {}}. The confirmation holds for five minutes.",
+    "stepUpHeld": "You confirmed with your password a moment ago; that holds until {time}.",
+    "password": "Your password",
+    "code": "Code from your authenticator app",
+    "grantTitle": "Grant a special right",
+    "confirm": "Grant",
+    "cancel": "Cancel"
   }
 }

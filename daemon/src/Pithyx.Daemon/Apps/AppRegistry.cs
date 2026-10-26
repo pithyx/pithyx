@@ -41,8 +41,15 @@ public sealed record InstalledApp(
     IReadOnlyList<AppStorageMapping> Storage,
     string? CatalogId = null,
     Catalog.UpdatePolicy? UpdatePolicy = null,
-    AppPrevious? Previous = null)
+    AppPrevious? Previous = null,
+    IReadOnlyList<AppElevatedState>? Elevated = null)
 {
+    /// <summary>The elevated rights of its manifest with whether each is granted (D311); a right without a row is not.</summary>
+    public IReadOnlyList<AppElevatedState> ElevatedRights => Elevated ?? [];
+
+    /// <summary>The elevated rights an administrator granted, which the backend runs with.</summary>
+    public IReadOnlySet<string> GrantedElevated => ElevatedRights.Where(state => state.Granted).Select(state => state.Right).ToHashSet(StringComparer.Ordinal);
+
     /// <summary>The path of the entry page below <c>/apps/&lt;id&gt;/</c> (the manifest's entry without <c>frontend/</c>).</summary>
     public string EntryPath => Manifest.GetProperty("entry").GetString()![(PackageLayout.FrontendFolder.Length + 1)..];
 
@@ -159,7 +166,15 @@ public sealed class AppRegistry(SqliteConnectionFactory connections, PermissionS
     public AppDetails Details(InstalledApp app)
     {
         ArgumentNullException.ThrowIfNull(app);
-        return new(app.Id, app.Version, app.Source, app.Enabled, app.Manifest, app.Permissions, app.Uid, app.Sha256, app.InstalledAt, app.UpdatedAt, IsBusy(app.Id), IsAvailable(app.Id), app.LogLevel, app.Storage, app.CatalogId, app.UpdatePolicy, app.Previous?.Version);
+        return new(app.Id, app.Version, app.Source, app.Enabled, app.Manifest, app.Permissions, app.Uid, app.Sha256, app.InstalledAt, app.UpdatedAt, IsBusy(app.Id), IsAvailable(app.Id), app.LogLevel, app.Storage, app.CatalogId, app.UpdatePolicy, app.Previous?.Version, ElevatedOf(app));
+    }
+
+    /// <summary>Every right of the manifest's <c>backend.elevated</c>, in its order, with whether it is granted.</summary>
+    public static IReadOnlyList<AppElevatedState> ElevatedOf(InstalledApp app)
+    {
+        ArgumentNullException.ThrowIfNull(app);
+        var granted = app.GrantedElevated;
+        return [.. Manifest.ElevatedRights.Of(app.Manifest).Select(right => new AppElevatedState(right, granted.Contains(right)))];
     }
 
     public static AppSummary Summary(InstalledApp app)
@@ -255,6 +270,8 @@ public sealed class AppRegistry(SqliteConnectionFactory connections, PermissionS
         var mappings = (await connection.QueryAsync<(string AppId, string StorageId, long ShareId, string Path, string Access)>(
                 "SELECT app_id, storage_id, share_id, path, access FROM storage_mappings ORDER BY storage_id"))
             .ToLookup(row => row.AppId, StringComparer.Ordinal);
+        var elevated = (await connection.QueryAsync<(string AppId, string Right, long Granted)>("SELECT app_id, \"right\", granted FROM app_elevated ORDER BY \"right\""))
+            .ToLookup(row => row.AppId, StringComparer.Ordinal);
         var pool = await connection.ExecuteScalarAsync<string?>("SELECT value FROM settings WHERE key = @key", new { key = PoolSetting });
         var apps = new SortedDictionary<string, InstalledApp>(StringComparer.Ordinal);
         foreach (var row in rows)
@@ -276,7 +293,8 @@ public sealed class AppRegistry(SqliteConnectionFactory connections, PermissionS
                     mapping.StorageId, mapping.ShareId, mapping.Path, mapping.Access == "read" ? AppStorageAccess.Read : AppStorageAccess.ReadWrite))],
                 row.CatalogId,
                 row.UpdatePolicy is { } policy ? Enum.Parse<Catalog.UpdatePolicy>(policy, ignoreCase: true) : null,
-                row.Previous is { } previous ? JsonSerializer.Deserialize<AppPrevious>(previous, PreviousJson) : null);
+                row.Previous is { } previous ? JsonSerializer.Deserialize<AppPrevious>(previous, PreviousJson) : null,
+                [.. elevated[row.Id].Select(right => new AppElevatedState(right.Right, right.Granted == 1))]);
         }
         return (apps, pool);
     }

@@ -18,6 +18,30 @@ export function isKnownPermission(permission: string): permission is KnownPermis
   return (KNOWN_PERMISSIONS as readonly string[]).includes(permission);
 }
 
+/** What kind of elevated right a manifest names (D311), for its title and risk text; the value is its device or capability. */
+export type ElevatedKind =
+  | { kind: 'hostNetwork' }
+  | { kind: 'hostPid' }
+  | { kind: 'device'; value: string }
+  | { kind: 'capability'; value: string }
+  | { kind: 'unknown'; value: string };
+
+export function elevatedKind(right: string): ElevatedKind {
+  if (right === 'host.network') {
+    return { kind: 'hostNetwork' };
+  }
+  if (right === 'host.pid') {
+    return { kind: 'hostPid' };
+  }
+  if (right.startsWith('device:')) {
+    return { kind: 'device', value: right.slice('device:'.length) };
+  }
+  if (right.startsWith('capability:')) {
+    return { kind: 'capability', value: right.slice('capability:'.length) };
+  }
+  return { kind: 'unknown', value: right };
+}
+
 /** One storage request of a manifest: a folder the app asks for. */
 export interface StorageRequest {
   id: string;
@@ -39,7 +63,7 @@ export interface ManifestFacts {
   backend: boolean;
   /** A container runs as root (unprivileged on the host through userns, D304). */
   root: boolean;
-  /** Elevated rights of `backend.elevated` (D71); A16 asks for them separately. */
+  /** Elevated rights of `backend.elevated` (D311), granted only after a step-up. */
   elevated: string[];
 }
 

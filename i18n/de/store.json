@@ -188,7 +188,6 @@
       "no": "Läuft nur im Browser, ohne Hintergrunddienst."
     },
     "root": "Ein Container dieser App läuft als root. Pithyx lässt ihm auf der Box selbst keine Rechte, aber installiere sie nur, wenn du dem Entwickler vertraust.",
-    "elevated": "Sie fragt nach besonderen Rechten: {rights}",
     "access": "Wer sie nutzen darf",
     "accessSuggested": "Für diese App empfohlen: nur Administratoren, weil sie alle Nutzer sehen kann, in einem Container als root läuft oder nach besonderen Rechten fragt.",
     "pool": "Pool für App-Daten",
@@ -207,7 +206,8 @@
     "updated": "{name} ist aktualisiert.",
     "stopped": "Die Installation wurde abgebrochen.",
     "fromCatalog": "Aus dem Katalog {catalog}, gegen seine Signatur geprüft.",
-    "fromCustomCatalog": "Aus dem Katalog {catalog}, der nicht geprüft ist: Installiere nur Apps aus Katalogen, denen du vertraust."
+    "fromCustomCatalog": "Aus dem Katalog {catalog}, der nicht geprüft ist: Installiere nur Apps aus Katalogen, denen du vertraust.",
+    "internet": "Diese App darf sich mit Servern im Internet verbinden."
   },
   "uninstall": {
     "title": "{name} deinstallieren?",
@@ -349,5 +349,37 @@
       "title": "Aus einer Datei installieren",
       "intro": "Installiere eine App aus ihrer Paketdatei (.pithyxapp). Solche Apps sind nicht geprüft."
     }
+  },
+  "elevated": {
+    "section": "Sonderrechte",
+    "warning": "Diese Rechte reichen über die Sandbox des Hintergrunddienstes der App hinaus. Gib sie nur Apps, denen du vertraust.",
+    "sectionIntro": "Rechte über die Sandbox des Hintergrunddienstes der App hinaus. Entziehst du eines, startet der Dienst ohne es neu; um es wieder zu geben, brauchst du dein Passwort.",
+    "hostNetwork": {
+      "title": "Netzwerk der Box",
+      "risk": "Ihr Hintergrunddienst nutzt das Netzwerk der Box statt eines eigenen: Er sieht jede Verbindung der Box und kann auf jedem Port jeder Netzwerkkarte Dienste anbieten."
+    },
+    "hostPid": {
+      "title": "Prozesse der Box",
+      "risk": "Ihr Hintergrunddienst sieht jeden Prozess der Box mit seiner Befehlszeile, in der Passwörter stehen können."
+    },
+    "device": {
+      "title": "Gerät {path}",
+      "risk": "Ihr Hintergrunddienst liest und schreibt dieses Gerät direkt, zum Beispiel eine Grafikkarte oder einen Funkstick für die Hausautomation."
+    },
+    "capability": {
+      "title": "Linux-Capability {name}",
+      "risk": "Root im Container der App bekommt die Capability {name} und kann damit Dinge tun, die ein Container sonst nicht kann, etwa sein eigenes Netzwerk ändern. Von der Box selbst bleibt er getrennt."
+    },
+    "unknown": "Ein Sonderrecht, das diese Version von Pithyx nicht erklärt.",
+    "badge": "Sonderrechte",
+    "grant": "{count, plural, one {Dieses Recht geben} other {Diese Rechte geben}}",
+    "grantLater": "Die App wird ohne sie installiert; ihr Hintergrunddienst läuft ohne diese Rechte, bis du sie auf ihrer Seite gibst.",
+    "stepUp": "Um Sonderrechte zu geben, bestätige mit deinem Passwort{twoFactor, select, true { und einem Code aus deiner Authenticator-App} other {}}. Die Bestätigung gilt fünf Minuten.",
+    "stepUpHeld": "Du hast gerade mit deinem Passwort bestätigt; das gilt bis {time}.",
+    "password": "Dein Passwort",
+    "code": "Code aus deiner Authenticator-App",
+    "grantTitle": "Sonderrecht geben",
+    "confirm": "Geben",
+    "cancel": "Abbrechen"
   }
 }

@@ -1,0 +1,6 @@
+# The rights of manifests/elevated-root.json: a capability and the tun device for a root service.
+services:
+  server:
+    image: ghcr.io/example/chat-server:1.2.0@sha256:a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5
+    cap_add: [NET_ADMIN]
+    devices: ['/dev/net/tun']

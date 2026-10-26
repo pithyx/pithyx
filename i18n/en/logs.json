@@ -26,6 +26,7 @@
     "some": "{count, plural, one {# source} other {# sources}}",
     "none": "No sources yet",
     "daemon": "Pithyx daemon",
+    "audit": "Audit log",
     "system": "System · {name}",
     "app": "App · {name}"
   },

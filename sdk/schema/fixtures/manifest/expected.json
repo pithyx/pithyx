@@ -124,6 +124,20 @@
       }
     }
   ],
+  "elevated-blocked-device.json": [
+    {
+      "code": "app.elevated.unsupported",
+      "params": {
+        "right": "device:/dev/sda"
+      }
+    },
+    {
+      "code": "app.elevated.unsupported",
+      "params": {
+        "right": "device:/dev/tty1"
+      }
+    }
+  ],
   "elevated-cap-prefix.json": [
     {
       "code": "app.manifest.schema_violation",
@@ -155,6 +169,34 @@
       "code": "app.elevated.unsupported",
       "params": {
         "right": "host.full"
+      }
+    }
+  ],
+  "elevated-root-conflict.json": [
+    {
+      "code": "app.elevated.root_conflict",
+      "params": {
+        "right": "host.network"
+      }
+    },
+    {
+      "code": "app.elevated.root_conflict",
+      "params": {
+        "right": "device:/dev/dri/renderD128"
+      }
+    },
+    {
+      "code": "app.elevated.root_conflict",
+      "params": {
+        "right": "host.pid"
+      }
+    }
+  ],
+  "elevated-root-required.json": [
+    {
+      "code": "app.elevated.root_required",
+      "params": {
+        "right": "capability:NET_ADMIN"
       }
     }
   ],

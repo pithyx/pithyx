@@ -1,6 +1,6 @@
 import type { PithyxApp } from '@pithyx/sdk';
 import { Badge, Button, Dialog } from '@pithyx/ui';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useId, useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { formatBytes } from '../../desktop/format';
@@ -10,6 +10,15 @@ import { AppIcon } from '../../shell/AppIcon';
 import { manifestText } from '../installed';
 import { storeCall, type AppAccess, type AppPackagePreview } from '../sdk/store';
 import { describeProblem } from '../storage/shared';
+import {
+  ElevatedRightText,
+  StepUpFields,
+  stepUpKey,
+  stepUpParams,
+  stepUpReady,
+  useStepUp,
+  type StepUpInput,
+} from './ElevatedRights';
 import { JobProgress, useAppJob } from './jobs';
 import { appPools, manifestFacts } from './model';
 import { PermissionText } from './PermissionText';
@@ -52,6 +61,10 @@ export function InstallDialog({
   const [file, setFile] = useState<File | null>(null);
   const [access, setAccess] = useState<AppAccess | null>(null);
   const [pool, setPool] = useState<string | null>(null);
+  // New special rights are granted with the install unless the administrator leaves them revoked (D311).
+  const [grant, setGrant] = useState(true);
+  const [stepUpInput, setStepUpInput] = useState<StepUpInput>({ password: '', code: '' });
+  const queryClient = useQueryClient();
   const { job, start } = useAppJob(app);
   const upload = useMutation({
     mutationFn: (chosen: File) =>
@@ -81,14 +94,22 @@ export function InstallDialog({
   const choices = pools.data === undefined ? [] : appPools(pools.data);
   const chosenPool = pool ?? choices[0] ?? null;
   const chosenAccess = access ?? preview?.suggestedAccess ?? 'everybody';
+  const addedElevated = preview?.addedElevated ?? [];
+  const stepUp = useStepUp(app);
+  const stepUpUntil = stepUp.data ?? null;
+  const needsStepUp = addedElevated.length > 0 && grant;
   const install = useMutation({
     mutationFn: (checked: AppPackagePreview) =>
       storeCall(app, 'internal.admin.apps.install', {
         packageId: checked.packageId,
         ...(needsPool && chosenPool !== null ? { pool: chosenPool } : {}),
         ...(checked.action === 'install' ? { access: chosenAccess } : {}),
+        ...(addedElevated.length > 0 && !grant ? { elevated: false } : {}),
+        ...(needsStepUp ? stepUpParams(app, stepUpUntil, stepUpInput) : {}),
       }),
     onSuccess: start,
+    // A step-up that ran out meanwhile asks for the password again.
+    onSettled: () => queryClient.invalidateQueries({ queryKey: stepUpKey }),
   });
   const facts = preview === undefined ? undefined : manifestFacts(preview.manifest);
   const name = facts === undefined ? '' : manifestText(facts.name, i18n.language);
@@ -132,7 +153,11 @@ export function InstallDialog({
         <Button
           variant="primary"
           isDisabled={
-            preview === undefined || install.isPending || (needsPool && chosenPool === null)
+            preview === undefined ||
+            install.isPending ||
+            (needsPool && chosenPool === null) ||
+            (needsStepUp &&
+              (stepUp.data === undefined || !stepUpReady(app, stepUpUntil, stepUpInput)))
           }
           onPress={() => {
             if (preview !== undefined) {
@@ -239,6 +264,31 @@ export function InstallDialog({
                 )}
               </fieldset>
             )}
+            {job === null && addedElevated.length > 0 && (
+              <fieldset className={styles.choices}>
+                <legend className={styles.fieldLabel}>{t('elevated.section')}</legend>
+                <label className={styles.check}>
+                  <input
+                    type="checkbox"
+                    checked={grant}
+                    onChange={(event) => {
+                      setGrant(event.target.checked);
+                    }}
+                  />
+                  <span>{t('elevated.grant', { count: addedElevated.length })}</span>
+                </label>
+                {grant ? (
+                  <StepUpFields
+                    app={app}
+                    until={stepUpUntil}
+                    value={stepUpInput}
+                    onChange={setStepUpInput}
+                  />
+                ) : (
+                  <p className={styles.muted}>{t('elevated.grantLater')}</p>
+                )}
+              </fieldset>
+            )}
             {job === null && needsPool && (
               <div className={styles.field}>
                 <label className={styles.fieldLabel} htmlFor={`${ids}-pool`}>
@@ -319,6 +369,7 @@ function Preview({
   const description =
     facts.description === null ? null : manifestText(facts.description, i18n.language);
   const added = new Set(preview.addedPermissions);
+  const addedElevated = new Set(preview.addedElevated ?? []);
   const isUpdate = preview.action !== 'install';
   return (
     <div className={styles.preview}>
@@ -351,10 +402,31 @@ function Preview({
       </p>
       {preview.keptData && <p className={styles.notice}>{t('install.keptData')}</p>}
       {facts.root && <p className={styles.warning}>{t('install.root')}</p>}
+      {facts.permissions.includes('network.internet') && (
+        <p className={styles.notice}>{t('install.internet')}</p>
+      )}
       {facts.elevated.length > 0 && (
-        <p className={styles.warning}>
-          {t('install.elevated', { rights: facts.elevated.join(', ') })}
-        </p>
+        <section className={styles.group} aria-labelledby="install-elevated">
+          <h4 id="install-elevated" className={styles.subTitle}>
+            {t('elevated.section')}
+          </h4>
+          <p className={styles.warning}>{t('elevated.warning')}</p>
+          <ul className={styles.permissions}>
+            {facts.elevated.map((right) => (
+              <li key={right} className={styles.permission}>
+                <ElevatedRightText right={right} />
+                {isUpdate && addedElevated.has(right) && (
+                  <Badge tone="highlight">{t('install.newPermission')}</Badge>
+                )}
+              </li>
+            ))}
+          </ul>
+          {(preview.removedElevated ?? []).length > 0 && (
+            <p className={styles.muted}>
+              {t('install.dropped', { permissions: (preview.removedElevated ?? []).join(', ') })}
+            </p>
+          )}
+        </section>
       )}
       <p className={styles.muted}>
         {facts.backend ? t('install.backend.yes') : t('install.backend.no')}

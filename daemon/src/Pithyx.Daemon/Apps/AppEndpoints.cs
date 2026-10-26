@@ -87,7 +87,7 @@ public static class AppEndpoints
         apps.MapPost("/packages/{packageId}/install", InstallAsync)
             .RequireAuthorization(Policies.Admin)
             .WithName("InstallAppPackage")
-            .WithDescription("Administrators only. Installs or updates the app from an uploaded package as a job and answers 202 with it. The first app needs pool, the pool for every app's data; access (everybody by default) decides who may use a newly installed app. An update takes a snapshot of the app's dataset first and returns to it when a step fails.");
+            .WithDescription("Administrators only. Installs or updates the app from an uploaded package as a job and answers 202 with it. The first app needs pool, the pool for every app's data; access (everybody by default) decides who may use a newly installed app. An update takes a snapshot of the app's dataset first and returns to it when a step fails. A package with elevated rights the app does not hold yet needs a step-up (password and TOTP in the request, or one of this session made in the last five minutes; auth.step_up.required otherwise), or elevated false to install it with them revoked (D311).");
         apps.MapPatch("/{appId}", async Task<Ok<AppDetails>> (string appId, UpdateAppRequest request, AppService service, HttpContext context, CancellationToken cancellationToken) =>
                 TypedResults.Ok(await service.SetEnabledAsync(context.User, appId, request, cancellationToken)))
             .RequireAuthorization(Policies.Admin)
@@ -98,6 +98,18 @@ public static class AppEndpoints
             .RequireAuthorization(Policies.Admin)
             .WithName("SetAppPermissions")
             .WithDescription("Administrators only. Grants or revokes permissions the app's manifest asks for (app.permission.not_requested for any other); the listed ones change, the others stay. A revoked permission stays revoked across updates. Users' windows of the app learn it with their next token (A11).");
+        apps.MapPut("/{appId}/elevated", async Task<Ok<AppDetails>> (string appId, AppElevatedRequest request, AppService service, StepUps stepUps, HttpContext context, CancellationToken cancellationToken) =>
+            {
+                ArgumentNullException.ThrowIfNull(request);
+                if (!string.IsNullOrEmpty(request.Password))
+                {
+                    await stepUps.EnsureAsync(context, request.Password, request.TotpCode, cancellationToken);
+                }
+                return TypedResults.Ok(await service.SetElevatedAsync(context.User, appId, request, cancellationToken));
+            })
+            .RequireAuthorization(Policies.Admin)
+            .WithName("SetAppElevatedRights")
+            .WithDescription("Administrators only. Grants or revokes elevated rights of the app's manifest (D311); granting needs a step-up with the password and, with two-factor sign-in on, an authenticator code (auth.step_up.required otherwise), which then holds for five minutes. A running backend restarts with the rights it holds. Every change goes to the audit log.");
         apps.MapPut("/{appId}/storage/{storageId}", async Task<Ok<AppDetails>> (string appId, string storageId, AppStorageMappingRequest request, AppService service, HttpContext context, CancellationToken cancellationToken) =>
                 TypedResults.Ok(await service.MapStorageAsync(context.User, appId, storageId, request, cancellationToken)))
             .RequireAuthorization(Policies.Admin)
@@ -143,8 +155,13 @@ public static class AppEndpoints
         return TypedResults.Ok(await service.UploadAsync(context.User, context.Request.Body, cancellationToken));
     }
 
-    private static async Task<Accepted<Job>> InstallAsync(string packageId, InstallAppRequest request, AppService service, HttpContext context, CancellationToken cancellationToken)
+    private static async Task<Accepted<Job>> InstallAsync(string packageId, InstallAppRequest request, AppService service, StepUps stepUps, HttpContext context, CancellationToken cancellationToken)
     {
+        ArgumentNullException.ThrowIfNull(request);
+        if (!string.IsNullOrEmpty(request.Password))
+        {
+            await stepUps.EnsureAsync(context, request.Password, request.TotpCode, cancellationToken);
+        }
         var job = await service.InstallAsync(context.User, packageId, request, cancellationToken);
         return TypedResults.Accepted($"/api/jobs/{job.Id}", job);
     }

@@ -20,13 +20,24 @@ namespace Pithyx.Daemon.Apps.Docker;
 /// <param name="Internet">Whether the app holds <c>network.internet</c>: its outside network reaches the internet.</param>
 /// <param name="Lan">Whether the app holds <c>network.lan</c>: its outside network reaches the local network (D358).</param>
 /// <param name="Storage">The folders the administrator mapped to its storage requests.</param>
-public sealed record BackendApp(string AppId, string Version, JsonElement Manifest, long Uid, bool Internet, bool Lan, IReadOnlyList<AppStorageMapping> Storage)
+/// <param name="Elevated">The elevated rights an administrator granted (D311); the Compose keys of the others are left out.</param>
+public sealed record BackendApp(
+    string AppId,
+    string Version,
+    JsonElement Manifest,
+    long Uid,
+    bool Internet,
+    bool Lan,
+    IReadOnlyList<AppStorageMapping> Storage,
+    IReadOnlySet<string>? Elevated = null)
 {
     public static BackendApp Of(InstalledApp app)
     {
         ArgumentNullException.ThrowIfNull(app);
-        return new(app.Id, app.Version, app.Manifest, app.Uid, app.HasInternet, app.HasLan, app.Storage);
+        return new(app.Id, app.Version, app.Manifest, app.Uid, app.HasInternet, app.HasLan, app.Storage, app.GrantedElevated);
     }
+
+    public IReadOnlySet<string> GrantedElevated => Elevated ?? new HashSet<string>(StringComparer.Ordinal);
 
     public bool HasBackend => Manifest.TryGetProperty("backend", out _);
 
@@ -77,6 +88,32 @@ public sealed partial class AppBackendRuntime(
 
     /// <summary>How long a service gets to stop before it is killed.</summary>
     public const int StopSeconds = 30;
+
+    /// <summary>
+    /// The group each granted device node needs, by the path the manifest names (D311): the node's group unless everybody
+    /// may read and write it, nothing for root's group. Throws <c>app.device.unavailable</c> for a node that is missing, is
+    /// no character device or leads to a blocked one through a link, so the backend does not start without it.
+    /// </summary>
+    public static IReadOnlyDictionary<string, int> DeviceGroups(IReadOnlySet<string> granted)
+    {
+        ArgumentNullException.ThrowIfNull(granted);
+        var groups = new Dictionary<string, int>(StringComparer.Ordinal);
+        foreach (var right in granted.Where(right => right.StartsWith(Manifest.ManifestValidator.DevicePrefix, StringComparison.Ordinal)).Order(StringComparer.Ordinal))
+        {
+            var path = right[Manifest.ManifestValidator.DevicePrefix.Length..];
+            var resolved = new FileInfo(path).ResolveLinkTarget(returnFinalTarget: true)?.FullName ?? path;
+            if (!Manifest.ManifestValidator.IsSupportedElevatedRight(Manifest.ManifestValidator.DevicePrefix + resolved)
+                || Files.LinuxFs.CharacterDevice(resolved) is not { } device)
+            {
+                throw new PithyxException(ErrorCodes.AppDeviceUnavailable, new Dictionary<string, object?> { ["path"] = path });
+            }
+            if (!device.Open && device.Gid != 0)
+            {
+                groups[path] = (int)device.Gid;
+            }
+        }
+        return groups;
+    }
 
     /// <summary>The Linux bridge of an app's internal network: <c>px-</c> and the app's uid without 40000 (D309, at most 15 characters).</summary>
     public static string BridgeName(long uid) => "px-" + (uid - Users.UidAllocator.MinAppUid).ToString(CultureInfo.InvariantCulture);
@@ -135,7 +172,9 @@ public sealed partial class AppBackendRuntime(
             BridgeName(app.Uid),
             images,
             mappings,
-            app.Outside ? InternetBridgeName(app.Uid) : null);
+            app.Outside ? InternetBridgeName(app.Uid) : null,
+            app.GrantedElevated,
+            DeviceGroups(app.GrantedElevated));
         var rewritten = ComposeRewriter.Rewrite(validation.Document!, app.Manifest, composeHost);
         var run = Path.Combine(root, AppStorage.RunFolder);
         Directory.CreateDirectory(run);

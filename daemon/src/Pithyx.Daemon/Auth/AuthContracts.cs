@@ -48,6 +48,13 @@ public sealed record TotpConfirmRequest(string Code);
 
 public sealed record TotpDisableRequest(string Password);
 
+/// <param name="Password">The signed-in user's password.</param>
+/// <param name="TotpCode">A current authenticator code, when two-factor sign-in is on.</param>
+public sealed record StepUpRequest(string Password, string? TotpCode = null);
+
+/// <param name="Until">Until when the session holds a step-up (UTC), or null.</param>
+public sealed record StepUpState(DateTimeOffset? Until);
+
 /// <param name="Codes">Shown exactly once. Each code replaces a TOTP code for one login.</param>
 public sealed record RecoveryCodes(IReadOnlyList<string> Codes);
 
