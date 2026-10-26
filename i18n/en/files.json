@@ -46,6 +46,7 @@
     "download": "Download",
     "upload": "Upload",
     "newFolder": "New folder",
+    "newFile": "New file",
     "rename": "Rename",
     "copy": "Copy",
     "cut": "Cut",
@@ -71,6 +72,7 @@
     "purgeBody": "{count, plural, one {# item is} other {# items are}} deleted for good. This cannot be undone.",
     "purgeConfirm": "Delete for good",
     "newFolderName": "New folder",
+    "newFileName": "New file",
     "conflict": {
       "skip": "Skip them",
       "overwrite": "Replace them",

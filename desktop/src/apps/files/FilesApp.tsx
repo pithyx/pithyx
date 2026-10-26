@@ -456,16 +456,20 @@ export function FilesApp({ app }: { app: PithyxApp }) {
     }
   }
 
-  async function createFolder() {
+  /** Creates a folder or an empty file under a free default name and starts renaming it. */
+  async function createEntry(kind: 'folder' | 'file') {
     if (shareId === null) {
       return;
     }
     const taken = new Set(folder.entries.map((entry) => entry.name));
-    const base = t('dialog.newFolderName');
+    const base = kind === 'folder' ? t('dialog.newFolderName') : t('dialog.newFileName');
     let name = taken.has(base) ? freeName(base, (candidate) => taken.has(candidate)) : base;
     for (let attempt = 0; attempt < 20; attempt++) {
       try {
-        const entry = await app.files.createFolder(location, joinPath(path, name));
+        const entry =
+          kind === 'folder'
+            ? await app.files.createFolder(location, joinPath(path, name))
+            : await app.files.upload(location, path, name, new Blob([]));
         changeFolder(client, shareId, path, { changed: [entry], removed: [] });
         setSelection(selectOnly(entry.name));
         setRenaming(entry.name);
@@ -616,7 +620,10 @@ export function FilesApp({ app }: { app: PithyxApp }) {
         }
         break;
       case 'newFolder':
-        void createFolder();
+        void createEntry('folder');
+        break;
+      case 'newFile':
+        void createEntry('file');
         break;
       case 'upload':
         upload.current?.click();
@@ -843,7 +850,7 @@ export function FilesApp({ app }: { app: PithyxApp }) {
             <IconButton
               label={t('actions.newFolder')}
               size="sm"
-              onPress={() => void createFolder()}
+              onPress={() => void createEntry('folder')}
             >
               <IconFolderPlus size={18} stroke={1.75} />
             </IconButton>
