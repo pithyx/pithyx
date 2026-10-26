@@ -1,6 +1,9 @@
 import type { FileItems } from '@pithyx/sdk';
 
-/** What a drag of entries carries between Files windows. */
+/** The data type of a drag of entries, between Files windows and onto the desktop. */
+export const ENTRIES_TYPE = 'application/x-pithyx-files';
+
+/** What a drag of entries carries between Files windows and onto the desktop. */
 export interface DraggedEntries {
   share: string | null;
   folder: string;

@@ -97,9 +97,10 @@ Unten im Pithyx-Menü, neben deinem Namen, stehen der Knopf **Abmelden** und, f�
 
 _Zwei Verknüpfungen und eine Notiz neben zwei offenen Fenstern._
 
-Der Desktop enthält Verknüpfungen zu Apps und Notizzettel. Sie gehören zu deinem Konto und erscheinen auf jedem Gerät.
+Der Desktop enthält Verknüpfungen zu Apps, Dateien und Ordnern sowie Notizzettel. Sie gehören zu deinem Konto und erscheinen auf jedem Gerät. Der Desktop enthält nur Verweise: Eine Verknüpfung zu entfernen, ändert nie die Datei.
 
 - Um eine Verknüpfung hinzuzufügen, klicke mit der rechten Maustaste auf eine freie Stelle und wähle **Neue Verknüpfung**, dann eine App. Oder klicke in der Taskleiste mit der rechten Maustaste auf eine laufende App und wähle **Zum Desktop hinzufügen**.
+- Um eine Datei oder einen Ordner auf den Desktop zu legen, klicke in Dateien mit der rechten Maustaste darauf und wähle **Zum Desktop hinzufügen**, oder ziehe sie aus Dateien auf den Desktop. Die Verknüpfung öffnet sie wie ein Doppelklick in Dateien; ihr Menü bietet zusätzlich **Öffnen mit …**, **In Dateien zeigen** (Dateien öffnet ihren Ordner mit ihr ausgewählt) und nach einem Umbenennen **Ursprünglichen Namen verwenden**. Sie folgt dem Umbenennen und Verschieben in Dateien, Apps, WebDAV und FTP. Eine Änderung über SMB oder SFTP, eine gelöschte Datei oder ein freigegebener Ordner, den du nicht mehr lesen darfst, lässt die Verknüpfung ausgegraut mit einem unterbrochenen Link zurück, und ihr Menü bietet nur noch **Vom Desktop entfernen**.
 - Um eine Notiz hinzuzufügen, klicke mit der rechten Maustaste auf eine freie Stelle und wähle **Neue Notiz**. Eine Notiz fasst bis zu 4000 Zeichen und speichert sich kurz nach dem Tippen selbst.
 - Öffne eine Verknüpfung mit einem Doppelklick (auf einem Touchscreen mit einem einfachen Tippen), oder wähle sie aus und drücke **Enter**.
 - Klicke mit der rechten Maustaste auf eine Verknüpfung für **Öffnen**, **Umbenennen**, **Verschieben** und **Vom Desktop entfernen**. **F2** benennt um, **Entf** entfernt.

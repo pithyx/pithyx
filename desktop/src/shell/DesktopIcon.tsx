@@ -1,4 +1,5 @@
-import { IconArrowUpRight } from '../ui/icons';
+import { IconArrowUpRight, IconLinkOff } from '../ui/icons';
+import type { ReactNode } from 'react';
 import type { TablerIcon } from '../ui/icons';
 import { useTranslation } from 'react-i18next';
 import { cx } from '@pithyx/ui';
@@ -7,31 +8,51 @@ import styles from './DesktopIcon.module.css';
 import type { AppInfo } from './types';
 
 export type DesktopItemKind =
-  | { kind: 'folder' }
-  | { kind: 'file'; icon: TablerIcon }
+  | { kind: 'folder'; link?: boolean }
+  | { kind: 'file'; icon: TablerIcon; link?: boolean }
+  | { kind: 'missing' }
   | { kind: 'shortcut'; app: Pick<AppInfo, 'icon' | 'tone'> };
+
+/** The arrow that marks a shortcut: removing it never touches what it points at. */
+function LinkBadge({ children }: { children: ReactNode }) {
+  return (
+    <span className={styles.shortcut}>
+      {children}
+      <span className={styles.arrow} aria-hidden>
+        <IconArrowUpRight size={12} stroke={2.5} />
+      </span>
+    </span>
+  );
+}
 
 /** The glyph and label of a desktop item, inside whatever element makes it interactive. */
 export function DesktopItemFace({ name, item }: { name: string; item: DesktopItemKind }) {
   let visual;
   if (item.kind === 'shortcut') {
     visual = (
-      <span className={styles.shortcut}>
+      <LinkBadge>
         <AppIcon app={item.app} size={48} />
-        <span className={styles.arrow} aria-hidden>
-          <IconArrowUpRight size={12} stroke={2.5} />
-        </span>
-      </span>
+      </LinkBadge>
     );
-  } else if (item.kind === 'folder') {
-    visual = <FolderGlyph />;
-  } else {
-    const Glyph = item.icon;
+  } else if (item.kind === 'missing') {
     visual = (
-      <span className={styles.file} aria-hidden>
-        <Glyph size={30} stroke={1.5} />
+      <span className={cx(styles.file, styles.missing)} aria-hidden>
+        <IconLinkOff size={30} stroke={1.5} />
       </span>
     );
+  } else {
+    let glyph;
+    if (item.kind === 'folder') {
+      glyph = <FolderGlyph />;
+    } else {
+      const Glyph = item.icon;
+      glyph = (
+        <span className={styles.file} aria-hidden>
+          <Glyph size={30} stroke={1.5} />
+        </span>
+      );
+    }
+    visual = item.link === true ? <LinkBadge>{glyph}</LinkBadge> : glyph;
   }
   return (
     <>

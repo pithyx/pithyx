@@ -1,8 +1,11 @@
 using System.Globalization;
+using System.Security.Claims;
 using System.Text.Json;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Pithyx.Daemon.Auth;
+using Pithyx.Daemon.Errors;
+using Pithyx.Daemon.Files;
 
 namespace Pithyx.Daemon.Layouts;
 
@@ -20,6 +23,7 @@ public static class LayoutEndpoints
     {
         services.AddSingleton<LayoutService>();
         services.AddSingleton<DesktopItemService>();
+        services.AddSingleton<DesktopFileLinks>();
         services.AddHostedService<LayoutCleanupService>();
         return services;
     }
@@ -58,11 +62,17 @@ public static class LayoutEndpoints
                 "Replaces the apps the signed-in user opens after signing in, in order, for every device (at most 10). "
                 + "GET /api/desktop returns them as startupApps; the desktop skips apps that are gone or not allowed.");
 
-        desktop.MapGet("/items", ListItemsAsync).WithName("ListDesktopItems");
+        desktop.MapGet("/items", ListItemsAsync)
+            .WithName("ListDesktopItems")
+            .WithDescription(
+                "The user's desktop items. A shortcut to a file or folder says in target whether its target is a file, a "
+                + "folder or missing (gone, moved past the daemon, or no longer readable for the user).");
         desktop.MapPost("/items", CreateItemAsync)
             .WithName("CreateDesktopItem")
             .WithDescription(
-                "Creates an item. The answer is 201 with the item, its URL as Location and its version as ETag.");
+                "Creates an item. The answer is 201 with the item, its URL as Location and its version as ETag. A shortcut "
+                + "to a file or folder needs read access to it; otherwise the answer is the file error (for example "
+                + "fs.entry.not_found).");
         desktop.MapPatch("/items/{id:long}", ChangeItemAsync)
             .WithName("ChangeDesktopItem")
             .WithDescription(
@@ -75,12 +85,26 @@ public static class LayoutEndpoints
             .WithDescription("Deletes one item. Deleting an item that does not exist (any more) also answers 204.");
     }
 
-    private static async Task<Ok<IReadOnlyList<DesktopItem>>> ListItemsAsync(DesktopItemService items, HttpContext context, CancellationToken cancellationToken) =>
-        TypedResults.Ok(await items.ListAsync(CurrentUser.Id(context.User), cancellationToken));
-
-    private static async Task<Created<DesktopItem>> CreateItemAsync(NewDesktopItem item, DesktopItemService items, HttpContext context, CancellationToken cancellationToken)
+    private static async Task<Ok<IReadOnlyList<DesktopItem>>> ListItemsAsync(DesktopItemService items, FileService files, HttpContext context, CancellationToken cancellationToken)
     {
-        var created = await items.CreateAsync(CurrentUser.Id(context.User), item, cancellationToken);
+        var list = await items.ListAsync(CurrentUser.Id(context.User), cancellationToken);
+        var result = new List<DesktopItem>(list.Count);
+        foreach (var item in list)
+        {
+            result.Add(await WithTargetAsync(item, files, context.User, cancellationToken));
+        }
+        return TypedResults.Ok<IReadOnlyList<DesktopItem>>(result);
+    }
+
+    private static async Task<Created<DesktopItem>> CreateItemAsync(NewDesktopItem item, DesktopItemService items, FileService files, HttpContext context, CancellationToken cancellationToken)
+    {
+        // The share's root is no target; the service refuses it as an invalid item.
+        if (item.Kind == DesktopItemKind.File && item.Share is { } share && FsPath.Normalize(item.Path).Length > 0)
+        {
+            // Throws the file error when the user cannot read the target.
+            await files.StatAsync(context.User, share, item.Path, cancellationToken);
+        }
+        var created = await WithTargetAsync(await items.CreateAsync(CurrentUser.Id(context.User), item, cancellationToken), files, context.User, cancellationToken);
         context.Response.Headers.ETag = EntityTag(created.Version);
         return TypedResults.Created(string.Create(CultureInfo.InvariantCulture, $"/api/desktop/items/{created.Id}"), created);
     }
@@ -90,17 +114,44 @@ public static class LayoutEndpoints
         [FromBody] DesktopItemChange change,
         [FromHeader(Name = "If-Match")] string? ifMatch,
         DesktopItemService items,
+        FileService files,
         HttpContext context,
         CancellationToken cancellationToken)
     {
-        var changed = await items.ChangeAsync(
-            CurrentUser.Id(context.User),
-            id,
-            change,
-            ifMatch is null ? null : ParseEntityTag(ifMatch),
+        var changed = await WithTargetAsync(
+            await items.ChangeAsync(
+                CurrentUser.Id(context.User),
+                id,
+                change,
+                ifMatch is null ? null : ParseEntityTag(ifMatch),
+                cancellationToken),
+            files,
+            context.User,
             cancellationToken);
         context.Response.Headers.ETag = EntityTag(changed.Version);
         return TypedResults.Ok(changed);
+    }
+
+    /// <summary>Adds to a shortcut to a file or folder what its target is now for this user.</summary>
+    private static async Task<DesktopItem> WithTargetAsync(DesktopItem item, FileService files, ClaimsPrincipal user, CancellationToken cancellationToken)
+    {
+        if (item.Kind != DesktopItemKind.File)
+        {
+            return item;
+        }
+        if (item.Share is not { } share || item.Path is null)
+        {
+            return item with { Target = DesktopFileTarget.Missing };
+        }
+        try
+        {
+            var entry = await files.StatAsync(user, share, item.Path, cancellationToken);
+            return item with { Target = entry.Kind is FileKind.Folder or FileKind.Symlink ? DesktopFileTarget.Folder : DesktopFileTarget.File };
+        }
+        catch (PithyxException)
+        {
+            return item with { Target = DesktopFileTarget.Missing };
+        }
     }
 
     private static async Task<NoContent> DeleteItemAsync(long id, DesktopItemService items, HttpContext context, CancellationToken cancellationToken)
