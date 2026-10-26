@@ -52,7 +52,7 @@ The reference machine is an Intel N100 or N305 with 8 GB of memory. The daemon i
 | RAID-Z2      | 4                  |
 | RAID-Z3      | 5                  |
 
-New pools are created with 4 KiB sectors (`ashift=12`), `lz4` compression and `atime=off`. A pool name starts with a lowercase letter and may contain lowercase letters, digits, hyphens and underscores, up to 32 characters. Pools are not encrypted. See [Storage](/docs/admin/storage/).
+New pools are created with 4 KiB sectors (`ashift=12`), `lz4` compression and `atime=off`. A pool name starts with a lowercase letter and may contain lowercase letters, digits, hyphens and underscores, up to 32 characters. A pool can be encrypted when it is created. See [Storage](/docs/admin/storage/#encryption).
 
 ## Network
 

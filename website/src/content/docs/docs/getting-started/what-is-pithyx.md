@@ -16,7 +16,7 @@ Pithyx 1.0 is marked beta: we consider it stable, but it has not yet proven itse
 ## What you get
 
 - **A web desktop.** Windows, a taskbar, desktop shortcuts and notes, in a browser on a PC, tablet or phone. See [The desktop](/docs/user/desktop/).
-- **Storage with ZFS.** You build pools from your disks in the Storage app and create shared folders on them. New pools use compression and are not encrypted. See [Storage](/docs/admin/storage/).
+- **Storage with ZFS.** You build pools from your disks in the Storage app and create shared folders on them. New pools use compression and can be encrypted with a key. See [Storage](/docs/admin/storage/).
 - **File sharing.** Shared folders are available over SMB, SFTP, WebDAV and FTP. SMB is on by default; the others you switch on in Settings. See [Access files from other devices](/docs/user/file-access/).
 - **Users and groups.** Every user is a real account on the box. Rights are given to users and groups; a user gets the union of all of them. Administrators can do everything. See [Users and groups](/docs/admin/users-and-groups/).
 - **Apps.** Apps open in windows on the desktop. An app is a frontend with an optional backend in containers. Administrators install apps from a file or from a catalog in the Store; the official and the community catalog are on by default. See [Using apps](/docs/user/apps/).
@@ -40,7 +40,7 @@ For details see [Architecture](/docs/developers/daemon/architecture/).
 - It is not for data you cannot afford to lose yet (see the warning above).
 - It is a fresh-install system. There is no import from other NAS systems.
 - The installer does not restore a backup or import pools. Both happen after the first sign-in.
-- It does not offer NFS. Pools are not encrypted yet.
+- It does not offer NFS.
 - It needs a 64-bit x86 computer with UEFI and Secure Boot switched off. There is no installer for 32-bit machines, legacy BIOS or Raspberry Pi. See [Hardware requirements](/docs/getting-started/requirements/).
 - It supports wired networks only. Wi-Fi is not supported.
 - It does not announce itself on the network, so you find the box by its address.

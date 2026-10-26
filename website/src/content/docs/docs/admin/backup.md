@@ -33,7 +33,7 @@ Categories you can choose when restoring:
 - **Reverse proxy**: proxy hosts (with Basic Auth users as hashes), redirect hosts, streams, what unknown names get, the sign-in address and the Let's Encrypt account (its certificates come with **Certificates and keys**).
 - **Apps**: the app registry, permissions, folder mappings, catalogs and the app pool. The apps' files and data stay on the pool.
 
-Not included: files on pools, app data, logs, Docker data, sessions, jobs, notifications, the recycle bin index, and the network settings (cards are named differently on other hardware).
+Not included: files on pools, app data, logs, Docker data, sessions, jobs, notifications, the recycle bin index, and the network settings (cards are named differently on other hardware). The keys of encrypted pools in the key vault are never included either: after a reinstall, unlock each encrypted pool once with its key ([Encryption](/docs/admin/storage/#encryption)).
 
 ## Restoring
 

@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { formatBytes } from '../../desktop/format';
 import { ErrorNotice } from '../../errors/ErrorNotice';
-import { Badge, Button, ProgressBar } from '@pithyx/ui';
+import { Badge, Button, cx, ProgressBar } from '@pithyx/ui';
 import { IconPlus } from '../../ui/icons';
 import {
   onInternal,
@@ -18,6 +18,7 @@ import { PoolActionDialog, type PoolAction } from './PoolActionDialog';
 import { PoolChangeDialog, type PoolChange } from './PoolChangeDialog';
 import { isFinished } from './PlanRun';
 import { PoolWizard } from './PoolWizard';
+import { ChangeKeyDialog, ForgetKeyDialog, UnlockDialog } from './PoolEncryption';
 import {
   describeProblem,
   formatDate,
@@ -40,6 +41,7 @@ export function PoolsSection({ app }: { app: PithyxApp }) {
   const [change, setChange] = useState<{ pool: Pool; vdev?: Vdev; action: PoolChange } | null>(
     null,
   );
+  const [keyAction, setKeyAction] = useState<{ pool: Pool; action: KeyAction } | null>(null);
   // Pools whose destroy job runs, by name; the card says so until the pool is gone or the job failed.
   const [deleting, setDeleting] = useState<Readonly<Record<string, number>>>({});
   const pools = usePools(app);
@@ -95,6 +97,9 @@ export function PoolsSection({ app }: { app: PithyxApp }) {
             onChange={(poolChange, vdev) => {
               setChange({ pool, action: poolChange, ...(vdev === undefined ? {} : { vdev }) });
             }}
+            onKey={(keyChange) => {
+              setKeyAction({ pool, action: keyChange });
+            }}
           />
         ))}
       </div>
@@ -105,6 +110,33 @@ export function PoolsSection({ app }: { app: PithyxApp }) {
           disks={disks.data.disks}
           onClose={() => {
             setCreating(false);
+          }}
+        />
+      )}
+      {keyAction?.action === 'unlock' && (
+        <UnlockDialog
+          app={app}
+          pool={keyAction.pool}
+          onClose={() => {
+            setKeyAction(null);
+          }}
+        />
+      )}
+      {keyAction?.action === 'change' && (
+        <ChangeKeyDialog
+          app={app}
+          pool={keyAction.pool}
+          onClose={() => {
+            setKeyAction(null);
+          }}
+        />
+      )}
+      {keyAction?.action === 'forget' && (
+        <ForgetKeyDialog
+          app={app}
+          pool={keyAction.pool}
+          onClose={() => {
+            setKeyAction(null);
           }}
         />
       )}
@@ -143,6 +175,7 @@ export function PoolsSection({ app }: { app: PithyxApp }) {
 
 type OnAction = (action: PoolAction, vdev?: Vdev) => void;
 type OnChange = (action: PoolChange, vdev?: Vdev) => void;
+type KeyAction = 'unlock' | 'change' | 'forget';
 
 function PoolCard({
   pool,
@@ -150,15 +183,18 @@ function PoolCard({
   datasets,
   onAction,
   onChange,
+  onKey,
 }: {
   pool: Pool;
   deleting: boolean;
   datasets: Dataset[];
   onAction: OnAction;
   onChange: OnChange;
+  onKey: (action: KeyAction) => void;
 }) {
   const { t } = useTranslation('storage');
   const locale = useFormatLocale();
+  const encryption = pool.encryption ?? null;
   const data = pool.vdevs.filter((vdev) => vdev.role === 'data');
   const others = pool.vdevs.filter((vdev) => vdev.role !== 'data');
   return (
@@ -169,6 +205,11 @@ function PoolCard({
         </h4>
         <span className={styles.badges}>
           {pool.readOnly && <Badge tone="neutral">{t('pools.readOnly')}</Badge>}
+          {encryption !== null && (
+            <Badge tone={encryption.locked ? 'highlight' : 'neutral'}>
+              {t(encryption.locked ? 'encryption.locked' : 'encryption.encrypted')}
+            </Badge>
+          )}
           {deleting ? (
             <Badge tone="neutral">{t('pools.deleting')}</Badge>
           ) : (
@@ -177,6 +218,20 @@ function PoolCard({
         </span>
       </div>
       {pool.readOnly && <p className={styles.notice}>{t('pools.readOnlyHint')}</p>}
+      {encryption?.locked === true && !pool.readOnly && (
+        <div className={cx(styles.notice, styles.lockedNotice)}>
+          <p>{t(encryption.keyInVault ? 'encryption.lockedVaultHint' : 'encryption.lockedHint')}</p>
+          <Button
+            size="sm"
+            variant="primary"
+            onPress={() => {
+              onKey('unlock');
+            }}
+          >
+            {t('encryption.unlock')}
+          </Button>
+        </div>
+      )}
       <div className={styles.usage}>
         <span>
           {t('pools.used', {
@@ -191,6 +246,11 @@ function PoolCard({
       <p className={styles.muted}>
         {t('pools.layout', { layout: data.map((vdev) => vdevLabel(t, vdev)).join(' + ') })}
       </p>
+      {encryption !== null && (
+        <p className={styles.muted}>
+          {t(encryption.keyInVault ? 'encryption.inVault' : 'encryption.byHand')}
+        </p>
+      )}
       {pool.scan !== null && <p className={styles.muted}>{scanText(t, pool, locale)}</p>}
       <Expansion pool={pool} />
       {pool.state !== 'ONLINE' && <p className={styles.notice}>{t('pools.degradedHint')}</p>}
@@ -263,6 +323,26 @@ function PoolCard({
             >
               {t('actions.spareAdd.button')}
             </Button>
+            {encryption !== null && !encryption.locked && (
+              <Button
+                size="sm"
+                onPress={() => {
+                  onKey('change');
+                }}
+              >
+                {t('encryption.change')}
+              </Button>
+            )}
+            {encryption?.keyInVault === true && (
+              <Button
+                size="sm"
+                onPress={() => {
+                  onKey('forget');
+                }}
+              >
+                {t('encryption.forget')}
+              </Button>
+            )}
             <Button
               size="sm"
               variant="danger"

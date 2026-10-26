@@ -51,7 +51,7 @@ test('Settings has no storage page and no link to Storage', async ({ page }) => 
   await expect(settings.getByRole('button', { name: /Storage/ })).toHaveCount(0);
 });
 
-test('the pool wizard compares layouts, asks about encryption and lists the exact commands', async ({
+test('the pool wizard compares layouts, encrypts with a stored key and lists the exact commands', async ({
   page,
 }) => {
   const storage = await openStorage(page);
@@ -75,12 +75,23 @@ test('the pool wizard compares layouts, asks about encryption and lists the exac
   await expect(layouts.getByRole('radio', { name: /^Stripe/ })).toContainText('No disk may fail');
   await dialog.getByRole('button', { name: 'Next' }).click();
 
-  await expect(dialog.getByRole('radio', { name: 'Encrypt with a key' })).toBeDisabled();
   await expect(dialog.getByRole('button', { name: 'Next' })).toBeDisabled();
-  await dialog.getByRole('radio', { name: 'No encryption' }).check();
+  await dialog.getByRole('radio', { name: 'Encrypt with a key' }).check();
+  await expect(
+    dialog.getByRole('radio', { name: 'Automatically at every start, from the key vault' }),
+  ).toBeChecked();
   await dialog.getByRole('button', { name: 'Next' }).click();
 
+  // The key is shown once and must be confirmed as stored before the pool can be created.
   await dialog.getByLabel('Pool name').fill('tank');
+  await expect(dialog.getByLabel('Pool key')).toHaveText(/^PXPK(-[0-9A-Z]{4}){14}$/);
+  await expect(dialog.getByRole('button', { name: 'Next' })).toBeDisabled();
+  await dialog.getByRole('checkbox', { name: /I stored the key/ }).check();
+  await dialog.getByRole('button', { name: 'Next' }).click();
+
+  await expect(dialog).toContainText(
+    'the box unlocks it at every start with the key from its key vault',
+  );
   await dialog.getByRole('button', { name: 'Show commands' }).click();
   const commands = dialog.getByRole('status').getByRole('listitem');
   await expect(commands).toHaveCount(9);
@@ -91,7 +102,7 @@ test('the pool wizard compares layouts, asks about encryption and lists the exac
     /zpool create .* tank raidz1 \/dev\/disk\/by-id\/scsi-0QEMU_QEMU_HARDDISK_drive-scsi1 .*scsi2 .*scsi3$/,
   );
   await expect(commands.nth(3)).toHaveText(
-    'zfs create -o canmount=off -o mountpoint=none tank/pithyx',
+    'zfs create -o encryption=aes-256-gcm -o keyformat=hex -o keylocation=prompt -o canmount=off -o mountpoint=none tank/pithyx',
   );
   await expect(dialog.getByRole('button', { name: 'Create pool' })).toBeEnabled();
 });

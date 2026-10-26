@@ -117,6 +117,7 @@
       "disks": "Platten",
       "layout": "Aufbau",
       "encryption": "Verschlüsselung",
+      "key": "Schlüssel",
       "review": "Name und Prüfung"
     },
     "recommend": {
@@ -152,7 +153,14 @@
       "none": "Keine Verschlüsselung",
       "noneHint": "Wer die Platten hat, kann die Daten lesen. In Ordnung für Medien und Sicherungen von bereits verschlüsselten Daten.",
       "key": "Mit einem Schlüssel verschlüsseln",
-      "keyLater": "Kommt mit dem Schlüsseltresor im nächsten Update. Wenn dieser Pool verschlüsselt sein soll, warte darauf: Ein jetzt angelegter Pool bleibt unverschlüsselt."
+      "keyHint": "Ohne den Schlüssel kann niemand die Daten auf den Platten lesen, auch du nicht: Die Box zeigt den Schlüssel einmal, und du bewahrst ihn auf, ausgedruckt oder in einem Passwortmanager.",
+      "unlock": "Wie soll der Pool entsperrt werden?",
+      "vault": "Automatisch bei jedem Start, aus dem Schlüsseltresor",
+      "manual": "Von Hand nach jedem Start",
+      "manualHint": "Nach jedem Start bleibt der Pool gesperrt, bis ein Administrator seinen Schlüssel in Speicher eingibt. Bis dahin sind seine freigegebenen Ordner, Home-Ordner und Apps nicht verfügbar. Das schützt die Daten auch, wenn die ganze Box gestohlen wird.",
+      "summaryNone": "Nicht verschlüsselt.",
+      "summaryVault": "Verschlüsselt; die Box entsperrt ihn bei jedem Start mit dem Schlüssel aus ihrem Schlüsseltresor.",
+      "summaryManual": "Verschlüsselt; er bleibt nach jedem Start gesperrt, bis sein Schlüssel eingegeben wird."
     },
     "layouts": {
       "single": {
@@ -545,5 +553,60 @@
       "explain": "Grenzen, Komprimierung und Namen der Datasets hinter deinen freigegebenen Ordnern und Volumes, und von Datasets, die Pithyx nicht angelegt hat.",
       "button": "Datasets anzeigen"
     }
+  },
+  "vault": {
+    "hint": "Die Box bewahrt den Schlüssel in einem Tresor auf ihrer Systemplatte auf und entsperrt den Pool bei jedem Start. Das schützt die Daten auf Platten, die gestohlen oder weggeworfen werden, aber nicht, wenn die ganze Box gestohlen wird. Der Tresor ist nie Teil einer Konfigurationssicherung; bewahre also eine eigene Kopie des Schlüssels auf."
+  },
+  "key": {
+    "intro": "Das ist der Schlüssel des Pools. Er wird nur jetzt angezeigt. Ohne ihn kann nach einer Neuinstallation, auf einer anderen Box oder wenn der Schlüsseltresor verloren geht, niemand die Daten des Pools lesen. Lade ihn herunter oder drucke ihn aus und bewahre ihn getrennt von der Box auf.",
+    "label": "Pool-Schlüssel",
+    "copy": "Schlüssel kopieren",
+    "copied": "Kopiert",
+    "copyManually": "Der Schlüssel ist markiert. Kopiere ihn mit Strg+C oder über das Kontextmenü.",
+    "download": "Herunterladen",
+    "print": "Drucken",
+    "confirm": "Ich habe den Schlüssel sicher und getrennt von der Box aufbewahrt.",
+    "sheet": {
+      "title": "Pithyx-Pool-Schlüssel",
+      "pool": "Pool: {pool}",
+      "date": "Erstellt: {date}",
+      "hint": "Dieser Schlüssel entsperrt die Daten des Pools. Bewahre ihn sicher und getrennt von der Box auf; wer ihn und die Platten hat, kann die Daten lesen. Gib ihn in Speicher ein, um den Pool zu entsperren."
+    }
+  },
+  "unlock": {
+    "title": "{pool} entsperren",
+    "intro": "Gib den Schlüssel des Pools ein, den du beim Anlegen des Pools oder beim Ändern seines Schlüssels heruntergeladen oder ausgedruckt hast.",
+    "introVaultFailed": "Der Schlüssel im Schlüsseltresor hat den Pool nicht entsperrt, zum Beispiel weil der Schlüssel auf einer anderen Box geändert wurde. Gib den Schlüssel des Pools ein.",
+    "key": "Schlüssel",
+    "keyHint": "Beginnt mit PXPK. Bindestriche, Leerzeichen und Groß- oder Kleinschreibung spielen keine Rolle.",
+    "keep": "Schlüssel im Schlüsseltresor aufbewahren und den Pool bei jedem Start automatisch entsperren",
+    "cancel": "Abbrechen",
+    "submit": "Entsperren"
+  },
+  "changeKey": {
+    "title": "Schlüssel von {pool} ändern",
+    "intro": "Der Pool bekommt einen neuen Schlüssel, und der alte funktioniert sofort nicht mehr. Die Daten bleiben, wie sie sind. Bewahre zuerst den neuen Schlüssel auf; erst dann übernimmt ihn der Pool.",
+    "create": "Neuen Schlüssel erzeugen",
+    "submit": "Schlüssel ändern",
+    "cancel": "Abbrechen",
+    "keep": "Neuen Schlüssel im Schlüsseltresor aufbewahren und den Pool bei jedem Start automatisch entsperren"
+  },
+  "forgetKey": {
+    "title": "Schlüssel von {pool} aus dem Schlüsseltresor entfernen?",
+    "intro": "Der Pool bleibt entsperrt, bis die Box neu startet. Danach bleibt er gesperrt, bis ein Administrator seinen Schlüssel in Speicher eingibt, und bis dahin sind seine freigegebenen Ordner, Home-Ordner und Apps nicht verfügbar.",
+    "warning": "Stell sicher, dass du den Schlüssel des Pools hast. Ohne ihn lassen sich die Daten des Pools nie wieder lesen.",
+    "cancel": "Abbrechen",
+    "submit": "Aus dem Tresor entfernen"
+  },
+  "encryption": {
+    "encrypted": "Verschlüsselt",
+    "locked": "Gesperrt",
+    "lockedHint": "Dieser Pool ist gesperrt. Seine freigegebenen Ordner, Home-Ordner und Apps sind nicht verfügbar, bis er mit seinem Schlüssel entsperrt wird.",
+    "lockedVaultHint": "Dieser Pool ist gesperrt: Der Schlüssel im Schlüsseltresor hat ihn nicht entsperrt. Seine freigegebenen Ordner, Home-Ordner und Apps sind nicht verfügbar, bis er mit seinem Schlüssel entsperrt wird.",
+    "unlock": "Entsperren…",
+    "inVault": "Verschlüsselt; wird bei jedem Start mit dem Schlüssel aus dem Schlüsseltresor entsperrt.",
+    "byHand": "Verschlüsselt; bleibt nach jedem Start gesperrt, bis sein Schlüssel eingegeben wird.",
+    "change": "Schlüssel ändern…",
+    "forget": "Schlüssel aus dem Tresor entfernen…"
   }
 }

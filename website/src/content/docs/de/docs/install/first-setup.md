@@ -33,7 +33,7 @@ Wenn du den Schlüssel und das Passwort verlierst, muss das System neu installie
 
 ## Der erste Pool
 
-![Der Assistent Pool anlegen bei Schritt 3, Verschlüsselung, mit gewählter Option Keine Verschlüsselung; Mit einem Schlüssel verschlüsseln ist noch nicht verfügbar](../../../../../assets/screenshots/first-setup-encryption.de.webp)
+![Der Assistent Pool anlegen bei Schritt 3, Verschlüsselung, mit gewähltem Mit einem Schlüssel verschlüsseln und vorausgewähltem Automatisch bei jedem Start, aus dem Schlüsseltresor](../../../../../assets/screenshots/first-setup-encryption.de.webp)
 
 _Schritt 3 des Pool-Assistenten: Verschlüsselung lässt sich nur beim Anlegen des Pools wählen._
 
@@ -41,13 +41,13 @@ Alle deine Daten liegen auf ZFS-Pools, und die Box startet ohne einen. Lege den 
 
 1. Öffne das Pithyx-Menü und starte **Speicher**.
 2. Klicke auf **Pool anlegen…**.
-3. Wähle die Platten, einen Aufbau, ob verschlüsselt werden soll, und einen Namen. Die Schritte heißen **Platten**, **Aufbau**, **Verschlüsselung**, **Name und Prüfung**.
+3. Wähle die Platten, einen Aufbau, ob verschlüsselt werden soll, und einen Namen. Die Schritte heißen **Platten**, **Aufbau**, **Verschlüsselung**, **Name und Prüfung**, und **Schlüssel** für einen verschlüsselten Pool.
 4. Klicke auf **Pool anlegen**.
 
 Hinweise:
 
 - Bei einer Platte mit Daten musst du ihre Seriennummer eintippen, bevor sie genutzt werden kann. Die Systemplatte wird nie angeboten.
-- Pools lassen sich noch nicht verschlüsseln. **Mit einem Schlüssel verschlüsseln** ist nicht verfügbar, und ein Pool, den du anlegst, bleibt unverschlüsselt. Wähle **Keine Verschlüsselung**.
+- Verschlüsselung lässt sich nur jetzt wählen. **Mit einem Schlüssel verschlüsseln** zeigt den Schlüssel des Pools einmal: Bewahre ihn getrennt von der Box auf, bevor es weitergeht, denn ohne ihn sind die Daten verloren. Siehe [Verschlüsselung](/de/docs/admin/storage/#verschlüsselung).
 - Der Assistent kann die Befehle anzeigen, die er ausführt: **Befehle anzeigen**.
 - Pool-Namen beginnen mit einem Kleinbuchstaben und dürfen Kleinbuchstaben, Ziffern, Bindestriche und Unterstriche enthalten.
 - Du kannst das Fenster schließen, während der Pool angelegt wird; eine Benachrichtigung sagt dir, wann er fertig ist.

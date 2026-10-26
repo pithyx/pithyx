@@ -33,7 +33,7 @@ If you lose the key and the password, the system has to be reinstalled. See [Rec
 
 ## The first pool
 
-![The Create a pool wizard at step 3, Encryption, with No encryption chosen and Encrypt with a key not available yet](../../../../assets/screenshots/first-setup-encryption.webp)
+![The Create a pool wizard at step 3, Encryption, with Encrypt with a key chosen and Automatically at every start, from the key vault preselected](../../../../assets/screenshots/first-setup-encryption.webp)
 
 _Step 3 of the pool wizard: encryption can only be chosen when the pool is created._
 
@@ -41,13 +41,13 @@ All of your data lives on ZFS pools, and the box starts without one. Create the 
 
 1. Open the Pithyx menu and start **Storage**.
 2. Click **Create pool…**.
-3. Pick the disks, a layout, whether to encrypt, and a name. The steps are **Disks**, **Layout**, **Encryption**, **Name and check**.
+3. Pick the disks, a layout, whether to encrypt, and a name. The steps are **Disks**, **Layout**, **Encryption**, **Name and check**, and **Key** for an encrypted pool.
 4. Click **Create pool**.
 
 Notes:
 
 - A disk that holds data asks you to type its serial number before it can be used. The system disk is never offered.
-- Pools cannot be encrypted yet. **Encrypt with a key** is not available, and a pool you create stays unencrypted. Choose **No encryption**.
+- Encryption can only be chosen now. **Encrypt with a key** shows the pool's key once: store it away from the box before you go on, because without it the data is lost. See [Encryption](/docs/admin/storage/#encryption).
 - The wizard can **Show commands** it will run.
 - Pool names start with a lowercase letter and may contain lowercase letters, digits, hyphens and underscores.
 - You can close the window while the pool is created; a notification tells you when it is done.

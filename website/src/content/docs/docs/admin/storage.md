@@ -39,7 +39,7 @@ If a disk changed after the plan was shown, nothing is changed and you get [`sto
 
 _Step 2 of the wizard compares the layouts for the chosen disks and marks the recommended one._
 
-Open Storage and choose **Create pool…**. The wizard has four steps: **Disks**, **Layout**, **Encryption** and **Name and check**. Disks are addressed by their `/dev/disk/by-id` names, so a pool survives a changed port or cable.
+Open Storage and choose **Create pool…**. The wizard has four steps: **Disks**, **Layout**, **Encryption** and **Name and check**, and a fifth, **Key**, for an encrypted pool (see [Encryption](#encryption)). Disks are addressed by their `/dev/disk/by-id` names, so a pool survives a changed port or cable.
 
 | Layout                      | Minimum disks | Notes                            |
 | --------------------------- | ------------- | -------------------------------- |
@@ -95,7 +95,34 @@ The Storage app has no button to turn a single disk into a mirror later.
 
 ## Encryption
 
-Pool encryption is not available in this version. The wizard asks "Should the pool be encrypted?" and the answer is mandatory; **No encryption** works and **Encrypt with a key** is refused with [`storage.encryption.unavailable`](/docs/reference/errors/#storage.encryption.unavailable). A pool cannot be encrypted afterwards.
+A pool is encrypted when it is created, or never: the wizard asks "Should the pool be encrypted?", and a pool cannot be encrypted afterwards. **Encrypt with a key** uses ZFS native encryption (AES-256-GCM) on `<pool>/pithyx`, so everything Pithyx keeps on the pool is encrypted with one key: shared folders, home folders, apps and their data, the log archive and the thumbnails. The pool's own root dataset holds no data and stays unencrypted.
+
+### The key
+
+The box makes the key; you cannot choose your own. The step **Key** shows it once, as `PXPK-` followed by 56 characters in groups of four. Copy it, **Download** it as a text file or **Print** it, keep it away from the box, and confirm **I stored the key somewhere safe, away from the box.** before you go on. The last characters check the others, so a typo is caught as [`storage.encryption.key_invalid`](/docs/reference/errors/#storage.encryption.key_invalid) before the pool is asked; when typing, dashes, spaces and upper or lower case do not matter.
+
+:::danger[Without the key, the data is gone]
+Pithyx has no way around a lost key. Keep the key even when the key vault holds it: the vault is on the system disk, which a reinstall replaces, and it is never part of a [configuration backup](/docs/admin/backup/).
+:::
+
+### Unlocking
+
+The wizard asks how the pool unlocks, and **Automatically at every start, from the key vault** is preselected:
+
+- **Automatically at every start, from the key vault**: the box keeps the key in a vault on its system disk (`/var/lib/pithyx/pool-keys/`, one file per pool, readable by root only) and unlocks the pool every time it starts or the pool is imported. That protects the data on disks that are stolen or thrown away, not on a stolen box: whoever has the box has the vault too.
+- **By hand after every start**: the pool stays locked after every start until an administrator types its key. This also protects the data when the whole box is stolen.
+
+A locked pool shows **Locked** and **Unlock…**. Unlocking loads the key and mounts the datasets the same way an import does (nothing that would hide a system folder). Its shared folders, home folders and apps are unavailable while it is locked: Files and the file services say so, and apps on the pool do not start. With **Keep the key in the key vault and unlock the pool automatically at every start** the typed key goes into the vault once it opened the pool. If the vault's key does not open a pool (it was changed elsewhere), the pool stays locked and the card says so; type the key. A key that is valid but belongs to another pool is refused with [`storage.encryption.key_wrong`](/docs/reference/errors/#storage.encryption.key_wrong).
+
+An encrypted pool on another box, or after a reinstall, is imported like any other pool; it stays locked until you unlock it with its key.
+
+### Changing the key and the vault
+
+**Change key…** on an unlocked pool makes a new key, shows it like the wizard and changes the pool's key only after you confirmed you stored it; the old key stops working at once. The data is not rewritten. The dialog also decides whether the new key goes into the vault.
+
+**Remove key from vault…** deletes the pool's key from the vault. The pool stays unlocked until the box restarts and then waits for its key. To put a key into the vault, unlock the pool with the box set to keep it, or change the key: ZFS cannot check a typed key against a pool that is unlocked already ([`storage.pool.not_locked`](/docs/reference/errors/#storage.pool.not_locked)).
+
+Keys go to ZFS on standard input, never as a command argument, and never appear in a log, a plan or the pool itself.
 
 ## Health and warnings
 

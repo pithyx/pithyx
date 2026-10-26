@@ -48,6 +48,8 @@ The words Pithyx uses in its interface and documentation, in alphabetical order.
 
 **Job.** A long operation that runs in the background with progress. Jobs are not resumed after a restart.
 
+**Key vault.** A folder on the system disk, readable by root only, where the box keeps the keys of encrypted pools it unlocks at every start. It protects against stolen disks, not a stolen box, and is never part of a configuration backup. See [Encryption](/docs/admin/storage/#encryption).
+
 **Lifecycle.** How long a backend runs: `always`, or `onDemand` (while a window is open, plus an idle time).
 
 **Live system.** The environment on the installation USB stick that runs the web installer.
@@ -63,6 +65,8 @@ The words Pithyx uses in its interface and documentation, in alphabetical order.
 **Permission.** Something an app may do, such as read shared folders or reach the internet. An administrator confirms and can revoke each one. Not to be confused with a user's rights.
 
 **Pool.** A ZFS pool: disks combined into one storage area, as a mirror, RAID-Z or stripe.
+
+**Pool key.** The key of an encrypted pool (it starts with `PXPK`), shown once when the pool is created or its key changes. Without it the pool's data cannot be read. See [Encryption](/docs/admin/storage/#encryption).
 
 **Protocol.** A way to reach shared folders from other devices: SMB, SFTP, WebDAV or FTP. Access is set per user.
 

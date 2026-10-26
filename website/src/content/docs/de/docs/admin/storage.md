@@ -39,7 +39,7 @@ Wenn sich eine Platte geändert hat, nachdem der Plan angezeigt wurde, wird nich
 
 _Schritt 2 des Assistenten vergleicht die Aufbauten für die gewählten Platten und markiert den empfohlenen._
 
-Öffne Speicher und wähle **Pool anlegen…**. Der Assistent hat vier Schritte: **Platten**, **Aufbau**, **Verschlüsselung** und **Name und Prüfung**. Platten werden über ihre Namen unter `/dev/disk/by-id` angesprochen, sodass ein Pool einen geänderten Anschluss oder ein anderes Kabel übersteht.
+Öffne Speicher und wähle **Pool anlegen…**. Der Assistent hat vier Schritte: **Platten**, **Aufbau**, **Verschlüsselung** und **Name und Prüfung**, und für einen verschlüsselten Pool einen fünften, **Schlüssel** (siehe [Verschlüsselung](#verschlüsselung)). Platten werden über ihre Namen unter `/dev/disk/by-id` angesprochen, sodass ein Pool einen geänderten Anschluss oder ein anderes Kabel übersteht.
 
 | Aufbau                            | Mindestanzahl Platten | Hinweise                                    |
 | --------------------------------- | --------------------- | ------------------------------------------- |
@@ -95,7 +95,34 @@ Die App Speicher hat keine Schaltfläche, um eine einzelne Platte später in ein
 
 ## Verschlüsselung
 
-Die Pool-Verschlüsselung ist in dieser Version nicht verfügbar. Der Assistent fragt „Soll der Pool verschlüsselt werden?“, und die Antwort ist Pflicht; **Keine Verschlüsselung** funktioniert, und **Mit einem Schlüssel verschlüsseln** wird mit [`storage.encryption.unavailable`](/de/docs/reference/errors/#storage.encryption.unavailable) abgelehnt. Ein Pool lässt sich nachträglich nicht verschlüsseln.
+Ein Pool wird beim Anlegen verschlüsselt oder nie: Der Assistent fragt „Soll der Pool verschlüsselt werden?“, und nachträglich lässt sich ein Pool nicht verschlüsseln. **Mit einem Schlüssel verschlüsseln** nutzt die native Verschlüsselung von ZFS (AES-256-GCM) auf `<pool>/pithyx`, sodass alles, was Pithyx auf dem Pool ablegt, mit einem Schlüssel verschlüsselt ist: freigegebene Ordner, Home-Ordner, Apps und ihre Daten, das Log-Archiv und die Vorschaubilder. Das Wurzel-Dataset des Pools enthält keine Daten und bleibt unverschlüsselt.
+
+### Der Schlüssel
+
+Die Box erzeugt den Schlüssel; einen eigenen kannst du nicht wählen. Der Schritt **Schlüssel** zeigt ihn einmal, als `PXPK-` gefolgt von 56 Zeichen in Vierergruppen. Kopiere ihn, lade ihn mit **Herunterladen** als Textdatei herunter oder **Drucke** ihn aus, bewahre ihn getrennt von der Box auf und bestätige **Ich habe den Schlüssel sicher und getrennt von der Box aufbewahrt.**, bevor es weitergeht. Die letzten Zeichen prüfen die übrigen, sodass ein Tippfehler als [`storage.encryption.key_invalid`](/de/docs/reference/errors/#storage.encryption.key_invalid) auffällt, bevor der Pool gefragt wird; beim Eingeben spielen Bindestriche, Leerzeichen und Groß- oder Kleinschreibung keine Rolle.
+
+:::danger[Ohne den Schlüssel sind die Daten verloren]
+Pithyx hat keinen Weg an einem verlorenen Schlüssel vorbei. Bewahre den Schlüssel auch dann auf, wenn der Schlüsseltresor ihn hat: Der Tresor liegt auf der Systemplatte, die eine Neuinstallation ersetzt, und er ist nie Teil einer [Konfigurationssicherung](/de/docs/admin/backup/).
+:::
+
+### Entsperren
+
+Der Assistent fragt, wie der Pool entsperrt wird, und **Automatisch bei jedem Start, aus dem Schlüsseltresor** ist vorausgewählt:
+
+- **Automatisch bei jedem Start, aus dem Schlüsseltresor**: Die Box bewahrt den Schlüssel in einem Tresor auf ihrer Systemplatte auf (`/var/lib/pithyx/pool-keys/`, eine Datei pro Pool, nur für root lesbar) und entsperrt den Pool bei jedem Start und jedem Import. Das schützt die Daten auf Platten, die gestohlen oder weggeworfen werden, nicht auf einer gestohlenen Box: Wer die Box hat, hat auch den Tresor.
+- **Von Hand nach jedem Start**: Der Pool bleibt nach jedem Start gesperrt, bis ein Administrator seinen Schlüssel eingibt. Das schützt die Daten auch, wenn die ganze Box gestohlen wird.
+
+Ein gesperrter Pool zeigt **Gesperrt** und **Entsperren…**. Entsperren lädt den Schlüssel und hängt die Datasets so ein wie ein Import (nichts, was einen Systemordner verdecken würde). Seine freigegebenen Ordner, Home-Ordner und Apps sind nicht verfügbar, solange er gesperrt ist: Dateien und die Dateidienste sagen das, und Apps auf dem Pool starten nicht. Mit **Schlüssel im Schlüsseltresor aufbewahren und den Pool bei jedem Start automatisch entsperren** kommt der eingegebene Schlüssel in den Tresor, sobald er den Pool geöffnet hat. Öffnet der Schlüssel aus dem Tresor einen Pool nicht (er wurde anderswo geändert), bleibt der Pool gesperrt, und die Karte sagt das; gib dann den Schlüssel ein. Ein gültiger Schlüssel eines anderen Pools wird mit [`storage.encryption.key_wrong`](/de/docs/reference/errors/#storage.encryption.key_wrong) abgelehnt.
+
+Ein verschlüsselter Pool von einer anderen Box oder nach einer Neuinstallation wird wie jeder andere Pool importiert; er bleibt gesperrt, bis du ihn mit seinem Schlüssel entsperrst.
+
+### Schlüssel ändern und der Tresor
+
+**Schlüssel ändern…** auf einem entsperrten Pool erzeugt einen neuen Schlüssel, zeigt ihn wie der Assistent und ändert den Schlüssel des Pools erst, wenn du bestätigt hast, dass du ihn aufbewahrt hast; der alte Schlüssel funktioniert sofort nicht mehr. Die Daten werden nicht neu geschrieben. Der Dialog entscheidet auch, ob der neue Schlüssel in den Tresor kommt.
+
+**Schlüssel aus dem Tresor entfernen…** löscht den Schlüssel des Pools aus dem Tresor. Der Pool bleibt entsperrt, bis die Box neu startet, und wartet dann auf seinen Schlüssel. Um einen Schlüssel in den Tresor zu legen, entsperre den Pool mit der Option zum Aufbewahren oder ändere den Schlüssel: ZFS kann einen eingegebenen Schlüssel nicht an einem Pool prüfen, der schon entsperrt ist ([`storage.pool.not_locked`](/de/docs/reference/errors/#storage.pool.not_locked)).
+
+Schlüssel gehen über die Standardeingabe an ZFS, nie als Befehlsargument, und erscheinen nie in einem Log, einem Plan oder auf dem Pool selbst.
 
 ## Zustand und Warnungen
 

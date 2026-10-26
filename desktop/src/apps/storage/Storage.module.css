@@ -753,3 +753,52 @@
   gap: var(--space-2);
   overflow-wrap: anywhere;
 }
+
+.poolKey {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-hover);
+}
+
+.poolKeyValue {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-md);
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+  user-select: all;
+}
+
+/* The key sheet exists only while the print dialog is open; everything else of the page is hidden then. */
+.printSheet {
+  display: none;
+}
+
+@media print {
+  :global(body[data-printing='pool-key']) > :not(.printSheet) {
+    display: none !important;
+  }
+
+  .printSheet {
+    display: block;
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: 12pt;
+    white-space: pre-wrap;
+    color: #000;
+  }
+}
+
+.lockedNotice {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2);
+}
+
+.lockedNotice p {
+  margin: 0;
+}
