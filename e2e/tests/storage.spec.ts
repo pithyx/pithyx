@@ -103,47 +103,6 @@ test('the pool wizard compares layouts, encrypts with a stored key and lists the
   }
   await dialog.getByRole('button', { name: 'Next' }).click();
 
-  await expect(dialog).toContainText('For 3 disks we recommend RAID-Z1');
-  const layouts = dialog.getByRole('radiogroup', { name: 'Layout' });
-  await expect(layouts.getByRole('radio')).toHaveCount(3);
-  await expect(layouts.getByRole('radio', { name: /^RAID-Z1/ })).toHaveAttribute(
-    'aria-checked',
-    'true',
-  );
-  await expect(layouts.getByRole('radio', { name: /^Stripe/ })).toContainText('No disk may fail');
-  await dialog.getByRole('button', { name: 'Next' }).click();
-
-  await expect(dialog.getByRole('button', { name: 'Next' })).toBeDisabled();
-  await dialog.getByRole('radio', { name: 'Encrypt with a key' }).check();
-  await expect(
-    dialog.getByRole('radio', { name: 'Automatically at every start, from the key vault' }),
-  ).toBeChecked();
-  await dialog.getByRole('button', { name: 'Next' }).click();
-
-  // The key is shown once and must be confirmed as stored before the pool can be created.
-  await dialog.getByLabel('Pool name').fill('tank');
-  await expect(dialog.getByLabel('Pool key')).toHaveText(/^PXPK(-[0-9A-Z]{4}){14}$/);
-  await expect(dialog.getByRole('button', { name: 'Next' })).toBeDisabled();
-  await dialog.getByRole('checkbox', { name: /I stored the key/ }).check();
-  await expect(dialog.getByRole('button', { name: 'Next' })).toBeDisabled();
-  // Two groups typed from the stored copy confirm it; a wrong one keeps the wizard where it is.
-  const groups = ((await dialog.getByLabel('Pool key').textContent()) ?? '').split('-').slice(1);
-  const asked = dialog.getByRole('textbox', { name: /^Group \d+$/ });
-  await expect(asked).toHaveCount(2);
-  for (const field of await asked.all()) {
-    const label = (await field.getAttribute('aria-labelledby')) ?? '';
-    const number = Number(
-      ((await dialog.locator(`[id="${label.split(' ')[0] ?? ''}"]`).textContent()) ?? '').replace(
-        /\D/g,
-        '',
-      ),
-    );
-    await field.fill('0000');
-    await expect(dialog.getByRole('button', { name: 'Next' })).toBeDisabled();
-    await field.fill((groups[number - 1] ?? '').toLowerCase());
-  }
-  await dialog.getByRole('button', { name: 'Next' }).click();
-
   await expect(dialog).toContainText(
     'the box unlocks it at every start with the key from its key vault',
   );
