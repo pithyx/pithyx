@@ -103,8 +103,13 @@ test('a dismissed notification leaves the panel and the keyboard reaches its but
   await page.keyboard.press('Enter');
 
   await expect(card).toHaveCount(0);
-  const list = (await (await page.request.get('/api/notifications')).json()) as {
-    items: unknown[];
-  };
-  expect(list.items).toEqual([]);
+  // The card goes at once; the daemon's delete may still be on its way.
+  await expect
+    .poll(async () => {
+      const list = (await (await page.request.get('/api/notifications')).json()) as {
+        items: unknown[];
+      };
+      return list.items;
+    })
+    .toEqual([]);
 });

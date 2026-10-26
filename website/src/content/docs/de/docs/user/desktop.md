@@ -48,7 +48,7 @@ Auf einem breiten Bildschirm:
 - Ziehe ein Fenster an den linken oder rechten Rand, damit es die halbe Breite füllt, oder an den oberen Rand, um es zu maximieren. Auf sehr breiten Bildschirmen (2400 Pixel oder mehr) ergeben die Ränder Drittel.
 - Ziehe ein maximiertes oder angedocktes Fenster vom Rand weg, um seine freie Größe zurückzubekommen.
 - Die Titelleiste hat die Schaltflächen **Minimieren**, **Maximieren** (oder **Wiederherstellen**) und **Schließen**.
-- Klicke auf das App-Symbol links in der Titelleiste, um das Fenstermenü zu öffnen: **Wiederherstellen**, **Verschieben**, **Größe ändern**, **Minimieren**, **Maximieren**, **Links andocken**, **Rechts andocken** und **Schließen**. Bei **Verschieben** und **Größe ändern** kannst du die Pfeiltasten benutzen (16 Pixel pro Druck, mit Umschalt 1 Pixel), mit **Enter** bestätigen und mit **Esc** abbrechen.
+- Klicke auf das App-Symbol links in der Titelleiste oder mit der rechten Maustaste auf die Titelleiste, um das Fenstermenü zu öffnen: **Wiederherstellen**, **Verschieben**, **Größe ändern**, **Minimieren**, **Maximieren**, **Links andocken**, **Rechts andocken** und **Schließen**. Bei **Verschieben** und **Größe ändern** kannst du die Pfeiltasten benutzen (16 Pixel pro Druck, mit Umschalt 1 Pixel), mit **Enter** bestätigen und mit **Esc** abbrechen.
 
 Neue Fenster öffnen sich leicht versetzt zueinander. Du kannst höchstens 50 Fenster gleichzeitig offen haben. Darüber hinaus tut das Öffnen einer weiteren App nichts.
 
@@ -106,6 +106,7 @@ Der Desktop enthält Verknüpfungen zu Apps, Dateien und Ordnern sowie Notizzett
 - Klicke mit der rechten Maustaste auf eine Verknüpfung für **Öffnen**, **Umbenennen**, **Verschieben** und **Vom Desktop entfernen**. **F2** benennt um, **Entf** entfernt.
 - Ziehe Symbole, um sie zu verschieben. Ziehe auf einer freien Stelle, um mehrere auszuwählen. Halte **Strg** oder **Umschalt** gedrückt, um zu einer Auswahl hinzuzufügen.
 - Auf einem Touchscreen hältst du etwa eine halbe Sekunde gedrückt, um das Menü zu öffnen.
+- Ist ein Menü offen, öffnet ein Rechtsklick auf etwas anderes stattdessen dessen Menü. Der Desktop zeigt nie das eigene Menü des Browsers, außer in Textfeldern wie dem Text einer Notiz.
 - Um eine Notiz zu löschen, klicke auf **Notiz entfernen**. Bei einer Notiz mit Text kommt vorher die Frage **Diese Notiz löschen?**. Der Text wird auf allen deinen Geräten gelöscht.
 
 Der Desktop fasst höchstens 200 Elemente. Symbole rasten an einem Raster ein. Auf kleinen Bildschirmen fließen sie in Reihen wie auf dem Home-Bildschirm eines Handys.
