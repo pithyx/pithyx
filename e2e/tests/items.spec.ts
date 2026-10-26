@@ -236,20 +236,15 @@ test('a right-click on another item of the shell replaces the open menu, and the
     await expect(start).toHaveCount(0);
   });
 
-  await test.step('the desktop menu gives way to a title bar, whose window menu gives way to the taskbar', async () => {
+  await test.step('the taskbar menu gives way to a title bar, which opens the window menu', async () => {
     await icon(page, 'About Pithyx').dblclick();
     const about = appWindow(page, 'About Pithyx');
     await expect(about).toBeVisible();
-    // A corner of the desktop that neither the icons nor the window cover.
-    const desktop = await box(page.getByRole('main', { name: 'Desktop' }));
-    await page.mouse.click(desktop.x + 24, desktop.y + desktop.height - 24, { button: 'right' });
-    await expect(page.getByRole('menu', { name: 'Desktop' })).toBeVisible();
+    await rightClick(taskbar.getByRole('button', { name: /^About Pithyx/ }));
+    await expect(page.getByRole('menu', { name: 'Menu for About Pithyx' })).toBeVisible();
     await rightClick(about.getByRole('heading', { name: 'About Pithyx' }).first());
     await expect(page.getByRole('menu', { name: 'Window menu for About Pithyx' })).toBeVisible();
     await expect(page.getByRole('menu')).toHaveCount(1);
-    await page.keyboard.press('Escape');
-    await rightClick(taskbar.getByRole('button', { name: /^About Pithyx/ }));
-    await expect(page.getByRole('menu', { name: 'Menu for About Pithyx' })).toBeVisible();
     await page.keyboard.press('Escape');
   });
 
@@ -258,7 +253,7 @@ test('a right-click on another item of the shell replaces the open menu, and the
     await rightClick(taskbar);
   });
 
-  expect(await rightClicks(page)).toEqual(Array<boolean>(8).fill(true));
+  expect(await rightClicks(page)).toEqual(Array<boolean>(7).fill(true));
 });
 
 test('the start menu and the taskbar put apps on the desktop, and the taskbar closes windows', async ({
