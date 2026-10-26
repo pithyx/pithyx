@@ -22,10 +22,10 @@ public sealed partial class PoolEncryptionService(
     private readonly SemaphoreSlim _gate = new(1, 1);
     private readonly Channel<bool> _changes = Channel.CreateBounded<bool>(new BoundedChannelOptions(1) { FullMode = BoundedChannelFullMode.DropWrite });
 
-    // Pools the vault was tried on since they appeared locked; a pool that is gone or unlocked is tried again next time.
-    private readonly HashSet<string> _tried = new(StringComparer.Ordinal);
-
-    /// <summary>Loads the pool's key and mounts its datasets.</summary>
+    /// <summary>
+    /// Loads the pool's key and mounts its datasets. On a pool that is unlocked already it only mounts what is missing,
+    /// for example after a mount failed, and ignores a typed key it cannot check.
+    /// </summary>
     /// <param name="poolName">The pool.</param>
     /// <param name="typedKey">The key as typed, or null to take it from the vault.</param>
     /// <param name="keepInVault">With a typed key: keep it in the vault once it opened the pool.</param>
@@ -38,8 +38,9 @@ public sealed partial class PoolEncryptionService(
             var (pool, encryption) = Encrypted(poolName);
             if (!encryption.Locked)
             {
-                // ZFS cannot check a key against a loaded one, so an unchecked key never goes into the vault.
-                if (typedKey is not null || keepInVault)
+                // ZFS cannot check a key against a loaded one, so an unchecked key never goes into the vault. The key that
+                // is there already opened the pool, so the same key again only asks to mount what is missing.
+                if (keepInVault && (typedKey is null || vault.Read(pool.PoolGuid) != PoolKey.ToHex(typedKey)))
                 {
                     throw new PithyxException(ErrorCodes.StoragePoolNotLocked, Name(pool));
                 }
@@ -49,17 +50,25 @@ public sealed partial class PoolEncryptionService(
                 var hexKey = typedKey is null
                     ? vault.Read(pool.PoolGuid) ?? throw new PithyxException(ErrorCodes.StorageEncryptionKeyRequired, Name(pool))
                     : PoolKey.ToHex(typedKey);
-                var result = await commands.RunAsync(EncryptionCommands.LoadKey(EncryptionCommands.Root(pool.Name), hexKey), CancellationToken.None);
+                var result = await RunAsync(EncryptionCommands.LoadKey(EncryptionCommands.Root(pool.Name), hexKey));
                 if (EncryptionCommands.IsWrongKey(result))
                 {
                     throw new PithyxException(ErrorCodes.StorageEncryptionKeyWrong, Name(pool));
                 }
                 Require(result, "zfs");
-                if (typedKey is not null && keepInVault)
-                {
-                    vault.Save(pool.PoolGuid, hexKey);
-                }
                 LogUnlocked(pool.Name, typedKey is null ? "vault" : "typed");
+                if (typedKey is not null)
+                {
+                    vault.ClearFailed(pool.PoolGuid);
+                }
+                // The pool is open now: its datasets are mounted even when the vault cannot take the key.
+                var kept = typedKey is null || !keepInVault || TrySave(pool, hexKey);
+                await MountAsync(pool.Name);
+                if (!kept)
+                {
+                    throw new PithyxException(ErrorCodes.StorageEncryptionVaultFailed, Name(pool));
+                }
+                return;
             }
             await MountAsync(pool.Name);
         }
@@ -84,31 +93,36 @@ public sealed partial class PoolEncryptionService(
             {
                 throw new PithyxException(ErrorCodes.StoragePoolLocked, Name(pool));
             }
-            Require(await commands.RunAsync(EncryptionCommands.ChangeKey(EncryptionCommands.Root(pool.Name), hexKey), CancellationToken.None), "zfs");
-            try
-            {
-                if (keepInVault)
-                {
-                    vault.Save(pool.PoolGuid, hexKey);
-                }
-                else
-                {
-                    vault.Remove(pool.PoolGuid);
-                }
-            }
-            catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
-            {
-                // The old key in the vault no longer opens the pool; without a key the pool waits for the typed one at start.
-                vault.Remove(pool.PoolGuid);
-                throw;
-            }
+            Require(await RunAsync(EncryptionCommands.ChangeKey(EncryptionCommands.Root(pool.Name), hexKey)), "zfs");
             LogKeyChanged(pool.Name, keepInVault);
+            var kept = keepInVault ? TrySave(pool, hexKey) : TryRemove(pool);
             state.PublishVault();
+            if (!kept)
+            {
+                throw new PithyxException(ErrorCodes.StorageEncryptionVaultFailed, Name(pool));
+            }
         }
         finally
         {
             _gate.Release();
         }
+    }
+
+    /// <summary>
+    /// The pool's key from the vault, for an administrator who lost the stored copy (D384); the caller checked the
+    /// password and the second factor again. Logged, never the key itself.
+    /// </summary>
+    public string RevealKey(string poolName, string userName)
+    {
+        var pool = pools.Current.Pools.FirstOrDefault(candidate => candidate.Name == poolName)
+            ?? throw new PithyxException(ErrorCodes.StoragePoolNotFound, new Dictionary<string, object?> { ["name"] = poolName });
+        if (pool.Encryption is null)
+        {
+            throw new PithyxException(ErrorCodes.StoragePoolNotEncrypted, Name(pool));
+        }
+        var hexKey = vault.Read(pool.PoolGuid) ?? throw new PithyxException(ErrorCodes.StorageEncryptionNotInVault, Name(pool));
+        LogKeyRevealed(pool.Name, userName);
+        return hexKey;
     }
 
     /// <summary>Takes the pool's key out of the vault: from the next start on, the pool waits for its key to be typed.</summary>
@@ -118,7 +132,10 @@ public sealed partial class PoolEncryptionService(
         try
         {
             var (pool, _) = Encrypted(poolName);
-            vault.Remove(pool.PoolGuid);
+            if (!TryRemove(pool))
+            {
+                throw new PithyxException(ErrorCodes.StorageEncryptionVaultFailed, Name(pool));
+            }
             LogKeyForgotten(pool.Name);
             state.PublishVault();
         }
@@ -150,20 +167,33 @@ public sealed partial class PoolEncryptionService(
         }
     }
 
-    /// <summary>Unlocks every locked pool whose key is in the vault and that was not tried since it appeared locked.</summary>
+    /// <summary>
+    /// Unlocks every locked pool whose key is in the vault and did not fail. A failed key is tried again once it is stored
+    /// anew (a typed unlock or a key change), after a restart, or after its pool was gone.
+    /// </summary>
     internal async Task UnlockFromVaultAsync(CancellationToken cancellationToken)
     {
-        var locked = pools.Current.Pools.Where(pool => pool.Encryption is { Locked: true } && !pool.ReadOnly).ToList();
-        _tried.IntersectWith(locked.Select(pool => pool.PoolGuid));
-        foreach (var pool in locked.Where(pool => pool.Encryption is { KeyInVault: true } && _tried.Add(pool.PoolGuid)))
+        var present = pools.Current.Pools.Select(pool => pool.PoolGuid).ToHashSet(StringComparer.Ordinal);
+        foreach (var gone in vault.FailedPools.Where(guid => !present.Contains(guid)))
+        {
+            vault.ClearFailed(gone);
+        }
+        var locked = pools.Current.Pools.Where(pool => pool.Encryption is { Locked: true, KeyInVault: true } && !pool.ReadOnly && !vault.Failed(pool.PoolGuid)).ToList();
+        foreach (var pool in locked)
         {
             try
             {
                 await UnlockAsync(pool.Name, null, false, cancellationToken);
             }
-            catch (PithyxException exception)
+            catch (Exception exception) when (exception is not OperationCanceledException)
             {
-                LogVaultUnlockFailed(pool.Name, exception.Code);
+                // A wrong, damaged or unreadable key leaves the pool locked; the card and an alert ask for the typed key.
+                if (pools.Current.Pools.FirstOrDefault(candidate => candidate.PoolGuid == pool.PoolGuid) is { Encryption.Locked: true })
+                {
+                    vault.MarkFailed(pool.PoolGuid);
+                    state.PublishVault();
+                }
+                LogVaultUnlockFailed(pool.Name, exception is PithyxException pithyx ? pithyx.Code : exception.GetType().Name);
             }
         }
     }
@@ -175,7 +205,7 @@ public sealed partial class PoolEncryptionService(
     private async Task MountAsync(string poolName)
     {
         var root = EncryptionCommands.Root(poolName);
-        var properties = await commands.RunAsync(ImportPlans.MountProperties(poolName), CancellationToken.None);
+        var properties = await RunAsync(ImportPlans.MountProperties(poolName));
         Require(properties, "zfs");
         var mounted = pools.Current.Datasets.Where(dataset => dataset.Mounted).Select(dataset => dataset.Name).ToHashSet(StringComparer.Ordinal);
         var below = ZfsDatasetParser.ParseProperties(properties.StandardOutput)
@@ -186,7 +216,7 @@ public sealed partial class PoolEncryptionService(
         var exitCode = 0;
         foreach (var dataset in mounts.Mount)
         {
-            var result = await commands.RunAsync(EncryptionCommands.Mount(dataset), CancellationToken.None);
+            var result = await RunAsync(EncryptionCommands.Mount(dataset));
             if (result.ExitCode != 0)
             {
                 LogMountFailed(dataset, result.ExitCode, result.StandardError);
@@ -226,6 +256,55 @@ public sealed partial class PoolEncryptionService(
 
     private static Dictionary<string, object?> Name(Pool pool) => new() { ["name"] = pool.Name };
 
+    /// <summary>A key command that hangs waits in the kernel or for a disk; the user gets a code that says so.</summary>
+    private async Task<CommandResult> RunAsync(CommandRequest command)
+    {
+        try
+        {
+            return await commands.RunAsync(command, CancellationToken.None);
+        }
+        catch (TimeoutException)
+        {
+            throw new PithyxException(
+                ErrorCodes.StorageCommandTimedOut,
+                new Dictionary<string, object?>
+                {
+                    ["command"] = $"{command.FileName} {command.Arguments[0]}",
+                    ["minutes"] = (int)Math.Ceiling((command.Timeout ?? ProcessCommandRunner.DefaultTimeout).TotalMinutes),
+                });
+        }
+    }
+
+    private bool TrySave(Pool pool, string hexKey)
+    {
+        try
+        {
+            vault.Save(pool.PoolGuid, hexKey);
+            return true;
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+        {
+            LogVaultWriteFailed(pool.Name, exception);
+            // An older key there no longer opens the pool; without one the pool waits for the typed key at start.
+            TryRemove(pool);
+            return false;
+        }
+    }
+
+    private bool TryRemove(Pool pool)
+    {
+        try
+        {
+            vault.Remove(pool.PoolGuid);
+            return true;
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+        {
+            LogVaultWriteFailed(pool.Name, exception);
+            return false;
+        }
+    }
+
     private static void Require(CommandResult result, string command)
     {
         if (result.ExitCode != 0)
@@ -247,6 +326,12 @@ public sealed partial class PoolEncryptionService(
 
     [LoggerMessage(Level = LogLevel.Information, Message = "Pool {Pool} has a new key; kept in the key vault: {Kept}")]
     private partial void LogKeyChanged(string pool, bool kept);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "The key of pool {Pool} was shown from the key vault to {User}")]
+    private partial void LogKeyRevealed(string pool, string user);
+
+    [LoggerMessage(Level = LogLevel.Error, Message = "Writing the key vault for pool {Pool} failed")]
+    private partial void LogVaultWriteFailed(string pool, Exception exception);
 
     [LoggerMessage(Level = LogLevel.Information, Message = "The key of pool {Pool} left the key vault")]
     private partial void LogKeyForgotten(string pool);

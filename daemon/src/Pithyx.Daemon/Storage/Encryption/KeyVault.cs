@@ -10,9 +10,22 @@ namespace Pithyx.Daemon.Storage.Encryption;
 /// <param name="directory"><c>/var/lib/pithyx/pool-keys</c> on a box.</param>
 public sealed partial class KeyVault(string directory)
 {
+    // Pools whose key from the vault did not unlock them since the key was last stored; in memory, a restart tries again.
+    private readonly System.Collections.Concurrent.ConcurrentDictionary<string, bool> _failed = new(StringComparer.Ordinal);
+
     public string Directory { get; } = directory;
 
     public bool Has(string poolGuid) => File.Exists(PathOf(poolGuid));
+
+    /// <summary>True when the vault's key of the pool was tried and did not unlock it (wrong, unreadable or damaged).</summary>
+    public bool Failed(string poolGuid) => _failed.ContainsKey(poolGuid ?? "");
+
+    /// <summary>The GUIDs of the pools whose vault key failed.</summary>
+    public IReadOnlyList<string> FailedPools => [.. _failed.Keys];
+
+    public void MarkFailed(string poolGuid) => _failed[PoolGuidOf(poolGuid)] = true;
+
+    public void ClearFailed(string poolGuid) => _failed.TryRemove(poolGuid ?? "", out _);
 
     /// <summary>The pool's key in hex, or null when the vault has none.</summary>
     public string? Read(string poolGuid)
@@ -51,15 +64,20 @@ public sealed partial class KeyVault(string directory)
             stream.Flush(flushToDisk: true);
         }
         File.Move(temporary, path, overwrite: true);
+        ClearFailed(poolGuid);
     }
 
     /// <summary>Deletes the pool's key; nothing happens when the vault has none.</summary>
-    public void Remove(string poolGuid) => File.Delete(PathOf(poolGuid));
+    public void Remove(string poolGuid)
+    {
+        File.Delete(PathOf(poolGuid));
+        ClearFailed(poolGuid);
+    }
 
-    private string PathOf(string poolGuid) =>
-        PoolGuid().IsMatch(poolGuid ?? "")
-            ? Path.Combine(Directory, $"{poolGuid}.key")
-            : throw new ArgumentException($"Not a pool GUID: {poolGuid}.", nameof(poolGuid));
+    private string PathOf(string poolGuid) => Path.Combine(Directory, $"{PoolGuidOf(poolGuid)}.key");
+
+    private static string PoolGuidOf(string poolGuid) =>
+        PoolGuid().IsMatch(poolGuid ?? "") ? poolGuid! : throw new ArgumentException($"Not a pool GUID: {poolGuid}.", nameof(poolGuid));
 
     [GeneratedRegex("^[0-9]{1,20}$")]
     private static partial Regex PoolGuid();

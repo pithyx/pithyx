@@ -570,8 +570,14 @@
       "title": "Pithyx-Pool-Schlüssel",
       "pool": "Pool: {pool}",
       "date": "Erstellt: {date}",
-      "hint": "Dieser Schlüssel entsperrt die Daten des Pools. Bewahre ihn sicher und getrennt von der Box auf; wer ihn und die Platten hat, kann die Daten lesen. Gib ihn in Speicher ein, um den Pool zu entsperren."
-    }
+      "hint": "Dieser Schlüssel entsperrt die Daten des Pools. Bewahre ihn sicher und getrennt von der Box auf; wer ihn und die Platten hat, kann die Daten lesen. Gib ihn in Speicher ein, um den Pool zu entsperren.",
+      "emergency": "Ohne Pithyx: Schließe auf einem beliebigen Linux mit OpenZFS 2.x alle Platten des Pools an und führe diese Befehle als root aus. Füge diesen Hex-Schlüssel ein, wenn zfs load-key danach fragt:",
+      "emergencyHint": "Danach liegen die Daten des Pools unter den Einhängepunkten, die zfs list zeigt. -f ist nötig, wenn der Pool zuletzt von einem anderen System benutzt wurde."
+    },
+    "introShown": "Das ist der Schlüssel des Pools aus dem Schlüsseltresor. Lade ihn herunter oder drucke ihn aus und bewahre ihn getrennt von der Box auf.",
+    "verify": "Damit sicher ist, dass die aufbewahrte Kopie vollständig ist, gib diese zwei Vierergruppen daraus ein.",
+    "group": "Gruppe {number}",
+    "groupWrong": "Diese Gruppe passt nicht zum Schlüssel."
   },
   "unlock": {
     "title": "{pool} entsperren",
@@ -581,7 +587,8 @@
     "keyHint": "Beginnt mit PXPK. Bindestriche, Leerzeichen und Groß- oder Kleinschreibung spielen keine Rolle.",
     "keep": "Schlüssel im Schlüsseltresor aufbewahren und den Pool bei jedem Start automatisch entsperren",
     "cancel": "Abbrechen",
-    "submit": "Entsperren"
+    "submit": "Entsperren",
+    "mountFailed": "Der Schlüssel hat den Pool geöffnet, aber nicht jedes Dataset ließ sich einhängen (Details im Protokoll). Drücke erneut auf Entsperren, um den Rest einzuhängen."
   },
   "changeKey": {
     "title": "Schlüssel von {pool} ändern",
@@ -607,6 +614,18 @@
     "inVault": "Verschlüsselt; wird bei jedem Start mit dem Schlüssel aus dem Schlüsseltresor entsperrt.",
     "byHand": "Verschlüsselt; bleibt nach jedem Start gesperrt, bis sein Schlüssel eingegeben wird.",
     "change": "Schlüssel ändern…",
-    "forget": "Schlüssel aus dem Tresor entfernen…"
+    "forget": "Schlüssel aus dem Tresor entfernen…",
+    "opening": "Dieser Pool wird mit dem Schlüssel aus dem Schlüsseltresor entsperrt.",
+    "reveal": "Schlüssel anzeigen…"
+  },
+  "reveal": {
+    "title": "Schlüssel von {pool} anzeigen",
+    "intro": "Die Box zeigt den Schlüssel aus ihrem Schlüsseltresor, nachdem du bestätigt hast, dass du es bist. Nutze das, wenn die aufbewahrte Kopie verloren ist, und bewahre den Schlüssel erneut auf.",
+    "vaultFailed": "Der Schlüssel im Tresor hat diesen Pool beim letzten Mal nicht entsperrt. Er ist vielleicht beschädigt oder ein älterer Schlüssel.",
+    "password": "Dein Passwort",
+    "code": "Code aus deiner Authenticator-App",
+    "cancel": "Abbrechen",
+    "submit": "Schlüssel anzeigen",
+    "close": "Schließen"
   }
 }

@@ -565,7 +565,9 @@
       "unavailable": "Diese Box kann keine Pools verschlüsseln. Ein Pool lässt sich nur beim Anlegen verschlüsseln; leg ihn also nur dann unverschlüsselt an, wenn das für seine Daten in Ordnung ist.",
       "key_invalid": "Das ist kein Pool-Schlüssel. Ein Pool-Schlüssel beginnt mit PXPK und hat danach 56 Zeichen; prüfe ihn auf Tippfehler.",
       "key_wrong": "Dieser Schlüssel entsperrt den Pool {name} nicht. Er ist ein Pool-Schlüssel, aber von einem anderen Pool oder ein älterer.",
-      "key_required": "Gib den Schlüssel des Pools {name} ein."
+      "key_required": "Gib den Schlüssel des Pools {name} ein.",
+      "vault_failed": "Der Schlüssel des Pools {name} konnte nicht im Schlüsseltresor auf der Systemplatte abgelegt werden. Der Pool ist jetzt entsperrt; nach dem nächsten Start wartet er auf seinen Schlüssel, bewahre den Schlüssel also auf. Prüfe die Systemplatte im Protokoll und entsperre den Pool oder ändere den Schlüssel erneut, um ihn im Tresor aufzubewahren.",
+      "not_in_vault": "Der Schlüsseltresor enthält keinen Schlüssel des Pools {name}. Nur der Schlüssel, den du selbst aufbewahrt hast, kann ihn öffnen."
     },
     "plan": {
       "action_invalid": "Unbekannte Speicheraktion.",

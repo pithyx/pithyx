@@ -570,8 +570,14 @@
       "title": "Pithyx pool key",
       "pool": "Pool: {pool}",
       "date": "Created: {date}",
-      "hint": "This key unlocks the pool's data. Keep it safe and away from the box; whoever has it and the disks can read the data. Type it in Storage to unlock the pool."
-    }
+      "hint": "This key unlocks the pool's data. Keep it safe and away from the box; whoever has it and the disks can read the data. Type it in Storage to unlock the pool.",
+      "emergency": "Without Pithyx: on any Linux with OpenZFS 2.x, connect all disks of the pool and run these commands as root. Paste this hex key when zfs load-key asks for it:",
+      "emergencyHint": "Then the pool's data is below the mount points it shows with zfs list. -f is needed when the pool was last used by another system."
+    },
+    "introShown": "This is the pool's key from the key vault. Download or print it and keep it away from the box.",
+    "verify": "To make sure the stored copy is complete, type these two groups of four from it.",
+    "group": "Group {number}",
+    "groupWrong": "This group does not match the key."
   },
   "unlock": {
     "title": "Unlock {pool}",
@@ -581,7 +587,8 @@
     "keyHint": "Starts with PXPK. Dashes, spaces and upper or lower case do not matter.",
     "keep": "Keep the key in the key vault and unlock the pool automatically at every start",
     "cancel": "Cancel",
-    "submit": "Unlock"
+    "submit": "Unlock",
+    "mountFailed": "The key opened the pool, but not every dataset could be mounted (the log has the details). Press Unlock again to mount what is missing."
   },
   "changeKey": {
     "title": "Change the key of {pool}",
@@ -607,6 +614,18 @@
     "inVault": "Encrypted; unlocks at every start with the key from the key vault.",
     "byHand": "Encrypted; stays locked after every start until its key is typed.",
     "change": "Change key…",
-    "forget": "Remove key from vault…"
+    "forget": "Remove key from vault…",
+    "opening": "This pool is being unlocked with the key from the key vault.",
+    "reveal": "Show key…"
+  },
+  "reveal": {
+    "title": "Show the key of {pool}",
+    "intro": "The box shows the key from its key vault after you confirm it is you. Use this when the stored copy is lost, and store the key again.",
+    "vaultFailed": "The key in the vault did not unlock this pool the last time. It may be damaged or belong to an older key.",
+    "password": "Your password",
+    "code": "Code from your authenticator app",
+    "cancel": "Cancel",
+    "submit": "Show key",
+    "close": "Close"
   }
 }

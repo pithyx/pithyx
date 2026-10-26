@@ -55,6 +55,20 @@ public static class PoolKey
         }
     }
 
+    /// <summary>The printed form of a key as ZFS takes it (64 hex characters), for a key from the vault.</summary>
+    public static string FromHex(string hexKey)
+    {
+        var key = Convert.FromHexString(hexKey);
+        try
+        {
+            return Format(key);
+        }
+        finally
+        {
+            CryptographicOperations.ZeroMemory(key);
+        }
+    }
+
     /// <summary>The printed form of a 32-byte key.</summary>
     internal static string Format(ReadOnlySpan<byte> key)
     {

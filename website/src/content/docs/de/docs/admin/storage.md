@@ -99,7 +99,7 @@ Ein Pool wird beim Anlegen verschlüsselt oder nie: Der Assistent fragt „Soll 
 
 ### Der Schlüssel
 
-Die Box erzeugt den Schlüssel; einen eigenen kannst du nicht wählen. Der Schritt **Schlüssel** zeigt ihn einmal, als `PXPK-` gefolgt von 56 Zeichen in Vierergruppen. Kopiere ihn, lade ihn mit **Herunterladen** als Textdatei herunter oder **Drucke** ihn aus, bewahre ihn getrennt von der Box auf und bestätige **Ich habe den Schlüssel sicher und getrennt von der Box aufbewahrt.**, bevor es weitergeht. Die letzten Zeichen prüfen die übrigen, sodass ein Tippfehler als [`storage.encryption.key_invalid`](/de/docs/reference/errors/#storage.encryption.key_invalid) auffällt, bevor der Pool gefragt wird; beim Eingeben spielen Bindestriche, Leerzeichen und Groß- oder Kleinschreibung keine Rolle.
+Die Box erzeugt den Schlüssel; einen eigenen kannst du nicht wählen. Der Schritt **Schlüssel** zeigt ihn einmal, als `PXPK-` gefolgt von 56 Zeichen in Vierergruppen. Kopiere ihn, lade ihn mit **Herunterladen** als Textdatei herunter oder **Drucke** ihn aus, bewahre ihn getrennt von der Box auf und bestätige **Ich habe den Schlüssel sicher und getrennt von der Box aufbewahrt.** und gib die zwei Vierergruppen aus deiner Kopie ein, nach denen gefragt wird, bevor es weitergeht. Das Blatt enthält den Schlüssel auch in Hex mit den Befehlen, die den Pool ohne Pithyx öffnen. Die letzten Zeichen prüfen die übrigen, sodass ein Tippfehler als [`storage.encryption.key_invalid`](/de/docs/reference/errors/#storage.encryption.key_invalid) auffällt, bevor der Pool gefragt wird; beim Eingeben spielen Bindestriche, Leerzeichen und Groß- oder Kleinschreibung keine Rolle.
 
 :::danger[Ohne den Schlüssel sind die Daten verloren]
 Pithyx hat keinen Weg an einem verlorenen Schlüssel vorbei. Bewahre den Schlüssel auch dann auf, wenn der Schlüsseltresor ihn hat: Der Tresor liegt auf der Systemplatte, die eine Neuinstallation ersetzt, und er ist nie Teil einer [Konfigurationssicherung](/de/docs/admin/backup/).
@@ -122,7 +122,9 @@ Ein verschlüsselter Pool von einer anderen Box oder nach einer Neuinstallation 
 
 **Schlüssel aus dem Tresor entfernen…** löscht den Schlüssel des Pools aus dem Tresor. Der Pool bleibt entsperrt, bis die Box neu startet, und wartet dann auf seinen Schlüssel. Wird ein Pool zerstört, löscht das auch seinen Schlüssel aus dem Tresor. Um einen Schlüssel in den Tresor zu legen, entsperre den Pool mit der Option zum Aufbewahren oder ändere den Schlüssel: ZFS kann einen eingegebenen Schlüssel nicht an einem Pool prüfen, der schon entsperrt ist ([`storage.pool.not_locked`](/de/docs/reference/errors/#storage.pool.not_locked)).
 
-Schlüssel gehen über die Standardeingabe an ZFS, nie als Befehlsargument, und erscheinen nie in einem Log, einem Plan oder auf dem Pool selbst.
+**Schlüssel anzeigen…** zeigt den Schlüssel aus dem Tresor erneut, nach deinem Passwort und, wenn die Zwei-Faktor-Anmeldung an ist, einem Authenticator-Code; nutze das, wenn deine Kopie verloren ist.
+
+Schlüssel gehen über die Standardeingabe an ZFS, nie als Befehlsargument, und erscheinen nie in einem Log, einem Plan oder auf dem Pool selbst. Administratoren bekommen eine Speicherwarnung, solange ein Pool auf seinen Schlüssel wartet. Was zu tun ist, wenn etwas schiefgeht, auch wie sich ein Pool ohne Pithyx öffnen lässt: [Verschlüsselte Pools: wenn etwas schiefgeht](/de/docs/admin/encryption-emergencies/).
 
 ## Zustand und Warnungen
 

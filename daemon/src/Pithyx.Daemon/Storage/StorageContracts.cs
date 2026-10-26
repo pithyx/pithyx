@@ -138,9 +138,15 @@ public sealed record ImportablePool(
     IReadOnlyList<string> UnknownDevices,
     bool Allowed);
 
-/// <summary>Response of <c>POST /api/storage/encryption/keys</c>.</summary>
-/// <param name="Key">The key as the user stores it: <c>PXPK-</c> and 56 characters in groups of four. Shown once; the box keeps no copy.</param>
-public sealed record NewPoolKey(string Key);
+/// <summary>Response of <c>POST /api/storage/encryption/keys</c> and <c>POST /api/storage/pools/{pool}/key/reveal</c>.</summary>
+/// <param name="Key">The key as the user stores it and types it into Pithyx: <c>PXPK-</c> and 56 characters in groups of four.</param>
+/// <param name="Hex">The same key as ZFS takes it (64 hex characters), to unlock the pool with <c>zfs load-key</c> without Pithyx.</param>
+public sealed record NewPoolKey(string Key, string Hex);
+
+/// <summary>Request of <c>POST /api/storage/pools/{pool}/key/reveal</c>: the signed-in administrator's credentials again.</summary>
+/// <param name="Password">The administrator's password.</param>
+/// <param name="TotpCode">A current code of the authenticator app, required when the administrator has two-factor sign-in on.</param>
+public sealed record PoolKeyRevealRequest(string Password, string? TotpCode = null);
 
 /// <summary>Request of <c>POST /api/storage/pools/{pool}/unlock</c>.</summary>
 /// <param name="Key">The pool's key as typed, or null to take it from the key vault.</param>

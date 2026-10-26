@@ -802,3 +802,13 @@
 .lockedNotice p {
   margin: 0;
 }
+
+.keyGroups {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.keyGroups > * {
+  width: 9rem;
+}

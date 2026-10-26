@@ -205,7 +205,8 @@ public static class AuthEndpoints
         return TypedResults.NoContent();
     }
 
-    private static async Task<T> CountFailuresAsync<T>(LoginRateLimiter limiter, HttpContext context, string username, Func<Task<T>> attempt)
+    /// <summary>Counts a wrong password, code or key as a failed sign-in for the rate limiter, then lets it through.</summary>
+    internal static async Task<T> CountFailuresAsync<T>(LoginRateLimiter limiter, HttpContext context, string username, Func<Task<T>> attempt)
     {
         try
         {

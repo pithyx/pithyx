@@ -36,6 +36,18 @@ public sealed class ShareAvailabilityTests
     }
 
     [Fact]
+    public void AShareOnALockedPoolSaysItIsLocked()
+    {
+        var locked = Dataset("tank/pithyx/shares/media", mounted: false) with { Encryption = "aes-256-gcm", KeyStatus = "unavailable", EncryptionRoot = "tank/pithyx" };
+
+        Assert.Equal(ShareAvailability.Locked, ShareAvailability.Reason("tank/pithyx/shares/media", Pools(Pool("tank"), locked), poolsRead: true));
+        Assert.Null(ShareAvailability.Reason("tank/pithyx/shares/media", Pools(Pool("tank"), locked with { Mounted = true, KeyStatus = "available" }), poolsRead: true));
+        Assert.NotEqual(
+            ShareAvailability.Fingerprint(Pools(Pool("tank"), locked)),
+            ShareAvailability.Fingerprint(Pools(Pool("tank"), locked with { KeyStatus = "available" })));
+    }
+
+    [Fact]
     public void PlainFoldersAndPoolsNeverReadAreNotJudged()
     {
         Assert.Null(ShareAvailability.Reason(null, Pools(Pool("tank")), poolsRead: true));

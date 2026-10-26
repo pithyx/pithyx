@@ -99,7 +99,7 @@ A pool is encrypted when it is created, or never: the wizard asks "Should the po
 
 ### The key
 
-The box makes the key; you cannot choose your own. The step **Key** shows it once, as `PXPK-` followed by 56 characters in groups of four. Copy it, **Download** it as a text file or **Print** it, keep it away from the box, and confirm **I stored the key somewhere safe, away from the box.** before you go on. The last characters check the others, so a typo is caught as [`storage.encryption.key_invalid`](/docs/reference/errors/#storage.encryption.key_invalid) before the pool is asked; when typing, dashes, spaces and upper or lower case do not matter.
+The box makes the key; you cannot choose your own. The step **Key** shows it once, as `PXPK-` followed by 56 characters in groups of four. Copy it, **Download** it as a text file or **Print** it, keep it away from the box, and confirm **I stored the key somewhere safe, away from the box.** and type the two groups of four it asks for from your copy before you go on. The sheet also carries the key in hex with the commands that open the pool without Pithyx. The last characters check the others, so a typo is caught as [`storage.encryption.key_invalid`](/docs/reference/errors/#storage.encryption.key_invalid) before the pool is asked; when typing, dashes, spaces and upper or lower case do not matter.
 
 :::danger[Without the key, the data is gone]
 Pithyx has no way around a lost key. Keep the key even when the key vault holds it: the vault is on the system disk, which a reinstall replaces, and it is never part of a [configuration backup](/docs/admin/backup/).
@@ -122,7 +122,9 @@ An encrypted pool on another box, or after a reinstall, is imported like any oth
 
 **Remove key from vault…** deletes the pool's key from the vault. The pool stays unlocked until the box restarts and then waits for its key. Destroying a pool also deletes its key from the vault. To put a key into the vault, unlock the pool with the box set to keep it, or change the key: ZFS cannot check a typed key against a pool that is unlocked already ([`storage.pool.not_locked`](/docs/reference/errors/#storage.pool.not_locked)).
 
-Keys go to ZFS on standard input, never as a command argument, and never appear in a log, a plan or the pool itself.
+**Show key…** shows the key from the vault again after your password and, with two-factor sign-in on, an authenticator code; use it when your copy is lost.
+
+Keys go to ZFS on standard input, never as a command argument, and never appear in a log, a plan or the pool itself. Administrators get a storage alert while a pool waits for its key. What to do when something goes wrong, including opening a pool without Pithyx: [Encrypted pools: when something goes wrong](/docs/admin/encryption-emergencies/).
 
 ## Health and warnings
 

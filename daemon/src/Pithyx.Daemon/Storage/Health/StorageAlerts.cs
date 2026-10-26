@@ -63,6 +63,18 @@ public static class StorageAlerts
             {
                 Add($"pool.faulted:{pool.Name}", Critical, "storage.alert.poolFaulted", new() { ["pool"] = pool.Name, ["state"] = pool.State });
             }
+            // A pool that waits for its key, by choice or because the vault's key failed; one in the vault and not tried yet is opening.
+            if (pool.Encryption is { Locked: true } encryption && !pool.ReadOnly)
+            {
+                if (encryption.VaultFailed)
+                {
+                    Add($"pool.locked:{pool.Name}", Critical, "storage.alert.poolLockedVault", name);
+                }
+                else if (!encryption.KeyInVault)
+                {
+                    Add($"pool.locked:{pool.Name}", Warning, "storage.alert.poolLocked", name);
+                }
+            }
             foreach (var leaf in pool.Vdevs.SelectMany(vdev => vdev.Leaves()).Where(leaf => leaf.Missing))
             {
                 Add(

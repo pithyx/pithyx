@@ -345,8 +345,19 @@ public sealed class StoragePlanner(
                 {
                     var pool = pools.Current.Pools.FirstOrDefault(candidate => candidate.Name == poolName)
                         ?? throw new PithyxException(ErrorCodes.StoragePoolNotFound, new Dictionary<string, object?> { ["name"] = poolName });
-                    keys.Save(pool.PoolGuid, hexKey);
-                    state.PublishVault();
+                    try
+                    {
+                        keys.Save(pool.PoolGuid, hexKey);
+                    }
+                    catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+                    {
+                        // The pool exists and is unlocked; the user stored the key, which opens it after the next start.
+                        throw new PithyxException(ErrorCodes.StorageEncryptionVaultFailed, new Dictionary<string, object?> { ["name"] = poolName });
+                    }
+                    finally
+                    {
+                        state.PublishVault();
+                    }
                     return Task.CompletedTask;
                 },
             },

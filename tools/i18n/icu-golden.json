@@ -2219,6 +2219,18 @@
         "name": "tank"
       },
       "expected": "Pool tank is unlocked already. To keep its key in the key vault, change the key: the new key goes into the vault."
+    },
+    "storage.encryption.vault_failed": {
+      "params": {
+        "name": "tank"
+      },
+      "expected": "The key of pool tank could not be stored in the key vault on the system disk. The pool is unlocked now; after the next start it waits for its key, so keep the key you stored. Check the system disk in the log, then unlock or change the key again to keep it in the vault."
+    },
+    "storage.encryption.not_in_vault": {
+      "params": {
+        "name": "tank"
+      },
+      "expected": "The key vault holds no key of pool tank. Only the key you stored yourself can open it."
     }
   },
   "cases": [

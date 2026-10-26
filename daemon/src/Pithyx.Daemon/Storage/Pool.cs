@@ -32,7 +32,8 @@ public sealed record Pool(
 
 /// <param name="Locked">True while its key is not loaded: its datasets are not mounted, and its shares, homes and apps are unavailable.</param>
 /// <param name="KeyInVault">True when the key vault on the system disk holds its key, so the box unlocks it at start.</param>
-public sealed record PoolEncryption(bool Locked, bool KeyInVault);
+/// <param name="VaultFailed">True when the vault's key was tried and did not unlock the pool (wrong, unreadable or damaged): the pool waits for its key to be typed.</param>
+public sealed record PoolEncryption(bool Locked, bool KeyInVault, bool VaultFailed = false);
 
 /// <param name="Name">Vdev name as ZFS shows it: <c>raidz1-0</c>, <c>mirror-1</c> or the device's by-id name.</param>
 /// <param name="VdevGuid">Vdev GUID as decimal text; names a device in commands even when it is missing.</param>

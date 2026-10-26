@@ -1186,6 +1186,17 @@ public static class ErrorCodes
     [ErrorStatus(HttpStatusCode.BadRequest)]
     public const string StorageEncryptionKeyRequired = "storage.encryption.key_required";
 
+    /// <summary>
+    /// The pool's key could not be written to the key vault on the system disk (full, read-only or broken). The pool is
+    /// unlocked; at the next start it waits for its key to be typed. <c>params.name</c> is the pool.
+    /// </summary>
+    [ErrorStatus(HttpStatusCode.InternalServerError)]
+    public const string StorageEncryptionVaultFailed = "storage.encryption.vault_failed";
+
+    /// <summary>The key vault holds no key of this pool, so there is nothing to show; <c>params.name</c> is the pool.</summary>
+    [ErrorStatus(HttpStatusCode.NotFound)]
+    public const string StorageEncryptionNotInVault = "storage.encryption.not_in_vault";
+
     /// <summary>The pool is not encrypted by Pithyx (its <c>&lt;pool&gt;/pithyx</c> has no key of its own); <c>params.name</c> is the pool.</summary>
     [ErrorStatus(HttpStatusCode.Conflict)]
     public const string StoragePoolNotEncrypted = "storage.pool.not_encrypted";

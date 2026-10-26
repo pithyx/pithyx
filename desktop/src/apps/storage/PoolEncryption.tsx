@@ -6,44 +6,56 @@ import { ErrorNotice } from '../../errors/ErrorNotice';
 import { useFormatLocale } from '../../i18n';
 import { copyText } from '../../platform/browser';
 import { IconCheck, IconCopy, IconDownload, IconKey, IconPrinter } from '../../ui/icons';
-import { Button, cx, Dialog, TextField } from '@pithyx/ui';
-import { internalCall, type Pool } from '../sdk/internal';
+import { Button, cx, Dialog, PasswordField, TextField } from '@pithyx/ui';
+import { internalCall, type NewPoolKey, type Pool } from '../sdk/internal';
 import styles from './Storage.module.css';
-import { describeProblem, formatDate, type Translate } from './shared';
+import { describeProblem, formatDate } from './shared';
+import { keyGroups, keySheet, normalizeGroup, pickTwo } from './poolKey';
 
 /**
- * A new pool key (D384), shown once: copy it, download it as a text file or print it, then confirm it was stored.
- * The box keeps no copy unless the key vault is chosen, so a lost key means lost data.
+ * A pool key (D384): copy it, download it as a text file or print it. The sheet also carries the key in hex with the
+ * commands that open the pool on any Linux with OpenZFS, without Pithyx. A new key is confirmed as stored by ticking the
+ * box and typing two of its groups from the stored copy; the box keeps no copy unless the key vault is chosen.
  */
 export function PoolKeyCard({
   poolKey,
   pool,
-  stored,
   onStoredChange,
 }: {
-  poolKey: string;
+  poolKey: NewPoolKey;
   pool: string;
-  stored: boolean;
-  onStoredChange: (stored: boolean) => void;
+  /** Set for a new key: called with true once the user ticked the box and typed both groups right. */
+  onStoredChange?: (stored: boolean) => void;
 }) {
   const { t } = useTranslation('storage');
   const locale = useFormatLocale();
   const [copied, setCopied] = useState<'no' | 'yes' | 'manually'>('no');
+  const [ticked, setTicked] = useState(false);
+  const [typed, setTyped] = useState<readonly [string, string]>(['', '']);
+  const groups = keyGroups(poolKey.key);
+  // Two different groups, chosen once per key, that the user types from the stored copy.
+  const [asked] = useState(() => pickTwo(groups.length));
   const value = useRef<HTMLElement>(null);
   const sheet = keySheet(t, pool, poolKey, formatDate(new Date().toISOString(), locale));
+  const report = (nextTicked: boolean, nextTyped: readonly [string, string]) => {
+    onStoredChange?.(
+      nextTicked &&
+        asked.every((group, index) => normalizeGroup(nextTyped[index] ?? '') === groups[group]),
+    );
+  };
   return (
     <div className={styles.form}>
-      <p>{t('key.intro')}</p>
+      <p>{t(onStoredChange === undefined ? 'key.introShown' : 'key.intro')}</p>
       <div className={styles.poolKey}>
         <IconKey size={20} stroke={1.75} aria-hidden />
         <code ref={value} className={styles.poolKeyValue} aria-label={t('key.label')}>
-          {poolKey}
+          {poolKey.key}
         </code>
       </div>
       <div className={styles.buttons}>
         <Button
           onPress={() => {
-            void copyText(poolKey, value.current).then((done) => {
+            void copyText(poolKey.key, value.current).then((done) => {
               setCopied(done ? 'yes' : 'manually');
             });
           }}
@@ -75,31 +87,48 @@ export function PoolKeyCard({
       <p className={styles.muted} role="status">
         {copied === 'manually' ? t('key.copyManually') : ''}
       </p>
-      <label className={styles.check}>
-        <input
-          type="checkbox"
-          checked={stored}
-          onChange={(event) => {
-            onStoredChange(event.target.checked);
-          }}
-        />
-        <span>{t('key.confirm')}</span>
-      </label>
+      {onStoredChange !== undefined && (
+        <>
+          <label className={styles.check}>
+            <input
+              type="checkbox"
+              checked={ticked}
+              onChange={(event) => {
+                setTicked(event.target.checked);
+                report(event.target.checked, typed);
+              }}
+            />
+            <span>{t('key.confirm')}</span>
+          </label>
+          <p className={styles.muted}>{t('key.verify')}</p>
+          <div className={styles.keyGroups}>
+            {asked.map((group, index) => (
+              <TextField
+                key={group}
+                label={t('key.group', { number: group + 1 })}
+                value={typed[index] ?? ''}
+                onChange={(next) => {
+                  const nextTyped: [string, string] =
+                    index === 0 ? [next, typed[1]] : [typed[0], next];
+                  setTyped(nextTyped);
+                  report(ticked, nextTyped);
+                }}
+                isInvalid={
+                  (typed[index] ?? '').trim().length >= 4 &&
+                  normalizeGroup(typed[index] ?? '') !== groups[group]
+                }
+                errorMessage={t('key.groupWrong')}
+                autoCapitalize="characters"
+                autoComplete="off"
+                spellCheck="false"
+                maxLength={6}
+              />
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
-}
-
-/** The lines of the downloaded or printed key, in the user's language. */
-function keySheet(t: Translate, pool: string, poolKey: string, date: string): string[] {
-  return [
-    t('key.sheet.title'),
-    t('key.sheet.pool', { pool: pool || '-' }),
-    t('key.sheet.date', { date }),
-    '',
-    poolKey,
-    '',
-    t('key.sheet.hint'),
-  ];
 }
 
 function download(text: string, fileName: string) {
@@ -187,7 +216,7 @@ export function UnlockDialog({
           }
         }}
       >
-        <p>{t(pool.encryption?.keyInVault ? 'unlock.introVaultFailed' : 'unlock.intro')}</p>
+        <p>{t(pool.encryption?.vaultFailed ? 'unlock.introVaultFailed' : 'unlock.intro')}</p>
         <TextField
           label={t('unlock.key')}
           description={t('unlock.keyHint')}
@@ -213,7 +242,111 @@ export function UnlockDialog({
         </label>
         <p className={cx(styles.muted, styles.indent)}>{t('vault.hint')}</p>
         {unlock.isError && <ErrorNotice error={describeProblem(unlock.error)} />}
+        {unlock.isError && mountProblem(unlock.error) && (
+          <p className={styles.notice}>{t('unlock.mountFailed')}</p>
+        )}
       </form>
+    </Dialog>
+  );
+}
+
+/** A command that failed or hung after the key was loaded: the pool is open, and unlocking again mounts the rest. */
+function mountProblem(error: unknown): boolean {
+  const code = describeProblem(error).code;
+  return code === 'storage.command.failed' || code === 'storage.command.timed_out';
+}
+
+/**
+ * Shows the pool's key from the vault again, for an administrator who lost the stored copy: the password and, with
+ * two-factor sign-in on, a current authenticator code first (D384).
+ */
+export function RevealKeyDialog({
+  app,
+  pool,
+  onClose,
+}: {
+  app: PithyxApp;
+  pool: Pool;
+  onClose: () => void;
+}) {
+  const { t } = useTranslation('storage');
+  const twoFactor = app.context.user.twoFactor;
+  const [password, setPassword] = useState('');
+  const [code, setCode] = useState('');
+  const reveal = useMutation({
+    mutationFn: () =>
+      internalCall(app, 'internal.admin.storage.revealKey', {
+        pool: pool.name,
+        password,
+        ...(twoFactor ? { totpCode: code.trim() } : {}),
+      }),
+  });
+  const ready = password !== '' && (!twoFactor || code.trim() !== '');
+  return (
+    <Dialog
+      isOpen
+      onOpenChange={(open) => {
+        if (!open) {
+          onClose();
+        }
+      }}
+      title={t('reveal.title', { pool: pool.name })}
+      actions={
+        reveal.data === undefined ? (
+          <>
+            <Button onPress={onClose}>{t('reveal.cancel')}</Button>
+            <Button
+              variant="primary"
+              isDisabled={!ready || reveal.isPending}
+              onPress={() => {
+                reveal.mutate();
+              }}
+            >
+              {t('reveal.submit')}
+            </Button>
+          </>
+        ) : (
+          <Button variant="primary" onPress={onClose}>
+            {t('reveal.close')}
+          </Button>
+        )
+      }
+    >
+      {reveal.data === undefined ? (
+        <form
+          className={styles.form}
+          onSubmit={(event) => {
+            event.preventDefault();
+            if (ready) {
+              reveal.mutate();
+            }
+          }}
+        >
+          <p>{t('reveal.intro')}</p>
+          {pool.encryption?.vaultFailed === true && (
+            <p className={styles.notice}>{t('reveal.vaultFailed')}</p>
+          )}
+          <PasswordField
+            label={t('reveal.password')}
+            value={password}
+            onChange={setPassword}
+            autoComplete="current-password"
+            autoFocus
+          />
+          {twoFactor && (
+            <TextField
+              label={t('reveal.code')}
+              value={code}
+              onChange={setCode}
+              inputMode="numeric"
+              autoComplete="one-time-code"
+            />
+          )}
+          {reveal.isError && <ErrorNotice error={describeProblem(reveal.error)} />}
+        </form>
+      ) : (
+        <PoolKeyCard poolKey={reveal.data} pool={pool.name} />
+      )}
     </Dialog>
   );
 }
@@ -246,7 +379,7 @@ export function ChangeKeyDialog({
       }),
     onSuccess: onClose,
   });
-  const newKey = created.data?.key;
+  const newKey = created.data;
   return (
     <Dialog
       isOpen
@@ -274,7 +407,7 @@ export function ChangeKeyDialog({
               variant="primary"
               isDisabled={!stored || change.isPending}
               onPress={() => {
-                change.mutate(newKey);
+                change.mutate(newKey.key);
               }}
             >
               {t('changeKey.submit')}
@@ -287,12 +420,7 @@ export function ChangeKeyDialog({
         <p>{t('changeKey.intro')}</p>
         {newKey !== undefined && (
           <>
-            <PoolKeyCard
-              poolKey={newKey}
-              pool={pool.name}
-              stored={stored}
-              onStoredChange={setStored}
-            />
+            <PoolKeyCard poolKey={newKey} pool={pool.name} onStoredChange={setStored} />
             <label className={styles.check}>
               <input
                 type="checkbox"

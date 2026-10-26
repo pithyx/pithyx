@@ -39,6 +39,7 @@ export type ShareGrants = components['schemas']['ShareGrants'];
 export type SubjectGrant = components['schemas']['SubjectGrant'];
 export type ShareAccess = components['schemas']['ShareAccess'];
 export type SharePlanRequest = components['schemas']['SharePlanRequest'];
+export type NewPoolKey = components['schemas']['NewPoolKey'];
 
 /**
  * Administrative calls of the desktop's own core apps, outside the public SDK: not versioned, never served to a
@@ -67,7 +68,12 @@ export interface InternalMethods {
   'internal.admin.storage.mute': { params: { key: string; muted: boolean }; result: StorageHealth };
   'internal.admin.storage.scrub': { params: { pool: string; action: ScrubAction }; result: null };
   /** A new pool key (D384); the box keeps no copy. */
-  'internal.admin.storage.newKey': { params: Record<string, never>; result: { key: string } };
+  'internal.admin.storage.newKey': { params: Record<string, never>; result: NewPoolKey };
+  /** The key from the vault again, after the password and the second factor (D384). */
+  'internal.admin.storage.revealKey': {
+    params: { pool: string; password: string; totpCode?: string };
+    result: NewPoolKey;
+  };
   'internal.admin.storage.unlock': {
     params: { pool: string; key?: string; keepInVault?: boolean };
     result: null;
@@ -440,6 +446,24 @@ export function adminStorageHost(emit: (event: string, data?: unknown) => void):
     'internal.admin.storage.newKey': {
       validate: isRecord,
       handle: () => daemon(async () => unwrap(await api.POST('/api/storage/encryption/keys'))),
+    },
+    'internal.admin.storage.revealKey': {
+      validate: (params) =>
+        isRecord(params) &&
+        typeof params.pool === 'string' &&
+        typeof params.password === 'string' &&
+        (params.totpCode === undefined || typeof params.totpCode === 'string'),
+      handle: (params) =>
+        daemon(async () => {
+          const { pool, password, totpCode } =
+            params as InternalMethods['internal.admin.storage.revealKey']['params'];
+          return unwrap(
+            await api.POST('/api/storage/pools/{pool}/key/reveal', {
+              params: { path: { pool } },
+              body: { password, totpCode: totpCode ?? null },
+            }),
+          );
+        }),
     },
     'internal.admin.storage.unlock': {
       validate: (params) =>

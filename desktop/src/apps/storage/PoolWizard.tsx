@@ -53,7 +53,7 @@ export function PoolWizard({
   const newKey = useMutation({
     mutationFn: () => internalCall(app, 'internal.admin.storage.newKey', {}),
   });
-  const poolKey = encryption === 'key' ? newKey.data?.key : undefined;
+  const poolKey = encryption === 'key' ? newKey.data : undefined;
   const usable = disks.filter(({ guard }) => guard.decision !== 'refused');
   const refused = disks.filter(({ guard }) => guard.decision === 'refused');
   const chosen = selected
@@ -73,7 +73,7 @@ export function PoolWizard({
         diskIds: [...selected],
         ...(poolKey === undefined
           ? { encryption: 'none' }
-          : { encryption: 'key', encryptionKey: poolKey, keepKeyInVault: unlock === 'vault' }),
+          : { encryption: 'key', encryptionKey: poolKey.key, keepKeyInVault: unlock === 'vault' }),
         confirmations: Object.fromEntries(
           Object.entries(confirmations).filter(([id]) => selected.includes(id)),
         ),
@@ -151,6 +151,10 @@ export function PoolWizard({
                   // One key per wizard: going back and forth never replaces a key the user may have stored already.
                   if (next === 'key' && newKey.data === undefined && !newKey.isPending) {
                     newKey.mutate();
+                  }
+                  // The card asks for the two groups again each time the step opens.
+                  if (next === 'key') {
+                    setKeyStored(false);
                   }
                   setStep(next);
                 }}
@@ -334,12 +338,7 @@ export function PoolWizard({
             />
             {newKey.isError && <ErrorNotice error={describeProblem(newKey.error)} />}
             {poolKey !== undefined && (
-              <PoolKeyCard
-                poolKey={poolKey}
-                pool={name.trim()}
-                stored={keyStored}
-                onStoredChange={setKeyStored}
-              />
+              <PoolKeyCard poolKey={poolKey} pool={name.trim()} onStoredChange={setKeyStored} />
             )}
           </>
         )}

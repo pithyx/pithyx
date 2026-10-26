@@ -565,7 +565,9 @@
       "unavailable": "This box cannot encrypt pools. A pool can only be encrypted when it is created, so create it without encryption only if that is fine for its data.",
       "key_invalid": "This is not a pool key. A pool key starts with PXPK and has 56 more characters; check it for a typo.",
       "key_wrong": "This key does not unlock pool {name}. It is a pool key, but of another pool or an older one.",
-      "key_required": "Enter the key of pool {name}."
+      "key_required": "Enter the key of pool {name}.",
+      "vault_failed": "The key of pool {name} could not be stored in the key vault on the system disk. The pool is unlocked now; after the next start it waits for its key, so keep the key you stored. Check the system disk in the log, then unlock or change the key again to keep it in the vault.",
+      "not_in_vault": "The key vault holds no key of pool {name}. Only the key you stored yourself can open it."
     },
     "plan": {
       "action_invalid": "Unknown storage action.",

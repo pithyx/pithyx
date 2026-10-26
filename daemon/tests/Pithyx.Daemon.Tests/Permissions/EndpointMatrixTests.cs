@@ -166,6 +166,7 @@ public sealed partial class EndpointMatrixTests : IDisposable
         ["UnlockPool"] = Need.Admin,
         ["ChangePoolKey"] = Need.Admin,
         ["RemovePoolKeyFromVault"] = Need.Admin,
+        ["RevealPoolKey"] = Need.Admin,
         ["ListSnapshots"] = Need.Admin,
         ["CreateSnapshot"] = Need.Admin,
         ["HoldSnapshot"] = Need.Admin,

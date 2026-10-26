@@ -44,7 +44,8 @@ public static class StorageEndpoints
         storage.MapPost("/encryption/keys", (HttpContext context) =>
             {
                 RequireAdmin(context.User);
-                return TypedResults.Ok(new NewPoolKey(Encryption.PoolKey.New()));
+                var key = Encryption.PoolKey.New();
+                return TypedResults.Ok(new NewPoolKey(key, Encryption.PoolKey.ToHex(key)));
             })
             .RequireAuthorization(Policies.Admin)
             .WithName("CreatePoolKey")
@@ -67,6 +68,10 @@ public static class StorageEndpoints
             .RequireAuthorization(Policies.Admin)
             .WithName("ChangePoolKey")
             .WithDescription("Administrators only. Replaces the key of an unlocked encrypted pool with a new key from POST /api/storage/encryption/keys, which the user stored first; the old key stops working at once. The key vault then holds the new key, or none.");
+        storage.MapPost("/pools/{pool}/key/reveal", RevealKeyAsync)
+            .RequireAuthorization(Policies.Admin)
+            .WithName("RevealPoolKey")
+            .WithDescription("Administrators only. The pool's key from the key vault, for an administrator who lost the stored copy (D384). Needs the password again and, with two-factor sign-in on, a current authenticator code; failures count like failed sign-ins. Logged without the key.");
         storage.MapDelete("/pools/{pool}/key/vault", async (string pool, Encryption.PoolEncryptionService encryption, HttpContext context, CancellationToken cancellationToken) =>
             {
                 RequireAdmin(context.User);
@@ -84,6 +89,28 @@ public static class StorageEndpoints
             .RequireAuthorization(Policies.Admin)
             .WithName("RunStoragePlan")
             .WithDescription("Administrators only. Runs a plan exactly as it was shown, as a job; the disk guard checks every disk again right before each command. A plan runs once and expires after 10 minutes.");
+    }
+
+    private static async Task<Ok<NewPoolKey>> RevealKeyAsync(
+        string pool,
+        PoolKeyRevealRequest request,
+        Encryption.PoolEncryptionService encryption,
+        AuthService auth,
+        LoginRateLimiter limiter,
+        HttpContext context,
+        CancellationToken cancellationToken)
+    {
+        RequireAdmin(context.User);
+        ArgumentNullException.ThrowIfNull(request);
+        var username = context.User.Identity?.Name ?? "";
+        limiter.EnsureAllowed(context, username);
+        await AuthEndpoints.CountFailuresAsync(limiter, context, username, async () =>
+        {
+            await auth.ConfirmStepUpAsync(CurrentUser.Id(context.User), request.Password, request.TotpCode, cancellationToken);
+            return true;
+        });
+        var hex = encryption.RevealKey(pool, username);
+        return TypedResults.Ok(new NewPoolKey(Encryption.PoolKey.FromHex(hex), hex));
     }
 
     private static async Task<Ok<StoragePlanPreview>> PlanAsync(StoragePlanRequest request, StoragePlanner planner, CommandPlanStore plans, HttpContext context, CancellationToken cancellationToken)

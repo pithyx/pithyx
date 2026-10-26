@@ -420,7 +420,8 @@ public sealed partial class SystemStateService(
             }
             derived = Zfs.EncryptionCommands.Apply(
                 PoolHealth.Apply(last, connected, facts.SuspendedPools(last.Pools.Select(pool => pool.Name)), _reconnecting, _serials),
-                guid => vault?.Has(guid) == true);
+                guid => vault?.Has(guid) == true,
+                guid => vault?.Failed(guid) == true);
         }
         if (pools.Replace(derived, read))
         {
