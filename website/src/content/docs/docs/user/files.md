@@ -63,7 +63,7 @@ _The dialog when names already exist in the target folder._
 - **Drag and drop:** dragging items onto another folder, a part of the path above the list or a share in the sidebar moves them there (a share you may only read takes nothing). Hold **Ctrl** or **Alt** while dropping to copy.
 - **Rename:** press **F2** or choose **Rename**. A name must not be empty, must not contain `/` and may be at most 255 bytes long.
 - **New folder:** choose **New folder**, then type its name.
-- **New file:** choose **New file** (in the menu of an empty spot or the button above the list), then type its name with the extension, for example `conf.toml`. The file starts empty; double-click it to open it with its default app.
+- **New file:** right-click an empty spot and choose **New file**, then type its name with the extension, for example `conf.toml`. The file starts empty; double-click it to open it with its default app.
 
 Copying and moving run in the background with progress and a cancel button. One request handles up to 1000 selected items. Symbolic links are not copied. A folder cannot be copied or moved into itself.
 

@@ -19,7 +19,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 - `pithyx-release sign-remote` (`tools/release/sign-remote.sh`): one command on the machine with the release key fetches an update file from the build machine over SSH, checks it, signs it, writes `channel.json` with the next sequence, copies the result back and with `--publish` uploads it to the release and the channel (D376).
 
-- Files: **New file** in the menu of an empty spot and as a button above the list creates an empty file and starts renaming it (#286).
+- Files: **New file** in the menu of an empty spot creates an empty file and starts renaming it (#286). It has no button above the list, which would leave too little room for the path on a phone.
 - `image/baseline/pithyx-1.1.0-amd64.packages`: the package list of the 1.1.0 image, the base for update files from 1.1.0 on.
 
 ### Changed

@@ -22,7 +22,6 @@ import {
   IconChevronRight,
   IconDownload,
   IconEye,
-  IconFilePlus,
   IconFolderPlus,
   IconHome,
   IconLayoutGrid,
@@ -905,13 +904,6 @@ export function FilesApp({ app }: { app: PithyxApp }) {
               onPress={() => void createEntry('folder')}
             >
               <IconFolderPlus size={18} stroke={1.75} />
-            </IconButton>
-            <IconButton
-              label={t('actions.newFile')}
-              size="sm"
-              onPress={() => void createEntry('file')}
-            >
-              <IconFilePlus size={18} stroke={1.75} />
             </IconButton>
             <IconButton
               label={t('actions.upload')}
