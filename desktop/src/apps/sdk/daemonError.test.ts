@@ -3,7 +3,7 @@ import { PithyxError } from '@pithyx/sdk/host';
 import { describe, expect, it } from 'vitest';
 import { daemon } from './daemonError';
 
-const fail = (error: unknown) => daemon(() => Promise.reject(error));
+const fail = (error: Error) => daemon(() => Promise.reject(error));
 
 describe('daemon', () => {
   it('reports a box that cannot be reached with its own code, not as a server error', async () => {
