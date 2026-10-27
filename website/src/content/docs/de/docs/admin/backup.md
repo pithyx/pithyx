@@ -33,7 +33,7 @@ Kategorien, die du bei der Wiederherstellung wählen kannst:
 - **Reverse Proxy**: Proxy-Hosts (mit Basic-Auth-Benutzern als Hashes), Weiterleitungs-Hosts, Streams, was unbekannte Namen bekommen, die Anmeldeadresse und das Let's-Encrypt-Konto (seine Zertifikate kommen mit **Zertifikate und Schlüssel**).
 - **Apps**: die App-Registry, Berechtigungen, Ordnerzuordnungen, Kataloge und der App-Pool. Die Dateien und Daten der Apps bleiben auf dem Pool.
 
-Nicht enthalten: Dateien auf Pools, App-Daten, Logs, Docker-Daten, Sitzungen, Jobs, Benachrichtigungen, der Index des Papierkorbs und die Netzwerkeinstellungen (Karten heißen auf anderer Hardware anders). Auch die Schlüssel verschlüsselter Pools im Schlüsseltresor sind nie enthalten: Entsperre nach einer Neuinstallation jeden verschlüsselten Pool einmal mit seinem Schlüssel ([Verschlüsselung](/de/docs/admin/storage/#verschlüsselung)).
+Nicht enthalten: Dateien auf Pools, App-Daten, Logs, Docker-Daten, Sitzungen, Jobs, Benachrichtigungen und die Arten von App-Benachrichtigungen, die Benutzer stummgeschaltet haben, der Index des Papierkorbs und die Netzwerkeinstellungen (Karten heißen auf anderer Hardware anders). Auch die Schlüssel verschlüsselter Pools im Schlüsseltresor sind nie enthalten: Entsperre nach einer Neuinstallation jeden verschlüsselten Pool einmal mit seinem Schlüssel ([Verschlüsselung](/de/docs/admin/storage/#verschlüsselung)).
 
 ## Wiederherstellen
 

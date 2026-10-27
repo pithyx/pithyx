@@ -164,6 +164,25 @@ public static class ManifestValidator
             }
         }
 
+        if (root.TryGetProperty("notifications", out var notifications))
+        {
+            var categoryIds = new HashSet<string>(StringComparer.Ordinal);
+            var index = 0;
+            foreach (var category in notifications.GetProperty("categories").EnumerateArray())
+            {
+                var categoryId = category.GetProperty("id").GetString()!;
+                if (!categoryIds.Add(categoryId))
+                {
+                    issues.Add(Duplicate($"/notifications/categories/{index}/id", categoryId));
+                }
+                index++;
+            }
+            if (!ElevatedRights.Declares(root, "notifications"))
+            {
+                issues.Add(new ValidationIssue(ErrorCodes.AppManifestPermissionMissing, ("path", "/notifications"), ("permission", "notifications")));
+            }
+        }
+
         if (hasBackend)
         {
             issues.AddRange(BackendIssues(backend));

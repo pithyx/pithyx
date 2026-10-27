@@ -42,7 +42,7 @@ console.log(app.context.user.displayName);
 `app.context` wird durch Ereignisse aktuell gehalten und enthält die App (`id`, `version`), die Fensterinstanz, den Benutzer (`id`, `name`, `displayName`, `groups`, `isAdmin`, `twoFactor`), `language`, `locale` (zum Beispiel `de-AT`), `timeZone`, `theme`, `sizeClass` (`compact` unter 600 px, `medium` bis 1023 px, `expanded`), Startargumente, `permissions`, `capabilities`, die Box (`name`, `version`), `visible`, `online`, `logLevel`, den Status und die Endpunkte des Backends und den Zustand jeder Speicheranforderung.
 
 - `app.window`: `setTitle` (bis zu 200 Zeichen), `close`, `setSize`, `setDirty(true)` (fragt die App vor dem Schließen), `requestAttention` und `ready` (beendet den Lade-Platzhalter, wenn das Manifest `window.loading.untilReady` setzt). Sie wirken nur auf das eigene Fenster der App.
-- `app.notify({ title, body?, level?, actions?, data?, tag? })` braucht `notifications`. Der Titel hat 1 bis 200 Zeichen, der Text bis zu 1000, höchstens 2 Aktionen. Liefert `{ id }`.
+- `app.notify({ title, body?, level?, actions?, data?, tag?, category? })` braucht `notifications`. Der Titel hat 1 bis 200 Zeichen, der Text bis zu 1000, höchstens 2 Aktionen. `category` ist eine der [Benachrichtigungskategorien](/de/docs/developers/apps/manifest/#benachrichtigungskategorien) des Manifests, die Benutzer stummschalten können. Liefert `{ id }`.
 - `app.setBadge(count | null)`, `app.openUrl(url)` (http, https oder mailto, in einem neuen Tab), `app.clipboard.writeText`, `app.contextMenu.show` und `app.ui.showError(error)`.
 - `app.directory.users()` und `groups()` brauchen `directory.read`.
 - `app.session.save(state)` und `restore()` behalten bis zu 16 KB JSON über Neuladen hinweg und ziehen mit dem Desktop-Layout um.

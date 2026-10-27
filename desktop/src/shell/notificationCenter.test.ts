@@ -47,6 +47,14 @@ describe('toasts for notifications', () => {
     ).toBe(created);
     expect(createdNotification({ items: [created] })).toBeUndefined();
     expect(
+      createdNotification({
+        change: 'created',
+        notification: { ...created, readAt: '2026-09-29T10:00:00Z' },
+        ids: [],
+        readAt: null,
+      }),
+    ).toBeUndefined();
+    expect(
       createdNotification({ change: 'read', notification: null, ids: [9], readAt: null }),
     ).toBeUndefined();
     expect(

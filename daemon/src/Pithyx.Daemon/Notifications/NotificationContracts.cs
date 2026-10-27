@@ -93,10 +93,34 @@ public sealed record AppNotificationAction(string Id, string Label);
 /// <param name="Actions">At most 2 buttons.</param>
 /// <param name="Data">Any JSON the app gets back with a click, at most 4096 characters.</param>
 /// <param name="Tag">Replaces the app's earlier notification with the same tag for this user; 1 to 64 characters.</param>
+/// <param name="Category">One of the manifest's <c>notifications.categories</c> (D390); a user who muted it gets the notification as read, without a toast or channel.</param>
 public sealed record AppNotifyRequest(
     string Title,
     string? Body = null,
     AppNotificationLevel? Level = null,
     IReadOnlyList<AppNotificationAction>? Actions = null,
     JsonElement? Data = null,
-    string? Tag = null);
+    string? Tag = null,
+    string? Category = null);
+
+/// <summary>One kind of notification an app the user may open sends (D390).</summary>
+/// <param name="App">The app's id.</param>
+/// <param name="AppName">The app's name by language.</param>
+/// <param name="Id">The category's id in the manifest.</param>
+/// <param name="Name">Its name by language.</param>
+/// <param name="Description">Its description by language, if any.</param>
+/// <param name="Muted">The user muted it.</param>
+public sealed record AppNotificationCategory(
+    string App,
+    IReadOnlyDictionary<string, string> AppName,
+    string Id,
+    IReadOnlyDictionary<string, string> Name,
+    IReadOnlyDictionary<string, string>? Description,
+    bool Muted);
+
+/// <summary>The notification categories of the apps the user may open, by app and in manifest order.</summary>
+public sealed record AppNotificationCategoryList(IReadOnlyList<AppNotificationCategory> Categories);
+
+/// <summary>Body of <c>PUT /api/notifications/categories/{app}/{category}</c>.</summary>
+/// <param name="Muted">Whether the user mutes the category.</param>
+public sealed record NotificationCategoryMuteRequest(bool Muted);

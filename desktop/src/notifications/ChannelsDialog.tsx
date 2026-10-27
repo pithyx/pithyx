@@ -2,6 +2,7 @@ import { unwrap } from '@pithyx/api-client';
 import { useTranslation } from 'react-i18next';
 import { Button, Dialog } from '@pithyx/ui';
 import { api } from '../api/client';
+import { AppCategories } from './AppCategories';
 import { ChannelEditor, type ChannelClient } from './ChannelEditor';
 import styles from './Channels.module.css';
 
@@ -35,6 +36,7 @@ export function ChannelsDialog({ onClose }: { onClose: () => void }) {
     >
       <p className={styles.muted}>{t('channels.intro')}</p>
       <ChannelEditor client={ownChannels} />
+      <AppCategories />
     </Dialog>
   );
 }

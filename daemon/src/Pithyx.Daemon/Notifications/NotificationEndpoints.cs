@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Pithyx.Daemon.Auth;
+using Pithyx.Daemon.Errors;
 
 namespace Pithyx.Daemon.Notifications;
 
@@ -52,6 +53,27 @@ public static class NotificationEndpoints
             })
             .WithName("ClearNotifications")
             .WithDescription("Deletes every notification of the signed-in user. Storage alerts are not notifications and stay.");
+        notifications.MapGet("/categories", async (NotificationService service, Apps.AppRegistry registry, Permissions.PermissionService permissions, HttpContext context, CancellationToken cancellationToken) =>
+                TypedResults.Ok(await NotificationCategories.ListAsync(CurrentUser.Id(context.User), service, registry, permissions, cancellationToken)))
+            .WithName("ListNotificationCategories")
+            .WithDescription(
+                "The kinds of notifications the apps the signed-in user may open declare in their manifest (D390), each with "
+                + "whether the user muted it.");
+        notifications.MapPut("/categories/{app}/{category}", async (string app, string category, NotificationCategoryMuteRequest request, NotificationService service, Apps.AppRegistry registry, Permissions.PermissionService permissions, HttpContext context, CancellationToken cancellationToken) =>
+            {
+                var userId = CurrentUser.Id(context.User);
+                if (!(await NotificationCategories.ListAsync(userId, service, registry, permissions, cancellationToken)).Categories.Any(entry => entry.App == app && entry.Id == category))
+                {
+                    throw new PithyxException(ErrorCodes.NotificationsCategoryNotFound, new Dictionary<string, object?> { ["app"] = app, ["category"] = category });
+                }
+                await service.SetMutedAsync(userId, app, category, request.Muted, cancellationToken);
+                return TypedResults.NoContent();
+            })
+            .WithName("MuteNotificationCategory")
+            .WithDescription(
+                "Mutes or unmutes one kind of an app's notifications for the signed-in user (D390). A muted notification is kept "
+                + "as read, without a toast and without the user's channels. An app the user may not open or a category its "
+                + "manifest does not declare answers 404 notifications.category.not_found.");
         notifications.MapPost("/app", async Task<Created<Notification>> (AppNotificationRequest request, NotificationService service, HttpContext context, CancellationToken cancellationToken) =>
             {
                 var notification = await service.CreateFromAppAsync(context.User, request, cancellationToken);

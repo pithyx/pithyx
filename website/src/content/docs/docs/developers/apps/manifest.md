@@ -9,7 +9,7 @@ sidebar:
 
 `pithyx.json` at the package root describes an app: who it is, which window it opens, which permissions it asks for, which folders it wants and, if it has one, how its backend runs. The JSON Schema is `sdk/schema/manifest.v2.schema.json` (published as `@pithyx/sdk/schema/manifest.v2.schema.json`); unknown fields are errors. The schema is a stable contract: a new optional field is a minor change, anything else a major one. Manifest version 2 (Pithyx 1.2, D388) replaced version 1: a box refuses a version 1 manifest with [`app.manifest.version_unsupported`](/docs/reference/errors/#app.manifest.version_unsupported), so rebuild an older app with `@pithyx/cli` 2. Apps already installed keep working; the box converted their stored manifests.
 
-Required fields: `manifestVersion`, `id`, `version`, `name`, `author`, `entry`, `sdk`, `permissions`, `arch`, `source` and `window`. Optional: `$schema`, `description`, `license`, `homepage`, `pithyx`, `dataVersion`, `storage`, `fileHandlers`, `fileActions`, `backend` and the [Store information](#store-information) (`privacy`, `security`, `maturity`, `categories`, `keywords`, `locales`, `screenshots`, `releaseNotes`, `requirements`, `audience`). See also the [schema reference](/docs/reference/manifest-schema/) with every field and the [Compose rules](/docs/reference/compose-rules/) for the backend.
+Required fields: `manifestVersion`, `id`, `version`, `name`, `author`, `entry`, `sdk`, `permissions`, `arch`, `source` and `window`. Optional: `$schema`, `description`, `license`, `homepage`, `pithyx`, `dataVersion`, `storage`, `fileHandlers`, `fileActions`, `backend`, [`notifications`](#notification-categories) and the [Store information](#store-information) (`privacy`, `security`, `maturity`, `categories`, `keywords`, `locales`, `screenshots`, `releaseNotes`, `requirements`, `audience`). See also the [schema reference](/docs/reference/manifest-schema/) with every field and the [Compose rules](/docs/reference/compose-rules/) for the backend.
 
 ```json
 {
@@ -82,6 +82,19 @@ Optional fields (D389) that the Store shows to administrators before and after t
 "releaseNotes": { "en": "Notes can have a due date." },
 "requirements": { "memory": 128, "disk": 50 },
 "audience": "everyone"
+```
+
+## Notification categories
+
+`notifications.categories` (optional, D390) names up to 16 kinds of notifications the app sends, each `{ "id", "name", "description"? }` with an `id` of lowercase letters, digits and dashes (at most 32 characters, unique in the app) and a localized `name`. It needs the permission `notifications` ([`app.manifest.permission_missing`](/docs/reference/errors/#app.manifest.permission_missing)). `app.notify({ ..., category: "mentions" })` names the kind; a category the manifest does not declare is refused with [`notifications.message.invalid`](/docs/reference/errors/#notifications.message.invalid). Each user can switch a kind off under **Notification channels**: its notifications then arrive as read, without a toast, email or webhook. A notification without a category is never muted.
+
+```json
+"notifications": {
+  "categories": [
+    { "id": "messages", "name": { "en": "New messages", "de": "Neue Nachrichten" } },
+    { "id": "mentions", "name": { "en": "Mentions", "de": "Erwähnungen" } }
+  ]
+}
 ```
 
 ## Windows

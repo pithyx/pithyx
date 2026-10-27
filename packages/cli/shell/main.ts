@@ -485,6 +485,16 @@ const methods: MethodHandlers = {
     if (!state.permissions.has('notifications')) {
       throw denied('notifications');
     }
+    // The box accepts only the categories of the manifest (D390).
+    if (
+      request.category !== undefined &&
+      !(manifest.notifications?.categories ?? []).some((entry) => entry.id === request.category)
+    ) {
+      throw new PithyxError({
+        code: 'notifications.message.invalid',
+        params: { field: 'category', maxLength: 0 },
+      });
+    }
     const id = `n${String(Date.now())}`;
     toast(id, { ...request, notification: id, action: null, data: request.data ?? null });
     addLog('method', `notify ${request.title}`);

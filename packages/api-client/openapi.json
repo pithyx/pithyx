@@ -2192,6 +2192,89 @@
         }
       }
     },
+    "/api/notifications/categories": {
+      "get": {
+        "tags": [
+          "Notifications"
+        ],
+        "description": "The kinds of notifications the apps the signed-in user may open declare in their manifest (D390), each with whether the user muted it.",
+        "operationId": "ListNotificationCategories",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppNotificationCategoryList"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/notifications/categories/{app}/{category}": {
+      "put": {
+        "tags": [
+          "Notifications"
+        ],
+        "description": "Mutes or unmutes one kind of an app's notifications for the signed-in user (D390). A muted notification is kept as read, without a toast and without the user's channels. An app the user may not open or a category its manifest does not declare answers 404 notifications.category.not_found.",
+        "operationId": "MuteNotificationCategory",
+        "parameters": [
+          {
+            "name": "app",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "category",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NotificationCategoryMuteRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/notifications/app": {
       "post": {
         "tags": [
@@ -11159,6 +11242,71 @@
         },
         "description": "A button of an app's notification."
       },
+      "AppNotificationCategory": {
+        "required": [
+          "app",
+          "appName",
+          "id",
+          "name",
+          "description",
+          "muted"
+        ],
+        "type": "object",
+        "properties": {
+          "app": {
+            "type": "string",
+            "description": "The app's id."
+          },
+          "appName": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "The app's name by language."
+          },
+          "id": {
+            "type": "string",
+            "description": "The category's id in the manifest."
+          },
+          "name": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Its name by language."
+          },
+          "description": {
+            "type": [
+              "null",
+              "object"
+            ],
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Its description by language, if any."
+          },
+          "muted": {
+            "type": "boolean",
+            "description": "The user muted it."
+          }
+        },
+        "description": "One kind of notification an app the user may open sends (D390)."
+      },
+      "AppNotificationCategoryList": {
+        "required": [
+          "categories"
+        ],
+        "type": "object",
+        "properties": {
+          "categories": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AppNotificationCategory"
+            }
+          }
+        },
+        "description": "The notification categories of the apps the user may open, by app and in manifest order."
+      },
       "AppNotificationLevel": {
         "enum": [
           "info",
@@ -11251,6 +11399,13 @@
               "string"
             ],
             "description": "Replaces the app's earlier notification with the same tag for this user; 1 to 64 characters."
+          },
+          "category": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "One of the manifest's `notifications.categories` (D390); a user who muted it gets the notification as read, without a toast or channel."
           }
         },
         "description": "Body of `POST /api/app/notifications`: the SDK's `notify` of a third-party app."
@@ -13481,6 +13636,7 @@
           "network.vlan.duplicate",
           "network.vlan.id_invalid",
           "network.vlan.parent_invalid",
+          "notifications.category.not_found",
           "notifications.channel.failed",
           "notifications.channel.invalid",
           "notifications.channel.limit_reached",
@@ -16584,6 +16740,19 @@
           "system"
         ],
         "description": "What a notification is about, so a channel can pick its events."
+      },
+      "NotificationCategoryMuteRequest": {
+        "required": [
+          "muted"
+        ],
+        "type": "object",
+        "properties": {
+          "muted": {
+            "type": "boolean",
+            "description": "Whether the user mutes the category."
+          }
+        },
+        "description": "Body of `PUT /api/notifications/categories/{app}/{category}`."
       },
       "NotificationChannel": {
         "required": [

@@ -590,6 +590,33 @@
       "code": "app.manifest.invalid_json"
     }
   ],
+  "notification-categories-without-permission.json": [
+    {
+      "code": "app.manifest.permission_missing",
+      "params": {
+        "path": "/notifications",
+        "permission": "notifications"
+      }
+    }
+  ],
+  "notification-category-duplicate.json": [
+    {
+      "code": "app.manifest.duplicate",
+      "params": {
+        "path": "/notifications/categories/1/id",
+        "value": "mentions"
+      }
+    }
+  ],
+  "notification-category-id.json": [
+    {
+      "code": "app.manifest.schema_violation",
+      "params": {
+        "path": "/notifications/categories/0/id",
+        "keyword": "pattern"
+      }
+    }
+  ],
   "permission-host-pattern.json": [
     {
       "code": "app.manifest.schema_violation",
