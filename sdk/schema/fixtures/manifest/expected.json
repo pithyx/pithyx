@@ -156,19 +156,20 @@
       }
     }
   ],
-  "elevated-docker-socket.json": [
-    {
-      "code": "app.elevated.unsupported",
-      "params": {
-        "right": "docker.socket"
-      }
-    }
-  ],
   "elevated-host-full.json": [
     {
       "code": "app.elevated.unsupported",
       "params": {
         "right": "host.full"
+      }
+    }
+  ],
+  "elevated-optional-device-unknown.json": [
+    {
+      "code": "app.manifest.reference_unknown",
+      "params": {
+        "path": "/backend/optionalDevices/0",
+        "name": "/dev/dri"
       }
     }
   ],

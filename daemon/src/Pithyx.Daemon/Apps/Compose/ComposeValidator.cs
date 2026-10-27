@@ -610,13 +610,19 @@ public static partial class ComposeValidator
         {
             if (rules.DockerSockets.Contains(source))
             {
-                _rights.Add(new Reference(rules.DockerSocketRight, path));
+                // The raw socket is the same mount with the other right (D387); declaring both leaves one unused.
+                _rights.Add(new Reference(DeclaresRawSocket() ? rules.DockerSocketRawRight : rules.DockerSocketRight, path));
             }
             else
             {
                 Invalid(path, "host_path");
             }
         }
+
+        private bool DeclaresRawSocket() =>
+            manifest.TryGetProperty("backend", out var backend)
+            && backend.TryGetProperty("elevated", out var elevated)
+            && elevated.EnumerateArray().Any(right => right.GetString() == rules.DockerSocketRawRight);
 
         private bool Target(string target, string path)
         {
@@ -1164,6 +1170,11 @@ internal sealed record KeyRule(
     string? Right,
     IReadOnlyDictionary<string, KeyRule>? Keys);
 
+/// <summary>A device class of the rules (D387): which character devices in its folder, or which link targets below it, it names.</summary>
+/// <param name="Nodes">Names of character devices directly in the folder.</param>
+/// <param name="Links">Targets of the links below the folder, taken instead of the links.</param>
+internal sealed record DeviceClass(Regex? Nodes, Regex? Links);
+
 /// <summary><c>sdk/schema/compose.v1.rules.json</c> as read by the daemon.</summary>
 internal sealed class ComposeRules
 {
@@ -1193,12 +1204,21 @@ internal sealed class ComposeRules
         ReservedTargets = Strings(mount.GetProperty("reservedTargets"));
         DockerSockets = Strings(mount.GetProperty("dockerSockets"));
         DockerSocketRight = mount.GetProperty("dockerSocketRight").GetString()!;
+        DockerSocketRawRight = mount.GetProperty("dockerSocketRawRight").GetString()!;
         DependsOnKeys = KeyRules(root.GetProperty("dependsOn").GetProperty("keys"));
         ReservedLabelPrefixes = Strings(root.GetProperty("reservedLabelPrefixes"));
         var elevated = root.GetProperty("elevated");
         BlockedCapabilities = Strings(elevated.GetProperty("blockedCapabilities"));
         HostNamespaceRights = Strings(elevated.GetProperty("hostNamespaceRights"));
         NamespacedDevices = Strings(elevated.GetProperty("namespacedDevices"));
+        DeviceClasses = elevated.GetProperty("deviceClasses").EnumerateObject()
+            .Where(entry => !entry.Name.StartsWith('$'))
+            .ToDictionary(
+                entry => entry.Name,
+                entry => new DeviceClass(
+                    entry.Value.TryGetProperty("nodes", out var nodes) ? new Regex(nodes.GetString()!, RegexOptions.CultureInvariant) : null,
+                    entry.Value.TryGetProperty("links", out var links) ? new Regex(links.GetString()!, RegexOptions.CultureInvariant) : null),
+                StringComparer.Ordinal);
         Version = root.GetProperty("rulesVersion").GetInt32();
     }
 
@@ -1222,6 +1242,12 @@ internal sealed class ComposeRules
     public IReadOnlyList<string> DockerSockets { get; }
 
     public string DockerSocketRight { get; }
+
+    /// <summary>The right for the unfiltered socket (D387); a mount of the socket needs it or <see cref="DockerSocketRight"/>.</summary>
+    public string DockerSocketRawRight { get; }
+
+    /// <summary>The device classes by path (D387): what a device right on such a path stands for at the start.</summary>
+    public IReadOnlyDictionary<string, DeviceClass> DeviceClasses { get; }
 
     public IReadOnlyList<string> ReservedLabelPrefixes { get; }
 

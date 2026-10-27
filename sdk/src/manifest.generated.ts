@@ -25,10 +25,11 @@ export type ServiceName = string;
  */
 export type BackendPath = string;
 /**
- * A right beyond the sandbox, for the backend only (D71): `host.network` (the host's network namespace), `host.pid` (the host's process namespace), `device:<path under /dev>` (one device node, for example `device:/dev/dri/renderD128`), `capability:<NAME>` (one Linux capability without the `CAP_` prefix, for example `capability:NET_ADMIN`), `docker.socket` (the Docker Engine API through the daemon's filtering proxy) and `host.full` (a privileged container: root on the host). Since Pithyx 1.2.0 an administrator grants `host.network`, `host.pid`, devices and capabilities after a confirmation with password and TOTP (D311), each revocable; blocked devices and capabilities, `docker.socket` and `host.full` are refused with `app.elevated.unsupported`. `host.network`, `host.pid` and devices other than `/dev/net/tun` cannot go together with `backend.root` (`app.elevated.root_conflict`), and a capability needs it (`app.elevated.root_required`).
+ * A right beyond the sandbox, for the backend only (D71): `host.network` (the host's network namespace), `host.pid` (the host's process namespace), `device:<path under /dev>` (one device node, for example `device:/dev/net/tun`, or a device class: `device:/dev/dri` for the graphics cards, `device:/dev/serial` for USB serial adapters), `capability:<NAME>` (one Linux capability without the `CAP_` prefix, for example `capability:NET_ADMIN`), `docker.socket` (the Docker Engine API through the daemon's filtering proxy: the app sees and controls only the containers it started), `docker.socket.raw` (the unfiltered Docker Engine API, which is root on the box; only for apps installed from a file, never from a catalog) and `host.full` (a privileged container: root on the host). An administrator grants them after a confirmation with password and TOTP (D311, D387), each revocable; blocked devices and capabilities and `host.full` are refused with `app.elevated.unsupported`. `host.network`, `host.pid` and devices other than `/dev/net/tun` cannot go together with `backend.root` (`app.elevated.root_conflict`), a capability needs it (`app.elevated.root_required`), and `docker.socket` and `docker.socket.raw` exclude each other.
  */
 export type ElevatedPermission =
   | 'docker.socket'
+  | 'docker.socket.raw'
   | 'host.network'
   | 'host.pid'
   | 'host.full'
@@ -317,6 +318,12 @@ export interface BackendManifest {
    * @maxItems 32
    */
   elevated?: ElevatedPermission[];
+  /**
+   * Devices of `elevated` (their paths, for example `/dev/dri`) the backend can run without, such as a graphics card that only speeds it up (D387). A missing optional device only gives a hint, and the backend starts without it. Every other device is required: without it the app cannot be installed, and its backend does not start until the device is back.
+   *
+   * @maxItems 32
+   */
+  optionalDevices?: string[];
 }
 /**
  * A port of a backend service that the proxy offers to the app's windows. Container ports never appear in a URL: the endpoint `api` is `/apps/<id>/api/`, every other endpoint `<name>` is `/apps/<id>/api-<name>/`.

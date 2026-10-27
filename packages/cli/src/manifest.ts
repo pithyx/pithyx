@@ -25,12 +25,16 @@ const elevatedRules = composeRules.elevated;
 const blockedDevice = new RegExp(composeRules.patterns.blockedDevice);
 
 /**
- * Whether this version of Pithyx can grant an elevated right the schema accepts (D311): `host.network`, `host.pid`, a
- * device node outside the block list and a capability outside the block list. `docker.socket` and `host.full` stay
- * refused.
+ * Whether this version of Pithyx can grant an elevated right the schema accepts (D311, D387): `host.network`,
+ * `host.pid`, `docker.socket`, `docker.socket.raw`, a device node or class outside the block list and a capability
+ * outside the block list. `host.full` stays refused.
  */
 export function isSupportedElevatedRight(right: string): boolean {
-  if (elevatedRules.hostNamespaceRights.includes(right)) {
+  if (
+    elevatedRules.hostNamespaceRights.includes(right) ||
+    right === composeRules.mount.dockerSocketRight ||
+    right === composeRules.mount.dockerSocketRawRight
+  ) {
     return true;
   }
   if (right.startsWith(DEVICE_PREFIX)) {
@@ -216,6 +220,12 @@ function semanticIssues(
         issues.push(
           unknownReference(`/backend/schedules/${String(index)}/endpoint`, schedule.endpoint),
         );
+      }
+    });
+    const declared = new Set<string>(backend.elevated ?? []);
+    (backend.optionalDevices ?? []).forEach((device, index) => {
+      if (!declared.has(DEVICE_PREFIX + device)) {
+        issues.push(unknownReference(`/backend/optionalDevices/${String(index)}`, device));
       }
     });
     const root = backend.root === true;

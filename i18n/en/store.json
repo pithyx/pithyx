@@ -380,6 +380,24 @@
     "code": "Code from your authenticator app",
     "grantTitle": "Grant a special right",
     "confirm": "Grant",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "dockerSocket": {
+      "title": "Its own containers",
+      "risk": "Its background service starts and controls further containers through a filtered container service. It sees only the containers it started; they run in the app's sandbox, without the box's network, files or devices. With the internet permission it can download images."
+    },
+    "dockerSocketRaw": {
+      "title": "The whole container service",
+      "risk": "Its background service controls the box's container service without any filter. That is the same as root on the box: it can read and change every file, every app and every setting. Grant it only to an app you wrote yourself or trust completely."
+    },
+    "deviceClass": {
+      "dri": "Graphics cards (/dev/dri)",
+      "serial": "USB serial adapters (/dev/serial)",
+      "tun": "Network tunnels (/dev/net/tun)"
+    },
+    "deviceOptional": "Optional: the app also runs without it.",
+    "deviceMissing": "Not plugged in. Plug in the device and try again.",
+    "deviceMissingOptional": "Not found. The app runs without it, for example without hardware acceleration.",
+    "deviceAbsent": "Not plugged in: its background service does not start until the device is back.",
+    "deviceAbsentOptional": "Not found: the background service runs without it."
   }
 }

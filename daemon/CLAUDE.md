@@ -38,6 +38,7 @@ Rules for `daemon/`; the root `CLAUDE.md` applies as well.
 /var/log/pithyx/     logs: daemon.json files and logs.db (the Log Center, capped at 4 GB)
 /run/pithyx/sftp/    SFTP views: one chroot per user with bind mounts of its shared folders and homes (home, for administrators homes/<folder>), rebuilt at start
 /run/pithyx/backup/  a checked configuration backup's database until it is restored (tmpfs, never on a disk)
+/run/pithyx/docker-proxy/  <id>.sock: an app's Docker socket of the filtering proxy (D387), while its backend runs
 /run/pithyx/usb-key/  where a USB stick with pool keys is mounted while its key files are read or written (D385), unmounted right after
 /<pool>/homes/<user>  a user's home (dataset <pool>/pithyx/homes/<user> on the home pool, setting homes.pool, D348); a deleted user's kept home is <user>.deleted-<uid>
 /<pool>/.pithyx/     app data, volumes

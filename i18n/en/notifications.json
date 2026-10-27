@@ -105,6 +105,12 @@
         "body": "{app} {version} is ready to install.",
         "action": "Install"
       }
+    },
+    "device": {
+      "missing": {
+        "title": "A device of {app} is missing",
+        "body": "{app} needs {path}, which is not plugged in. Its background service does not run until the device is back."
+      }
     }
   },
   "desktop": {

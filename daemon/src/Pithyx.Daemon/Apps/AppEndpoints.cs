@@ -30,6 +30,14 @@ public static class AppEndpoints
         }
         services.AddSingleton(provider => Catalog.StoreService.AdminDefinition(provider.GetRequiredService<Catalog.StoreService>));
         services.AddSingleton(docker ?? new Docker.DockerOptions(Apply: false));
+        services.AddSingleton(provider => provider.GetRequiredService<Docker.DockerOptions>().Apply ? Docker.DeviceFs.Real : Docker.DeviceFs.Simulation);
+        services.AddSingleton<Docker.DockerSocketProxy>();
+        services.AddSingleton<Docker.AppDevices>();
+        if (!Hosting.BuildTimeDocument.IsGenerating)
+        {
+            services.AddHostedService(provider => provider.GetRequiredService<Docker.AppDevices>());
+            services.AddHostedService<Docker.AppDeviceAlerts>();
+        }
         services.AddSingleton<Docker.DockerEngine>();
         services.AddSingleton<Docker.DockerHost>();
         services.AddSingleton<Docker.AppBackendRuntime>();

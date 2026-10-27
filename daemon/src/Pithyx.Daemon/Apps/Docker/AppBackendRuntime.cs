@@ -63,6 +63,8 @@ public sealed partial class AppBackendRuntime(
     AppBackends backends,
     SqliteConnectionFactory connections,
     PoolInventory pools,
+    DockerSocketProxy dockerProxy,
+    DeviceFs deviceFs,
     ILogger<AppBackendRuntime> logger)
 {
     /// <summary>The rewritten Compose file in the app's <c>run/</c> folder.</summary>
@@ -90,30 +92,34 @@ public sealed partial class AppBackendRuntime(
     public const int StopSeconds = 30;
 
     /// <summary>
-    /// The group each granted device node needs, by the path the manifest names (D311): the node's group unless everybody
-    /// may read and write it, nothing for root's group. Throws <c>app.device.unavailable</c> for a node that is missing, is
-    /// no character device or leads to a blocked one through a link, so the backend does not start without it.
+    /// The nodes present now for each granted device path (D311, D387): a class stands for every node of it, each with the
+    /// group it needs. Throws <c>app.device.unavailable</c> for a required device without any node (missing, no character
+    /// device, or a link to a blocked one), so the backend does not start without it; a missing optional one is left out.
     /// </summary>
-    public static IReadOnlyDictionary<string, int> DeviceGroups(IReadOnlySet<string> granted)
+    public static IReadOnlyDictionary<string, IReadOnlyList<DeviceNode>> Devices(IReadOnlySet<string> granted, IReadOnlySet<string> optional, DeviceFs fs, Action<string>? optionalMissing = null)
     {
         ArgumentNullException.ThrowIfNull(granted);
-        var groups = new Dictionary<string, int>(StringComparer.Ordinal);
-        foreach (var right in granted.Where(right => right.StartsWith(Manifest.ManifestValidator.DevicePrefix, StringComparison.Ordinal)).Order(StringComparer.Ordinal))
+        ArgumentNullException.ThrowIfNull(optional);
+        var devices = new Dictionary<string, IReadOnlyList<DeviceNode>>(StringComparer.Ordinal);
+        foreach (var path in DeviceNodes.Paths(granted))
         {
-            var path = right[Manifest.ManifestValidator.DevicePrefix.Length..];
-            var resolved = new FileInfo(path).ResolveLinkTarget(returnFinalTarget: true)?.FullName ?? path;
-            if (!Manifest.ManifestValidator.IsSupportedElevatedRight(Manifest.ManifestValidator.DevicePrefix + resolved)
-                || Files.LinuxFs.CharacterDevice(resolved) is not { } device)
+            var nodes = DeviceNodes.Present(path, fs);
+            if (nodes.Count == 0)
             {
-                throw new PithyxException(ErrorCodes.AppDeviceUnavailable, new Dictionary<string, object?> { ["path"] = path });
+                if (!optional.Contains(path))
+                {
+                    throw new PithyxException(ErrorCodes.AppDeviceUnavailable, new Dictionary<string, object?> { ["path"] = path });
+                }
+                optionalMissing?.Invoke(path);
             }
-            if (!device.Open && device.Gid != 0)
-            {
-                groups[path] = (int)device.Gid;
-            }
+            devices[path] = nodes;
         }
-        return groups;
+        return devices;
     }
+
+    /// <summary>Whether a set of granted rights holds the Docker socket, filtered or raw (D387).</summary>
+    public static bool HoldsDockerSocket(IReadOnlySet<string> granted) =>
+        granted.Contains(Manifest.ManifestValidator.DockerSocket) || granted.Contains(Manifest.ManifestValidator.DockerSocketRaw);
 
     /// <summary>The Linux bridge of an app's internal network: <c>px-</c> and the app's uid without 40000 (D309, at most 15 characters).</summary>
     public static string BridgeName(long uid) => "px-" + (uid - Users.UidAllocator.MinAppUid).ToString(CultureInfo.InvariantCulture);
@@ -166,6 +172,15 @@ public sealed partial class AppBackendRuntime(
         progress?.Invoke(new Jobs.JobProgress(1, 3, 0, 0, "images"));
         var images = await ImagesAsync(app.AppId, version, lockFile, cancellationToken);
 
+        var devices = Devices(app.GrantedElevated, DeviceNodes.Optional(app.Manifest), deviceFs, path => LogOptionalDeviceMissing(app.AppId, path));
+        var project = ComposeRewriter.ProjectName(app.AppId);
+        var socket = HoldsDockerSocket(app.GrantedElevated)
+            ? dockerProxy.Open(new DockerProxySocket(
+                new DockerProxyApp(app.AppId, root, project, app.Internet),
+                app.Uid,
+                app.Manifest.GetProperty("backend").TryGetProperty("root", out var rootFlag) && rootFlag.GetBoolean(),
+                app.GrantedElevated.Contains(Manifest.ManifestValidator.DockerSocketRaw)))
+            : null;
         var composeHost = new ComposeHost(
             (int)app.Uid,
             root,
@@ -174,7 +189,8 @@ public sealed partial class AppBackendRuntime(
             mappings,
             app.Outside ? InternetBridgeName(app.Uid) : null,
             app.GrantedElevated,
-            DeviceGroups(app.GrantedElevated));
+            devices,
+            socket);
         var rewritten = ComposeRewriter.Rewrite(validation.Document!, app.Manifest, composeHost);
         var run = Path.Combine(root, AppStorage.RunFolder);
         Directory.CreateDirectory(run);
@@ -182,9 +198,12 @@ public sealed partial class AppBackendRuntime(
         await VolumesAsync(root, validation.Document!, app, mappings, cancellationToken);
 
         progress?.Invoke(new Jobs.JobProgress(2, 3, 0, 0, "start"));
-        var project = ComposeRewriter.ProjectName(app.AppId);
+        // A new socket of the proxy is a new file: containers that mount the old one are made again (D387).
+        string[] upArguments = socket is null
+            ? ["up", "--detach", "--wait", "--remove-orphans"]
+            : ["up", "--detach", "--wait", "--remove-orphans", "--force-recreate"];
         var up = await commands.RunAsync(
-            new CommandRequest("docker", Compose(project, run, "up", "--detach", "--wait", "--remove-orphans"), StartTimeout + TimeSpan.FromMinutes(1)),
+            new CommandRequest("docker", Compose(project, run, upArguments), StartTimeout + TimeSpan.FromMinutes(1)),
             cancellationToken);
         if (up.ExitCode != 0)
         {
@@ -205,7 +224,8 @@ public sealed partial class AppBackendRuntime(
     public async Task<bool> AdoptAsync(BackendApp app, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(app);
-        if (!app.HasBackend || !options.Apply)
+        // The proxy's socket of the old daemon is gone, so a backend holding it starts again instead (D387).
+        if (!app.HasBackend || !options.Apply || HoldsDockerSocket(app.GrantedElevated))
         {
             return false;
         }
@@ -273,9 +293,15 @@ public sealed partial class AppBackendRuntime(
     public async Task StopAsync(string appId, string? pool, CancellationToken cancellationToken)
     {
         backends.SetStopped(appId);
+        dockerProxy.Close(appId);
         if (!options.Apply || !await engine.PingAsync(cancellationToken))
         {
             return;
+        }
+        // Containers the app started through its Docker socket stop with it (D387).
+        foreach (var spawned in await engine.SpawnedContainersAsync(appId, cancellationToken))
+        {
+            await engine.StopContainerAsync(spawned, StopSeconds, cancellationToken);
         }
         var project = ComposeRewriter.ProjectName(appId);
         var run = pool is null ? null : storage.RootOf(pool, appId) is { } root ? Path.Combine(root, AppStorage.RunFolder) : null;
@@ -290,6 +316,23 @@ public sealed partial class AppBackendRuntime(
             throw new PithyxException(ErrorCodes.AppDockerUnavailable);
         }
         LogStopped(appId);
+    }
+
+    /// <summary>Removes the containers and volumes an app started through its Docker socket (D387), when it is uninstalled.</summary>
+    public async Task RemoveSpawnedAsync(string appId, CancellationToken cancellationToken)
+    {
+        if (!options.Apply || !await engine.PingAsync(cancellationToken))
+        {
+            return;
+        }
+        foreach (var spawned in await engine.SpawnedContainersAsync(appId, cancellationToken))
+        {
+            await engine.RemoveContainerAsync(spawned, cancellationToken);
+        }
+        foreach (var volume in await engine.SpawnedVolumesAsync(appId, cancellationToken))
+        {
+            await engine.RemoveVolumeAsync(volume, cancellationToken);
+        }
     }
 
     /// <summary>
@@ -504,6 +547,9 @@ public sealed partial class AppBackendRuntime(
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "Stopping the backend of app {AppId} failed: docker compose down ended with {ExitCode}")]
     private partial void LogStopFailed(string appId, int exitCode);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "The optional device {Path} of app {AppId} is not there; its backend starts without it")]
+    private partial void LogOptionalDeviceMissing(string appId, string path);
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "Bringing in the image {Image} failed")]
     private partial void LogImageFailed(Exception exception, string image);

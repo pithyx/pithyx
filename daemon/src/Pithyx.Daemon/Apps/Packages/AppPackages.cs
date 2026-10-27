@@ -167,6 +167,10 @@ public sealed class AppPackages
             throw validation.Issues[0].ToException();
         }
         var manifest = validation.Manifest!.Value;
+        if (origin is not null && ManifestValidator.Declares(manifest, ManifestValidator.DockerSocketRaw))
+        {
+            throw new PithyxException(ErrorCodes.AppElevatedSideloadOnly, new Dictionary<string, object?> { ["right"] = ManifestValidator.DockerSocketRaw });
+        }
         if (origin is not null
             && (manifest.GetProperty("id").GetString() != origin.AppId
                 || manifest.GetProperty("version").GetString() != origin.Version

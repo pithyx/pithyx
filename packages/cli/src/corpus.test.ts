@@ -78,7 +78,6 @@ describe('manifest corpus', () => {
   });
 
   it.each([
-    'docker.socket',
     'host.full',
     'capability:BPF',
     'capability:SYS_ADMIN',

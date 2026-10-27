@@ -87,7 +87,7 @@ public sealed record InstalledApp(
 /// topics <c>apps</c> (the apps each user may use) and <c>apps/admin</c> read it, <see cref="AppChangePublisher"/>
 /// publishes.
 /// </summary>
-public sealed class AppRegistry(SqliteConnectionFactory connections, PermissionService permissions, PoolInventory pools, AppStorageOptions options)
+public sealed class AppRegistry(SqliteConnectionFactory connections, PermissionService permissions, PoolInventory pools, AppStorageOptions options, Docker.DeviceFs deviceFs)
 {
     public const string Topic = "apps";
     public const string AdminTopic = "apps/admin";
@@ -166,7 +166,17 @@ public sealed class AppRegistry(SqliteConnectionFactory connections, PermissionS
     public AppDetails Details(InstalledApp app)
     {
         ArgumentNullException.ThrowIfNull(app);
-        return new(app.Id, app.Version, app.Source, app.Enabled, app.Manifest, app.Permissions, app.Uid, app.Sha256, app.InstalledAt, app.UpdatedAt, IsBusy(app.Id), IsAvailable(app.Id), app.LogLevel, app.Storage, app.CatalogId, app.UpdatePolicy, app.Previous?.Version, ElevatedOf(app));
+        return new(app.Id, app.Version, app.Source, app.Enabled, app.Manifest, app.Permissions, app.Uid, app.Sha256, app.InstalledAt, app.UpdatedAt, IsBusy(app.Id), IsAvailable(app.Id), app.LogLevel, app.Storage, app.CatalogId, app.UpdatePolicy, app.Previous?.Version, ElevatedOf(app), DevicesOf(app.Manifest, deviceFs));
+    }
+
+    /// <summary>Every device of the manifest's elevated rights with whether it is optional and plugged in now (D387).</summary>
+    public static IReadOnlyList<AppDeviceState> DevicesOf(JsonElement manifest, Docker.DeviceFs fs)
+    {
+        var rights = manifest.TryGetProperty("backend", out var backend) && backend.TryGetProperty("elevated", out var elevated)
+            ? elevated.EnumerateArray().Select(right => right.GetString()!).ToList()
+            : [];
+        var optional = Docker.DeviceNodes.Optional(manifest);
+        return [.. Docker.DeviceNodes.Paths(rights).Select(path => new AppDeviceState(path, optional.Contains(path), Docker.DeviceNodes.Present(path, fs).Count > 0))];
     }
 
     /// <summary>Every right of the manifest's <c>backend.elevated</c>, in its order, with whether it is granted.</summary>
@@ -328,11 +338,12 @@ public sealed class AppRegistry(SqliteConnectionFactory connections, PermissionS
 /// Publishes <c>apps</c>, <c>apps/admin</c> and every app's <c>apps/&lt;id&gt;/context</c> when the registry, the rights
 /// or the pools change.
 /// </summary>
-public sealed class AppChangePublisher(TopicHub hub, AppRegistry registry, AppContexts contexts, PermissionService permissions, PoolInventory pools, Proxy.AppBackends backends) : IHostedService
+public sealed class AppChangePublisher(TopicHub hub, AppRegistry registry, AppContexts contexts, PermissionService permissions, PoolInventory pools, Proxy.AppBackends backends, Docker.AppDevices devices) : IHostedService
 {
     public Task StartAsync(CancellationToken cancellationToken)
     {
         registry.Changed += Publish;
+        devices.Changed += Publish;
         permissions.Changed += Publish;
         pools.Changed += Publish;
         backends.Changed += PublishContext;
@@ -342,6 +353,7 @@ public sealed class AppChangePublisher(TopicHub hub, AppRegistry registry, AppCo
     public Task StopAsync(CancellationToken cancellationToken)
     {
         registry.Changed -= Publish;
+        devices.Changed -= Publish;
         permissions.Changed -= Publish;
         pools.Changed -= Publish;
         backends.Changed -= PublishContext;

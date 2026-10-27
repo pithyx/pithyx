@@ -20,7 +20,7 @@ import {
   type StepUpInput,
 } from './ElevatedRights';
 import { JobProgress, useAppJob } from './jobs';
-import { appPools, manifestFacts } from './model';
+import { appPools, deviceNote, manifestFacts } from './model';
 import { PermissionText } from './PermissionText';
 import { StorageSection } from './StorageSection';
 import { useInstalled } from './StoreApp';
@@ -414,7 +414,10 @@ function Preview({
           <ul className={styles.permissions}>
             {facts.elevated.map((right) => (
               <li key={right} className={styles.permission}>
-                <ElevatedRightText right={right} />
+                <ElevatedRightText
+                  right={right}
+                  note={deviceNote(right, preview.devices, 'install')}
+                />
                 {isUpdate && addedElevated.has(right) && (
                   <Badge tone="highlight">{t('install.newPermission')}</Badge>
                 )}

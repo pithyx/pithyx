@@ -57,6 +57,7 @@ public enum AppPackageAction
 /// <param name="SuggestedAccess">Who should use the app after an install (D304): administrators only when it asks for elevated rights, root in a container or <c>directory.read</c>, everybody otherwise. An install without access takes it.</param>
 /// <param name="Catalog">The catalog the package comes from; null for an uploaded file (a sideload, unverified).</param>
 /// <param name="KeptData">For an install: an earlier installation was removed with "Keep the data", and the app gets its data and its user id again.</param>
+/// <param name="Devices">Each device of the package's elevated rights with whether it is optional and plugged in now (D387): a missing required one refuses the install with <c>app.device.missing</c>, a missing optional one is only a hint.</param>
 /// <param name="AddedElevated">Elevated rights the package asks for that the app does not hold or had revoked (D311): installing grants them, so it needs a step-up with password and TOTP.</param>
 /// <param name="RemovedElevated">Elevated rights the installed version had that the package no longer asks for.</param>
 public sealed record AppPackagePreview(
@@ -78,7 +79,8 @@ public sealed record AppPackagePreview(
     string? Catalog = null,
     bool KeptData = false,
     IReadOnlyList<string>? AddedElevated = null,
-    IReadOnlyList<string>? RemovedElevated = null);
+    IReadOnlyList<string>? RemovedElevated = null,
+    IReadOnlyList<AppDeviceState>? Devices = null);
 
 /// <param name="Pool">The pool for the app data; required for the first app, and then always the app pool.</param>
 /// <param name="Access">Who may use the app after an install; an update keeps who may use it. Defaults to the preview's suggested access.</param>
@@ -152,6 +154,7 @@ public sealed record AppList(IReadOnlyList<AppSummary> Apps);
 /// <param name="UpdatePolicy">Its own update policy; null follows the box's.</param>
 /// <param name="PreviousVersion">The version before its last update, which a rollback restores with its data; null when there is none.</param>
 /// <param name="Elevated">Each elevated right of the manifest's <c>backend.elevated</c> with whether it is granted (D311).</param>
+/// <param name="Devices">Each device of the manifest's elevated rights with whether it is optional and plugged in now (D387).</param>
 public sealed record AppDetails(
     string Id,
     string Version,
@@ -170,7 +173,14 @@ public sealed record AppDetails(
     string? Catalog,
     Catalog.UpdatePolicy? UpdatePolicy,
     string? PreviousVersion,
-    IReadOnlyList<AppElevatedState> Elevated);
+    IReadOnlyList<AppElevatedState> Elevated,
+    IReadOnlyList<AppDeviceState> Devices);
+
+/// <summary>A device an app's backend asks for (D387).</summary>
+/// <param name="Path">The device or device class, for example <c>/dev/dri</c>.</param>
+/// <param name="Optional">The backend runs without it (<c>backend.optionalDevices</c>).</param>
+/// <param name="Present">At least one node of it is plugged in now.</param>
+public sealed record AppDeviceState(string Path, bool Optional, bool Present);
 
 /// <summary>A folder in a shared folder that an administrator mapped to one storage request of an app.</summary>
 /// <param name="StorageId">The id of the request in the manifest.</param>

@@ -1,0 +1,6 @@
+# The filtered Docker socket (D387): the box mounts its proxy for the app at the socket's path.
+services:
+  server:
+    image: ghcr.io/example/chat-server:1.2.0@sha256:a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock

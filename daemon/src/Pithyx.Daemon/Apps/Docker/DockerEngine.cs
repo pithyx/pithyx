@@ -180,6 +180,66 @@ public sealed class DockerEngine(DockerOptions options) : IDisposable
         }
     }
 
+    /// <summary>The Engine's JSON for a path such as <c>containers/&lt;id&gt;/json</c>, or null when it does not know the object.</summary>
+    public async Task<JsonDocument?> InspectAsync(string path, CancellationToken cancellationToken)
+    {
+        using var response = await _client.GetAsync(path, cancellationToken);
+        if (response.StatusCode == HttpStatusCode.NotFound)
+        {
+            return null;
+        }
+        await RequireSuccessAsync(response, cancellationToken);
+        return JsonDocument.Parse(await response.Content.ReadAsStringAsync(cancellationToken));
+    }
+
+    /// <summary>The ids of the containers an app started through its Docker socket (D387), running or not.</summary>
+    public async Task<IReadOnlyList<string>> SpawnedContainersAsync(string appId, CancellationToken cancellationToken)
+    {
+        var filters = Uri.EscapeDataString(JsonSerializer.Serialize(new Dictionary<string, string[]> { ["label"] = [DockerApiFilter.SpawnedLabel + "=" + appId] }));
+        using var document = JsonDocument.Parse(await GetTextAsync($"containers/json?all=1&filters={filters}", cancellationToken));
+        return [.. document.RootElement.EnumerateArray().Select(container => container.GetProperty("Id").GetString()!)];
+    }
+
+    /// <summary>The names of the volumes an app created through its Docker socket (D387).</summary>
+    public async Task<IReadOnlyList<string>> SpawnedVolumesAsync(string appId, CancellationToken cancellationToken)
+    {
+        var filters = Uri.EscapeDataString(JsonSerializer.Serialize(new Dictionary<string, string[]> { ["label"] = [DockerApiFilter.SpawnedLabel + "=" + appId] }));
+        using var document = JsonDocument.Parse(await GetTextAsync($"volumes?filters={filters}", cancellationToken));
+        return document.RootElement.TryGetProperty("Volumes", out var volumes) && volumes.ValueKind == JsonValueKind.Array
+            ? [.. volumes.EnumerateArray().Select(volume => volume.GetProperty("Name").GetString()!)]
+            : [];
+    }
+
+    /// <summary>Stops a container, killing it after <paramref name="seconds"/>; one that is gone or stopped already is no error.</summary>
+    public async Task StopContainerAsync(string id, int seconds, CancellationToken cancellationToken)
+    {
+        using var response = await _client.PostAsync($"containers/{Uri.EscapeDataString(id)}/stop?t={seconds.ToString(System.Globalization.CultureInfo.InvariantCulture)}", null, cancellationToken);
+        if (response.StatusCode is not (HttpStatusCode.NotFound or HttpStatusCode.NotModified))
+        {
+            await RequireSuccessAsync(response, cancellationToken);
+        }
+    }
+
+    /// <summary>Removes a container with its anonymous volumes, also a running one.</summary>
+    public async Task RemoveContainerAsync(string id, CancellationToken cancellationToken)
+    {
+        using var response = await _client.DeleteAsync($"containers/{Uri.EscapeDataString(id)}?force=1&v=1", cancellationToken);
+        if (response.StatusCode != HttpStatusCode.NotFound)
+        {
+            await RequireSuccessAsync(response, cancellationToken);
+        }
+    }
+
+    /// <summary>Removes a volume; one that is gone is no error.</summary>
+    public async Task RemoveVolumeAsync(string name, CancellationToken cancellationToken)
+    {
+        using var response = await _client.DeleteAsync($"volumes/{Uri.EscapeDataString(name)}?force=1", cancellationToken);
+        if (response.StatusCode != HttpStatusCode.NotFound)
+        {
+            await RequireSuccessAsync(response, cancellationToken);
+        }
+    }
+
     public void Dispose() => _client.Dispose();
 
     private async Task<string> GetTextAsync(string path, CancellationToken cancellationToken)

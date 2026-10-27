@@ -10330,7 +10330,7 @@
                       "null",
                       "string"
                     ],
-                    "description": "Why a backend that is not running cannot start, which makes it `unavailable` (D360): `storage` (a required\nstorage request is not mapped) or `pool` (the app pool is locked or missing); null otherwise."
+                    "description": "Why a backend that is not running cannot start, which makes it `unavailable` (D360): `storage` (a required\nstorage request is not mapped), `pool` (the app pool is locked or missing) or `device` (a required device is\nnot plugged in, D387); null otherwise."
                   }
                 },
                 "description": "The app's backend: the state of its containers and the names of its endpoints."
@@ -10396,7 +10396,8 @@
           "catalog",
           "updatePolicy",
           "previousVersion",
-          "elevated"
+          "elevated",
+          "devices"
         ],
         "type": "object",
         "properties": {
@@ -10496,9 +10497,39 @@
               "$ref": "#/components/schemas/AppElevatedState"
             },
             "description": "Each elevated right of the manifest's `backend.elevated` with whether it is granted (D311)."
+          },
+          "devices": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AppDeviceState"
+            },
+            "description": "Each device of the manifest's elevated rights with whether it is optional and plugged in now (D387)."
           }
         },
         "description": "An installed app for administrators (topic `apps/admin` and `GET /api/apps`)."
+      },
+      "AppDeviceState": {
+        "required": [
+          "path",
+          "optional",
+          "present"
+        ],
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "The device or device class, for example `/dev/dri`."
+          },
+          "optional": {
+            "type": "boolean",
+            "description": "The backend runs without it (`backend.optionalDevices`)."
+          },
+          "present": {
+            "type": "boolean",
+            "description": "At least one node of it is plugged in now."
+          }
+        },
+        "description": "A device an app's backend asks for (D387)."
       },
       "AppElevatedRequest": {
         "required": [
@@ -11330,6 +11361,16 @@
               "type": "string"
             },
             "description": "Elevated rights the installed version had that the package no longer asks for."
+          },
+          "devices": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/AppDeviceState"
+            },
+            "description": "Each device of the package's elevated rights with whether it is optional and plugged in now (D387): a missing required one refuses the install with `app.device.missing`, a missing optional one is only a hint."
           }
         },
         "description": "A checked package, kept for 15 minutes for its installation by the administrator who uploaded it."
@@ -13226,10 +13267,12 @@
           "app.compose.storage_mismatch",
           "app.compose.value_invalid",
           "app.compose.yaml_invalid",
+          "app.device.missing",
           "app.device.unavailable",
           "app.docker.unavailable",
           "app.elevated.root_conflict",
           "app.elevated.root_required",
+          "app.elevated.sideload_only",
           "app.elevated.unsupported",
           "app.icon.invalid",
           "app.image.mismatch",
