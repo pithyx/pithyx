@@ -74,6 +74,8 @@ public sealed partial class EndpointMatrixTests : IDisposable
         ["DeleteNotification"] = Need.AnyUser,
         ["CreateAppNotification"] = Need.AnyUser,
         ["SetNotificationLanguage"] = Need.AnyUser,
+        ["ListNotificationCategories"] = Need.AnyUser,
+        ["MuteNotificationCategory"] = Need.AnyUser,
         ["ListNotificationChannels"] = Need.AnyUser,
         ["CreateNotificationChannel"] = Need.AnyUser,
         ["UpdateNotificationChannel"] = Need.AnyUser,

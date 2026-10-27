@@ -390,7 +390,7 @@
       "unsupported": "The box cannot write in the language {language}."
     },
     "message": {
-      "invalid": "The notification was not sent: its {field, select, app {app id is not valid} title {title is empty or longer than {maxLength} characters} other {text is longer than {maxLength} characters}}."
+      "invalid": "The notification was not sent: its {field, select, app {app id is not valid} title {title is empty or longer than {maxLength} characters} category {category is not one the app declares} other {text is longer than {maxLength} characters}}."
     },
     "notification": {
       "not_found": "This notification no longer exists."
@@ -398,6 +398,9 @@
     "smtp": {
       "invalid": "The email server was not saved: {field, select, host {its name is empty or invalid} port {the port must be between 1 and 65535} security {the encryption is unknown} username {the user name is too long} password {the password is too long} from {the sender is not a valid email address} other {a value is invalid}}.",
       "missing": "Email channels need an email server. An administrator sets it up in Settings > Notifications."
+    },
+    "category": {
+      "not_found": "No app you may open has the notification category {category} of {app}."
     }
   },
   "permissions": {

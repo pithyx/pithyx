@@ -75,12 +75,13 @@ public static class BackupDatabase
 
     /// <summary>
     /// Runtime state: emptied in the backup's copy and never restored. The network settings belong here too (D337): a
-    /// restore would change the network without the confirmation timer, and another box has other card names.
+    /// restore would change the network without the confirmation timer, and another box has other card names. So do the
+    /// muted notification categories (D390): they tie users to apps, which a restore of one category alone would break.
     /// </summary>
     public static readonly FrozenSet<string> NotBackedUp = new[]
     {
         "sessions", "jobs", "notifications", "storage_alert_notices", "storage_schedule_runs", "trash_items",
-        "network_config", "network_pending", "system_updates", "proxy_sessions", "proxy_acme", "audit_log",
+        "network_config", "network_pending", "system_updates", "proxy_sessions", "proxy_acme", "audit_log", "notification_mutes",
     }.ToFrozenSet();
 
     /// <summary>Copies the live database to <paramref name="path"/> without its runtime state.</summary>

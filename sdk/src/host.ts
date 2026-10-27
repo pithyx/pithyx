@@ -269,7 +269,9 @@ function isNotification(p: unknown): boolean {
           (action) => isRecord(action) && isText(action.id, 64) && isText(action.label, 40),
         ))) &&
     isSmallJson(p.data, MAX_NOTIFICATION_DATA) &&
-    (p.tag === undefined || isText(p.tag, 64))
+    (p.tag === undefined || isText(p.tag, 64)) &&
+    (p.category === undefined ||
+      (typeof p.category === 'string' && /^[a-z][a-z0-9-]{0,31}$/.test(p.category)))
   );
 }
 

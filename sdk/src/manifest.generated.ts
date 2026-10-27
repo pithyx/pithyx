@@ -175,6 +175,18 @@ export interface AppManifest {
    * @maxItems 16
    */
   fileActions?: FileAction[];
+  /**
+   * How the app's notifications are sorted (D390). Needs the permission `notifications`.
+   */
+  notifications?: {
+    /**
+     * Up to 16 kinds of notifications the app sends, such as new messages or reminders. Each user can mute a kind in the notification settings; `notify` names the kind with `category`.
+     *
+     * @minItems 1
+     * @maxItems 16
+     */
+    categories: NotificationCategory[];
+  };
   backend?: BackendManifest;
 }
 /**
@@ -347,6 +359,17 @@ export interface FileAction {
    * Whether the action writes into the folder of the selection, so the desktop offers it only where the user may change files. Default false.
    */
   writes?: boolean;
+}
+/**
+ * One kind of notification the app sends.
+ */
+export interface NotificationCategory {
+  /**
+   * The name `notify` uses for it: lowercase letters, digits and dashes, starting with a letter, at most 32 characters. Unique in the app.
+   */
+  id: string;
+  name: LocalizedName;
+  description?: LocalizedText;
 }
 /**
  * An optional backend of one or more containers, described by a Compose file in the package and reached only through the daemon's proxy.

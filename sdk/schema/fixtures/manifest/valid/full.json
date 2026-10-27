@@ -171,6 +171,27 @@
       "writes": true
     }
   ],
+  "notifications": {
+    "categories": [
+      {
+        "id": "messages",
+        "name": {
+          "en": "New messages",
+          "de": "Neue Nachrichten"
+        },
+        "description": {
+          "en": "A message in a chat you are in."
+        }
+      },
+      {
+        "id": "mentions",
+        "name": {
+          "en": "Mentions",
+          "de": "Erwähnungen"
+        }
+      }
+    ]
+  },
   "backend": {
     "compose": "backend/compose.yaml",
     "endpoints": {

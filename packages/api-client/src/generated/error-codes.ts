@@ -185,6 +185,7 @@ export const errorCodes = [
   'network.vlan.duplicate',
   'network.vlan.id_invalid',
   'network.vlan.parent_invalid',
+  'notifications.category.not_found',
   'notifications.channel.failed',
   'notifications.channel.invalid',
   'notifications.channel.limit_reached',

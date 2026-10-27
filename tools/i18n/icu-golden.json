@@ -986,6 +986,13 @@
       },
       "expected": "enp2s0 cannot carry the VLAN vlan7: choose a network card or a bond."
     },
+    "notifications.category.not_found": {
+      "params": {
+        "app": "com.example.chat",
+        "category": "mentions"
+      },
+      "expected": "No app you may open has the notification category mentions of com.example.chat."
+    },
     "notifications.channel.failed": {
       "params": {
         "detail": "HTTP 403"

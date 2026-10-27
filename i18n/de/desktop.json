@@ -375,6 +375,11 @@
     "enabled": "Benachrichtigungen senden",
     "off": "Aus",
     "lastSent": "Zuletzt gesendet {date}",
-    "never": "Noch nichts gesendet"
+    "never": "Noch nichts gesendet",
+    "apps": {
+      "title": "Benachrichtigungen von Apps",
+      "intro": "Schalte eine Art von Benachrichtigung aus, um sie stummzuschalten: Sie landet weiter als gelesen in deiner Liste, aber ohne Toast, E-Mail oder Webhook.",
+      "none": "Keine deiner Apps sortiert ihre Benachrichtigungen nach Arten."
+    }
   }
 }

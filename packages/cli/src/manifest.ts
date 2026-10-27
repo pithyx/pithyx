@@ -216,6 +216,20 @@ function semanticIssues(
     });
   }
 
+  const categoryIds = new Set<string>();
+  manifest.notifications?.categories.forEach((category, index) => {
+    if (categoryIds.has(category.id)) {
+      issues.push(duplicate(`/notifications/categories/${String(index)}/id`, category.id));
+    }
+    categoryIds.add(category.id);
+  });
+  if (manifest.notifications !== undefined && !('notifications' in manifest.permissions)) {
+    issues.push({
+      code: 'app.manifest.permission_missing',
+      params: { path: '/notifications', permission: 'notifications' },
+    });
+  }
+
   const backend = manifest.backend;
   if (backend !== undefined) {
     const endpoints = new Set(Object.keys(backend.endpoints));

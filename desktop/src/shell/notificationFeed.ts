@@ -8,12 +8,13 @@ type NotificationList = components['schemas']['NotificationList'];
 
 /**
  * The notification that a message of the `notifications` topic brings, if it is a new one. Snapshots (on connect and
- * after every reconnect) are the history the user has already seen and bring none.
+ * after every reconnect) are the history the user has already seen and bring none, and a notification of a category
+ * the user muted arrives already read (D390) and brings none either.
  */
 export function createdNotification(
   data: NotificationEvent | NotificationList,
 ): DaemonNotification | undefined {
-  return 'change' in data && data.change === 'created'
+  return 'change' in data && data.change === 'created' && data.notification?.readAt == null
     ? (data.notification ?? undefined)
     : undefined;
 }

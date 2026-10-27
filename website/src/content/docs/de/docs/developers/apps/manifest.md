@@ -9,7 +9,7 @@ sidebar:
 
 `pithyx.json` im Wurzelverzeichnis des Pakets beschreibt eine App: wer sie ist, welches Fenster sie öffnet, welche Berechtigungen sie anfordert, welche Ordner sie haben will und, falls sie eines hat, wie ihr Backend läuft. Das JSON-Schema ist `sdk/schema/manifest.v2.schema.json` (veröffentlicht als `@pithyx/sdk/schema/manifest.v2.schema.json`); unbekannte Felder sind Fehler. Das Schema ist ein stabiler Vertrag: Ein neues optionales Feld ist eine Minor-Änderung, alles andere eine Major-Änderung. Die Manifest-Version 2 (Pithyx 1.2, D388) hat Version 1 abgelöst: Eine Box lehnt ein Manifest der Version 1 mit [`app.manifest.version_unsupported`](/de/docs/reference/errors/#app.manifest.version_unsupported) ab, baue eine ältere App also mit `@pithyx/cli` 2 neu. Schon installierte Apps laufen weiter; die Box hat ihre gespeicherten Manifeste umgewandelt.
 
-Pflichtfelder: `manifestVersion`, `id`, `version`, `name`, `author`, `entry`, `sdk`, `permissions`, `arch`, `source` und `window`. Optional: `$schema`, `description`, `license`, `homepage`, `pithyx`, `dataVersion`, `storage`, `fileHandlers`, `fileActions`, `backend` und die [Angaben für den Store](#angaben-für-den-store) (`privacy`, `security`, `maturity`, `categories`, `keywords`, `locales`, `screenshots`, `releaseNotes`, `requirements`, `audience`). Siehe auch die [Schema-Referenz](/de/docs/reference/manifest-schema/) mit jedem Feld und die [Compose-Regeln](/de/docs/reference/compose-rules/) für das Backend.
+Pflichtfelder: `manifestVersion`, `id`, `version`, `name`, `author`, `entry`, `sdk`, `permissions`, `arch`, `source` und `window`. Optional: `$schema`, `description`, `license`, `homepage`, `pithyx`, `dataVersion`, `storage`, `fileHandlers`, `fileActions`, `backend`, [`notifications`](#benachrichtigungskategorien) und die [Angaben für den Store](#angaben-für-den-store) (`privacy`, `security`, `maturity`, `categories`, `keywords`, `locales`, `screenshots`, `releaseNotes`, `requirements`, `audience`). Siehe auch die [Schema-Referenz](/de/docs/reference/manifest-schema/) mit jedem Feld und die [Compose-Regeln](/de/docs/reference/compose-rules/) für das Backend.
 
 ```json
 {
@@ -82,6 +82,19 @@ Optionale Felder (D389), die der Store Administratoren vor und nach der Installa
 "releaseNotes": { "en": "Notes can have a due date.", "de": "Notizen können ein Fälligkeitsdatum haben." },
 "requirements": { "memory": 128, "disk": 50 },
 "audience": "everyone"
+```
+
+## Benachrichtigungskategorien
+
+`notifications.categories` (optional, D390) nennt bis zu 16 Arten von Benachrichtigungen, die die App sendet, jede `{ "id", "name", "description"? }` mit einer `id` aus Kleinbuchstaben, Ziffern und Bindestrichen (höchstens 32 Zeichen, eindeutig in der App) und einem mehrsprachigen `name`. Das braucht die Berechtigung `notifications` ([`app.manifest.permission_missing`](/de/docs/reference/errors/#app.manifest.permission_missing)). `app.notify({ ..., category: "mentions" })` nennt die Art; eine Kategorie, die das Manifest nicht angibt, wird mit [`notifications.message.invalid`](/de/docs/reference/errors/#notifications.message.invalid) abgelehnt. Jeder Benutzer kann eine Art unter **Benachrichtigungskanäle** ausschalten: Ihre Benachrichtigungen kommen dann als gelesen an, ohne Toast, E-Mail oder Webhook. Eine Benachrichtigung ohne Kategorie wird nie stummgeschaltet.
+
+```json
+"notifications": {
+  "categories": [
+    { "id": "messages", "name": { "en": "New messages", "de": "Neue Nachrichten" } },
+    { "id": "mentions", "name": { "en": "Mentions", "de": "Erwähnungen" } }
+  ]
+}
 ```
 
 ## Fenster

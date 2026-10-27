@@ -260,6 +260,11 @@ export interface NotificationRequest {
    * characters.
    */
   tag?: string;
+  /**
+   * The kind of notification, one of the `id`s of the manifest's `notifications.categories`. A user who muted that
+   * kind gets the notification as read, without a toast or email.
+   */
+  category?: string;
 }
 
 /** A token for the app's backend. */

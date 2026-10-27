@@ -390,7 +390,7 @@
       "unsupported": "Die Box kann nicht in der Sprache {language} schreiben."
     },
     "message": {
-      "invalid": "Die Benachrichtigung wurde nicht gesendet: {field, select, app {die App-ID ist ungültig} title {der Titel ist leer oder länger als {maxLength} Zeichen} other {der Text ist länger als {maxLength} Zeichen}}."
+      "invalid": "Die Benachrichtigung wurde nicht gesendet: {field, select, app {die App-ID ist ungültig} title {der Titel ist leer oder länger als {maxLength} Zeichen} category {die Kategorie ist keine, die die App angibt} other {der Text ist länger als {maxLength} Zeichen}}."
     },
     "notification": {
       "not_found": "Diese Benachrichtigung gibt es nicht mehr."
@@ -398,6 +398,9 @@
     "smtp": {
       "invalid": "Der E-Mail-Server wurde nicht gespeichert: {field, select, host {sein Name ist leer oder ungültig} port {der Port muss zwischen 1 und 65535 liegen} security {die Verschlüsselung ist unbekannt} username {der Benutzername ist zu lang} password {das Passwort ist zu lang} from {der Absender ist keine gültige E-Mail-Adresse} other {ein Wert ist ungültig}}.",
       "missing": "E-Mail-Kanäle brauchen einen E-Mail-Server. Ein Administrator richtet ihn unter Einstellungen > Benachrichtigungen ein."
+    },
+    "category": {
+      "not_found": "Keine App, die du öffnen darfst, hat die Benachrichtigungskategorie {category} von {app}."
     }
   },
   "permissions": {

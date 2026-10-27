@@ -75,6 +75,7 @@ export const pages: ReferencePage[] = [
         'Permissions',
         'PermissionGrant',
         'Screenshot',
+        'NotificationCategory',
         'WindowLoading',
         'WindowManifest',
         'WindowSize',

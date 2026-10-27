@@ -164,7 +164,7 @@ export function appBrokerFor(target: {
           .catch(() => undefined);
       }
     },
-    notify: async ({ title, body, level, actions, data, tag }) =>
+    notify: async ({ title, body, level, actions, data, tag, category }) =>
       daemon(async () => {
         const created = await client.call((headers) =>
           api.POST('/api/app/notifications', {
@@ -176,6 +176,7 @@ export function appBrokerFor(target: {
               actions: actions ?? null,
               data: data === undefined ? null : (data as never),
               tag: tag ?? null,
+              category: category ?? null,
             },
           }),
         );

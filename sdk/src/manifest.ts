@@ -27,6 +27,7 @@ export type {
   FileHandler,
   LocalizedName,
   LocalizedText,
+  NotificationCategory,
   Permissions,
   Screenshot,
   StorageRequest,

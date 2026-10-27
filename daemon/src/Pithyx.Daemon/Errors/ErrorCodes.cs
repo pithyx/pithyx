@@ -889,9 +889,13 @@ public static class ErrorCodes
     [ErrorStatus(HttpStatusCode.Conflict)]
     public const string NotificationsSmtpMissing = "notifications.smtp.missing";
 
-    /// <summary>An app notification is invalid; <c>params.field</c> names the field (app, title, body), <c>params.maxLength</c> its limit.</summary>
+    /// <summary>An app notification is invalid; <c>params.field</c> names the field (app, title, body, actions, data, tag, category), <c>params.maxLength</c> its limit.</summary>
     [ErrorStatus(HttpStatusCode.BadRequest)]
     public const string NotificationsMessageInvalid = "notifications.message.invalid";
+
+    /// <summary>No app the user may open has this notification category (D390); <c>params.app</c> and <c>params.category</c> name it.</summary>
+    [ErrorStatus(HttpStatusCode.NotFound)]
+    public const string NotificationsCategoryNotFound = "notifications.category.not_found";
 
     /// <summary>The signed-in user has no notification with this id (it was deleted, or belongs to someone else).</summary>
     [ErrorStatus(HttpStatusCode.NotFound)]
