@@ -243,7 +243,7 @@
     "dockerSocketRawRight": "docker.socket.raw"
   },
   "elevated": {
-    "$comment": "Which elevated rights of the manifest's backend.elevated the box grants (D311). `blockedCapabilities` are never granted. A right of `hostNamespaceRights`, and a device outside `namespacedDevices`, runs its service in the host's user namespace (Docker refuses the host network and process namespaces inside a user namespace, and a device's group exists only on the host), so it cannot go together with `backend.root`: root there would be root on the box. A capability only works for root, so `capability:` needs `backend.root`.",
+    "$comment": "Which elevated rights of the manifest's `permissions` the box grants (D311). `blockedCapabilities` are never granted. A right of `hostNamespaceRights`, and a device outside `namespacedDevices`, runs its service in the host's user namespace (Docker refuses the host network and process namespaces inside a user namespace, and a device's group exists only on the host), so it cannot go together with `backend.root`: root there would be root on the box. A capability only works for root, so `capability:` needs `backend.root`.",
     "blockedCapabilities": [
       "ALL",
       "AUDIT_CONTROL",
@@ -271,6 +271,20 @@
       "/dev/dri": { "nodes": "^(?:card[0-9]+|renderD[0-9]+)$" },
       "/dev/serial": { "links": "^(?:/dev/tty(?:USB|ACM)[0-9]+)$" },
       "/dev/net/tun": {}
+    },
+    "tiers": {
+      "$comment": "The risk tier of each elevated right (D388), which decides how much the install dialog asks: `elevated` a yellow hint and a checkbox, `high` an orange risk text, a checkbox and the step-up, `critical` (root on the box) a red step of its own where the administrator types the app's name, plus the step-up; a critical app also never updates by itself. `rights` names the rights of the lower and the critical tier, and a device below a device right of it (`device:/dev/dri/renderD128` below `device:/dev/dri`) has its tier; every other right (a capability, another device) is `default`.",
+      "default": "high",
+      "rights": {
+        "device:/dev/net/tun": "elevated",
+        "device:/dev/dri": "elevated",
+        "device:/dev/serial": "elevated",
+        "host.network": "high",
+        "host.pid": "high",
+        "docker.socket": "high",
+        "docker.socket.raw": "critical",
+        "host.full": "critical"
+      }
     }
   },
   "dependsOn": {

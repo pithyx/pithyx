@@ -1,6 +1,6 @@
 {
-  "$schema": "./node_modules/@pithyx/sdk/schema/manifest.v1.schema.json",
-  "manifestVersion": 1,
+  "$schema": "./node_modules/@pithyx/sdk/schema/manifest.v2.schema.json",
+  "manifestVersion": 2,
   "id": "com.mueller.chat",
   "version": "1.2.0",
   "name": {
@@ -19,12 +19,38 @@
   "homepage": "https://github.com/janmueller/pithyx-chat",
   "entry": "frontend/index.html",
   "sdk": "^1.0.0",
-  "permissions": [
-    "notifications",
-    "directory.read",
-    "network.internet",
-    "files.read"
+  "arch": [
+    "amd64",
+    "arm64"
   ],
+  "source": "https://github.com/janmueller/pithyx-chat",
+  "permissions": {
+    "notifications": {
+      "reason": {
+        "en": "Tells you about new messages."
+      }
+    },
+    "directory.read": {
+      "reason": {
+        "en": "Lists the users to share with."
+      }
+    },
+    "network.internet": {
+      "reason": {
+        "en": "Fetches updates from the internet."
+      }
+    },
+    "files.read": {
+      "reason": {
+        "en": "Opens the files you choose."
+      }
+    },
+    "docker.socket": {
+      "reason": {
+        "en": "Needs docker.socket for its background service."
+      }
+    }
+  },
   "window": {
     "instances": "single",
     "defaultSize": {
@@ -86,9 +112,6 @@
         "endpoint": "api",
         "path": "/jobs/cleanup"
       }
-    ],
-    "elevated": [
-      "docker.socket"
     ]
   }
 }

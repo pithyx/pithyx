@@ -19,6 +19,13 @@
       },
       "expected": "No app with the id com.example.chat is installed."
     },
+    "app.arch.unsupported": {
+      "params": {
+        "arch": "arm64",
+        "supported": "amd64"
+      },
+      "expected": "This app runs only on amd64, not on this box (arm64)."
+    },
     "app.backend.endpoint_unknown": {
       "params": {
         "endpoint": "metrics"
@@ -73,10 +80,10 @@
     },
     "app.compose.right_unused": {
       "params": {
-        "path": "/backend/elevated/0",
+        "path": "/permissions/host.pid",
         "right": "host.pid"
       },
-      "expected": "The app's manifest declares the right host.pid at /backend/elevated/0, which its Compose file does not use."
+      "expected": "The app's manifest declares the right host.pid at /permissions/host.pid, which its Compose file does not use."
     },
     "app.compose.storage_mismatch": {
       "params": {
@@ -116,6 +123,18 @@
       "params": {},
       "expected": "The container service does not answer, so app backends cannot run right now."
     },
+    "app.elevated.backend_missing": {
+      "params": {
+        "right": "host.network"
+      },
+      "expected": "The app asks for host.network, a right only a background service can use, but it has no background service."
+    },
+    "app.elevated.confirmation_required": {
+      "params": {
+        "right": "docker.socket.raw"
+      },
+      "expected": "docker.socket.raw gives the app full control of the box. Type the app's name in the install dialog to confirm it."
+    },
     "app.elevated.root_conflict": {
       "params": {
         "right": "host.network"
@@ -127,12 +146,6 @@
         "right": "capability:NET_ADMIN"
       },
       "expected": "The app asks for capability:NET_ADMIN, but only a background service that runs as root can use a capability."
-    },
-    "app.elevated.sideload_only": {
-      "params": {
-        "right": "docker.socket.raw"
-      },
-      "expected": "The app asks for docker.socket.raw, the unfiltered container service, which is root on the box. Pithyx grants it only to apps installed from a file, never to apps from a catalog."
     },
     "app.elevated.unsupported": {
       "params": {
@@ -224,10 +237,10 @@
     },
     "app.manifest.version_unsupported": {
       "params": {
-        "version": "2",
-        "supported": 1
+        "version": "1",
+        "supported": 2
       },
-      "expected": "This app needs a newer version of Pithyx (manifest version 2, this box reads version 1)."
+      "expected": "This app was made for an older version of Pithyx (manifest version 1, this box reads version 2). Ask its author for a new version."
     },
     "app.manifest.window_size_invalid": {
       "params": {},

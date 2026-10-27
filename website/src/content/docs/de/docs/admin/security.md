@@ -1,13 +1,13 @@
 ---
 title: 'Sicherheit'
-description: 'Transport, offene Ports, physischer Zugriff, SSH, Zwei-Faktor-Anmeldung, Passkeys, der Wiederherstellungsschlüssel und was die Box verlässt.'
+description: 'Transport, offene Ports, physischer Zugriff, SSH, Zwei-Faktor-Anmeldung, Passkeys, der Wiederherstellungsschlüssel, Apps mit Root-Zugriff und was die Box verlässt.'
 status: ready
 audience: admin
 sidebar:
   order: 9
 ---
 
-Pithyx behält alles auf der Box: keine Telemetrie, kein Cloud-Konto, kein Nach-Hause-Telefonieren. Der Web-Desktop spricht HTTPS mit einem Zertifikat der eigenen Zertifizierungsstelle der Box. Diese Seite behandelt Transport, offene Ports, physischen Zugriff, SSH, Zwei-Faktor-Anmeldung, Passkeys, den Wiederherstellungsschlüssel und die wenigen Verbindungen, die die Box von sich aus aufbaut.
+Pithyx behält alles auf der Box: keine Telemetrie, kein Cloud-Konto, kein Nach-Hause-Telefonieren. Der Web-Desktop spricht HTTPS mit einem Zertifikat der eigenen Zertifizierungsstelle der Box. Diese Seite behandelt Transport, offene Ports, physischen Zugriff, SSH, Zwei-Faktor-Anmeldung, Passkeys, den Wiederherstellungsschlüssel, Apps mit Root-Zugriff und die wenigen Verbindungen, die die Box von sich aus aufbaut.
 
 ## HTTPS und Zertifikate
 
@@ -57,6 +57,15 @@ Ein Passkey ist an den Namen gebunden, unter dem die Box geöffnet wurde (die We
 ## Der Wiederherstellungsschlüssel
 
 Die Ersteinrichtung zeigt den Wiederherstellungsschlüssel einmal an (`PTHX-` gefolgt von 26 Zeichen). Er ist der einzige Weg, das Administratorpasswort zurückzusetzen. Wähle dazu auf der Anmeldeseite „Passwort vergessen?“ und gib dann den Schlüssel, den Benutzernamen eines Administrators und ein neues Passwort ein. Das meldet diesen Benutzer überall ab, schaltet seine Zwei-Faktor-Anmeldung aus, entfernt seine Passkeys und stellt einen neuen Wiederherstellungsschlüssel aus; der alte wird ungültig. Es gibt einen Schlüssel für die ganze Box, und er gehört zum Konfigurationsbackup. Ohne den Schlüssel und das Passwort muss das System neu installiert werden. Andere Benutzer bitten einen Administrator um ein neues Passwort.
+
+## Apps mit Root-Zugriff
+
+Manche Apps brauchen ein Recht, das root auf der Box ist, heute den ungefilterten Containerdienst `docker.socket.raw` (etwa eine Containerverwaltung). Pithyx lehnt sie nicht ab; ein solches Recht zu geben, verlangt im Installationsdialog einen eigenen roten Schritt, den eingetippten Namen der App und dein Passwort ([Sonderrechte](/de/docs/admin/apps-and-store/#sonderrechte)). Danach gilt:
+
+- Die App trägt im Store und auf ihrer Seite das Abzeichen **Root-Zugriff**.
+- **Einstellungen > Sicherheit** listet jede App mit Root-Zugriff und ihre Rechte. **Root-Zugriff entziehen** nimmt das Recht sofort weg, ohne Passwort; der Hintergrunddienst der App startet ohne es neu. Gibst du es wieder, verlangt Pithyx die volle Zustimmung.
+- Jeder andere Administrator bekommt die Benachrichtigung "<App> hat jetzt Root-Zugriff", auch per E-Mail oder Webhook, wo eingerichtet.
+- Die App aktualisiert sich nie von selbst, egal was die Update-Regel sagt. Lies die Versionshinweise und installiere ihr Update mit einem Klick im Tab **Updates** des Stores.
 
 ## Was die Box verlässt
 

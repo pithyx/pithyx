@@ -1,0 +1,35 @@
+{
+  "$schema": "../../../sdk/schema/manifest.v2.schema.json",
+  "manifestVersion": 2,
+  "id": "com.example.root-probe",
+  "version": "1.0.0",
+  "name": { "en": "Root probe", "de": "Root-Sonde" },
+  "description": {
+    "en": "An E2E fixture that asks for the unfiltered container service, root on the box (D388).",
+    "de": "Ein E2E-Testobjekt, das den ungefilterten Containerdienst verlangt, root auf der Box (D388)."
+  },
+  "author": { "name": "Pithyx E2E" },
+  "license": "MIT",
+  "entry": "frontend/index.html",
+  "sdk": "^1.0.0",
+  "arch": ["amd64", "arm64"],
+  "source": "https://github.com/pithyx/pithyx",
+  "permissions": {
+    "docker.socket.raw": {
+      "reason": {
+        "en": "Manages every container of the box.",
+        "de": "Verwaltet jeden Container der Box."
+      }
+    }
+  },
+  "window": {
+    "instances": "single",
+    "defaultSize": { "width": 640, "height": 480 },
+    "minSize": { "width": 320, "height": 240 }
+  },
+  "backend": {
+    "compose": "backend/compose.yaml",
+    "endpoints": { "api": { "service": "server", "port": 8080 } },
+    "lifecycle": "onDemand"
+  }
+}

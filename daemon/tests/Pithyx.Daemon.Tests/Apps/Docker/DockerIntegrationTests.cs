@@ -326,15 +326,14 @@ public sealed class DockerIntegrationTests
 
     private const string ElevatedRights = "\"host.network\", \"device:/dev/net/tun\", \"device:/dev/kvm\"";
 
-    private const string SocketRights = "\"docker.socket\", \"device:/dev/net/tun\", \"device:/dev/serial\"], \"optionalDevices\": [\"/dev/serial\"";
+    private const string SocketRights = "\"docker.socket\", \"device:/dev/net/tun\", \"device:/dev/serial\"";
 
     private static async Task<BackendApp> InstallAsync(
         AppStorage storage, AppBackendRuntime runtime, string pool, string staging, string imageId, byte[] image, string version, string text, bool update, bool healthy = true,
         bool elevated = false, bool socket = false)
     {
-        var manifest = TarBuilder.Manifest(AppId, version, "", elevated || socket
-            ? TarBuilder.BackendManifest.Replace("\"lifecycle\": \"onDemand\"", "\"lifecycle\": \"onDemand\", \"elevated\": [" + (socket ? SocketRights : ElevatedRights) + "]", StringComparison.Ordinal)
-            : TarBuilder.BackendManifest);
+        var manifest = TarBuilder.Manifest(AppId, version, socket ? SocketRights : elevated ? ElevatedRights : "", TarBuilder.BackendManifest,
+            optionalDevices: socket ? "\"/dev/serial\"" : "");
         var check = healthy ? "hello.txt" : "missing.txt";
         var probe = elevated
             ? $$"""

@@ -1,6 +1,6 @@
 {
-  "$schema": "./node_modules/@pithyx/sdk/schema/manifest.v1.schema.json",
-  "manifestVersion": 1,
+  "$schema": "./node_modules/@pithyx/sdk/schema/manifest.v2.schema.json",
+  "manifestVersion": 2,
   "id": "com.mueller.chat",
   "version": "1.2.0",
   "name": {
@@ -21,15 +21,53 @@
   "pithyx": ">=0.1.0 <2.0.0 || ^2.1.0-beta.1",
   "dataVersion": 3,
   "sdk": "^1.0.0",
-  "permissions": [
-    "notifications",
-    "notifications.external",
-    "directory.read",
-    "network.internet",
-    "network.lan",
-    "files.read",
-    "files.shares"
+  "arch": [
+    "amd64",
+    "arm64"
   ],
+  "source": "https://github.com/janmueller/pithyx-chat",
+  "permissions": {
+    "notifications": {
+      "reason": {
+        "en": "Tells you about new messages."
+      }
+    },
+    "notifications.external": {
+      "reason": {
+        "en": "Sends messages to your email."
+      }
+    },
+    "directory.read": {
+      "reason": {
+        "en": "Lists the users to share with."
+      }
+    },
+    "network.internet": {
+      "reason": {
+        "en": "Fetches updates from the internet.",
+        "de": "Lädt Neuigkeiten aus dem Internet."
+      },
+      "hosts": [
+        "api.example.org",
+        "*.tiles.example.org"
+      ]
+    },
+    "network.lan": {
+      "reason": {
+        "en": "Talks to devices in your network."
+      }
+    },
+    "files.read": {
+      "reason": {
+        "en": "Opens the files you choose."
+      }
+    },
+    "files.shares": {
+      "reason": {
+        "en": "Browses your shared folders."
+      }
+    }
+  },
   "window": {
     "instances": "single",
     "suggestAtSignIn": true,

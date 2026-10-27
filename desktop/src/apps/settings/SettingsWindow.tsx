@@ -7,6 +7,7 @@ import { adminStorageHost } from '../sdk/internal';
 import { networkHost } from '../sdk/network';
 import { notificationsHost } from '../sdk/notifications';
 import { proxyHost } from '../sdk/proxy';
+import { securityHost } from '../sdk/security';
 import { systemHost } from '../sdk/system';
 import { tlsHost } from '../sdk/tls';
 import { updatesHost } from '../sdk/updates';
@@ -39,6 +40,7 @@ export function SettingsWindow({ windowId }: AppProps) {
             ...tlsHost(),
             ...proxyHost(),
             ...notificationsHost(),
+            ...securityHost(),
           },
           close: () => {
             storage.close();

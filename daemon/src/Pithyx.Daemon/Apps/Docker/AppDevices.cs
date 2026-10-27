@@ -37,7 +37,7 @@ public sealed partial class AppDevices(
     public IReadOnlyList<string> MissingRequired(InstalledApp app)
     {
         ArgumentNullException.ThrowIfNull(app);
-        return DeviceNodes.MissingRequired(app.GrantedElevated, DeviceNodes.Optional(app.Manifest), fs);
+        return DeviceNodes.MissingRequired(app.GrantedElevated, Manifest.ElevatedRights.OptionalDevices(app.Manifest), fs);
     }
 
     public override Task StartAsync(CancellationToken cancellationToken)
@@ -116,7 +116,7 @@ public sealed partial class AppDevices(
         var changed = false;
         foreach (var app in registry.Apps.Values)
         {
-            var optional = DeviceNodes.Optional(app.Manifest);
+            var optional = Manifest.ElevatedRights.OptionalDevices(app.Manifest);
             var missing = DeviceNodes.Paths(app.GrantedElevated).Where(path => DeviceNodes.Present(path, fs).Count == 0).ToHashSet(StringComparer.Ordinal);
             var before = _missing.GetValueOrDefault(app.Id) ?? new HashSet<string>(StringComparer.Ordinal);
             if (missing.SetEquals(before))

@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://pithyx.org/schema/manifest.v1.schema.json",
+  "$id": "https://pithyx.org/schema/manifest.v2.schema.json",
   "title": "AppManifest",
-  "description": "The app manifest (`pithyx.json` at the root of an app package). It tells the daemon and the desktop what the app is, what it may do and how its window and backend behave. The icon is always `icon.svg` next to it. This schema is a stable contract: a new optional field is a minor change, anything else a major one. Unknown fields are errors.",
+  "description": "The app manifest (`pithyx.json` at the root of an app package), version 2 (D388). It tells the daemon and the desktop what the app is, what it may do and why, and how its window and backend behave. The icon is always `icon.svg` next to it. This schema is a stable contract: a new optional field is a minor change, anything else a major one. Unknown fields are errors.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -14,6 +14,8 @@
     "entry",
     "sdk",
     "permissions",
+    "arch",
+    "source",
     "window"
   ],
   "properties": {
@@ -23,8 +25,8 @@
       "maxLength": 500
     },
     "manifestVersion": {
-      "description": "The manifest schema this file follows.",
-      "const": 1
+      "description": "The manifest schema this file follows. A box refuses a manifest of another version with `app.manifest.version_unsupported`; version 1 ended with Pithyx 1.2 (D388).",
+      "const": 2
     },
     "id": {
       "$ref": "#/$defs/AppId"
@@ -54,6 +56,12 @@
       "$ref": "#/$defs/HttpUrl",
       "description": "The app's website or source repository."
     },
+    "source": {
+      "description": "Where the app's source code is: the URL of its repository, or `private` when the source is not public. The Store shows \"Open source\" for a public source with a `license`, and \"Source not public\" otherwise.",
+      "type": "string",
+      "maxLength": 500,
+      "pattern": "^(https?://[!-~]+|private)$"
+    },
     "entry": {
       "description": "Path of the HTML page the desktop loads in the sandboxed window, inside `frontend/` of the package, for example `frontend/index.html`. Segments never start with a dot.",
       "type": "string",
@@ -75,11 +83,16 @@
       "maximum": 2147483647
     },
     "permissions": {
-      "description": "The permissions the app asks for. Each one appears in the install dialog and can be revoked later.",
+      "$ref": "#/$defs/Permissions"
+    },
+    "arch": {
+      "description": "The processor architectures the app runs on: `amd64` (x86-64) and `arm64`. Every image of the backend must exist for each of them. A box refuses to install the app on another architecture (`app.arch.unsupported`), because it cannot run there; an app without a backend usually names both.",
       "type": "array",
+      "minItems": 1,
       "uniqueItems": true,
       "items": {
-        "$ref": "#/$defs/Permission"
+        "type": "string",
+        "enum": ["amd64", "arm64"]
       }
     },
     "window": {
@@ -205,7 +218,7 @@
     },
     "Permission": {
       "title": "Permission",
-      "description": "A permission an app declares. Nothing is granted by using an API: the install dialog lists every declared permission, an administrator confirms them for the app, and each one can be revoked later (the app gets `permissionsChange`). Which users may use the app at all is a separate grant per user and group. The daemon checks every permission on every call that reaches data or leaves the window. An update that declares a new permission waits until an administrator confirms it; the old version keeps running. `files.read`: read files the user opens with the app or picks in a desktop file dialog. `files.write`: write those files, and save new files where the user chooses in a desktop save dialog. `files.shares`: browse every shared folder the user may access, with the user's own rights. `notifications`: show notifications. `notifications.external`: let them also reach the email and webhook channels of the users, together with `notifications` (D379). `directory.read`: list all users and groups of the box. `network.internet`: outgoing connections to the internet, from the window (`connect-src https:`) and from the backend. `network.lan`: outgoing connections from the backend to the local network (private, shared and link-local addresses such as `192.168.0.0/16`); without it the backend reaches no other device in the LAN, also with `network.internet`. The box itself is never reachable.",
+      "description": "The name of a permission an app declares in `permissions`. Nothing is granted by using an API: the install dialog lists every declared permission, an administrator confirms them for the app, and each one can be revoked later (the app gets `permissionsChange`). Which users may use the app at all is a separate grant per user and group. The daemon checks every permission on every call that reaches data or leaves the window. An update that declares a new permission waits until an administrator confirms it; the old version keeps running. `files.read`: read files the user opens with the app or picks in a desktop file dialog. `files.write`: write those files, and save new files where the user chooses in a desktop save dialog. `files.shares`: browse every shared folder the user may access, with the user's own rights. `notifications`: show notifications. `notifications.external`: let them also reach the email and webhook channels of the users, together with `notifications` (D379). `directory.read`: list all users and groups of the box. `network.internet`: outgoing connections to the internet, from the window (`connect-src https:`) and from the backend. `network.lan`: outgoing connections from the backend to the local network (private, shared and link-local addresses such as `192.168.0.0/16`); without it the backend reaches no other device in the LAN, also with `network.internet`. The box itself is never reachable.",
       "type": "string",
       "enum": [
         "files.read",
@@ -220,11 +233,109 @@
     },
     "ElevatedPermission": {
       "title": "ElevatedPermission",
-      "description": "A right beyond the sandbox, for the backend only (D71): `host.network` (the host's network namespace), `host.pid` (the host's process namespace), `device:<path under /dev>` (one device node, for example `device:/dev/net/tun`, or a device class: `device:/dev/dri` for the graphics cards, `device:/dev/serial` for USB serial adapters), `capability:<NAME>` (one Linux capability without the `CAP_` prefix, for example `capability:NET_ADMIN`), `docker.socket` (the Docker Engine API through the daemon's filtering proxy: the app sees and controls only the containers it started), `docker.socket.raw` (the unfiltered Docker Engine API, which is root on the box; only for apps installed from a file, never from a catalog) and `host.full` (a privileged container: root on the host). An administrator grants them after a confirmation with password and TOTP (D311, D387), each revocable; blocked devices and capabilities and `host.full` are refused with `app.elevated.unsupported`. `host.network`, `host.pid` and devices other than `/dev/net/tun` cannot go together with `backend.root` (`app.elevated.root_conflict`), a capability needs it (`app.elevated.root_required`), and `docker.socket` and `docker.socket.raw` exclude each other.",
+      "description": "The name of a right beyond the sandbox, for the backend only (D71), declared in `permissions` like the other permissions: `host.network` (the host's network namespace), `host.pid` (the host's process namespace), `device:<path under /dev>` (one device node, for example `device:/dev/net/tun`, or a device class: `device:/dev/dri` for the graphics cards, `device:/dev/serial` for USB serial adapters), `capability:<NAME>` (one Linux capability without the `CAP_` prefix, for example `capability:NET_ADMIN`), `docker.socket` (the Docker Engine API through the daemon's filtering proxy: the app sees and controls only the containers it started), `docker.socket.raw` (the unfiltered Docker Engine API, which is root on the box) and `host.full` (a privileged container: root on the host). The box sorts each into a risk tier (elevated, high or critical, `elevated.tiers` in `compose.v1.rules.json`) that decides how much the install dialog asks; an administrator grants them after a confirmation with password and TOTP (D311, D387, D388), each revocable. Blocked devices and capabilities and `host.full` are refused with `app.elevated.unsupported`. `host.network`, `host.pid` and devices other than `/dev/net/tun` cannot go together with `backend.root` (`app.elevated.root_conflict`), a capability needs it (`app.elevated.root_required`), every one needs a `backend` (`app.elevated.backend_missing`), and `docker.socket` and `docker.socket.raw` exclude each other.",
       "type": "string",
       "maxLength": 200,
       "pattern": "^(docker\\.socket|docker\\.socket\\.raw|host\\.network|host\\.pid|host\\.full|device:/dev(/[A-Za-z0-9_][A-Za-z0-9._-]*)+|capability:(?!CAP_)[A-Z][A-Z0-9_]*)$",
       "tsType": "'docker.socket' | 'docker.socket.raw' | 'host.network' | 'host.pid' | 'host.full' | `device:/dev/${string}` | `capability:${string}`"
+    },
+    "Permissions": {
+      "title": "Permissions",
+      "description": "The permissions and rights the app asks for, by name (`Permission` or `ElevatedPermission`), each with the author's reason (D388). Each one appears with its reason in the install dialog and on the Store page and can be revoked later. `optional` is allowed only on a device right, `hosts` only on `network.internet`; an unknown name is refused.",
+      "type": "object",
+      "maxProperties": 48,
+      "properties": {
+        "network.internet": {
+          "$ref": "#/$defs/InternetGrant"
+        }
+      },
+      "patternProperties": {
+        "^(files\\.read|files\\.write|files\\.shares|notifications|notifications\\.external|directory\\.read|network\\.lan|docker\\.socket|docker\\.socket\\.raw|host\\.network|host\\.pid|host\\.full|capability:(?!CAP_)[A-Z][A-Z0-9_]{0,63})$": {
+          "$ref": "#/$defs/PlainGrant"
+        },
+        "^device:(?=.{1,193}$)\\x2Fdev(\\x2F[A-Za-z0-9_][A-Za-z0-9._-]*)+$": {
+          "$ref": "#/$defs/DeviceGrant"
+        }
+      },
+      "additionalProperties": false,
+      "tsType": "Record<string, { reason: { en: string; [language: string]: string }; optional?: boolean; hosts?: string[] }>"
+    },
+    "PlainGrant": {
+      "title": "PlainGrant",
+      "description": "A permission or right with its reason.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["reason"],
+      "properties": {
+        "reason": {
+          "$ref": "#/$defs/Reason"
+        }
+      }
+    },
+    "DeviceGrant": {
+      "title": "DeviceGrant",
+      "description": "A device right with its reason and whether the backend runs without the device.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["reason"],
+      "properties": {
+        "reason": {
+          "$ref": "#/$defs/Reason"
+        },
+        "optional": {
+          "description": "The backend runs without the device, such as a graphics card that only speeds it up (D387). A missing optional device only gives a hint, and the backend starts without it. Every other device is required: without it the app cannot be installed, and its backend does not start until the device is back. Default false.",
+          "type": "boolean"
+        }
+      }
+    },
+    "InternetGrant": {
+      "title": "InternetGrant",
+      "description": "`network.internet` with its reason and the hosts the app talks to.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["reason"],
+      "properties": {
+        "reason": {
+          "$ref": "#/$defs/Reason"
+        },
+        "hosts": {
+          "description": "The domains the app talks to, for example `api.example.org`, or `*.example.org` for its subdomains. The Store shows them; the box does not enforce them yet.",
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 32,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "maxLength": 253,
+            "pattern": "^(\\*\\.)?([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\\.)+[a-z][a-z0-9-]{0,62}$"
+          }
+        }
+      }
+    },
+    "Reason": {
+      "title": "Reason",
+      "description": "Why the app needs a permission, in the author's words, keyed by BCP 47 language tag, for example \"Fetches the weather for your city\". `en` is required and used when nothing else matches. One line, at most 200 characters per language. Required for every permission and right (D388).",
+      "type": "object",
+      "required": ["en"],
+      "properties": {
+        "en": {
+          "$ref": "#/$defs/ReasonText",
+          "description": "The English reason, shown when no other language matches."
+        }
+      },
+      "patternProperties": {
+        "^[a-z]{2,3}(-[A-Za-z0-9]{1,8})*$": {
+          "$ref": "#/$defs/ReasonText",
+          "description": "The reason in the language of the key, a BCP 47 language tag such as `de` or `pt-BR`."
+        }
+      },
+      "additionalProperties": false
+    },
+    "ReasonText": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200,
+      "pattern": "^[^\\u0000-\\u001f\\u007f]+$"
     },
     "WindowSize": {
       "title": "WindowSize",
@@ -552,26 +663,6 @@
           "maxItems": 16,
           "items": {
             "$ref": "#/$defs/BackendSchedule"
-          }
-        },
-        "elevated": {
-          "description": "Rights beyond the sandbox. The Compose file must use exactly what these allow.",
-          "type": "array",
-          "maxItems": 32,
-          "uniqueItems": true,
-          "items": {
-            "$ref": "#/$defs/ElevatedPermission"
-          }
-        },
-        "optionalDevices": {
-          "description": "Devices of `elevated` (their paths, for example `/dev/dri`) the backend can run without, such as a graphics card that only speeds it up (D387). A missing optional device only gives a hint, and the backend starts without it. Every other device is required: without it the app cannot be installed, and its backend does not start until the device is back.",
-          "type": "array",
-          "maxItems": 32,
-          "uniqueItems": true,
-          "items": {
-            "type": "string",
-            "maxLength": 193,
-            "pattern": "^/dev(/[A-Za-z0-9_][A-Za-z0-9._-]*)+$"
           }
         }
       }

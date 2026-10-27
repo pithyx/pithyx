@@ -221,9 +221,6 @@ function manifestIssues(
     return result.issues;
   }
   const issues: Issue[] = [];
-  if ((manifest.backend?.elevated ?? []).some((right) => right === 'docker.socket.raw')) {
-    issues.push({ code: 'app.elevated.sideload_only', params: { right: 'docker.socket.raw' } });
-  }
   if (manifest.id !== folder) {
     issues.push(violation('folder_id', { path, id: manifest.id }));
   }

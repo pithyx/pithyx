@@ -1,5 +1,5 @@
 {
-  "manifestVersion": 1,
+  "manifestVersion": 2,
   "id": "com.example.sdk-probe",
   "version": "1.0.0",
   "name": {
@@ -15,7 +15,25 @@
   "license": "MIT",
   "entry": "frontend/index.html",
   "sdk": "^1.0.0-rc.1",
-  "permissions": ["notifications", "files.write", "files.shares"],
+  "arch": ["amd64", "arm64"],
+  "source": "https://github.com/example/app",
+  "permissions": {
+    "notifications": {
+      "reason": {
+        "en": "Tells you about new messages."
+      }
+    },
+    "files.write": {
+      "reason": {
+        "en": "Saves your changes."
+      }
+    },
+    "files.shares": {
+      "reason": {
+        "en": "Browses your shared folders."
+      }
+    }
+  },
   "window": {
     "instances": "single",
     "defaultSize": {

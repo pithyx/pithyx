@@ -5,6 +5,9 @@
       "not_found": "Es ist keine App mit der ID {id} installiert.",
       "no_previous": "{id} hat keine Version vor dem letzten Update, zu der es zurückgehen kann."
     },
+    "arch": {
+      "unsupported": "Diese App läuft nur auf {supported}, nicht auf dieser Box ({arch})."
+    },
     "backend": {
       "endpoint_unknown": "Die App hat keinen Backend-Endpunkt namens {endpoint}.",
       "missing": "Die App hat kein Backend.",
@@ -33,7 +36,8 @@
       "unsupported": "Die App verlangt das Recht {right}, das Pithyx keiner App gibt.",
       "root_conflict": "Die App führt ihren Hintergrunddienst als root aus und verlangt {right}. Mit diesem Recht läuft der Dienst direkt auf der Box, wo root die ganze Box beherrschen würde, deshalb lehnt Pithyx die Kombination ab.",
       "root_required": "Die App verlangt {right}, aber nur ein Hintergrunddienst, der als root läuft, kann eine Capability nutzen.",
-      "sideload_only": "Die App verlangt {right}, den ungefilterten Containerdienst, und das ist root auf der Box. Pithyx gibt dieses Recht nur Apps, die aus einer Datei installiert werden, nie Apps aus einem Katalog."
+      "backend_missing": "Die App verlangt {right}, ein Recht, das nur ein Hintergrunddienst nutzen kann, aber sie hat keinen Hintergrunddienst.",
+      "confirmation_required": "{right} gibt der App die volle Kontrolle über die Box. Tippe im Installationsdialog den Namen der App ein, um es zu bestätigen."
     },
     "icon": {
       "invalid": "Das Symbol der App ist nicht verwendbar: {reason, select, too_large {es ist größer als 64 KB} malformed {es ist keine gültige SVG-Datei} not_svg {es ist kein SVG-Bild} viewbox {seine viewBox fehlt oder ist nicht quadratisch} doctype {es enthält einen DOCTYPE} processing_instruction {es enthält eine Verarbeitungsanweisung} element_forbidden {es enthält das Element {element}} event_attribute {es enthält das Ereignisattribut {attribute}} external_href {es verweist auf etwas außerhalb der Datei} style_import {seine Styles nutzen @import} style_url {es lädt mit url() etwas außerhalb der Datei} style_escape {seine Styles enthalten Escape-Sequenzen} other {es verletzt eine Regel für Symbole}}."
@@ -53,7 +57,7 @@
       "reference_unknown": "Das Manifest verweist unter {path} auf {name}, das es nicht deklariert.",
       "schema_violation": "Das Manifest der App ist unter {path} ungültig ({keyword}).",
       "sdk_invalid": "Der SDK-Versionsbereich {sdk} im Manifest ist ungültig.",
-      "version_unsupported": "Diese App braucht eine neuere Version von Pithyx (Manifest-Version {version}, diese Box liest Version {supported}).",
+      "version_unsupported": "{version, select, 1 {Diese App wurde für eine ältere Version von Pithyx gemacht (Manifest-Version 1, diese Box liest Version {supported}). Bitte ihren Autor um eine neue Version.} other {Diese App braucht eine neuere Version von Pithyx (Manifest-Version {version}, diese Box liest Version {supported}).}}",
       "window_size_invalid": "Die kleinste Fenstergröße der App ist größer als ihre Standardgröße."
     },
     "mapping": {

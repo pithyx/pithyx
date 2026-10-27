@@ -1,5 +1,5 @@
 // A team board that offers what its permissions allow and follows when an administrator changes them.
-// pithyx.json declares: "permissions": ["notifications", "directory.read"]
+// pithyx.json declares "notifications" and "directory.read" in "permissions", each with its "reason".
 import { PithyxError, type DirectoryUser, type PithyxApp } from '@pithyx/sdk';
 
 interface Features {

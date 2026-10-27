@@ -11,7 +11,9 @@ import { manifestText } from '../installed';
 import { storeCall, type AppAccess, type AppPackagePreview } from '../sdk/store';
 import { describeProblem } from '../storage/shared';
 import {
+  CriticalConfirm,
   ElevatedRightText,
+  nameConfirmed,
   StepUpFields,
   stepUpKey,
   stepUpParams,
@@ -20,7 +22,7 @@ import {
   type StepUpInput,
 } from './ElevatedRights';
 import { JobProgress, useAppJob } from './jobs';
-import { appPools, deviceNote, manifestFacts } from './model';
+import { appPools, deviceNote, manifestFacts, tierOf } from './model';
 import { PermissionText } from './PermissionText';
 import { StorageSection } from './StorageSection';
 import { useInstalled } from './StoreApp';
@@ -38,8 +40,10 @@ export interface CatalogVersion {
 /**
  * Installs an app from its package file or a catalog, or updates an installed one: the daemon checks the upload (or
  * the catalog's package) and answers what
- * installing does; the dialog shows it (permissions with their meaning, folders, background service, root, special
- * rights), asks who may use a new app (prefilled after D304) and, for the first app, the pool for app data. The
+ * installing does; the dialog shows it (permissions with their meaning and the author's reasons, folders, background
+ * service, root, special rights in their risk tiers), asks who may use a new app (prefilled after D304) and, for the
+ * first app, the pool for app data. New special rights need the consent of their tiers (D388): a checkbox for devices,
+ * a checkbox and the step-up for high risk, and a red step of its own with the typed app name for root access. The
  * install or update runs as a job.
  */
 export function InstallDialog({
@@ -63,6 +67,9 @@ export function InstallDialog({
   const [pool, setPool] = useState<string | null>(null);
   // New special rights are granted with the install unless the administrator leaves them revoked (D311).
   const [grant, setGrant] = useState(true);
+  const [consent, setConsent] = useState({ elevated: false, high: false });
+  const [step, setStep] = useState<'review' | 'critical'>('review');
+  const [typed, setTyped] = useState('');
   const [stepUpInput, setStepUpInput] = useState<StepUpInput>({ password: '', code: '' });
   const queryClient = useQueryClient();
   const { job, start } = useAppJob(app);
@@ -95,9 +102,15 @@ export function InstallDialog({
   const chosenPool = pool ?? choices[0] ?? null;
   const chosenAccess = access ?? preview?.suggestedAccess ?? 'everybody';
   const addedElevated = preview?.addedElevated ?? [];
+  const addedTiers = new Set(addedElevated.map(tierOf));
   const stepUp = useStepUp(app);
   const stepUpUntil = stepUp.data ?? null;
-  const needsStepUp = addedElevated.length > 0 && grant;
+  const needsStepUp = grant && (addedTiers.has('high') || addedTiers.has('critical'));
+  const critical = grant && addedTiers.has('critical');
+  const consented =
+    !grant ||
+    ((!addedTiers.has('elevated') || consent.elevated) &&
+      (!addedTiers.has('high') || consent.high));
   const install = useMutation({
     mutationFn: (checked: AppPackagePreview) =>
       storeCall(app, 'internal.admin.apps.install', {
@@ -106,6 +119,7 @@ export function InstallDialog({
         ...(checked.action === 'install' ? { access: chosenAccess } : {}),
         ...(addedElevated.length > 0 && !grant ? { elevated: false } : {}),
         ...(needsStepUp ? stepUpParams(app, stepUpUntil, stepUpInput) : {}),
+        ...(critical ? { confirmCritical: checked.id } : {}),
       }),
     onSuccess: start,
     // A step-up that ran out meanwhile asks for the password again.
@@ -113,6 +127,8 @@ export function InstallDialog({
   });
   const facts = preview === undefined ? undefined : manifestFacts(preview.manifest);
   const name = facts === undefined ? '' : manifestText(facts.name, i18n.language);
+  const stepUpDone =
+    !needsStepUp || (stepUp.data !== undefined && stepUpReady(app, stepUpUntil, stepUpInput));
   const isUpdate = preview !== undefined && preview.action !== 'install';
   // Once installed, the folders it asks for are mapped here; a backend waits for its required ones (D360).
   const installed = useInstalled(app);
@@ -148,16 +164,37 @@ export function InstallDialog({
           {t('install.openApp')}
         </Button>
       )}
+      {job === null && step === 'critical' && (
+        <Button
+          onPress={() => {
+            setStep('review');
+          }}
+        >
+          {t('elevated.critical.back')}
+        </Button>
+      )}
       <Button onPress={close}>{job === null ? t('install.cancel') : t('install.close')}</Button>
-      {job === null && (
+      {job === null && critical && step === 'review' && (
         <Button
           variant="primary"
+          isDisabled={preview === undefined || (needsPool && chosenPool === null) || !consented}
+          onPress={() => {
+            setStep('critical');
+          }}
+        >
+          {t('elevated.critical.continue')}
+        </Button>
+      )}
+      {job === null && (!critical || step === 'critical') && (
+        <Button
+          variant={critical ? 'danger' : 'primary'}
           isDisabled={
             preview === undefined ||
             install.isPending ||
             (needsPool && chosenPool === null) ||
-            (needsStepUp &&
-              (stepUp.data === undefined || !stepUpReady(app, stepUpUntil, stepUpInput)))
+            !consented ||
+            !stepUpDone ||
+            (critical && !nameConfirmed(typed, name))
           }
           onPress={() => {
             if (preview !== undefined) {
@@ -165,7 +202,13 @@ export function InstallDialog({
             }
           }}
         >
-          {isUpdate ? t('install.update') : t('install.install')}
+          {critical
+            ? isUpdate
+              ? t('elevated.critical.update')
+              : t('elevated.critical.install')
+            : isUpdate
+              ? t('install.update')
+              : t('install.install')}
         </Button>
       )}
     </>
@@ -237,7 +280,23 @@ export function InstallDialog({
         )}
         {upload.isError && <ErrorNotice error={describeProblem(upload.error)} />}
         {staged.isError && <ErrorNotice error={describeProblem(staged.error)} />}
-        {preview !== undefined && (
+        {preview !== undefined && job === null && step === 'critical' && (
+          <div className={styles.form}>
+            <CriticalConfirm
+              name={name}
+              rights={addedElevated.filter((right) => tierOf(right) === 'critical')}
+              typed={typed}
+              onType={setTyped}
+            />
+            <StepUpFields
+              app={app}
+              until={stepUpUntil}
+              value={stepUpInput}
+              onChange={setStepUpInput}
+            />
+          </div>
+        )}
+        {preview !== undefined && step === 'review' && (
           <Preview
             preview={preview}
             verified={catalog?.verified ?? false}
@@ -267,26 +326,57 @@ export function InstallDialog({
             {job === null && addedElevated.length > 0 && (
               <fieldset className={styles.choices}>
                 <legend className={styles.fieldLabel}>{t('elevated.section')}</legend>
-                <label className={styles.check}>
-                  <input
-                    type="checkbox"
-                    checked={grant}
-                    onChange={(event) => {
-                      setGrant(event.target.checked);
-                    }}
-                  />
-                  <span>{t('elevated.grant', { count: addedElevated.length })}</span>
-                </label>
-                {grant ? (
+                {([true, false] as const).map((choice) => (
+                  <label key={String(choice)} className={styles.check}>
+                    <input
+                      type="radio"
+                      name={`${ids}-grant`}
+                      checked={grant === choice}
+                      onChange={() => {
+                        setGrant(choice);
+                      }}
+                    />
+                    <span>
+                      {choice ? t('elevated.consent.grant') : t('elevated.consent.later')}
+                    </span>
+                  </label>
+                ))}
+                {grant && addedTiers.has('elevated') && (
+                  <label className={`${styles.check} ${styles.consent}`}>
+                    <input
+                      type="checkbox"
+                      checked={consent.elevated}
+                      onChange={(event) => {
+                        setConsent({ ...consent, elevated: event.target.checked });
+                      }}
+                    />
+                    <span>{t('elevated.consent.elevated')}</span>
+                  </label>
+                )}
+                {grant && addedTiers.has('high') && (
+                  <label className={`${styles.check} ${styles.consent} ${styles.consentHigh}`}>
+                    <input
+                      type="checkbox"
+                      checked={consent.high}
+                      onChange={(event) => {
+                        setConsent({ ...consent, high: event.target.checked });
+                      }}
+                    />
+                    <span>{t('elevated.consent.high')}</span>
+                  </label>
+                )}
+                {grant && critical && (
+                  <p className={styles.muted}>{t('elevated.consent.critical')}</p>
+                )}
+                {grant && needsStepUp && !critical && (
                   <StepUpFields
                     app={app}
                     until={stepUpUntil}
                     value={stepUpInput}
                     onChange={setStepUpInput}
                   />
-                ) : (
-                  <p className={styles.muted}>{t('elevated.grantLater')}</p>
                 )}
+                {!grant && <p className={styles.muted}>{t('elevated.grantLater')}</p>}
               </fieldset>
             )}
             {job === null && needsPool && (
@@ -417,6 +507,7 @@ function Preview({
                 <ElevatedRightText
                   right={right}
                   note={deviceNote(right, preview.devices, 'install')}
+                  reason={facts.reasons[right]}
                 />
                 {isUpdate && addedElevated.has(right) && (
                   <Badge tone="highlight">{t('install.newPermission')}</Badge>
@@ -444,7 +535,11 @@ function Preview({
           <ul className={styles.permissions}>
             {facts.permissions.map((permission) => (
               <li key={permission} className={styles.permission}>
-                <PermissionText permission={permission} />
+                <PermissionText
+                  permission={permission}
+                  reason={facts.reasons[permission]}
+                  hosts={facts.hosts}
+                />
                 {isUpdate && added.has(permission) && (
                   <Badge tone="highlight">{t('install.newPermission')}</Badge>
                 )}

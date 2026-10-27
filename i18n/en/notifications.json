@@ -111,6 +111,12 @@
         "title": "A device of {app} is missing",
         "body": "{app} needs {path}, which is not plugged in. Its background service does not run until the device is back."
       }
+    },
+    "elevated": {
+      "critical": {
+        "title": "{app} has root access now",
+        "body": "{user} granted {app} the right {right}: the app can now control the whole box. If you did not expect that, revoke it in Settings > Security."
+      }
     }
   },
   "desktop": {

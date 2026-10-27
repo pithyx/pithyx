@@ -172,19 +172,16 @@ public sealed class AppRegistry(SqliteConnectionFactory connections, PermissionS
     /// <summary>Every device of the manifest's elevated rights with whether it is optional and plugged in now (D387).</summary>
     public static IReadOnlyList<AppDeviceState> DevicesOf(JsonElement manifest, Docker.DeviceFs fs)
     {
-        var rights = manifest.TryGetProperty("backend", out var backend) && backend.TryGetProperty("elevated", out var elevated)
-            ? elevated.EnumerateArray().Select(right => right.GetString()!).ToList()
-            : [];
-        var optional = Docker.DeviceNodes.Optional(manifest);
-        return [.. Docker.DeviceNodes.Paths(rights).Select(path => new AppDeviceState(path, optional.Contains(path), Docker.DeviceNodes.Present(path, fs).Count > 0))];
+        var optional = Manifest.ElevatedRights.OptionalDevices(manifest);
+        return [.. Docker.DeviceNodes.Paths(Manifest.ElevatedRights.Of(manifest)).Select(path => new AppDeviceState(path, optional.Contains(path), Docker.DeviceNodes.Present(path, fs).Count > 0))];
     }
 
-    /// <summary>Every right of the manifest's <c>backend.elevated</c>, in its order, with whether it is granted.</summary>
-    public static IReadOnlyList<AppElevatedState> ElevatedOf(InstalledApp app)
+    /// <summary>Every elevated right of the manifest's <c>permissions</c>, in its order, with its tier and whether it is granted.</summary>
+    public static IReadOnlyList<AppElevatedRight> ElevatedOf(InstalledApp app)
     {
         ArgumentNullException.ThrowIfNull(app);
         var granted = app.GrantedElevated;
-        return [.. Manifest.ElevatedRights.Of(app.Manifest).Select(right => new AppElevatedState(right, granted.Contains(right)))];
+        return [.. Manifest.ElevatedRights.Of(app.Manifest).Select(right => new AppElevatedRight(right, granted.Contains(right), Manifest.ElevatedRights.TierOf(right)))];
     }
 
     public static AppSummary Summary(InstalledApp app)

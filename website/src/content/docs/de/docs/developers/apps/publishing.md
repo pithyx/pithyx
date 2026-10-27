@@ -17,7 +17,7 @@ Ein Katalog ist ein Git-Repository, das Apps für den Store auflistet. Pithyx ha
 - **Sequenz.** Jede Veröffentlichung erhöht die `sequence` des Index um eins. Die Box lehnt eine niedrigere Nummer ab ([`store.catalog.sequence_old`](/de/docs/reference/errors/#store.catalog.sequence_old)).
 - **Signatur.** Ed25519 über die exakten Bytes von `index.json`. Eine Box akzeptiert einen Projektkatalog, wenn mindestens eine Signatur von einem Schlüssel stammt, dem sie für den Kanal vertraut, und jede Signatur eines vertrauten Schlüssels stimmt. Unbekannte Schlüssel-IDs werden ignoriert, was eine Schlüsselrotation erlaubt. Eine fehlgeschlagene Prüfung ist [`store.catalog.signature_invalid`](/de/docs/reference/errors/#store.catalog.signature_invalid). Eigene Kataloge sind nicht signiert, und der Store markiert ihre Apps als nicht geprüft.
 - **Auf der Box.** Kataloge sind flache Klone in `/var/lib/pithyx/catalogs/<id>/`, abgeholt mit git über https oder ssh (3 Minuten Timeout, keine Hooks, keine Submodule). Ein fehlgeschlagener Abruf behält die letzte geprüfte Kopie. Jede Datei wird gegen den Hash im Index geprüft.
-- **Kanäle und Updates.** Die Store-Einstellungen haben einen Kanal (stable liest `catalog`, beta liest `catalog-next`), eine Update-Richtlinie (automatisch, benachrichtigen oder keine; Standard benachrichtigen), eine tägliche Prüfzeit (Standard 03:00 mit einer zufälligen Verzögerung von bis zu 60 Minuten) und eine Ausnahme pro App. Ein Update, das neue Berechtigungen, root oder erhöhte Rechte braucht, wird nie automatisch installiert.
+- **Kanäle und Updates.** Die Store-Einstellungen haben einen Kanal (stable liest `catalog`, beta liest `catalog-next`), eine Update-Richtlinie (automatisch, benachrichtigen oder keine; Standard benachrichtigen), eine tägliche Prüfzeit (Standard 03:00 mit einer zufälligen Verzögerung von bis zu 60 Minuten) und eine Ausnahme pro App. Ein Update, das neue Berechtigungen, root oder erhöhte Rechte braucht, wird nie automatisch installiert, und auch kein Update einer App mit einem Recht der Stufe Root-Zugriff (`docker.socket.raw`, D388).
 
 ## Die Prüfung
 
@@ -39,7 +39,7 @@ Eine Box lehnt eine `org.pithyx.*`-ID in einem Paket aus einer Datei ab, auch mi
 Aus `sdk/schema/catalog.v1.rules.json`:
 
 - Ein App-Ordner pro Pull Request, unter `apps/`. Höchstens 5 MiB pro App-Ordner und 1000 Zeichen pro Zeile.
-- Pflichtdateien: `pithyx.json`, `icon.svg`, `maintainers.json` und eine von `LICENSE`, `LICENSE.md`, `LICENSE.txt`. Das Manifest braucht `license` und `pithyx`.
+- Pflichtdateien: `pithyx.json`, `icon.svg`, `maintainers.json` und eine von `LICENSE`, `LICENSE.md`, `LICENSE.txt`. Das Manifest braucht `license` und `pithyx`. Wie jedes Manifest nennt es zu jeder Berechtigung und jedem Sonderrecht einen `reason`, dazu `arch` und `source`; die Prüfung schaut, ob die Begründungen stimmen. Jeder Katalog darf Sonderrechte jeder Stufe ausliefern, auch `docker.socket.raw` (D388); die Box fragt den Administrator je nach Stufe nach seiner Zustimmung.
 - Bis zu 8 Screenshots in `screenshots/`, jeder höchstens 1 MiB, benannt nach `[a-z0-9][a-z0-9_-]{0,62}` mit `.png`, `.jpg` oder `.webp`.
 - Dateien sind UTF-8-Text oder aufgelistete Medien (gif, jpeg, png, webp, woff2), deren Inhalt zur Endung passt. Minifizierte Dateien (`.min.js` und ähnliche) und nicht aufgelistete Dateien werden abgelehnt.
 - Jedes `FROM` und `COPY --from` in einem Dockerfile ist per `@sha256` festgelegt oder `scratch`.

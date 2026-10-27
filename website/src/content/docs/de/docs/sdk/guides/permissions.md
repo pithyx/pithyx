@@ -28,13 +28,22 @@ Wer `directory.read` verlangt, bekommt im Installationsdialog den Vorschlag "nur
 
 ## Beispiel
 
-Das Manifest deklariert `"permissions": ["notifications", "directory.read"]`. Das Board funktioniert ohne beide und bietet mit ihnen mehr:
+Das Manifest deklariert `notifications` und `directory.read`, jede mit dem `reason`, den der Installationsdialog zeigt (siehe [Berechtigungen](/de/docs/developers/apps/manifest/#berechtigungen)):
+
+```json
+"permissions": {
+  "notifications": { "reason": { "en": "Tells you when a card is assigned to you.", "de": "Sagt dir, wenn dir eine Karte zugewiesen wird." } },
+  "directory.read": { "reason": { "en": "Lets you assign cards to other users.", "de": "Damit kannst du Karten anderen Benutzern zuweisen." } }
+}
+```
+
+Das Board funktioniert ohne beide und bietet mit ihnen mehr:
 
 <!-- example: sdk/permissions.ts -->
 
 ```ts
 // A team board that offers what its permissions allow and follows when an administrator changes them.
-// pithyx.json declares: "permissions": ["notifications", "directory.read"]
+// pithyx.json declares "notifications" and "directory.read" in "permissions", each with its "reason".
 import { PithyxError, type DirectoryUser, type PithyxApp } from '@pithyx/sdk';
 
 interface Features {

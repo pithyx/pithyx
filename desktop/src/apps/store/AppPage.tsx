@@ -250,6 +250,8 @@ export function AppPage({
                     <PermissionText
                       permission={entry.permission}
                       id={`store-permission-${entry.permission}`}
+                      reason={facts.reasons[entry.permission]}
+                      hosts={facts.hosts}
                     />
                     <Switch
                       aria-labelledby={`store-permission-${entry.permission}`}
@@ -300,6 +302,9 @@ export function AppPage({
             ))}
           </select>
           <p className={styles.muted}>{t('detail.policy.hint')}</p>
+          {details.elevated.some((entry) => entry.tier === 'critical') && (
+            <p className={styles.notice}>{t('settings.updates.criticalHint')}</p>
+          )}
           {policy.isError && <ErrorNotice error={describeProblem(policy.error)} />}
         </section>
 

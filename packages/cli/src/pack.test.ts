@@ -195,7 +195,7 @@ describe('pithyx validate', () => {
 
   it('checks the manifest and the icon as the box does', () => {
     const root = copyProject('broken');
-    writeFileSync(join(root, 'pithyx.json'), '{"manifestVersion": 1}');
+    writeFileSync(join(root, 'pithyx.json'), '{"manifestVersion": 2}');
     writeFileSync(join(root, 'icon.svg'), '<svg xmlns="http://www.w3.org/2000/svg"/>');
     expect(new Set(codes(root))).toEqual(
       new Set(['error app.manifest.schema_violation', 'error app.icon.invalid']),

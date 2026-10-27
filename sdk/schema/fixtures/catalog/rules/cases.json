@@ -1182,8 +1182,15 @@
       ]
     },
     {
-      "name": "the raw Docker socket in a catalog",
+      "name": "the raw Docker socket in a catalog, allowed with informed consent (D388)",
       "manifest": {
+        "permissions": {
+          "docker.socket.raw": {
+            "reason": {
+              "en": "Manages the containers of the box."
+            }
+          }
+        },
         "backend": {
           "compose": "backend/compose.yaml",
           "endpoints": {
@@ -1192,10 +1199,7 @@
               "port": 8080
             }
           },
-          "lifecycle": "onDemand",
-          "elevated": [
-            "docker.socket.raw"
-          ]
+          "lifecycle": "onDemand"
         }
       },
       "files": {
@@ -1203,14 +1207,7 @@
           "text": "services:\n  server:\n    build: ./server\n    volumes:\n      - /var/run/docker.sock:/var/run/docker.sock\n"
         }
       },
-      "expected": [
-        {
-          "code": "app.elevated.sideload_only",
-          "params": {
-            "right": "docker.socket.raw"
-          }
-        }
-      ]
+      "expected": []
     }
   ]
 }

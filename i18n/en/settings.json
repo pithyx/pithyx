@@ -159,6 +159,11 @@
       "description": "Save the configuration of this box and restore it",
       "keywords": "backup restore configuration export import save recover reinstall system disk"
     },
+    "security": {
+      "title": "Security",
+      "description": "Apps with root access to the box, and revoking it",
+      "keywords": "security root access special rights apps docker container socket revoke trust"
+    },
     "groups": {
       "title": "Groups",
       "description": "Groups, their members and rights",
@@ -1043,6 +1048,17 @@
     "system": {
       "title": "Channels of the box",
       "explain": "These channels get the system's own alerts (storage, updates, the UPS, failed sign-ins and more) once for all administrators. Every user, administrators too, can add their own channels in the user menu."
+    }
+  },
+  "security": {
+    "intro": "What on the box can do more than an app should.",
+    "root": {
+      "title": "Apps with root access",
+      "intro": "These apps hold a right that is root on the box, such as the unfiltered container service: they can read and change every file and setting. They never update by themselves. Revoking the right restarts the app's background service without it.",
+      "none": "No app has root access.",
+      "badge": "Root access",
+      "rights": "Rights: {rights}",
+      "revoke": "Revoke root access"
     }
   }
 }

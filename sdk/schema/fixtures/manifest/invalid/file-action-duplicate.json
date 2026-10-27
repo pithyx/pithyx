@@ -1,5 +1,5 @@
 {
-  "manifestVersion": 1,
+  "manifestVersion": 2,
   "id": "com.example.notes",
   "version": "0.1.0",
   "name": {
@@ -10,9 +10,18 @@
   },
   "entry": "frontend/index.html",
   "sdk": "^1.0.0",
-  "permissions": [
-    "files.shares"
+  "arch": [
+    "amd64",
+    "arm64"
   ],
+  "source": "https://github.com/example/app",
+  "permissions": {
+    "files.shares": {
+      "reason": {
+        "en": "Browses your shared folders."
+      }
+    }
+  },
   "window": {
     "instances": "multi",
     "defaultSize": {

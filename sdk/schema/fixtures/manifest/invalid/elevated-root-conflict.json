@@ -1,6 +1,6 @@
 {
-  "$schema": "./node_modules/@pithyx/sdk/schema/manifest.v1.schema.json",
-  "manifestVersion": 1,
+  "$schema": "./node_modules/@pithyx/sdk/schema/manifest.v2.schema.json",
+  "manifestVersion": 2,
   "id": "com.mueller.chat",
   "version": "1.2.0",
   "name": {
@@ -19,12 +19,53 @@
   "homepage": "https://github.com/janmueller/pithyx-chat",
   "entry": "frontend/index.html",
   "sdk": "^1.0.0",
-  "permissions": [
-    "notifications",
-    "directory.read",
-    "network.internet",
-    "files.read"
+  "arch": [
+    "amd64",
+    "arm64"
   ],
+  "source": "https://github.com/janmueller/pithyx-chat",
+  "permissions": {
+    "notifications": {
+      "reason": {
+        "en": "Tells you about new messages."
+      }
+    },
+    "directory.read": {
+      "reason": {
+        "en": "Lists the users to share with."
+      }
+    },
+    "network.internet": {
+      "reason": {
+        "en": "Fetches updates from the internet."
+      }
+    },
+    "files.read": {
+      "reason": {
+        "en": "Opens the files you choose."
+      }
+    },
+    "host.network": {
+      "reason": {
+        "en": "Needs host.network for its background service."
+      }
+    },
+    "device:/dev/net/tun": {
+      "reason": {
+        "en": "Needs device:/dev/net/tun for its background service."
+      }
+    },
+    "device:/dev/dri/renderD128": {
+      "reason": {
+        "en": "Needs device:/dev/dri/renderD128 for its background service."
+      }
+    },
+    "host.pid": {
+      "reason": {
+        "en": "Needs host.pid for its background service."
+      }
+    }
+  },
   "window": {
     "instances": "single",
     "defaultSize": {
@@ -41,7 +82,7 @@
       "id": "attachments",
       "name": {
         "en": "Chat attachments",
-        "de": "Chat-Anh\u00e4nge"
+        "de": "Chat-Anhänge"
       },
       "access": "readWrite",
       "required": false,
@@ -86,12 +127,6 @@
         "endpoint": "api",
         "path": "/jobs/cleanup"
       }
-    ],
-    "elevated": [
-      "host.network",
-      "device:/dev/net/tun",
-      "device:/dev/dri/renderD128",
-      "host.pid"
     ]
   }
 }

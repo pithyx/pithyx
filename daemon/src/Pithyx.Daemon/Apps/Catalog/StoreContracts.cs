@@ -5,7 +5,7 @@ namespace Pithyx.Daemon.Apps.Catalog;
 /// <summary>What the box does when a check finds a newer version of an app (D329).</summary>
 public enum UpdatePolicy
 {
-    /// <summary>Installs it as a job of the box, unless it asks for new permissions or elevated rights.</summary>
+    /// <summary>Installs it as a job of the box, unless it asks for new permissions or elevated rights or the app has a critical right (D388).</summary>
     Automatic,
 
     /// <summary>Tells the administrators on their desktops.</summary>
@@ -164,8 +164,9 @@ public sealed record StoreAppDetails(StoreApp App, JsonElement Manifest, IReadOn
 /// <param name="AddedPermissions">Permissions the new version asks for that the installed one did not.</param>
 /// <param name="Elevated">It asks for root in a container or elevated rights it did not have.</param>
 /// <param name="Policy">The app's own policy, or the box's.</param>
-/// <param name="Automatic">The next check installs it on its own: the policy is automatic and nothing new is asked for.</param>
-public sealed record AppUpdate(string Id, string InstalledVersion, string Version, string Catalog, IReadOnlyList<string> AddedPermissions, bool Elevated, UpdatePolicy Policy, bool Automatic);
+/// <param name="Automatic">The next check installs it on its own: the policy is automatic, nothing new is asked for and the app has no critical right.</param>
+/// <param name="Critical">The app has a critical right (root on the box) or the new version asks for one, so it never updates by itself whatever the policy (D388).</param>
+public sealed record AppUpdate(string Id, string InstalledVersion, string Version, string Catalog, IReadOnlyList<string> AddedPermissions, bool Elevated, UpdatePolicy Policy, bool Automatic, bool Critical);
 
 /// <summary>The Store for administrators: the snapshot and every event of the topic <c>store/admin</c>.</summary>
 /// <param name="Settings">The settings with the next check.</param>

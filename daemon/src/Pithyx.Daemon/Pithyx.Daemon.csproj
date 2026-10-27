@@ -50,7 +50,7 @@
     <EmbeddedResource Include="../../../i18n/de/errors.json" LogicalName="i18n/de/errors.json" />
     <EmbeddedResource Include="Database/Migrations/*.sql" LogicalName="migrations/%(Filename)%(Extension)" />
     <EmbeddedResource Include="Auth/common-passwords.txt" LogicalName="auth/common-passwords.txt" />
-    <EmbeddedResource Include="../../../sdk/schema/manifest.v1.schema.json" LogicalName="schema/manifest.v1.schema.json" />
+    <EmbeddedResource Include="../../../sdk/schema/manifest.v2.schema.json" LogicalName="schema/manifest.v2.schema.json" />
     <EmbeddedResource Include="../../../sdk/schema/compose.v1.rules.json" LogicalName="schema/compose.v1.rules.json" />
     <EmbeddedResource Include="../../../sdk/schema/catalog.v1.schema.json" LogicalName="schema/catalog.v1.schema.json" />
     <EmbeddedResource Include="../../../sdk/schema/catalog.v1.rules.json" LogicalName="schema/catalog.v1.rules.json" />

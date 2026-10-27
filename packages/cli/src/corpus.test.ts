@@ -17,7 +17,7 @@ import { validateCompose } from './compose';
 import { validateIcon } from './icon';
 import type { Issue } from './issues';
 import { checkLayout } from './layout';
-import { isSupportedElevatedRight, validateManifest } from './manifest';
+import { isSupportedElevatedRight, tierOf, validateManifest } from './manifest';
 
 const fixtures = join(dirname(fileURLToPath(import.meta.url)), '../../../sdk/schema/fixtures');
 
@@ -40,6 +40,14 @@ function matches(issue: Issue, expected: ExpectedIssue): boolean {
     )
   );
 }
+
+describe('risk tier corpus', () => {
+  const { cases } = json('tiers', 'cases.json') as { cases: Record<string, string> };
+
+  it.each(Object.entries(cases))('%s is %s', (right, tier) => {
+    expect(tierOf(right)).toBe(tier);
+  });
+});
 
 describe('manifest corpus', () => {
   const expected = json('manifest', 'expected.json') as Record<string, ExpectedIssue[]>;

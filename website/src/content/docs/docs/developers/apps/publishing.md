@@ -17,7 +17,7 @@ A catalog is a Git repository that lists apps for the Store. Pithyx has two proj
 - **Sequence.** Each publish raises the index `sequence` by one. The box refuses a lower number ([`store.catalog.sequence_old`](/docs/reference/errors/#store.catalog.sequence_old)).
 - **Signature.** Ed25519 over the exact bytes of `index.json`. A box accepts a project catalog if at least one signature comes from a key it trusts for the channel and every signature by a trusted key verifies. Unknown key ids are ignored, which allows key rotation. A failed check is [`store.catalog.signature_invalid`](/docs/reference/errors/#store.catalog.signature_invalid). Custom catalogs are not signed and the Store marks their apps as not verified.
 - **On the box.** Catalogs are shallow clones in `/var/lib/pithyx/catalogs/<id>/`, fetched with git over https or ssh (3 minute timeout, no hooks, no submodules). A failed fetch keeps the last verified copy. Every file is checked against the index hash.
-- **Channels and updates.** The Store settings have a channel (stable reads `catalog`, beta reads `catalog-next`), an update policy (automatic, notify or none; default notify), a daily check time (default 03:00 with a random delay of up to 60 minutes) and a per-app override. An update that needs new permissions, root or elevated rights is never installed automatically.
+- **Channels and updates.** The Store settings have a channel (stable reads `catalog`, beta reads `catalog-next`), an update policy (automatic, notify or none; default notify), a daily check time (default 03:00 with a random delay of up to 60 minutes) and a per-app override. An update that needs new permissions, root or elevated rights is never installed automatically, and neither is any update of an app holding a right of the tier root access (`docker.socket.raw`, D388).
 
 ## The review
 
@@ -39,7 +39,7 @@ A box refuses an `org.pithyx.*` id in a package from a file, also with that opti
 From `sdk/schema/catalog.v1.rules.json`:
 
 - One app folder per pull request, under `apps/`. At most 5 MiB per app folder and 1000 characters per line.
-- Required files: `pithyx.json`, `icon.svg`, `maintainers.json` and one of `LICENSE`, `LICENSE.md`, `LICENSE.txt`. The manifest needs `license` and `pithyx`.
+- Required files: `pithyx.json`, `icon.svg`, `maintainers.json` and one of `LICENSE`, `LICENSE.md`, `LICENSE.txt`. The manifest needs `license` and `pithyx`. Like every manifest it gives a `reason` for each permission and special right, `arch` and `source`; a reviewer checks that the reasons are true. Every catalog may ship a special right of any tier, also `docker.socket.raw` (D388); the box asks the administrator for consent by tier.
 - Up to 8 screenshots in `screenshots/`, each at most 1 MiB, named `[a-z0-9][a-z0-9_-]{0,62}` with `.png`, `.jpg` or `.webp`.
 - Files are UTF-8 text or listed media (gif, jpeg, png, webp, woff2) whose content matches the extension. Minified files (`.min.js` and similar) and unlisted files are refused.
 - Every `FROM` and `COPY --from` in a Dockerfile is pinned by `@sha256` or is `scratch`.

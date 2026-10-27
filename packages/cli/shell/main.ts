@@ -24,6 +24,7 @@ import {
 import { serveApp, type AppConnection, type MethodHandlers } from '@pithyx/sdk/host';
 import { createI18n } from '@pithyx/sdk/i18n';
 import type { DevConfig } from '../src/dev/config';
+import { permissionsOf } from '../src/rights';
 import type { MockUser } from '../src/dev/users';
 import de from '../../../i18n/de/cli.json';
 import en from '../../../i18n/en/cli.json';
@@ -108,7 +109,7 @@ const state: State = {
   locale: navigator.language.startsWith('de') ? 'de-DE' : 'en-US',
   timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
   sizeClass: 'expanded',
-  permissions: new Set(manifest.permissions),
+  permissions: new Set(permissionsOf(manifest)),
   online: true,
   logLevel: 'info',
   backend: 'running',
@@ -844,7 +845,7 @@ function eventRow<E extends EventName>(event: E, sample: Events[E]) {
 }
 
 function renderPanel(): void {
-  const permissions = [...new Set([...manifest.permissions, ...state.permissions])];
+  const permissions = [...new Set([...permissionsOf(manifest), ...state.permissions])];
   const all = samples();
   panel.replaceChildren(
     ...present([

@@ -619,10 +619,7 @@ public static partial class ComposeValidator
             }
         }
 
-        private bool DeclaresRawSocket() =>
-            manifest.TryGetProperty("backend", out var backend)
-            && backend.TryGetProperty("elevated", out var elevated)
-            && elevated.EnumerateArray().Any(right => right.GetString() == rules.DockerSocketRawRight);
+        private bool DeclaresRawSocket() => ElevatedRights.Declares(manifest, rules.DockerSocketRawRight);
 
         private bool Target(string target, string path)
         {
@@ -1027,9 +1024,7 @@ public static partial class ComposeValidator
                 }
             }
 
-            var declared = backend?.TryGetProperty("elevated", out var elevated) == true
-                ? elevated.EnumerateArray().Select(right => right.GetString()!).ToList()
-                : [];
+            var declared = ElevatedRights.Of(manifest);
             foreach (var (name, path) in _rights)
             {
                 if (!ManifestValidator.IsSupportedElevatedRight(name))
@@ -1041,12 +1036,11 @@ public static partial class ComposeValidator
                     Add(ErrorCodes.AppComposeRightMissing, ("path", path), ("right", name));
                 }
             }
-            for (var index = 0; index < declared.Count; index++)
+            foreach (var right in declared)
             {
-                var right = declared[index];
                 if (ManifestValidator.IsSupportedElevatedRight(right) && !_rights.Exists(used => used.Name == right))
                 {
-                    Add(ErrorCodes.AppComposeRightUnused, ("path", $"/backend/elevated/{index}"), ("right", right));
+                    Add(ErrorCodes.AppComposeRightUnused, ("path", $"/permissions/{JsonSchemaCheck.EscapePointer(right)}"), ("right", right));
                 }
             }
         }
@@ -1219,6 +1213,9 @@ internal sealed class ComposeRules
                     entry.Value.TryGetProperty("nodes", out var nodes) ? new Regex(nodes.GetString()!, RegexOptions.CultureInvariant) : null,
                     entry.Value.TryGetProperty("links", out var links) ? new Regex(links.GetString()!, RegexOptions.CultureInvariant) : null),
                 StringComparer.Ordinal);
+        var tiers = elevated.GetProperty("tiers");
+        DefaultTier = Tier(tiers.GetProperty("default"));
+        Tiers = tiers.GetProperty("rights").EnumerateObject().ToDictionary(entry => entry.Name, entry => Tier(entry.Value), StringComparer.Ordinal);
         Version = root.GetProperty("rulesVersion").GetInt32();
     }
 
@@ -1259,6 +1256,13 @@ internal sealed class ComposeRules
 
     /// <summary>Devices a service can use inside the box's user namespace; every other device needs the host's.</summary>
     public IReadOnlyList<string> NamespacedDevices { get; }
+
+    /// <summary>The risk tier of single elevated rights (D388); every other right has <see cref="DefaultTier"/>.</summary>
+    public IReadOnlyDictionary<string, RiskTier> Tiers { get; }
+
+    public RiskTier DefaultTier { get; }
+
+    private static RiskTier Tier(JsonElement value) => Enum.Parse<RiskTier>(value.GetString()!, ignoreCase: true);
 
     public double Limit(string name) => _limits[name];
 

@@ -79,7 +79,7 @@ public static class ErrorCodes
     public const string AppComposeReferenceUnknown = "app.compose.reference_unknown";
 
     /// <summary>
-    /// The Compose file uses a key that needs an elevated right the manifest's <c>backend.elevated</c> does not declare
+    /// The Compose file uses a key that needs an elevated right the manifest's <c>permissions</c> do not declare
     /// (<c>devices</c>, <c>cap_add</c>, <c>network_mode: host</c>, <c>pid: host</c>); <c>params.path</c> is the use,
     /// <c>params.right</c> the right it needs.
     /// </summary>
@@ -159,11 +159,25 @@ public static class ErrorCodes
     public const string AppDeviceMissing = "app.device.missing";
 
     /// <summary>
-    /// The right <c>params.right</c> (<c>docker.socket.raw</c>, root on the box) is only for apps installed from a file, never
-    /// from a catalog (D387).
+    /// The manifest asks for the elevated right <c>params.right</c>, which only a backend can use, and the app has no
+    /// <c>backend</c> (D388).
     /// </summary>
     [ErrorStatus(HttpStatusCode.BadRequest)]
-    public const string AppElevatedSideloadOnly = "app.elevated.sideload_only";
+    public const string AppElevatedBackendMissing = "app.elevated.backend_missing";
+
+    /// <summary>
+    /// Granting the critical right <c>params.right</c> (root on the box) needs the administrator to type the app's name in
+    /// the critical step; the request carries <c>confirmCritical</c> with the app's id once that is done (D388).
+    /// </summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string AppElevatedConfirmationRequired = "app.elevated.confirmation_required";
+
+    /// <summary>
+    /// The app runs only on the architectures in <c>params.supported</c> (its manifest's <c>arch</c>), not on this box's
+    /// <c>params.arch</c>, so it cannot be installed here (D388).
+    /// </summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string AppArchUnsupported = "app.arch.unsupported";
 
     /// <summary>Docker did not start or does not answer, so no app backend can run now.</summary>
     [ErrorStatus(HttpStatusCode.ServiceUnavailable)]
@@ -228,7 +242,7 @@ public static class ErrorCodes
     public const string AppManifestReferenceUnknown = "app.manifest.reference_unknown";
 
     /// <summary>
-    /// The manifest breaks its JSON Schema (<c>sdk/schema/manifest.v1.schema.json</c>); <c>params.path</c> is the JSON
+    /// The manifest breaks its JSON Schema (<c>sdk/schema/manifest.v2.schema.json</c>); <c>params.path</c> is the JSON
     /// Pointer of the value (of the missing or unknown field for <c>required</c> and <c>additionalProperties</c>),
     /// <c>params.keyword</c> the schema keyword it fails.
     /// </summary>

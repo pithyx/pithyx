@@ -7,21 +7,30 @@ sidebar:
   order: 3
 ---
 
-`pithyx.json` at the package root describes an app: who it is, which window it opens, which permissions it asks for, which folders it wants and, if it has one, how its backend runs. The JSON Schema is `sdk/schema/manifest.v1.schema.json` (published as `@pithyx/sdk/schema/manifest.v1.schema.json`); unknown fields are errors. The schema is a stable contract: a new optional field is a minor change, anything else a major one.
+`pithyx.json` at the package root describes an app: who it is, which window it opens, which permissions it asks for, which folders it wants and, if it has one, how its backend runs. The JSON Schema is `sdk/schema/manifest.v2.schema.json` (published as `@pithyx/sdk/schema/manifest.v2.schema.json`); unknown fields are errors. The schema is a stable contract: a new optional field is a minor change, anything else a major one. Manifest version 2 (Pithyx 1.2, D388) replaced version 1: a box refuses a version 1 manifest with [`app.manifest.version_unsupported`](/docs/reference/errors/#app.manifest.version_unsupported), so rebuild an older app with `@pithyx/cli` 2. Apps already installed keep working; the box converted their stored manifests.
 
-Required fields: `manifestVersion`, `id`, `version`, `name`, `author`, `entry`, `sdk`, `permissions` and `window`. Optional: `$schema`, `description`, `license`, `homepage`, `pithyx`, `dataVersion`, `storage`, `fileHandlers`, `fileActions` and `backend`. See also the [schema reference](/docs/reference/manifest-schema/) with every field and the [Compose rules](/docs/reference/compose-rules/) for the backend.
+Required fields: `manifestVersion`, `id`, `version`, `name`, `author`, `entry`, `sdk`, `permissions`, `arch`, `source` and `window`. Optional: `$schema`, `description`, `license`, `homepage`, `pithyx`, `dataVersion`, `storage`, `fileHandlers`, `fileActions` and `backend`. See also the [schema reference](/docs/reference/manifest-schema/) with every field and the [Compose rules](/docs/reference/compose-rules/) for the backend.
 
 ```json
 {
-  "$schema": "./node_modules/@pithyx/sdk/schema/manifest.v1.schema.json",
-  "manifestVersion": 1,
+  "$schema": "./node_modules/@pithyx/sdk/schema/manifest.v2.schema.json",
+  "manifestVersion": 2,
   "id": "com.example.notes",
   "version": "1.0.0",
   "name": { "en": "Notes", "de": "Notizen" },
   "author": { "name": "Example Author" },
   "entry": "frontend/index.html",
   "sdk": "^1.0.0",
-  "permissions": ["notifications"],
+  "arch": ["amd64", "arm64"],
+  "source": "https://github.com/example/notes",
+  "permissions": {
+    "notifications": {
+      "reason": {
+        "en": "Reminds you of notes with a due date.",
+        "de": "Erinnert dich an fällige Notizen."
+      }
+    }
+  },
   "window": {
     "instances": "single",
     "defaultSize": { "width": 800, "height": 600 },
@@ -32,7 +41,7 @@ Required fields: `manifestVersion`, `id`, `version`, `name`, `author`, `entry`, 
 
 ## Identity
 
-- `manifestVersion`: the number `1`.
+- `manifestVersion`: the number `2`.
 - `id`: see [App ids](/docs/developers/apps/overview/#app-ids).
 - `version`: SemVer 2.0 without build metadata, at most 64 characters (`1.2.0`, `2.0.0-beta.1`).
 - `name`: an object keyed by language tag (`en`, `de`, `pt-BR`). `en` is required; each text is 1 to 60 characters on one line. The desktop uses the user's language, then its base language, then `en`.
@@ -40,6 +49,8 @@ Required fields: `manifestVersion`, `id`, `version`, `name`, `author`, `entry`, 
 - `author`: `name` (1 to 100 characters) and an optional `url` (http or https).
 - `license`: optional SPDX expression. Catalogs require it.
 - `homepage`: optional http or https URL.
+- `source`: required. The URL of the app's source repository, or `private` when the source is not public. The Store shows it next to the `license`.
+- `arch`: required list of the processor architectures the app runs on, `amd64` and `arm64`. Every image of the backend must exist for each of them; an app without a backend usually names both. A box of another architecture refuses the install with [`app.arch.unsupported`](/docs/reference/errors/#app.arch.unsupported), because the app cannot run there. That is the only kind of refusal: what an app merely recommends is a hint.
 - `entry`: the HTML page, `frontend/<path>.html`, at most 200 characters, no segment starting with a dot.
 - `sdk`: required npm-style version range for the SDK, for example `^1.0.0`. The box checks its syntax ([`app.manifest.sdk_invalid`](/docs/reference/errors/#app.manifest.sdk_invalid)); it does not compare it with the desktop's protocol today. An app built during the release candidates may keep `^1.0.0-rc.8`: that range also covers 1.0.0 and every later 1.x.
 - `pithyx`: optional range of box versions the app works with. The box installs the app only if its own version is inside. Catalogs require it. Prerelease versions match by plain SemVer ordering, so `>=0.1.0` includes `0.2.0-beta.1`, but `^0.1.0` does not.
@@ -60,7 +71,22 @@ Required fields: `manifestVersion`, `id`, `version`, `name`, `author`, `entry`, 
 
 ## Permissions
 
-`permissions` is a required list (it can be empty) of unique values from this set:
+`permissions` is a required map (it can be empty, `{}`) from the name of a permission or a special right to what the app says about it. Every entry needs a `reason`: why the app needs it, in your words, localized like `name` (`en` required, one line, at most 200 characters). The install dialog and the Store page show it next to the right; `pithyx validate` and the box refuse a manifest without it.
+
+```json
+"permissions": {
+  "network.internet": {
+    "reason": { "en": "Fetches the weather for your city.", "de": "Lädt das Wetter für deine Stadt." },
+    "hosts": ["api.open-meteo.com"]
+  },
+  "device:/dev/dri": {
+    "reason": { "en": "Converts videos faster with the graphics card." },
+    "optional": true
+  }
+}
+```
+
+`hosts` is allowed only on `network.internet`: the domains the app talks to (`api.example.org`, or `*.example.org` for its subdomains), shown in the Store; the box does not enforce them yet. `optional` is allowed only on a device right (see [special rights](#special-rights)). The permissions are:
 
 | Permission               | Lets the app                                                                                                                                         |
 | ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -75,7 +101,23 @@ Required fields: `manifestVersion`, `id`, `version`, `name`, `author`, `entry`, 
 
 An administrator confirms the list at install and can revoke each permission later; the app then receives a `permissionsChange` event. A permission that is new in an update waits for the administrator, and a revoked permission stays revoked across updates. Calling something without the permission fails with [`app.permission.denied`](/docs/reference/errors/#app.permission.denied).
 
-An app that asks for `directory.read`, runs a container as root (`backend.root`) or asks for special rights (`backend.elevated`) is suggested for administrators only: the install dialog preselects **Administrators only** and says why. The administrator can still let everybody use it.
+An app that asks for `directory.read`, runs a container as root (`backend.root`) or asks for a special right is suggested for administrators only: the install dialog preselects **Administrators only** and says why. The administrator can still let everybody use it.
+
+### Special rights
+
+The same map holds the rights beyond the sandbox, for the backend only (D311, D387): `host.network`, `host.pid`, `device:/dev/<path>`, `capability:<NAME>`, `docker.socket`, `docker.socket.raw` and `host.full`. Each needs a `backend` ([`app.elevated.backend_missing`](/docs/reference/errors/#app.elevated.backend_missing)). The box sorts each into a risk tier (D388, `elevated.tiers` in the [Compose rules](/docs/reference/compose-rules/#elevated-rights)), and the tier decides what an administrator does to grant it:
+
+| Tier          | Rights                                                                                  | Granting it                                                                                       |
+| ------------- | --------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| Device access | `device:/dev/net/tun`, `device:/dev/dri`, `device:/dev/serial` and the nodes below them | a hint and a checkbox                                                                             |
+| High risk     | `host.network`, `host.pid`, `capability:<NAME>`, `docker.socket`, every other device    | a risk text, a checkbox and the password (and TOTP)                                               |
+| Root access   | `docker.socket.raw`, later `host.full`                                                  | a red step of its own with the consequences, the app's name typed in, and the password (and TOTP) |
+
+An app with a root access right never updates by itself, whatever the box's update policy says, and every other administrator gets a notification when one is granted. `docker.socket.raw` is allowed from a file and from every catalog; if your app only manages containers it starts itself, ask for `docker.socket` instead (`pithyx validate` warns, `cli.rights.raw_socket`). `host.full` and blocked devices and capabilities are refused with [`app.elevated.unsupported`](/docs/reference/errors/#app.elevated.unsupported). With `root: true` an app cannot ask for `host.network`, `host.pid` or a device other than `/dev/net/tun` ([`app.elevated.root_conflict`](/docs/reference/errors/#app.elevated.root_conflict)), and a capability needs `root: true` ([`app.elevated.root_required`](/docs/reference/errors/#app.elevated.root_required)). The Compose file must use exactly the rights the map declares; details are under [Elevated rights](/docs/reference/compose-rules/#elevated-rights).
+
+A device right with `optional: true` is one the backend runs without (for example `/dev/dri` for hardware acceleration). Every other device is required: without it the app cannot be installed ([`app.device.missing`](/docs/reference/errors/#app.device.missing)) and its backend does not start until the device is back.
+
+### Folders
 
 `storage` (optional, up to 16) asks for folders. Each request has an `id`, a `name`, an optional `description`, `access` (`read` or `readWrite`), `required` and, for backends, `services` (the services that get the folder). An administrator maps each request to a folder in a shared folder. The window addresses it as `{ storage: id }` in the SDK file API; a backend service sees a Compose volume with that name. An app cannot start until its required requests are mapped.
 
@@ -91,8 +133,8 @@ An app that asks for `directory.read`, runs a container as root (`backend.root`)
 - `network`: `{ "services": ["fetcher"] }` names the services that get the network out of the box which `network.internet` and `network.lan` open; the others stay on the app's internal network. Without it every service gets it. Each name must be a service of the Compose file ([`app.compose.reference_unknown`](/docs/reference/errors/#app.compose.reference_unknown)).
 - `health`: `{ "endpoint": "api", "path": "/health" }`. The daemon calls `GET` on it; a 2xx answer means the backend is running.
 - `schedules`: up to 16 entries of `{ id, cron, endpoint, path }`. The daemon starts the backend and calls `POST path` with `X-Pithyx-Schedule` (see [Who is calling](/docs/developers/apps/backend/#who-is-calling)). The cron expression has five fields (minute 0 to 59, hour 0 to 23, day of month 1 to 31, month 1 to 12, weekday 0 to 7) in the box's time zone, with `*`, numbers, ranges, lists and steps; names are not allowed ([`app.manifest.cron_invalid`](/docs/reference/errors/#app.manifest.cron_invalid)).
-- `elevated`: a list of extra rights (`host.network`, `host.pid`, `device:/dev/<path>`, `capability:<NAME>`, `docker.socket`, `host.full`), up to 32. Since Pithyx 1.2.0 an administrator grants `host.network`, `host.pid`, devices and device classes (`device:/dev/dri`, `device:/dev/serial`, `device:/dev/net/tun`), capabilities and the filtered Docker socket `docker.socket` after confirming with the password (and TOTP), and can revoke each one; `docker.socket.raw` (the unfiltered socket, root on the box) only for apps installed from a file ([`app.elevated.sideload_only`](/docs/reference/errors/#app.elevated.sideload_only)); `host.full` and blocked devices and capabilities are refused with [`app.elevated.unsupported`](/docs/reference/errors/#app.elevated.unsupported). With `root: true` an app cannot ask for `host.network`, `host.pid` or a device other than `/dev/net/tun` ([`app.elevated.root_conflict`](/docs/reference/errors/#app.elevated.root_conflict)), and a capability needs `root: true` ([`app.elevated.root_required`](/docs/reference/errors/#app.elevated.root_required)). Details are under [Elevated rights](/docs/reference/compose-rules/#elevated-rights).
-- `optionalDevices`: device paths of `elevated` the backend runs without (for example `/dev/dri` for hardware acceleration). Every other device is required: without it the app cannot be installed ([`app.device.missing`](/docs/reference/errors/#app.device.missing)) and its backend does not start until the device is back.
+
+The special rights the backend uses are declared in `permissions`, see [Special rights](#special-rights).
 
 Beyond the schema the box checks that service and endpoint names exist ([`app.manifest.reference_unknown`](/docs/reference/errors/#app.manifest.reference_unknown)) and that the storage requests match the Compose mounts.
 

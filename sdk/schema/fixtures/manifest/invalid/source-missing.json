@@ -1,0 +1,29 @@
+{
+  "manifestVersion": 2,
+  "id": "com.example.notes",
+  "version": "0.1.0",
+  "name": {
+    "en": "Notes"
+  },
+  "author": {
+    "name": "Example"
+  },
+  "entry": "frontend/index.html",
+  "sdk": "^1.0.0",
+  "arch": [
+    "amd64",
+    "arm64"
+  ],
+  "permissions": {},
+  "window": {
+    "instances": "multi",
+    "defaultSize": {
+      "width": 640,
+      "height": 480
+    },
+    "minSize": {
+      "width": 320,
+      "height": 240
+    }
+  }
+}

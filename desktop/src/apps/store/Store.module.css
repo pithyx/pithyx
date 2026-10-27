@@ -341,6 +341,52 @@
   font-weight: var(--font-weight-medium);
 }
 
+/* Risk tiers of elevated rights (D388): a stripe in amber, orange or red; the text keeps its own colour. */
+.tierElevated,
+.tierHigh,
+.tierCritical {
+  padding-inline-start: var(--space-3);
+  border-inline-start: 4px solid var(--color-highlight);
+}
+
+.tierHigh {
+  border-inline-start-color: var(--color-warning);
+}
+
+.tierCritical {
+  border-inline-start-color: var(--color-danger);
+}
+
+.tierLabel {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-muted);
+}
+
+.reason {
+  font-style: italic;
+}
+
+/* The step of its own for root access (D388). */
+.critical {
+  padding: var(--space-3);
+  border: 1px solid var(--color-danger);
+  border-radius: var(--radius-sm);
+  background: var(--color-danger-surface);
+}
+
+.consent {
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  border-inline-start: 4px solid var(--color-highlight);
+  background: var(--color-surface-2);
+}
+
+.consentHigh {
+  border-inline-start-color: var(--color-warning);
+  background: var(--color-warning-surface);
+}
+
 .subject {
   display: flex;
   flex-wrap: wrap;

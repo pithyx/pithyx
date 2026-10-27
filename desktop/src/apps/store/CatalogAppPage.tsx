@@ -118,7 +118,7 @@ export function CatalogAppPage({
                 <ul className={styles.permissions}>
                   {facts.elevated.map((right) => (
                     <li key={right} className={styles.permission}>
-                      <ElevatedRightText right={right} />
+                      <ElevatedRightText right={right} reason={facts.reasons[right]} />
                     </li>
                   ))}
                 </ul>
@@ -137,7 +137,11 @@ export function CatalogAppPage({
                 <ul className={styles.permissions}>
                   {facts.permissions.map((permission) => (
                     <li key={permission} className={styles.permission}>
-                      <PermissionText permission={permission} />
+                      <PermissionText
+                        permission={permission}
+                        reason={facts.reasons[permission]}
+                        hosts={facts.hosts}
+                      />
                     </li>
                   ))}
                 </ul>

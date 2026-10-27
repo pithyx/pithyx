@@ -1,7 +1,7 @@
 import { expect, test } from './fixtures';
 import { createTestCatalog } from './catalog';
-import { installProbe, probeId, probePackage, uninstallProbe } from './probe';
-import { appWindow, openFromStart, signInAsAdmin } from './session';
+import { installProbe, probeId, probePackage, rootProbePackage, uninstallProbe } from './probe';
+import { admin, appWindow, openFromStart, signInAsAdmin } from './session';
 
 // The probe leaves the box first, so the Store installs it the way an administrator does; the specs after this one
 // find it installed again.
@@ -153,5 +153,46 @@ test('an administrator adds a catalog in the Store settings and installs an app 
       store.getByRole('combobox', { name: 'When a catalog has a newer version' }),
     ).toBeVisible();
     await expect(store.getByRole('button', { name: 'Own', exact: true })).toBeVisible();
+  });
+});
+
+test('root access for an app takes a red step of its own with the typed app name (D388)', async ({
+  page,
+}) => {
+  await openFromStart(page, 'Store');
+  const store = appWindow(page, 'Store');
+  await store.getByRole('button', { name: 'Install from file' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Install an app' });
+  await dialog.locator('input[type="file"]').setInputFiles(rootProbePackage());
+
+  await test.step("the right shows its tier and the author's reason", async () => {
+    await expect(dialog.getByRole('heading', { name: 'Root probe' })).toBeVisible();
+    await expect(dialog.getByText('Root access', { exact: true })).toBeVisible();
+    await expect(
+      dialog.getByText('Why the app needs it: Manages every container of the box.'),
+    ).toBeVisible();
+    await expect(dialog.getByRole('radio', { name: 'Grant these rights' })).toBeChecked();
+    await expect(dialog.getByRole('button', { name: 'Install', exact: true })).toHaveCount(0);
+    await dialog.getByRole('button', { name: 'Continue' }).click();
+  });
+
+  await test.step('the critical step wants the name and the password, and a paste gets a reminder', async () => {
+    await expect(
+      dialog.getByRole('heading', { name: 'Root probe gets root access to the box' }),
+    ).toBeVisible();
+    const confirm = dialog.getByRole('button', { name: 'Install with root access' });
+    const name = dialog.getByRole('textbox', { name: /Type the app's name/ });
+    await expect(confirm).toBeDisabled();
+    await name.fill('Root');
+    await name.dispatchEvent('paste');
+    await expect(dialog.getByRole('status')).toContainText(
+      'Pasting is fine, but this is not a joke',
+    );
+    await name.fill('root probe');
+    await dialog.getByLabel('Your password').fill(admin.password);
+    await expect(confirm).toBeEnabled();
+    await dialog.getByRole('button', { name: 'Back' }).click();
+    await expect(dialog.getByRole('button', { name: 'Continue' })).toBeVisible();
+    await dialog.getByRole('button', { name: 'Cancel' }).click();
   });
 });

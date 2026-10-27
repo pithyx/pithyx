@@ -91,12 +91,6 @@ public static class DeviceNodes
             .Select(right => right[ManifestValidator.DevicePrefix.Length..])
             .Order(StringComparer.Ordinal);
 
-    /// <summary>The manifest's <c>backend.optionalDevices</c>.</summary>
-    public static IReadOnlySet<string> Optional(System.Text.Json.JsonElement manifest) =>
-        manifest.TryGetProperty("backend", out var backend) && backend.TryGetProperty("optionalDevices", out var devices)
-            ? devices.EnumerateArray().Select(device => device.GetString()!).ToHashSet(StringComparer.Ordinal)
-            : new HashSet<string>(StringComparer.Ordinal);
-
     private static IEnumerable<string> Links(string folder, DeviceFs fs, int depth)
     {
         if (depth > 3)

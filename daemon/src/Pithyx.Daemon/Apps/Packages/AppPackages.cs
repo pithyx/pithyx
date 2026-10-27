@@ -39,7 +39,7 @@ public sealed record CheckedPackage(string Id, long UserId, DateTimeOffset Expir
 
     public string Version => Manifest.GetProperty("version").GetString()!;
 
-    public IReadOnlyList<string> Permissions => [.. Manifest.GetProperty("permissions").EnumerateArray().Select(permission => permission.GetString()!)];
+    public IReadOnlyList<string> Permissions => ElevatedRights.PermissionsOf(Manifest);
 }
 
 /// <summary>
@@ -167,9 +167,11 @@ public sealed class AppPackages
             throw validation.Issues[0].ToException();
         }
         var manifest = validation.Manifest!.Value;
-        if (origin is not null && ManifestValidator.Declares(manifest, ManifestValidator.DockerSocketRaw))
+        var architectures = manifest.GetProperty("arch").EnumerateArray().Select(architecture => architecture.GetString()!).ToList();
+        if (Docker.ImagesLock.HostArchitecture is { } host && !architectures.Contains(host))
         {
-            throw new PithyxException(ErrorCodes.AppElevatedSideloadOnly, new Dictionary<string, object?> { ["right"] = ManifestValidator.DockerSocketRaw });
+            // The one refusal of D388 that is no policy: the app's code cannot run on this processor.
+            throw new PithyxException(ErrorCodes.AppArchUnsupported, new Dictionary<string, object?> { ["arch"] = host, ["supported"] = string.Join(", ", architectures) });
         }
         if (origin is not null
             && (manifest.GetProperty("id").GetString() != origin.AppId
