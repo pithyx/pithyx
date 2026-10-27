@@ -3927,7 +3927,7 @@ export type components = {
             removedPermissions: string[];
             /** @description SHA-256 of the package file, lowercase hex. */
             sha256: string;
-            /** @description Who should use the app after an install (D304): administrators only when it asks for elevated rights, root in a container or `directory.read`, everybody otherwise. An install without access takes it. */
+            /** @description Who should use the app after an install (D304): administrators only when it asks for elevated rights, root in a container or `directory.read`, or its `audience` is `admins` (D389), everybody otherwise. An install without access takes it. */
             suggestedAccess: components["schemas"]["AppAccess"];
             /**
              * Format: int64
@@ -4074,6 +4074,10 @@ export type components = {
             installedVersion: string;
             /** @description The app's own policy, or the box's. */
             policy: components["schemas"]["UpdatePolicy"];
+            /** @description What is new in the new version by language, from its manifest's `releaseNotes` (D389), if it has them. */
+            releaseNotes: null | {
+                [key: string]: string;
+            };
             /** @description The newest version for this box. */
             version: string;
         };
@@ -7644,6 +7648,8 @@ export type components = {
             author: null | string;
             /** @description The catalog's id. */
             catalog: string;
+            /** @description Its categories from the manifest (D389), empty without. */
+            categories: string[];
             /** @description Descriptions by language, if any. */
             description: null | {
                 [key: string]: string;
@@ -7654,10 +7660,14 @@ export type components = {
             id: string;
             /** @description The installed version, if the app is installed. */
             installedVersion: null | string;
+            /** @description Its search words from the manifest, empty without. */
+            keywords: string[];
             /** @description The catalog's kind; custom ones are unverified. */
             kind: components["schemas"]["CatalogKind"];
             /** @description The SPDX license. */
             license: string;
+            /** @description Its maturity: `stable` (also without the field), `beta` or `experimental`. */
+            maturity: string;
             /** @description Names by language. */
             name: {
                 [key: string]: string;

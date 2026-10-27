@@ -8,6 +8,8 @@ import { AppIcon } from '../../shell/AppIcon';
 import { manifestText } from '../installed';
 import { storeCall, type CatalogInfo, type StoreAppSummary } from '../sdk/store';
 import { describeProblem } from '../storage/shared';
+import { CATEGORIES, inCategory } from './model';
+import { MaturityBadge } from './StoreInfo';
 import { catalogName } from './storeState';
 import styles from './Store.module.css';
 
@@ -30,6 +32,7 @@ export function CatalogBrowser({
 }) {
   const { t, i18n } = useTranslation('store');
   const [query, setQuery] = useState('');
+  const [category, setCategory] = useState<string | null>(null);
   const deferred = useDeferredValue(query.trim());
   const ids = catalogs.map((catalog) => catalog.id).filter((id): id is string => id !== null);
   const search = useQuery({
@@ -37,7 +40,12 @@ export function CatalogBrowser({
     queryFn: () =>
       storeCall(app, 'internal.admin.store.search', deferred === '' ? {} : { query: deferred }),
   });
-  const apps = (search.data?.apps ?? []).filter((entry) => ids.includes(entry.catalog));
+  const found = (search.data?.apps ?? []).filter((entry) => ids.includes(entry.catalog));
+  // Only the categories some app of the enabled catalogs names are offered (D389).
+  const categories = CATEGORIES.filter((name) =>
+    found.some((entry) => entry.categories.includes(name)),
+  );
+  const apps = inCategory(found, category);
   return (
     <section className={styles.page} aria-labelledby="store-catalog-title">
       <header className={styles.pageHeader}>
@@ -63,6 +71,28 @@ export function CatalogBrowser({
         value={query}
         onChange={setQuery}
       />
+      {categories.length > 0 && (
+        <div className={styles.filters}>
+          <label className={styles.fieldLabel} htmlFor="store-catalog-category">
+            {t('catalog.category')}
+          </label>
+          <select
+            id="store-catalog-category"
+            className={styles.select}
+            value={category ?? ''}
+            onChange={(event) => {
+              setCategory(event.target.value === '' ? null : event.target.value);
+            }}
+          >
+            <option value="">{t('catalog.allCategories')}</option>
+            {categories.map((name) => (
+              <option key={name} value={name}>
+                {t(`category.${name}`)}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
       {search.isPending && (
         <p className={styles.loading} role="status">
           {t('catalog.loading')}
@@ -71,7 +101,11 @@ export function CatalogBrowser({
       {search.isError && <ErrorNotice error={describeProblem(search.error)} />}
       {search.data !== undefined && apps.length === 0 && (
         <p className={styles.empty}>
-          {deferred === '' ? t('catalog.empty') : t('catalog.noMatch', { query: deferred })}
+          {found.length > 0
+            ? t('catalog.noCategoryMatch')
+            : deferred === ''
+              ? t('catalog.empty')
+              : t('catalog.noMatch', { query: deferred })}
         </p>
       )}
       {apps.length > 0 && (
@@ -101,6 +135,7 @@ export function CatalogBrowser({
                   )}
                   <span className={styles.badges}>
                     <SourceBadge kind={entry.kind} />
+                    <MaturityBadge maturity={entry.maturity} />
                     {entry.installedVersion !== null && (
                       <Badge tone={entry.update ? 'highlight' : 'neutral'}>
                         {entry.update ? t('catalog.updateAvailable') : t('catalog.installed')}

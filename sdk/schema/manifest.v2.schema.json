@@ -62,6 +62,125 @@
       "maxLength": 500,
       "pattern": "^(https?://[!-~]+|private)$"
     },
+    "privacy": {
+      "description": "What the app sends out of the box, shown openly in the Store (D389): `none` (nothing), `optional` (only what a user switches on, such as a link to an account), `telemetry` (usage or crash data to its author) or `vendorAccount` (it needs an account at a service outside the box). `note` says more in the author's words. Catalogs require it.",
+      "type": "object",
+      "required": ["sends"],
+      "properties": {
+        "sends": {
+          "description": "What the app sends out of the box.",
+          "type": "string",
+          "enum": ["none", "optional", "telemetry", "vendorAccount"]
+        },
+        "note": {
+          "$ref": "#/$defs/LocalizedText",
+          "description": "What exactly the app sends and to whom, in the author's words."
+        }
+      },
+      "additionalProperties": false
+    },
+    "security": {
+      "description": "Where to report a vulnerability of the app: an `https` URL or a `mailto:` address. The Store shows it on the app's page; `pithyx validate` recommends it for apps with high or critical rights.",
+      "type": "string",
+      "maxLength": 500,
+      "pattern": "^(https://[!-~]+|mailto:[!-~]+@[!-~]+)$"
+    },
+    "maturity": {
+      "description": "How far the app is: `stable`, `beta` or `experimental`. The Store shows `beta` and `experimental` as a badge. Without it the app counts as `stable`.",
+      "type": "string",
+      "enum": ["stable", "beta", "experimental"]
+    },
+    "categories": {
+      "description": "Up to three categories from a fixed list, for the Store's filter.",
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 3,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "enum": [
+          "backup",
+          "communication",
+          "development",
+          "education",
+          "files",
+          "finance",
+          "games",
+          "home-automation",
+          "media",
+          "monitoring",
+          "network",
+          "office",
+          "photos",
+          "productivity",
+          "security",
+          "utilities"
+        ]
+      }
+    },
+    "keywords": {
+      "description": "Up to 10 words the Store's search finds the app by, besides its name and description, in any language. Each 1 to 30 characters on one line.",
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 10,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 30,
+        "pattern": "^[^\\u0000-\\u001f\\u007f]+$"
+      }
+    },
+    "locales": {
+      "description": "The languages the app's own interface is in, as BCP 47 tags such as `en` or `pt-BR`. The Store says which of them match the user's language.",
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 64,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "maxLength": 35,
+        "pattern": "^[a-z]{2,3}(-[A-Za-z0-9]{1,8})*$"
+      }
+    },
+    "screenshots": {
+      "description": "Up to 8 pictures of the app for its Store page: files in the package under `frontend/` (PNG, JPEG or WebP, at most 1 MiB each), each with an optional caption. An installed app serves them with its frontend.",
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 8,
+      "items": {
+        "$ref": "#/$defs/Screenshot"
+      }
+    },
+    "releaseNotes": {
+      "$ref": "#/$defs/LocalizedText",
+      "description": "What is new in this version, shown with every update of the app, in several languages. `en` is required; at most 500 characters per language."
+    },
+    "requirements": {
+      "description": "What the app needs to run well, as a hint: the install dialog warns when the box or the app pool has less, and installs anyway.",
+      "type": "object",
+      "minProperties": 1,
+      "properties": {
+        "memory": {
+          "description": "About how much memory the app uses while it runs, in MB.",
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1048576
+        },
+        "disk": {
+          "description": "About how much space the app's data takes on the app pool, in MB.",
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 104857600
+        }
+      },
+      "additionalProperties": false
+    },
+    "audience": {
+      "description": "Who the app is for: `everyone` or `admins`. It is the default of \"Who may use it\" when the app is installed; an app that may see every user, runs as root or asks for special rights is still suggested for administrators. The administrator can change it.",
+      "type": "string",
+      "enum": ["everyone", "admins"]
+    },
     "entry": {
       "description": "Path of the HTML page the desktop loads in the sandboxed window, inside `frontend/` of the package, for example `frontend/index.html`. Segments never start with a dot.",
       "type": "string",
@@ -666,6 +785,25 @@
           }
         }
       }
+    },
+    "Screenshot": {
+      "title": "Screenshot",
+      "description": "A picture of the app in the package.",
+      "type": "object",
+      "required": ["file"],
+      "properties": {
+        "file": {
+          "description": "The picture's path in the package, under `frontend/`, ending in `.png`, `.jpg`, `.jpeg` or `.webp`. The file must exist and be at most 1 MiB.",
+          "type": "string",
+          "maxLength": 200,
+          "pattern": "^frontend/([A-Za-z0-9_][A-Za-z0-9._-]*/)*[A-Za-z0-9_][A-Za-z0-9._-]*\\.(png|jpg|jpeg|webp)$"
+        },
+        "caption": {
+          "$ref": "#/$defs/LocalizedName",
+          "description": "What the picture shows, in several languages."
+        }
+      },
+      "additionalProperties": false
     }
   }
 }

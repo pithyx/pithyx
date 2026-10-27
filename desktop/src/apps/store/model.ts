@@ -108,8 +108,38 @@ export interface StorageRequest {
   required: boolean;
 }
 
+/** What an app sends out of the box, from the manifest's `privacy` (D389). */
+export type PrivacyLevel = 'none' | 'optional' | 'telemetry' | 'vendorAccount';
+
+/** How far an app is, from the manifest's `maturity`; without it an app is `stable`. */
+export type Maturity = 'stable' | 'beta' | 'experimental';
+
+/** A picture of the app in its package (D389): its path under `frontend/` and an optional caption. */
+export interface ScreenshotFact {
+  file: string;
+  caption: Record<string, string> | null;
+}
+
+/** The fields the Store shows next to the rights (D389); each is optional in the manifest. */
+export interface StoreFacts {
+  /** The manifest's `source`: a URL, `private`, or null for a manifest without it. */
+  source: string | null;
+  arch: string[];
+  privacy: { sends: PrivacyLevel; note: Record<string, string> | null } | null;
+  security: string | null;
+  maturity: Maturity;
+  categories: string[];
+  keywords: string[];
+  locales: string[];
+  screenshots: ScreenshotFact[];
+  releaseNotes: Record<string, string> | null;
+  /** Approximate memory and disk use in MB. */
+  requirements: { memory: number | null; disk: number | null };
+  audience: 'everyone' | 'admins' | null;
+}
+
 /** What the Store shows of a manifest; the daemon checked it against the schema, so only shapes are read here. */
-export interface ManifestFacts {
+export interface ManifestFacts extends StoreFacts {
   name: Record<string, string>;
   description: Record<string, string> | null;
   author: string | null;
@@ -145,6 +175,9 @@ const texts = (value: unknown): Record<string, string> | null =>
       )
     : null;
 
+const isPrivacyLevel = (value: unknown): value is PrivacyLevel =>
+  value === 'none' || value === 'optional' || value === 'telemetry' || value === 'vendorAccount';
+
 const strings = (value: unknown): string[] =>
   Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : [];
 
@@ -164,7 +197,33 @@ export function manifestFacts(manifest: unknown): ManifestFacts {
     }
   }
   const internet = rights['network.internet'];
+  const privacy = isRecord(root.privacy) ? root.privacy : null;
+  const requirements = isRecord(root.requirements) ? root.requirements : {};
   return {
+    source: typeof root.source === 'string' ? root.source : null,
+    arch: strings(root.arch),
+    privacy:
+      privacy !== null && isPrivacyLevel(privacy.sends)
+        ? { sends: privacy.sends, note: texts(privacy.note) }
+        : null,
+    security: typeof root.security === 'string' ? root.security : null,
+    maturity:
+      root.maturity === 'beta' || root.maturity === 'experimental' ? root.maturity : 'stable',
+    categories: strings(root.categories),
+    keywords: strings(root.keywords),
+    locales: strings(root.locales),
+    screenshots: (Array.isArray(root.screenshots) ? root.screenshots : [])
+      .filter(isRecord)
+      .filter(
+        (shot): shot is Record<string, unknown> & { file: string } => typeof shot.file === 'string',
+      )
+      .map((shot) => ({ file: shot.file, caption: texts(shot.caption) })),
+    releaseNotes: texts(root.releaseNotes),
+    requirements: {
+      memory: typeof requirements.memory === 'number' ? requirements.memory : null,
+      disk: typeof requirements.disk === 'number' ? requirements.disk : null,
+    },
+    audience: root.audience === 'everyone' || root.audience === 'admins' ? root.audience : null,
     name: texts(root.name) ?? {},
     description: texts(root.description),
     author,
@@ -273,4 +332,91 @@ export function deviceNote(
     return device.optional ? 'elevated.deviceMissingOptional' : 'elevated.deviceMissing';
   }
   return device.optional ? 'elevated.deviceAbsentOptional' : 'elevated.deviceAbsent';
+}
+
+/**
+ * Whether the app's interface speaks the user's language (D389): a locale of the manifest equals the language or
+ * shares its base (`pt` for `pt-BR`). Null when the manifest names no locales, so the Store says nothing.
+ */
+export function speaksLanguage(locales: readonly string[], language: string): boolean | null {
+  if (locales.length === 0) {
+    return null;
+  }
+  const base = (tag: string) => tag.toLowerCase().split('-')[0];
+  return locales.some(
+    (locale) => locale.toLowerCase() === language.toLowerCase() || base(locale) === base(language),
+  );
+}
+
+/** A hint of the install dialog that the box may be too small for the app; it never stops the install (D389). */
+export type RequirementHint =
+  | { kind: 'memory'; needed: number; available: number }
+  | { kind: 'disk'; needed: number; available: number };
+
+/**
+ * The requirements of a manifest the box falls short of, in MB: memory against the box's physical memory, disk
+ * against the free space of the app pool. Unknown sizes give no hint.
+ */
+export function requirementHints(
+  requirements: StoreFacts['requirements'],
+  memoryBytes: number | null,
+  poolFreeBytes: number | null,
+): RequirementHint[] {
+  const mb = (bytes: number) => Math.floor(bytes / (1024 * 1024));
+  const hints: RequirementHint[] = [];
+  if (
+    requirements.memory !== null &&
+    memoryBytes !== null &&
+    mb(memoryBytes) < requirements.memory
+  ) {
+    hints.push({ kind: 'memory', needed: requirements.memory, available: mb(memoryBytes) });
+  }
+  if (
+    requirements.disk !== null &&
+    poolFreeBytes !== null &&
+    mb(poolFreeBytes) < requirements.disk
+  ) {
+    hints.push({ kind: 'disk', needed: requirements.disk, available: mb(poolFreeBytes) });
+  }
+  return hints;
+}
+
+/** The categories of the manifest schema, in the order the Store's filter lists them (D389). */
+export const CATEGORIES = [
+  'productivity',
+  'office',
+  'communication',
+  'files',
+  'backup',
+  'photos',
+  'media',
+  'home-automation',
+  'network',
+  'security',
+  'monitoring',
+  'development',
+  'education',
+  'finance',
+  'games',
+  'utilities',
+] as const;
+
+/** One category of the manifest schema. */
+export type Category = (typeof CATEGORIES)[number];
+
+/** Whether a manifest's category is one this desktop knows. */
+export const isCategory = (value: string): value is Category =>
+  (CATEGORIES as readonly string[]).includes(value);
+
+/** The catalog apps in a category, or all of them for no category. */
+export function inCategory<T extends { categories: readonly string[] }>(
+  apps: readonly T[],
+  category: string | null,
+): T[] {
+  return category === null ? [...apps] : apps.filter((app) => app.categories.includes(category));
+}
+
+/** The URL an installed app serves one of its screenshots at: its frontend path below `/apps/<id>/`. */
+export function screenshotUrl(appId: string, file: string): string {
+  return `/apps/${appId}/${file.replace(/^frontend\//, '')}`;
 }

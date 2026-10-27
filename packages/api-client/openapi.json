@@ -11357,7 +11357,7 @@
             "description": "SHA-256 of the package file, lowercase hex."
           },
           "suggestedAccess": {
-            "description": "Who should use the app after an install (D304): administrators only when it asks for elevated rights, root in a container or `directory.read`, everybody otherwise. An install without access takes it.",
+            "description": "Who should use the app after an install (D304): administrators only when it asks for elevated rights, root in a container or `directory.read`, or its `audience` is `admins` (D389), everybody otherwise. An install without access takes it.",
             "$ref": "#/components/schemas/AppAccess"
           },
           "catalog": {
@@ -11717,7 +11717,8 @@
           "elevated",
           "policy",
           "automatic",
-          "critical"
+          "critical",
+          "releaseNotes"
         ],
         "type": "object",
         "properties": {
@@ -11759,6 +11760,16 @@
           "critical": {
             "type": "boolean",
             "description": "The app has a critical right (root on the box) or the new version asks for one, so it never updates by itself whatever the policy (D388)."
+          },
+          "releaseNotes": {
+            "type": [
+              "null",
+              "object"
+            ],
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "What is new in the new version by language, from its manifest's `releaseNotes` (D389), if it has them."
           }
         },
         "description": "A newer version of an installed app that a catalog offers."
@@ -20891,7 +20902,10 @@
           "license",
           "icon",
           "installedVersion",
-          "update"
+          "update",
+          "categories",
+          "keywords",
+          "maturity"
         ],
         "type": "object",
         "properties": {
@@ -20953,6 +20967,24 @@
           "update": {
             "type": "boolean",
             "description": "The installed app is older than Version."
+          },
+          "categories": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Its categories from the manifest (D389), empty without."
+          },
+          "keywords": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Its search words from the manifest, empty without."
+          },
+          "maturity": {
+            "type": "string",
+            "description": "Its maturity: `stable` (also without the field), `beta` or `experimental`."
           }
         },
         "description": "An app of a catalog, at the newest version this box can run."

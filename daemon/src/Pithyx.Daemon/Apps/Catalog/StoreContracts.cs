@@ -123,6 +123,9 @@ public sealed record UpdateCatalogRequest(bool? Enabled = null, string? Registry
 /// <param name="Icon">The icon's URL.</param>
 /// <param name="InstalledVersion">The installed version, if the app is installed.</param>
 /// <param name="Update">The installed app is older than <paramref name="Version"/>.</param>
+/// <param name="Categories">Its categories from the manifest (D389), empty without.</param>
+/// <param name="Keywords">Its search words from the manifest, empty without.</param>
+/// <param name="Maturity">Its maturity: <c>stable</c> (also without the field), <c>beta</c> or <c>experimental</c>.</param>
 public sealed record StoreApp(
     string Catalog,
     CatalogKind Kind,
@@ -134,7 +137,10 @@ public sealed record StoreApp(
     string License,
     string Icon,
     string? InstalledVersion,
-    bool Update);
+    bool Update,
+    IReadOnlyList<string> Categories,
+    IReadOnlyList<string> Keywords,
+    string Maturity);
 
 /// <summary>Apps of the enabled catalogs, sorted by name.</summary>
 public sealed record StoreAppList(IReadOnlyList<StoreApp> Apps);
@@ -166,7 +172,8 @@ public sealed record StoreAppDetails(StoreApp App, JsonElement Manifest, IReadOn
 /// <param name="Policy">The app's own policy, or the box's.</param>
 /// <param name="Automatic">The next check installs it on its own: the policy is automatic, nothing new is asked for and the app has no critical right.</param>
 /// <param name="Critical">The app has a critical right (root on the box) or the new version asks for one, so it never updates by itself whatever the policy (D388).</param>
-public sealed record AppUpdate(string Id, string InstalledVersion, string Version, string Catalog, IReadOnlyList<string> AddedPermissions, bool Elevated, UpdatePolicy Policy, bool Automatic, bool Critical);
+/// <param name="ReleaseNotes">What is new in the new version by language, from its manifest's <c>releaseNotes</c> (D389), if it has them.</param>
+public sealed record AppUpdate(string Id, string InstalledVersion, string Version, string Catalog, IReadOnlyList<string> AddedPermissions, bool Elevated, UpdatePolicy Policy, bool Automatic, bool Critical, IReadOnlyDictionary<string, string>? ReleaseNotes);
 
 /// <summary>The Store for administrators: the snapshot and every event of the topic <c>store/admin</c>.</summary>
 /// <param name="Settings">The settings with the next check.</param>

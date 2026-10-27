@@ -22,10 +22,18 @@ import {
   type StepUpInput,
 } from './ElevatedRights';
 import { JobProgress, useAppJob } from './jobs';
-import { appPools, deviceNote, manifestFacts, tierOf } from './model';
+import {
+  appPools,
+  deviceNote,
+  manifestFacts,
+  requirementHints,
+  tierOf,
+  type RequirementHint,
+} from './model';
 import { PermissionText } from './PermissionText';
 import { StorageSection } from './StorageSection';
 import { useInstalled } from './StoreApp';
+import { MaturityBadge, ReleaseNotes, RequirementHints, StoreInfoRows } from './StoreInfo';
 import styles from './Store.module.css';
 
 /** A version of a catalog app to install instead of a package file. */
@@ -96,10 +104,24 @@ export function InstallDialog({
   const pools = useQuery({
     queryKey: ['store', 'pools'],
     queryFn: () => storeCall(app, 'internal.admin.apps.pools', {}),
-    enabled: needsPool,
+    enabled: preview !== undefined,
+  });
+  const memory = useQuery({
+    queryKey: ['store', 'memory'],
+    queryFn: () => storeCall(app, 'internal.admin.apps.memory', {}),
+    enabled: preview !== undefined,
   });
   const choices = pools.data === undefined ? [] : appPools(pools.data);
   const chosenPool = pool ?? choices[0] ?? null;
+  const targetPool = needsPool ? chosenPool : (preview?.pool ?? null);
+  const hints =
+    preview === undefined
+      ? []
+      : requirementHints(
+          manifestFacts(preview.manifest).requirements,
+          memory.data ?? null,
+          pools.data?.pools.find((entry) => entry.name === targetPool)?.freeBytes ?? null,
+        );
   const chosenAccess = access ?? preview?.suggestedAccess ?? 'everybody';
   const addedElevated = preview?.addedElevated ?? [];
   const addedTiers = new Set(addedElevated.map(tierOf));
@@ -301,6 +323,7 @@ export function InstallDialog({
             preview={preview}
             verified={catalog?.verified ?? false}
             storage={details === undefined}
+            hints={hints}
           >
             {job === null && preview.action === 'install' && (
               <fieldset className={styles.choices}>
@@ -319,7 +342,11 @@ export function InstallDialog({
                   </label>
                 ))}
                 {preview.suggestedAccess === 'admins' && (
-                  <p className={styles.muted}>{t('install.accessSuggested')}</p>
+                  <p className={styles.muted}>
+                    {suggestedForRisk(preview)
+                      ? t('install.accessSuggested')
+                      : t('install.accessAudience')}
+                  </p>
                 )}
               </fieldset>
             )}
@@ -440,16 +467,25 @@ export function InstallDialog({
 }
 
 /** What installing the checked package does: the app, its permissions and folders, and what deserves a warning. */
+/** Whether the risk of an app makes it suggested for administrators (D304), rather than only its `audience` (D389). */
+function suggestedForRisk(preview: AppPackagePreview): boolean {
+  const facts = manifestFacts(preview.manifest);
+  return facts.root || facts.elevated.length > 0 || facts.permissions.includes('directory.read');
+}
+
 function Preview({
   preview,
   verified,
   storage,
+  hints,
   children,
 }: {
   preview: AppPackagePreview;
   verified: boolean;
   /** Lists the folders it asks for; once installed, the dialog maps them instead. */
   storage: boolean;
+  /** Where the box may be too small for the app. */
+  hints: RequirementHint[];
   children: ReactNode;
 }) {
   const { t, i18n } = useTranslation('store');
@@ -466,7 +502,9 @@ function Preview({
       <div className={styles.previewHead}>
         <AppIcon app={{ icon: null, tone: 'graphite' }} size={48} />
         <div className={styles.headerText}>
-          <h3 className={styles.previewTitle}>{name}</h3>
+          <h3 className={styles.previewTitle}>
+            {name} <MaturityBadge maturity={facts.maturity} />
+          </h3>
           <p className={styles.muted}>
             {t(`install.action.${preview.action}`, {
               version: preview.version,
@@ -483,6 +521,8 @@ function Preview({
         </div>
       </div>
       {description !== null && description !== '' && <p>{description}</p>}
+      {isUpdate && <ReleaseNotes notes={facts.releaseNotes} version={preview.version} />}
+      <RequirementHints hints={hints} />
       <p className={styles.notice}>
         {preview.catalog == null
           ? t('install.unverified')
@@ -576,6 +616,9 @@ function Preview({
           <p className={styles.muted}>{t('install.storageHint')}</p>
         </section>
       )}
+      <dl className={styles.facts}>
+        <StoreInfoRows facts={facts} />
+      </dl>
       {children}
     </div>
   );

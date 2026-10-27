@@ -39,7 +39,7 @@ A box refuses an `org.pithyx.*` id in a package from a file, also with that opti
 From `sdk/schema/catalog.v1.rules.json`:
 
 - One app folder per pull request, under `apps/`. At most 5 MiB per app folder and 1000 characters per line.
-- Required files: `pithyx.json`, `icon.svg`, `maintainers.json` and one of `LICENSE`, `LICENSE.md`, `LICENSE.txt`. The manifest needs `license` and `pithyx`. Like every manifest it gives a `reason` for each permission and special right, `arch` and `source`; a reviewer checks that the reasons are true. Every catalog may ship a special right of any tier, also `docker.socket.raw` (D388); the box asks the administrator for consent by tier.
+- Required files: `pithyx.json`, `icon.svg`, `maintainers.json` and one of `LICENSE`, `LICENSE.md`, `LICENSE.txt`. The manifest needs `license`, `pithyx` and `privacy` (what the app sends out of the box, D389). Like every manifest it gives a `reason` for each permission and special right, `arch` and `source`; a reviewer checks that the reasons are true. Every catalog may ship a special right of any tier, also `docker.socket.raw` (D388); the box asks the administrator for consent by tier.
 - Up to 8 screenshots in `screenshots/`, each at most 1 MiB, named `[a-z0-9][a-z0-9_-]{0,62}` with `.png`, `.jpg` or `.webp`.
 - Files are UTF-8 text or listed media (gif, jpeg, png, webp, woff2) whose content matches the extension. Minified files (`.min.js` and similar) and unlisted files are refused.
 - Every `FROM` and `COPY --from` in a Dockerfile is pinned by `@sha256` or is `scratch`.

@@ -39,7 +39,7 @@ Eine Box lehnt eine `org.pithyx.*`-ID in einem Paket aus einer Datei ab, auch mi
 Aus `sdk/schema/catalog.v1.rules.json`:
 
 - Ein App-Ordner pro Pull Request, unter `apps/`. Höchstens 5 MiB pro App-Ordner und 1000 Zeichen pro Zeile.
-- Pflichtdateien: `pithyx.json`, `icon.svg`, `maintainers.json` und eine von `LICENSE`, `LICENSE.md`, `LICENSE.txt`. Das Manifest braucht `license` und `pithyx`. Wie jedes Manifest nennt es zu jeder Berechtigung und jedem Sonderrecht einen `reason`, dazu `arch` und `source`; die Prüfung schaut, ob die Begründungen stimmen. Jeder Katalog darf Sonderrechte jeder Stufe ausliefern, auch `docker.socket.raw` (D388); die Box fragt den Administrator je nach Stufe nach seiner Zustimmung.
+- Pflichtdateien: `pithyx.json`, `icon.svg`, `maintainers.json` und eine von `LICENSE`, `LICENSE.md`, `LICENSE.txt`. Das Manifest braucht `license`, `pithyx` und `privacy` (was die App aus der Box hinaus sendet, D389). Wie jedes Manifest nennt es zu jeder Berechtigung und jedem Sonderrecht einen `reason`, dazu `arch` und `source`; die Prüfung schaut, ob die Begründungen stimmen. Jeder Katalog darf Sonderrechte jeder Stufe ausliefern, auch `docker.socket.raw` (D388); die Box fragt den Administrator je nach Stufe nach seiner Zustimmung.
 - Bis zu 8 Screenshots in `screenshots/`, jeder höchstens 1 MiB, benannt nach `[a-z0-9][a-z0-9_-]{0,62}` mit `.png`, `.jpg` oder `.webp`.
 - Dateien sind UTF-8-Text oder aufgelistete Medien (gif, jpeg, png, webp, woff2), deren Inhalt zur Endung passt. Minifizierte Dateien (`.min.js` und ähnliche) und nicht aufgelistete Dateien werden abgelehnt.
 - Jedes `FROM` und `COPY --from` in einem Dockerfile ist per `@sha256` festgelegt oder `scratch`.

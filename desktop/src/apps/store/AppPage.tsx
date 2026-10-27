@@ -20,6 +20,7 @@ import { storeCall } from '../sdk/store';
 import { describeProblem, formatDate } from '../storage/shared';
 import { AccessSection } from './AccessSection';
 import { CatalogScreenshots, CatalogVersions, useCatalogDetails } from './CatalogAppPage';
+import { ManifestScreenshots, MaturityBadge, StoreInfoRows } from './StoreInfo';
 import { ElevatedBadge, ElevatedSection } from './ElevatedRights';
 import { InstallDialog } from './InstallDialog';
 import { JobProgress, useAppJob } from './jobs';
@@ -161,6 +162,7 @@ export function AppPage({
               </Badge>
               {details.busy && <Badge tone="accent">{t('installed.busy')}</Badge>}
               <ElevatedBadge details={details} />
+              <MaturityBadge maturity={facts.maturity} />
             </span>
           </div>
           <div className={styles.buttons}>
@@ -220,7 +222,11 @@ export function AppPage({
         </header>
         {description !== null && description !== '' && <p>{description}</p>}
         {!details.available && <p className={styles.warning}>{t('detail.unavailable')}</p>}
-        {catalog.data !== undefined && <CatalogScreenshots details={catalog.data} name={name} />}
+        {catalog.data !== undefined && catalog.data.screenshots.length > 0 ? (
+          <CatalogScreenshots details={catalog.data} name={name} />
+        ) : (
+          <ManifestScreenshots appId={appId} name={name} screenshots={facts.screenshots} />
+        )}
         <div className={styles.group}>
           <Switch
             isSelected={details.enabled}
@@ -349,6 +355,7 @@ export function AppPage({
                 <dd className={styles.breakable}>{facts.homepage}</dd>
               </>
             )}
+            <StoreInfoRows facts={facts} />
             {catalog.data !== undefined && (
               <>
                 <dt>{t('catalog.source')}</dt>

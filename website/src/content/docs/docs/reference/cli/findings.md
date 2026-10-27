@@ -101,6 +101,7 @@ Reported by [`validate`](/docs/reference/cli/validate/) and [`pack`](/docs/refer
   - `reason` = `duplicate`: {path} is in it twice
   - `reason` = `unexpected`: {path} does not belong in an app package
   - `reason` = `reserved`: {path} uses a name reserved for the backend
+  - `reason` = `too_large`: {path} is larger than 1 MiB
   - `reason` = `other`: {path} is not allowed
 
 <!-- /generated -->
@@ -124,6 +125,7 @@ Only the CLI reports these. `cli.backend.unbuilt` comes from the Vite plugin aft
   - `reason` = `unused`: {image} is not used
   - `reason` = `other`: {image} differs
 - `cli.manifest.missing` (error): pithyx.json does not exist in {folder}. Run the command in the project folder of an app, or name that folder.
+- `cli.manifest.security_missing` (warning): The app asks for a right of high risk or root access but names no security contact. Add security (an https URL or a mailto: address), so administrators know where to report a vulnerability.
 - `cli.rights.raw_socket` (warning): The app asks for docker.socket.raw, the unfiltered container service: root on the box. Every box asks the administrator to type the app's name to grant it, and the app never updates by itself. If the app only manages containers it starts itself, ask for docker.socket instead.
 
 <!-- /generated -->

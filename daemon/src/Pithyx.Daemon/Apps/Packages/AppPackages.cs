@@ -181,7 +181,9 @@ public sealed class AppPackages
             throw HashMismatch($"apps/{origin.AppId}/{origin.Version}/{PackageLayout.ManifestFile}");
         }
         var compose = manifest.TryGetProperty("backend", out var backend) ? backend.GetProperty("compose").GetString() : null;
-        var layout = PackageLayout.Check(paths, manifest.GetProperty("entry").GetString()!, compose);
+        var screenshots = manifest.TryGetProperty("screenshots", out var shots) ? shots.EnumerateArray().Select(shot => shot.GetProperty("file").GetString()!).ToList() : [];
+        var sizes = package.Files.ToDictionary(file => file.Path, file => file.Size, StringComparer.Ordinal);
+        var layout = PackageLayout.Check(paths, manifest.GetProperty("entry").GetString()!, compose, screenshots, path => sizes[path]);
         if (layout.Count > 0)
         {
             throw layout[0].ToException();
