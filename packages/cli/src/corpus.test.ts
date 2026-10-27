@@ -233,11 +233,17 @@ describe('layout corpus', () => {
     files: string[];
     entry: string;
     compose?: string;
+    screenshots?: string[];
+    sizes?: Record<string, number>;
     expected: { path: string; reason: string }[];
   }[];
 
   it.each(cases.map((entry) => [entry.name, entry] as const))('%s', (_, entry) => {
-    const issues = checkLayout(entry.files, { entry: entry.entry, compose: entry.compose });
+    const issues = checkLayout(
+      entry.files,
+      { entry: entry.entry, compose: entry.compose, screenshots: entry.screenshots },
+      (path) => entry.sizes?.[path] ?? 0,
+    );
     expect(issues.every((issue) => issue.code === 'app.package.layout_invalid')).toBe(true);
     expect(
       new Set(issues.map((issue) => JSON.stringify([issue.params.path, issue.params.reason]))),

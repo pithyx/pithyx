@@ -6,6 +6,8 @@ export const ICON_FILE = 'icon.svg';
 const MAX_PATH_LENGTH = 512;
 const MAX_SEGMENT_LENGTH = 255;
 const MAX_DEPTH = 32;
+/** The largest screenshot a manifest may name (D389). */
+export const MAX_SCREENSHOT_BYTES = 1024 * 1024;
 const SEGMENT = /^[A-Za-z0-9_~@+-][A-Za-z0-9._~@+-]*$/;
 
 /**
@@ -49,11 +51,17 @@ function placementProblem(path: string, hasBackend: boolean): string | null {
  * and checksums), the entry under `frontend/`, files under `backend/` only with a backend, whose Compose file must be
  * there. Paths are relative with `/` as the separator and use ASCII letters, digits and `._~@+-` only, so no two names
  * can mean the same file on any file system; the list holds the regular files of the package only. `frontend/api`
- * and `frontend/api-*` are reserved: their URLs belong to the backend (D303).
+ * and `frontend/api-*` are reserved: their URLs belong to the backend (D303). The manifest's screenshots must be files of
+ * the package of at most 1 MiB each (D389).
  */
 export function checkLayout(
   paths: Iterable<string>,
-  manifest: { entry: string; compose?: string | undefined },
+  manifest: {
+    entry: string;
+    compose?: string | undefined;
+    screenshots?: readonly string[] | undefined;
+  },
+  sizeOf: (path: string) => number = () => 0,
 ): Issue[] {
   const issues: Issue[] = [];
   const issue = (path: string, reason: string): Issue => ({
@@ -93,6 +101,13 @@ export function checkLayout(
   for (const required of [MANIFEST_FILE, ICON_FILE, manifest.entry, manifest.compose]) {
     if (required !== undefined && !seen.has(required)) {
       issues.push(issue(required, 'missing'));
+    }
+  }
+  for (const screenshot of new Set(manifest.screenshots ?? [])) {
+    if (!seen.has(screenshot)) {
+      issues.push(issue(screenshot, 'missing'));
+    } else if (sizeOf(screenshot) > MAX_SCREENSHOT_BYTES) {
+      issues.push(issue(screenshot, 'too_large'));
     }
   }
   return issues;

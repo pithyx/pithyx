@@ -858,10 +858,13 @@ public sealed partial class StoreService(
             manifest.TryGetProperty("license", out var license) ? license.GetString() ?? "" : "",
             $"/api/store/catalogs/{copy.CatalogId}/apps/{appId}/{version}/icon",
             installed?.Version,
-            installed is not null && AppService.CompareVersions(version, installed.Version) > 0);
+            installed is not null && AppService.CompareVersions(version, installed.Version) > 0,
+            Words(manifest, "categories"),
+            Words(manifest, "keywords"),
+            manifest.TryGetProperty("maturity", out var maturity) ? maturity.GetString() ?? "stable" : "stable");
     }
 
-    /// <summary>Apps of the enabled catalogs (or one of them) whose id, name, description or author contains the query.</summary>
+    /// <summary>Apps of the enabled catalogs (or one of them) whose id, name, description, author or keywords (D389) contain the query.</summary>
     public async Task<StoreAppList> SearchAsync(ClaimsPrincipal caller, string? catalog, string? query, CancellationToken cancellationToken)
     {
         RequireAdmin(caller);
@@ -898,7 +901,8 @@ public sealed partial class StoreService(
         app.Id.Contains(text, StringComparison.OrdinalIgnoreCase)
         || app.Name.Values.Any(name => name.Contains(text, StringComparison.OrdinalIgnoreCase))
         || app.Description?.Values.Any(description => description.Contains(text, StringComparison.OrdinalIgnoreCase)) == true
-        || app.Author?.Contains(text, StringComparison.OrdinalIgnoreCase) == true;
+        || app.Author?.Contains(text, StringComparison.OrdinalIgnoreCase) == true
+        || app.Keywords.Any(keyword => keyword.Contains(text, StringComparison.OrdinalIgnoreCase));
 
     private async Task<CatalogCopy> CopyAsync(string catalogId, CancellationToken cancellationToken) =>
         (await EnabledCopiesAsync(cancellationToken)).FirstOrDefault(copy => copy.CatalogId == catalogId)
@@ -1081,7 +1085,7 @@ public sealed partial class StoreService(
                 var elevated = (IsRoot(manifest) && !IsRoot(app.Manifest)) || Manifest.ElevatedRights.Of(manifest).Except(Manifest.ElevatedRights.Of(app.Manifest)).Any();
                 var critical = Manifest.ElevatedRights.IsCritical(app.Manifest) || Manifest.ElevatedRights.IsCritical(manifest);
                 var effective = app.UpdatePolicy ?? policy;
-                updates.Add(new AppUpdate(app.Id, app.Version, newest.Version, copy.CatalogId, added, elevated, effective, UpdatesItself(effective, added.Count, elevated, critical), critical));
+                updates.Add(new AppUpdate(app.Id, app.Version, newest.Version, copy.CatalogId, added, elevated, effective, UpdatesItself(effective, added.Count, elevated, critical), critical, Texts(manifest, "releaseNotes")));
                 break;
             }
         }
@@ -1136,6 +1140,9 @@ public sealed partial class StoreService(
                 cancellationToken);
         }
     }
+
+    private static string[] Words(JsonElement manifest, string property) =>
+        manifest.TryGetProperty(property, out var words) ? [.. words.EnumerateArray().Select(word => word.GetString()!)] : [];
 
     private static Dictionary<string, string>? Texts(JsonElement element, string property) =>
         element.TryGetProperty(property, out var texts) && texts.ValueKind == JsonValueKind.Object

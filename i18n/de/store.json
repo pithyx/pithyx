@@ -207,7 +207,8 @@
     "stopped": "Die Installation wurde abgebrochen.",
     "fromCatalog": "Aus dem Katalog {catalog}, gegen seine Signatur geprüft.",
     "fromCustomCatalog": "Aus dem Katalog {catalog}, der nicht geprüft ist: Installiere nur Apps aus Katalogen, denen du vertraust.",
-    "internet": "Diese App darf sich mit Servern im Internet verbinden."
+    "internet": "Diese App darf sich mit Servern im Internet verbinden.",
+    "accessAudience": "Für diese App empfohlen: nur Administratoren, weil ihr Autor sie für sie gemacht hat."
   },
   "uninstall": {
     "title": "{name} deinstallieren?",
@@ -263,7 +264,10 @@
     "source": "Quellcode",
     "sourceLink": "Quellcode dieser Version im Katalog",
     "versions": "Versionen",
-    "needs": "braucht Pithyx {range}"
+    "needs": "braucht Pithyx {range}",
+    "category": "Kategorie",
+    "allCategories": "Alle Kategorien",
+    "noCategoryMatch": "Keine App in dieser Kategorie passt."
   },
   "updates": {
     "title": "Updates",
@@ -428,5 +432,62 @@
       "update": "Mit Root-Zugriff aktualisieren",
       "grant": "Root-Zugriff geben"
     }
+  },
+  "info": {
+    "privacy": {
+      "title": "Datenschutz",
+      "none": "Sendet nichts aus der Box hinaus.",
+      "optional": "Sendet Daten nur aus der Box hinaus, wenn du es einschaltest.",
+      "telemetry": "Sendet Nutzungs- oder Absturzdaten an ihren Autor.",
+      "vendorAccount": "Braucht ein Konto bei einem Dienst außerhalb der Box.",
+      "unknown": "Der Autor sagt nicht, was die App aus der Box hinaus sendet."
+    },
+    "source": {
+      "title": "Quellcode",
+      "open": "Open Source ({license})",
+      "public": "Quellcode öffentlich, ohne Lizenzangabe",
+      "private": "Quellcode nicht öffentlich"
+    },
+    "arch": {
+      "title": "Läuft auf"
+    },
+    "languages": {
+      "title": "Sprachen",
+      "yours": "Verfügbar auf {language}",
+      "others": "Nicht in deiner Sprache; verfügbar auf {languages}"
+    },
+    "security": {
+      "title": "Sicherheitskontakt"
+    },
+    "categories": {
+      "title": "Kategorien"
+    },
+    "maturity": {
+      "beta": "Beta",
+      "experimental": "Experimentell"
+    },
+    "releaseNotes": "Neu in {version}",
+    "requirements": {
+      "memory": "Die App braucht etwa {needed} MB Arbeitsspeicher, und diese Box hat {available} MB. Sie wird trotzdem installiert, läuft aber vielleicht langsam.",
+      "disk": "Die App braucht etwa {needed} MB auf dem App-Pool, und {available} MB sind frei. Sie wird trotzdem installiert, aber der Platz reicht vielleicht nicht."
+    }
+  },
+  "category": {
+    "productivity": "Produktivität",
+    "office": "Büro",
+    "communication": "Kommunikation",
+    "files": "Dateien",
+    "backup": "Sicherung",
+    "photos": "Fotos",
+    "media": "Medien",
+    "home-automation": "Hausautomation",
+    "network": "Netzwerk",
+    "security": "Sicherheit",
+    "monitoring": "Überwachung",
+    "development": "Entwicklung",
+    "education": "Bildung",
+    "finance": "Finanzen",
+    "games": "Spiele",
+    "utilities": "Werkzeuge"
   }
 }

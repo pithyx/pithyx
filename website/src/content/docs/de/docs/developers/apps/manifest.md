@@ -9,7 +9,7 @@ sidebar:
 
 `pithyx.json` im Wurzelverzeichnis des Pakets beschreibt eine App: wer sie ist, welches Fenster sie öffnet, welche Berechtigungen sie anfordert, welche Ordner sie haben will und, falls sie eines hat, wie ihr Backend läuft. Das JSON-Schema ist `sdk/schema/manifest.v2.schema.json` (veröffentlicht als `@pithyx/sdk/schema/manifest.v2.schema.json`); unbekannte Felder sind Fehler. Das Schema ist ein stabiler Vertrag: Ein neues optionales Feld ist eine Minor-Änderung, alles andere eine Major-Änderung. Die Manifest-Version 2 (Pithyx 1.2, D388) hat Version 1 abgelöst: Eine Box lehnt ein Manifest der Version 1 mit [`app.manifest.version_unsupported`](/de/docs/reference/errors/#app.manifest.version_unsupported) ab, baue eine ältere App also mit `@pithyx/cli` 2 neu. Schon installierte Apps laufen weiter; die Box hat ihre gespeicherten Manifeste umgewandelt.
 
-Pflichtfelder: `manifestVersion`, `id`, `version`, `name`, `author`, `entry`, `sdk`, `permissions`, `arch`, `source` und `window`. Optional: `$schema`, `description`, `license`, `homepage`, `pithyx`, `dataVersion`, `storage`, `fileHandlers`, `fileActions` und `backend`. Siehe auch die [Schema-Referenz](/de/docs/reference/manifest-schema/) mit jedem Feld und die [Compose-Regeln](/de/docs/reference/compose-rules/) für das Backend.
+Pflichtfelder: `manifestVersion`, `id`, `version`, `name`, `author`, `entry`, `sdk`, `permissions`, `arch`, `source` und `window`. Optional: `$schema`, `description`, `license`, `homepage`, `pithyx`, `dataVersion`, `storage`, `fileHandlers`, `fileActions`, `backend` und die [Angaben für den Store](#angaben-für-den-store) (`privacy`, `security`, `maturity`, `categories`, `keywords`, `locales`, `screenshots`, `releaseNotes`, `requirements`, `audience`). Siehe auch die [Schema-Referenz](/de/docs/reference/manifest-schema/) mit jedem Feld und die [Compose-Regeln](/de/docs/reference/compose-rules/) für das Backend.
 
 ```json
 {
@@ -49,12 +49,40 @@ Pflichtfelder: `manifestVersion`, `id`, `version`, `name`, `author`, `entry`, `s
 - `author`: `name` (1 bis 100 Zeichen) und eine optionale `url` (http oder https).
 - `license`: optional, ein SPDX-Ausdruck. Kataloge verlangen ihn.
 - `homepage`: optional, eine http- oder https-URL.
-- `source`: Pflicht. Die URL des Quellcode-Repositorys der App, oder `private`, wenn der Quellcode nicht öffentlich ist. Der Store zeigt sie neben der `license`.
+- `source`: Pflicht. Die URL des Quellcode-Repositorys der App, oder `private`, wenn der Quellcode nicht öffentlich ist. Der Store zeigt bei öffentlichem Quellcode "Open Source" mit der `license` und sonst "Quellcode nicht öffentlich".
 - `arch`: Pflichtliste der Prozessorarchitekturen, auf denen die App läuft, `amd64` und `arm64`. Jedes Image des Backends muss es für jede davon geben; eine App ohne Backend nennt meist beide. Eine Box mit anderer Architektur lehnt die Installation mit [`app.arch.unsupported`](/de/docs/reference/errors/#app.arch.unsupported) ab, weil die App dort nicht laufen kann. Das ist die einzige Art Ablehnung: Was eine App nur empfiehlt, ist ein Hinweis.
 - `entry`: die HTML-Seite, `frontend/<path>.html`, höchstens 200 Zeichen, kein Segment, das mit einem Punkt beginnt.
 - `sdk`: Pflicht, ein Versionsbereich für das SDK im npm-Stil, zum Beispiel `^1.0.0`. Die Box prüft die Syntax ([`app.manifest.sdk_invalid`](/de/docs/reference/errors/#app.manifest.sdk_invalid)); mit dem Protokoll des Desktops vergleicht sie ihn heute nicht. Eine App aus der Zeit der Release Candidates kann `^1.0.0-rc.8` behalten: Dieser Bereich umfasst auch 1.0.0 und jede spätere 1.x.
 - `pithyx`: optional, ein Bereich der Box-Versionen, mit denen die App funktioniert. Die Box installiert die App nur, wenn ihre eigene Version darin liegt. Kataloge verlangen ihn. Vorabversionen werden nach der einfachen SemVer-Reihenfolge verglichen, also schließt `>=0.1.0` die Version `0.2.0-beta.1` ein, `^0.1.0` aber nicht.
 - `dataVersion`: optional, eine ganze Zahl von 1 bis 2147483647. Ein Downgrade aus einem Katalog ist nur zwischen Versionen mit derselben `dataVersion` erlaubt. Ein Rollback auf die vorherige Version nach einem Update hängt nicht davon ab.
+
+## Angaben für den Store
+
+Optionale Felder (D389), die der Store Administratoren vor und nach der Installation zeigt. Keines ändert, was die App darf, und keines verhindert eine Installation: Was eine App empfiehlt, ist ein Hinweis.
+
+- `privacy`: was die App aus der Box hinaus sendet, `{ "sends": ..., "note": {...} }`. `sends` ist `none` (nichts), `optional` (nur was ein Benutzer einschaltet), `telemetry` (Nutzungs- oder Absturzdaten an dich) oder `vendorAccount` (sie braucht ein Konto bei einem Dienst außerhalb der Box); `note` sagt mehr dazu, mehrsprachig wie `description`. Der Store zeigt es in einfachen Worten; ohne das Feld sagt er, dass der Autor nichts dazu sagt. Kataloge verlangen es.
+- `security`: wohin man eine Sicherheitslücke meldet, eine `https`-URL oder eine `mailto:`-Adresse. `pithyx validate` warnt ohne sie, wenn die App ein Recht mit hohem Risiko oder Root-Zugriff verlangt (`cli.manifest.security_missing`).
+- `maturity`: `stable` (auch ohne das Feld), `beta` oder `experimental`. Der Store zeigt die beiden letzten als Abzeichen.
+- `categories`: eine bis drei aus `productivity`, `office`, `communication`, `files`, `backup`, `photos`, `media`, `home-automation`, `network`, `security`, `monitoring`, `development`, `education`, `finance`, `games` und `utilities`. Die Katalog-Tabs filtern danach.
+- `keywords`: bis zu 10 Wörter in beliebiger Sprache (1 bis 30 Zeichen), über die die Suche des Stores die App findet, neben ihrer ID, ihrem Namen, ihrer Beschreibung und ihrem Autor.
+- `locales`: die Sprachen der eigenen Oberfläche der App als BCP-47-Tags (`en`, `pt-BR`). Der Store sagt "Verfügbar auf Deutsch", wenn eine zur Sprache des Benutzers oder ihrer Grundsprache passt.
+- `screenshots`: bis zu 8 `{ "file": "frontend/<Pfad>.png", "caption": {...} }`. Die Dateien gehören zum Frontend (PNG, JPEG oder WebP, höchstens 1 MiB je Datei; die Box und `pithyx validate` prüfen beides mit [`app.package.layout_invalid`](/de/docs/reference/errors/#app.package.layout_invalid)), eine installierte App liefert sie also selbst aus, und ihre Seite im Store zeigt sie. Ein Katalog behält seinen eigenen Ordner `screenshots/` für Apps, die noch nicht installiert sind.
+- `releaseNotes`: was in dieser Version neu ist, mehrsprachig wie `description`. Der Update-Dialog und der Tab **Updates** zeigen es; das zählt vor allem bei Apps, die sich nie von selbst aktualisieren.
+- `requirements`: `memory` und `disk` in MB, ungefähr was die App braucht. Der Installationsdialog warnt, wenn die Box weniger Arbeitsspeicher oder der App-Pool weniger freien Platz hat, und installiert trotzdem.
+- `audience`: `everyone` oder `admins`, die Vorgabe für "Wer sie nutzen darf" bei der Installation. Eine App, die jeden Benutzer sehen kann, als root läuft oder ein Sonderrecht verlangt, wird ohnehin nur Administratoren empfohlen; der Administrator kann es ändern.
+
+```json
+"privacy": { "sends": "none" },
+"security": "mailto:security@example.com",
+"maturity": "beta",
+"categories": ["productivity"],
+"keywords": ["todo", "Aufgaben"],
+"locales": ["en", "de"],
+"screenshots": [{ "file": "frontend/screenshots/main.png", "caption": { "en": "Your notes", "de": "Deine Notizen" } }],
+"releaseNotes": { "en": "Notes can have a due date.", "de": "Notizen können ein Fälligkeitsdatum haben." },
+"requirements": { "memory": 128, "disk": 50 },
+"audience": "everyone"
+```
 
 ## Fenster
 
@@ -101,7 +129,7 @@ Pflichtfelder: `manifestVersion`, `id`, `version`, `name`, `author`, `entry`, `s
 
 Ein Administrator bestätigt die Liste bei der Installation und kann jede Berechtigung später entziehen; die App bekommt dann ein `permissionsChange`-Ereignis. Eine Berechtigung, die in einem Update neu ist, wartet auf den Administrator, und eine entzogene Berechtigung bleibt über Updates hinweg entzogen. Ein Aufruf ohne die nötige Berechtigung schlägt mit [`app.permission.denied`](/de/docs/reference/errors/#app.permission.denied) fehl.
 
-Eine App, die `directory.read` verlangt, einen Container als root betreibt (`backend.root`) oder ein Sonderrecht verlangt, wird nur für Administratoren vorgeschlagen: Der Installationsdialog wählt **Nur Administratoren** vor und sagt warum. Der Administrator kann sie trotzdem allen erlauben.
+Eine App, die `directory.read` verlangt, einen Container als root betreibt (`backend.root`) oder ein Sonderrecht verlangt, wird nur für Administratoren vorgeschlagen: Der Installationsdialog wählt **Nur Administratoren** vor und sagt warum. Ebenso bei `"audience": "admins"` (siehe [Angaben für den Store](#angaben-für-den-store)). Der Administrator kann sie trotzdem allen erlauben.
 
 ### Sonderrechte
 

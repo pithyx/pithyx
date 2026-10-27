@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { existsSync, lstatSync, readdirSync, readFileSync } from 'node:fs';
+import { existsSync, lstatSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { dirname, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { AppManifest } from '@pithyx/sdk';
@@ -8,7 +8,8 @@ import { error, type Finding } from './findings';
 import { validateIcon } from './icon';
 import { checkLayout, ICON_FILE, MANIFEST_FILE } from './layout';
 import { ARCHITECTURES, composeImages, LOCK_FILE, lockDifferences, parseLock } from './lock';
-import { validateManifest } from './manifest';
+import { tierOf, validateManifest } from './manifest';
+import { elevatedRightsOf } from './rights';
 
 /** The file with the SHA-256 of every other file of a package, in the format of `sha256sum` (D315). */
 export const CHECKSUMS_FILE = 'CHECKSUMS';
@@ -136,6 +137,13 @@ export function readProject(root: string, options: ProjectOptions = {}): Project
     if (manifest !== undefined && 'docker.socket.raw' in manifest.permissions) {
       findings.push({ level: 'warning', code: 'cli.rights.raw_socket', params: {} });
     }
+    if (
+      manifest !== undefined &&
+      manifest.security === undefined &&
+      elevatedRightsOf(manifest).some((right) => tierOf(right) !== 'elevated')
+    ) {
+      findings.push({ level: 'warning', code: 'cli.manifest.security_missing', params: {} });
+    }
   } else {
     findings.push({
       level: 'error',
@@ -212,7 +220,19 @@ export function readProject(root: string, options: ProjectOptions = {}): Project
     findings.push(
       ...checkLayout(
         entries.map((entry) => entry.path),
-        { entry: manifest.entry, compose },
+        {
+          entry: manifest.entry,
+          compose,
+          screenshots: manifest.screenshots?.map((shot) => shot.file),
+        },
+        (path) => {
+          const source = entries.find((entry) => entry.path === path)?.source;
+          return source === undefined
+            ? 0
+            : typeof source === 'string'
+              ? statSync(source).size
+              : source.length;
+        },
       ).map(error),
     );
   }

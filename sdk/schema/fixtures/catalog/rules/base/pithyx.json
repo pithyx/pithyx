@@ -26,6 +26,9 @@
     "arm64"
   ],
   "source": "https://example.com/notes",
+  "privacy": {
+    "sends": "none"
+  },
   "permissions": {},
   "window": {
     "instances": "multi",

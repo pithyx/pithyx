@@ -26,6 +26,50 @@
     "arm64"
   ],
   "source": "https://github.com/janmueller/pithyx-chat",
+  "privacy": {
+    "sends": "optional",
+    "note": {
+      "en": "Sends messages to your email only when you switch it on.",
+      "de": "Sendet Nachrichten nur an deine E-Mail, wenn du es einschaltest."
+    }
+  },
+  "security": "mailto:security@mueller.com",
+  "maturity": "beta",
+  "categories": [
+    "communication",
+    "productivity"
+  ],
+  "keywords": [
+    "messenger",
+    "team",
+    "Nachrichten"
+  ],
+  "locales": [
+    "en",
+    "de",
+    "pt-BR"
+  ],
+  "screenshots": [
+    {
+      "file": "frontend/screenshots/chat.png",
+      "caption": {
+        "en": "A conversation",
+        "de": "Ein Gespräch"
+      }
+    },
+    {
+      "file": "frontend/screenshots/dark.webp"
+    }
+  ],
+  "releaseNotes": {
+    "en": "Threads and reactions.",
+    "de": "Threads und Reaktionen."
+  },
+  "requirements": {
+    "memory": 256,
+    "disk": 1024
+  },
+  "audience": "everyone",
   "permissions": {
     "notifications": {
       "reason": {

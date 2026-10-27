@@ -7,7 +7,11 @@ import {
   deviceNote,
   elevatedKind,
   folderPath,
+  inCategory,
   manifestFacts,
+  requirementHints,
+  screenshotUrl,
+  speaksLanguage,
   tierOf,
   withSubject,
 } from './model';
@@ -168,5 +172,59 @@ describe('deviceNote', () => {
       'elevated.deviceAbsentOptional',
     );
     expect(deviceNote('host.network', devices, 'installed')).toBeNull();
+  });
+});
+
+describe('store fields (D389)', () => {
+  it('reads the store fields of a manifest and leaves out what it lacks', () => {
+    const facts = manifestFacts({
+      source: 'private',
+      arch: ['amd64'],
+      privacy: { sends: 'telemetry', note: { en: 'Crash reports.' } },
+      maturity: 'beta',
+      categories: ['media'],
+      screenshots: [{ file: 'frontend/shot.png' }, { caption: { en: 'No file' } }],
+      requirements: { memory: 512 },
+      audience: 'admins',
+    });
+    expect(facts.privacy).toEqual({ sends: 'telemetry', note: { en: 'Crash reports.' } });
+    expect(facts.maturity).toBe('beta');
+    expect(facts.screenshots).toEqual([{ file: 'frontend/shot.png', caption: null }]);
+    expect(facts.requirements).toEqual({ memory: 512, disk: null });
+    expect(facts.audience).toBe('admins');
+    expect(manifestFacts({}).maturity).toBe('stable');
+    expect(manifestFacts({ privacy: { sends: 'everything' } }).privacy).toBeNull();
+  });
+
+  it('matches the user language by its base and says nothing without locales', () => {
+    expect(speaksLanguage(['en', 'pt-BR'], 'pt-PT')).toBe(true);
+    expect(speaksLanguage(['en'], 'de')).toBe(false);
+    expect(speaksLanguage(['DE'], 'de')).toBe(true);
+    expect(speaksLanguage([], 'de')).toBeNull();
+  });
+
+  it('hints only where the box falls short, in MB', () => {
+    const mb = 1024 * 1024;
+    expect(requirementHints({ memory: 2048, disk: 100 }, 1024 * mb, 50 * mb)).toEqual([
+      { kind: 'memory', needed: 2048, available: 1024 },
+      { kind: 'disk', needed: 100, available: 50 },
+    ]);
+    expect(requirementHints({ memory: 2048, disk: 100 }, 4096 * mb, 500 * mb)).toEqual([]);
+    expect(requirementHints({ memory: 2048, disk: 100 }, null, null)).toEqual([]);
+  });
+
+  it('filters catalog apps by category', () => {
+    const apps = [
+      { id: 'a', categories: ['media'] },
+      { id: 'b', categories: [] },
+    ];
+    expect(inCategory(apps, 'media').map((app) => app.id)).toEqual(['a']);
+    expect(inCategory(apps, null)).toHaveLength(2);
+  });
+
+  it('serves a screenshot from the frontend of the installed app', () => {
+    expect(screenshotUrl('com.example.chat', 'frontend/screenshots/a.png')).toBe(
+      '/apps/com.example.chat/screenshots/a.png',
+    );
   });
 });

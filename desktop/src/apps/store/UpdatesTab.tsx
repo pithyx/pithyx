@@ -7,6 +7,7 @@ import { manifestText } from '../installed';
 import type { AdminAppList, AppUpdate, CatalogInfo } from '../sdk/store';
 import { InstallDialog } from './InstallDialog';
 import { iconUrl, manifestFacts } from './model';
+import { ReleaseNotes } from './StoreInfo';
 import styles from './Store.module.css';
 
 /**
@@ -69,6 +70,7 @@ export function UpdatesTab({
                       : t(`updates.policy.${update.policy ?? 'notify'}`)}
                   </Badge>
                 </span>
+                <ReleaseNotes notes={update.releaseNotes} version={update.version} />
               </span>
               <Button
                 variant="primary"

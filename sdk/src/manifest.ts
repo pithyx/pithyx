@@ -28,6 +28,7 @@ export type {
   LocalizedName,
   LocalizedText,
   Permissions,
+  Screenshot,
   StorageRequest,
   WindowLoading,
   WindowManifest,

@@ -101,6 +101,8 @@ interface StoreMethods {
     result: AppGrants;
   };
   'internal.admin.apps.pools': { params: Record<string, never>; result: PoolList };
+  /** The box's physical memory in bytes, for the install dialog's hint on `requirements.memory` (D389). */
+  'internal.admin.apps.memory': { params: Record<string, never>; result: number };
   'internal.admin.apps.shares': { params: Record<string, never>; result: ShareDetails[] };
   /** Opens an installed app for the administrator, as the menu would. */
   'internal.admin.apps.open': { params: { appId: string }; result: boolean };
@@ -445,6 +447,11 @@ export function storeHost(emit: (event: string, data?: unknown) => void): {
     'internal.admin.apps.pools': {
       validate: isRecord,
       handle: () => daemon(async () => unwrap(await api.GET('/api/storage/pools'))),
+    },
+    'internal.admin.apps.memory': {
+      validate: isRecord,
+      handle: () =>
+        daemon(async () => unwrap(await api.GET('/api/system/overview')).memoryTotalBytes),
     },
     'internal.admin.apps.shares': {
       validate: isRecord,

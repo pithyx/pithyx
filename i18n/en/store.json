@@ -207,7 +207,8 @@
     "stopped": "The installation stopped.",
     "fromCatalog": "From the catalog {catalog}, checked against its signature.",
     "fromCustomCatalog": "From the catalog {catalog}, which is not verified: only install apps from catalogs you trust.",
-    "internet": "This app may connect to servers on the internet."
+    "internet": "This app may connect to servers on the internet.",
+    "accessAudience": "Suggested for this app: administrators only, because its author made it for them."
   },
   "uninstall": {
     "title": "Uninstall {name}?",
@@ -263,7 +264,10 @@
     "source": "Source",
     "sourceLink": "Source of this version in the catalog",
     "versions": "Versions",
-    "needs": "needs Pithyx {range}"
+    "needs": "needs Pithyx {range}",
+    "category": "Category",
+    "allCategories": "All categories",
+    "noCategoryMatch": "No app in this category matches."
   },
   "updates": {
     "title": "Updates",
@@ -428,5 +432,62 @@
       "update": "Update with root access",
       "grant": "Grant root access"
     }
+  },
+  "info": {
+    "privacy": {
+      "title": "Privacy",
+      "none": "Sends nothing out of the box.",
+      "optional": "Sends data out of the box only when you switch it on.",
+      "telemetry": "Sends usage or crash data to its author.",
+      "vendorAccount": "Needs an account at a service outside the box.",
+      "unknown": "The author does not say what the app sends out of the box."
+    },
+    "source": {
+      "title": "Source",
+      "open": "Open source ({license})",
+      "public": "Source public, no license given",
+      "private": "Source not public"
+    },
+    "arch": {
+      "title": "Runs on"
+    },
+    "languages": {
+      "title": "Languages",
+      "yours": "Available in {language}",
+      "others": "Not in your language; available in {languages}"
+    },
+    "security": {
+      "title": "Security contact"
+    },
+    "categories": {
+      "title": "Categories"
+    },
+    "maturity": {
+      "beta": "Beta",
+      "experimental": "Experimental"
+    },
+    "releaseNotes": "What is new in {version}",
+    "requirements": {
+      "memory": "The app needs about {needed} MB of memory, and this box has {available} MB. It installs anyway, but may run slowly.",
+      "disk": "The app needs about {needed} MB on the app pool, and {available} MB are free. It installs anyway, but may run out of space."
+    }
+  },
+  "category": {
+    "productivity": "Productivity",
+    "office": "Office",
+    "communication": "Communication",
+    "files": "Files",
+    "backup": "Backup",
+    "photos": "Photos",
+    "media": "Media",
+    "home-automation": "Home automation",
+    "network": "Network",
+    "security": "Security",
+    "monitoring": "Monitoring",
+    "development": "Development",
+    "education": "Education",
+    "finance": "Finance",
+    "games": "Games",
+    "utilities": "Utilities"
   }
 }

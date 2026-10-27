@@ -9,7 +9,7 @@ sidebar:
 
 `pithyx.json` at the package root describes an app: who it is, which window it opens, which permissions it asks for, which folders it wants and, if it has one, how its backend runs. The JSON Schema is `sdk/schema/manifest.v2.schema.json` (published as `@pithyx/sdk/schema/manifest.v2.schema.json`); unknown fields are errors. The schema is a stable contract: a new optional field is a minor change, anything else a major one. Manifest version 2 (Pithyx 1.2, D388) replaced version 1: a box refuses a version 1 manifest with [`app.manifest.version_unsupported`](/docs/reference/errors/#app.manifest.version_unsupported), so rebuild an older app with `@pithyx/cli` 2. Apps already installed keep working; the box converted their stored manifests.
 
-Required fields: `manifestVersion`, `id`, `version`, `name`, `author`, `entry`, `sdk`, `permissions`, `arch`, `source` and `window`. Optional: `$schema`, `description`, `license`, `homepage`, `pithyx`, `dataVersion`, `storage`, `fileHandlers`, `fileActions` and `backend`. See also the [schema reference](/docs/reference/manifest-schema/) with every field and the [Compose rules](/docs/reference/compose-rules/) for the backend.
+Required fields: `manifestVersion`, `id`, `version`, `name`, `author`, `entry`, `sdk`, `permissions`, `arch`, `source` and `window`. Optional: `$schema`, `description`, `license`, `homepage`, `pithyx`, `dataVersion`, `storage`, `fileHandlers`, `fileActions`, `backend` and the [Store information](#store-information) (`privacy`, `security`, `maturity`, `categories`, `keywords`, `locales`, `screenshots`, `releaseNotes`, `requirements`, `audience`). See also the [schema reference](/docs/reference/manifest-schema/) with every field and the [Compose rules](/docs/reference/compose-rules/) for the backend.
 
 ```json
 {
@@ -49,12 +49,40 @@ Required fields: `manifestVersion`, `id`, `version`, `name`, `author`, `entry`, 
 - `author`: `name` (1 to 100 characters) and an optional `url` (http or https).
 - `license`: optional SPDX expression. Catalogs require it.
 - `homepage`: optional http or https URL.
-- `source`: required. The URL of the app's source repository, or `private` when the source is not public. The Store shows it next to the `license`.
+- `source`: required. The URL of the app's source repository, or `private` when the source is not public. The Store shows "Open source" with the `license` for a public source and "Source not public" otherwise.
 - `arch`: required list of the processor architectures the app runs on, `amd64` and `arm64`. Every image of the backend must exist for each of them; an app without a backend usually names both. A box of another architecture refuses the install with [`app.arch.unsupported`](/docs/reference/errors/#app.arch.unsupported), because the app cannot run there. That is the only kind of refusal: what an app merely recommends is a hint.
 - `entry`: the HTML page, `frontend/<path>.html`, at most 200 characters, no segment starting with a dot.
 - `sdk`: required npm-style version range for the SDK, for example `^1.0.0`. The box checks its syntax ([`app.manifest.sdk_invalid`](/docs/reference/errors/#app.manifest.sdk_invalid)); it does not compare it with the desktop's protocol today. An app built during the release candidates may keep `^1.0.0-rc.8`: that range also covers 1.0.0 and every later 1.x.
 - `pithyx`: optional range of box versions the app works with. The box installs the app only if its own version is inside. Catalogs require it. Prerelease versions match by plain SemVer ordering, so `>=0.1.0` includes `0.2.0-beta.1`, but `^0.1.0` does not.
 - `dataVersion`: optional integer from 1 to 2147483647. A catalog downgrade is allowed only between versions with the same `dataVersion`. A rollback to the previous version after an update does not depend on it.
+
+## Store information
+
+Optional fields (D389) that the Store shows to administrators before and after the install. None of them changes what the app may do, and none stops an install: what an app recommends is a hint.
+
+- `privacy`: what the app sends out of the box, `{ "sends": ..., "note": {...} }`. `sends` is `none` (nothing), `optional` (only what a user switches on), `telemetry` (usage or crash data to you) or `vendorAccount` (it needs an account at a service outside the box); `note` says more, localized like `description`. The Store shows it in plain words; without it the Store says the author does not tell. Catalogs require it.
+- `security`: where to report a vulnerability, an `https` URL or a `mailto:` address. `pithyx validate` warns without it when the app asks for a right of high risk or root access (`cli.manifest.security_missing`).
+- `maturity`: `stable` (also without the field), `beta` or `experimental`. The Store shows the last two as a badge.
+- `categories`: one to three of `productivity`, `office`, `communication`, `files`, `backup`, `photos`, `media`, `home-automation`, `network`, `security`, `monitoring`, `development`, `education`, `finance`, `games` and `utilities`. The catalog tabs filter by them.
+- `keywords`: up to 10 words in any language (1 to 30 characters) that the Store's search finds the app by, next to its id, name, description and author.
+- `locales`: the languages of the app's own interface as BCP 47 tags (`en`, `pt-BR`). The Store says "Available in German" when one matches the user's language or its base.
+- `screenshots`: up to 8 `{ "file": "frontend/<path>.png", "caption": {...} }`. The files are part of the frontend (PNG, JPEG or WebP, at most 1 MiB each; the box and `pithyx validate` check both with [`app.package.layout_invalid`](/docs/reference/errors/#app.package.layout_invalid)), so an installed app serves them itself and its page in the Store shows them. A catalog keeps its own `screenshots/` folder for apps that are not installed yet.
+- `releaseNotes`: what is new in this version, localized like `description`. The update dialog and the **Updates** tab show it, which matters most for apps that never update by themselves.
+- `requirements`: `memory` and `disk` in MB, about what the app uses. The install dialog warns when the box has less memory or the app pool less free space, and installs anyway.
+- `audience`: `everyone` or `admins`, the default of "Who may use it" at install. An app that may see every user, runs as root or asks for a special right is suggested for administrators either way; the administrator can change it.
+
+```json
+"privacy": { "sends": "none" },
+"security": "mailto:security@example.com",
+"maturity": "beta",
+"categories": ["productivity"],
+"keywords": ["todo", "Aufgaben"],
+"locales": ["en", "de"],
+"screenshots": [{ "file": "frontend/screenshots/main.png", "caption": { "en": "Your notes" } }],
+"releaseNotes": { "en": "Notes can have a due date." },
+"requirements": { "memory": 128, "disk": 50 },
+"audience": "everyone"
+```
 
 ## Windows
 
@@ -101,7 +129,7 @@ Required fields: `manifestVersion`, `id`, `version`, `name`, `author`, `entry`, 
 
 An administrator confirms the list at install and can revoke each permission later; the app then receives a `permissionsChange` event. A permission that is new in an update waits for the administrator, and a revoked permission stays revoked across updates. Calling something without the permission fails with [`app.permission.denied`](/docs/reference/errors/#app.permission.denied).
 
-An app that asks for `directory.read`, runs a container as root (`backend.root`) or asks for a special right is suggested for administrators only: the install dialog preselects **Administrators only** and says why. The administrator can still let everybody use it.
+An app that asks for `directory.read`, runs a container as root (`backend.root`) or asks for a special right is suggested for administrators only: the install dialog preselects **Administrators only** and says why. So does `"audience": "admins"` (see [Store information](#store-information)). The administrator can still let everybody use it.
 
 ### Special rights
 

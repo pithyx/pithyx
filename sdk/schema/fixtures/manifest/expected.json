@@ -26,6 +26,15 @@
       }
     }
   ],
+  "audience-unknown.json": [
+    {
+      "code": "app.manifest.schema_violation",
+      "params": {
+        "path": "/audience",
+        "keyword": "enum"
+      }
+    }
+  ],
   "author-missing.json": [
     {
       "code": "app.manifest.schema_violation",
@@ -38,6 +47,24 @@
   "byte-order-mark.json": [
     {
       "code": "app.manifest.invalid_json"
+    }
+  ],
+  "categories-too-many.json": [
+    {
+      "code": "app.manifest.schema_violation",
+      "params": {
+        "path": "/categories",
+        "keyword": "maxItems"
+      }
+    }
+  ],
+  "category-unknown.json": [
+    {
+      "code": "app.manifest.schema_violation",
+      "params": {
+        "path": "/categories/0",
+        "keyword": "enum"
+      }
     }
   ],
   "compose-outside-backend.json": [
@@ -445,6 +472,15 @@
       }
     }
   ],
+  "keyword-line-break.json": [
+    {
+      "code": "app.manifest.schema_violation",
+      "params": {
+        "path": "/keywords/0",
+        "keyword": "pattern"
+      }
+    }
+  ],
   "lifecycle-unknown.json": [
     {
       "code": "app.manifest.schema_violation",
@@ -469,6 +505,24 @@
       "params": {
         "path": "/window/loading/untilReady",
         "keyword": "type"
+      }
+    }
+  ],
+  "locale-bad.json": [
+    {
+      "code": "app.manifest.schema_violation",
+      "params": {
+        "path": "/locales/0",
+        "keyword": "pattern"
+      }
+    }
+  ],
+  "maturity-unknown.json": [
+    {
+      "code": "app.manifest.schema_violation",
+      "params": {
+        "path": "/maturity",
+        "keyword": "enum"
       }
     }
   ],
@@ -624,6 +678,51 @@
       }
     }
   ],
+  "privacy-unknown.json": [
+    {
+      "code": "app.manifest.schema_violation",
+      "params": {
+        "path": "/privacy/sends",
+        "keyword": "enum"
+      }
+    }
+  ],
+  "privacy-without-sends.json": [
+    {
+      "code": "app.manifest.schema_violation",
+      "params": {
+        "path": "/privacy/sends",
+        "keyword": "required"
+      }
+    }
+  ],
+  "release-notes-without-en.json": [
+    {
+      "code": "app.manifest.schema_violation",
+      "params": {
+        "path": "/releaseNotes/en",
+        "keyword": "required"
+      }
+    }
+  ],
+  "requirements-empty.json": [
+    {
+      "code": "app.manifest.schema_violation",
+      "params": {
+        "path": "/requirements",
+        "keyword": "minProperties"
+      }
+    }
+  ],
+  "requirements-zero-memory.json": [
+    {
+      "code": "app.manifest.schema_violation",
+      "params": {
+        "path": "/requirements/memory",
+        "keyword": "minimum"
+      }
+    }
+  ],
   "resources-removed.json": [
     {
       "code": "app.manifest.schema_violation",
@@ -660,6 +759,24 @@
       }
     }
   ],
+  "screenshot-outside-frontend.json": [
+    {
+      "code": "app.manifest.schema_violation",
+      "params": {
+        "path": "/screenshots/0/file",
+        "keyword": "pattern"
+      }
+    }
+  ],
+  "screenshot-svg.json": [
+    {
+      "code": "app.manifest.schema_violation",
+      "params": {
+        "path": "/screenshots/0/file",
+        "keyword": "pattern"
+      }
+    }
+  ],
   "sdk-loose.json": [
     {
       "code": "app.manifest.sdk_invalid",
@@ -673,6 +790,15 @@
       "code": "app.manifest.sdk_invalid",
       "params": {
         "sdk": "latest"
+      }
+    }
+  ],
+  "security-http.json": [
+    {
+      "code": "app.manifest.schema_violation",
+      "params": {
+        "path": "/security",
+        "keyword": "pattern"
       }
     }
   ],

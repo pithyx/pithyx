@@ -446,5 +446,64 @@
     ],
     "entry": "frontend/index.html",
     "expected": []
+  },
+  {
+    "name": "screenshots in the frontend",
+    "files": [
+      "pithyx.json",
+      "icon.svg",
+      "frontend/index.html",
+      "frontend/screenshots/main.png",
+      "frontend/screenshots/dark.webp"
+    ],
+    "entry": "frontend/index.html",
+    "screenshots": [
+      "frontend/screenshots/main.png",
+      "frontend/screenshots/dark.webp"
+    ],
+    "sizes": {
+      "frontend/screenshots/main.png": 1048576
+    },
+    "expected": []
+  },
+  {
+    "name": "a screenshot that is missing",
+    "files": [
+      "pithyx.json",
+      "icon.svg",
+      "frontend/index.html"
+    ],
+    "entry": "frontend/index.html",
+    "screenshots": [
+      "frontend/shot.png"
+    ],
+    "expected": [
+      {
+        "path": "frontend/shot.png",
+        "reason": "missing"
+      }
+    ]
+  },
+  {
+    "name": "a screenshot over 1 MiB",
+    "files": [
+      "pithyx.json",
+      "icon.svg",
+      "frontend/index.html",
+      "frontend/shot.jpg"
+    ],
+    "entry": "frontend/index.html",
+    "screenshots": [
+      "frontend/shot.jpg"
+    ],
+    "sizes": {
+      "frontend/shot.jpg": 1048577
+    },
+    "expected": [
+      {
+        "path": "frontend/shot.jpg",
+        "reason": "too_large"
+      }
+    ]
   }
 ]

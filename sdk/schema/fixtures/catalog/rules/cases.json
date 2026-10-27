@@ -153,6 +153,22 @@
       ]
     },
     {
+      "name": "no privacy in the manifest",
+      "manifest": {
+        "privacy": null
+      },
+      "expected": [
+        {
+          "code": "store.catalog.rule_violation",
+          "params": {
+            "rule": "manifest_field",
+            "path": "apps/com.example.notes/pithyx.json",
+            "field": "privacy"
+          }
+        }
+      ]
+    },
+    {
       "name": "a license that is not OSI approved",
       "manifest": {
         "license": "BUSL-1.1"

@@ -202,6 +202,27 @@ describe('pithyx validate', () => {
     );
   });
 
+  it('checks the screenshots the manifest names against the build (D389)', () => {
+    const root = copyProject('screenshots');
+    const manifest = JSON.parse(readFileSync(join(root, 'pithyx.json'), 'utf8')) as Record<
+      string,
+      unknown
+    >;
+    manifest.screenshots = [{ file: 'frontend/shot.png' }, { file: 'frontend/big.png' }];
+    writeFileSync(join(root, 'pithyx.json'), JSON.stringify(manifest));
+    writeFileSync(join(root, 'build', 'big.png'), Buffer.alloc(1024 * 1024 + 1));
+    expect(
+      readProject(root, { frontend: 'build' }).findings.map((finding) => [
+        finding.code,
+        finding.params.path,
+        finding.params.reason,
+      ]),
+    ).toEqual([
+      ['app.package.layout_invalid', 'frontend/shot.png', 'missing'],
+      ['app.package.layout_invalid', 'frontend/big.png', 'too_large'],
+    ]);
+  });
+
   describe('with a backend', () => {
     const image = `ghcr.io/example/chat-server:1.2.0@sha256:${'a3f5'.repeat(16)}`;
     const digest = (n: string) => `sha256:${n.repeat(64)}`;
@@ -219,6 +240,23 @@ describe('pithyx validate', () => {
 
     it('needs the images lock', () => {
       expect(codes(backendProject())).toEqual(['error cli.lock.missing']);
+    });
+
+    it('recommends a security contact for high and critical rights only (D389)', () => {
+      const root = backendProject();
+      cpSync(join(fixtures, 'compose', 'manifests', 'elevated.json'), join(root, 'pithyx.json'));
+      cpSync(
+        join(fixtures, 'compose', 'valid', 'elevated.yaml'),
+        join(root, 'backend', 'compose.yaml'),
+      );
+      expect(codes(root)).toContain('warning cli.manifest.security_missing');
+      const manifest = JSON.parse(readFileSync(join(root, 'pithyx.json'), 'utf8')) as Record<
+        string,
+        unknown
+      >;
+      manifest.security = 'https://example.com/security';
+      writeFileSync(join(root, 'pithyx.json'), JSON.stringify(manifest));
+      expect(codes(root)).not.toContain('warning cli.manifest.security_missing');
     });
 
     it('takes the Compose file and a current lock into the package', () => {

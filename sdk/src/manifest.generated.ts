@@ -53,6 +53,87 @@ export interface AppManifest {
    */
   source: string;
   /**
+   * What the app sends out of the box, shown openly in the Store (D389): `none` (nothing), `optional` (only what a user switches on, such as a link to an account), `telemetry` (usage or crash data to its author) or `vendorAccount` (it needs an account at a service outside the box). `note` says more in the author's words. Catalogs require it.
+   */
+  privacy?: {
+    /**
+     * What the app sends out of the box.
+     */
+    sends: 'none' | 'optional' | 'telemetry' | 'vendorAccount';
+    note?: LocalizedText;
+  };
+  /**
+   * Where to report a vulnerability of the app: an `https` URL or a `mailto:` address. The Store shows it on the app's page; `pithyx validate` recommends it for apps with high or critical rights.
+   */
+  security?: string;
+  /**
+   * How far the app is: `stable`, `beta` or `experimental`. The Store shows `beta` and `experimental` as a badge. Without it the app counts as `stable`.
+   */
+  maturity?: 'stable' | 'beta' | 'experimental';
+  /**
+   * Up to three categories from a fixed list, for the Store's filter.
+   *
+   * @minItems 1
+   * @maxItems 3
+   */
+  categories?: (
+    | 'backup'
+    | 'communication'
+    | 'development'
+    | 'education'
+    | 'files'
+    | 'finance'
+    | 'games'
+    | 'home-automation'
+    | 'media'
+    | 'monitoring'
+    | 'network'
+    | 'office'
+    | 'photos'
+    | 'productivity'
+    | 'security'
+    | 'utilities'
+  )[];
+  /**
+   * Up to 10 words the Store's search finds the app by, besides its name and description, in any language. Each 1 to 30 characters on one line.
+   *
+   * @minItems 1
+   * @maxItems 10
+   */
+  keywords?: string[];
+  /**
+   * The languages the app's own interface is in, as BCP 47 tags such as `en` or `pt-BR`. The Store says which of them match the user's language.
+   *
+   * @minItems 1
+   * @maxItems 64
+   */
+  locales?: string[];
+  /**
+   * Up to 8 pictures of the app for its Store page: files in the package under `frontend/` (PNG, JPEG or WebP, at most 1 MiB each), each with an optional caption. An installed app serves them with its frontend.
+   *
+   * @minItems 1
+   * @maxItems 8
+   */
+  screenshots?: Screenshot[];
+  releaseNotes?: LocalizedText;
+  /**
+   * What the app needs to run well, as a hint: the install dialog warns when the box or the app pool has less, and installs anyway.
+   */
+  requirements?: {
+    /**
+     * About how much memory the app uses while it runs, in MB.
+     */
+    memory?: number;
+    /**
+     * About how much space the app's data takes on the app pool, in MB.
+     */
+    disk?: number;
+  };
+  /**
+   * Who the app is for: `everyone` or `admins`. It is the default of "Who may use it" when the app is installed; an app that may see every user, runs as root or asks for special rights is still suggested for administrators. The administrator can change it.
+   */
+  audience?: 'everyone' | 'admins';
+  /**
    * Path of the HTML page the desktop loads in the sandboxed window, inside `frontend/` of the package, for example `frontend/index.html`. Segments never start with a dot.
    */
   entry: string;
@@ -140,6 +221,16 @@ export interface AppAuthor {
    * The author's website.
    */
   url?: string;
+}
+/**
+ * A picture of the app in the package.
+ */
+export interface Screenshot {
+  /**
+   * The picture's path in the package, under `frontend/`, ending in `.png`, `.jpg`, `.jpeg` or `.webp`. The file must exist and be at most 1 MiB.
+   */
+  file: string;
+  caption?: LocalizedName;
 }
 /**
  * How the app's windows behave. `defaultSize` is the size of a new window when the user has no remembered size for the app; `minSize` is the smallest size on screens that can fit it, at most `defaultSize` in both dimensions.

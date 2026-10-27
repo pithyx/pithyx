@@ -982,7 +982,8 @@ public sealed partial class AppService(
 
     /// <summary>
     /// Who should use an app after its install (D304): administrators only when it asks for elevated rights, root in a
-    /// container or the user directory (<c>directory.read</c>), everybody otherwise.
+    /// container or the user directory (<c>directory.read</c>), or when its <c>audience</c> is <c>admins</c> (D389);
+    /// everybody otherwise. An <c>audience</c> of <c>everyone</c> never lowers what the risk suggests.
     /// </summary>
     public static AppAccess SuggestedAccess(JsonElement manifest)
     {
@@ -990,7 +991,8 @@ public sealed partial class AppService(
         var backend = manifest.TryGetProperty("backend", out var declared) ? declared : default;
         var root = backend.ValueKind == JsonValueKind.Object && backend.TryGetProperty("root", out var flag) && flag.ValueKind == JsonValueKind.True;
         var elevated = Manifest.ElevatedRights.Of(manifest).Count > 0;
-        return directory || root || elevated ? AppAccess.Admins : AppAccess.Everybody;
+        var forAdmins = manifest.TryGetProperty("audience", out var audience) && audience.ValueKind == JsonValueKind.String && audience.GetString() == "admins";
+        return directory || root || elevated || forAdmins ? AppAccess.Admins : AppAccess.Everybody;
     }
 
     /// <summary>The access a storage request of the manifest asks for, or null when the manifest has no such request.</summary>

@@ -14,6 +14,7 @@ export type CliCode =
   | 'cli.lock.platform_missing'
   | 'cli.compose.healthcheck_redundant'
   | 'cli.rights.raw_socket'
+  | 'cli.manifest.security_missing'
   | 'cli.backend.unbuilt';
 
 /** What `pithyx validate` reports: an error stops `pithyx pack`, a warning does not. */
@@ -42,6 +43,8 @@ const cliTexts: Record<CliCode, string> = {
     'Service {service} has a Compose healthcheck next to the health of the manifest. Docker starts a process in the container for every check, which delays every start and keeps the idle backend busy. Remove it and let health decide.',
   'cli.rights.raw_socket':
     "The app asks for docker.socket.raw, the unfiltered container service: root on the box. Every box asks the administrator to type the app's name to grant it, and the app never updates by itself. If the app only manages containers it starts itself, ask for docker.socket instead.",
+  'cli.manifest.security_missing':
+    'The app asks for a right of high risk or root access but names no security contact. Add security (an https URL or a mailto: address), so administrators know where to report a vulnerability.',
   'cli.backend.unbuilt':
     '{path} is not built yet: run pithyx build, or let the catalog build it from the source form.',
 };

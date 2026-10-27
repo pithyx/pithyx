@@ -15,6 +15,7 @@ import { InstallDialog } from './InstallDialog';
 import { manifestFacts } from './model';
 import { ElevatedRightText } from './ElevatedRights';
 import { PermissionText } from './PermissionText';
+import { MaturityBadge, StoreInfoRows } from './StoreInfo';
 import styles from './Store.module.css';
 
 /**
@@ -64,6 +65,7 @@ export function CatalogAppPage({
             </p>
             <span className={styles.badges}>
               <SourceBadge kind={summary.kind} />
+              <MaturityBadge maturity={summary.maturity} />
               {installed && (
                 <Badge tone="neutral">
                   {t('catalog.installedVersion', { version: summary.installedVersion })}
@@ -156,6 +158,7 @@ export function CatalogAppPage({
                 <dd>{summary.author ?? '-'}</dd>
                 <dt>{t('detail.facts.license')}</dt>
                 <dd>{summary.license}</dd>
+                <StoreInfoRows facts={facts} />
                 <dt>{t('catalog.catalog')}</dt>
                 <dd className={styles.breakable}>{summary.catalog}</dd>
                 {details.data.homepage !== null && (

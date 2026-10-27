@@ -85,6 +85,9 @@ public sealed class StoreApiTests : IAsyncLifetime
     [InlineData("", ", \"backend\": { \"root\": false }", AppAccess.Everybody)]
     [InlineData("", ", \"backend\": { \"root\": true }", AppAccess.Admins)]
     [InlineData("\"device:/dev/dri/renderD128\"", ", \"backend\": { }", AppAccess.Admins)]
+    [InlineData("\"notifications\"", ", \"audience\": \"admins\"", AppAccess.Admins)]
+    [InlineData("\"notifications\"", ", \"audience\": \"everyone\"", AppAccess.Everybody)]
+    [InlineData("\"directory.read\"", ", \"audience\": \"everyone\"", AppAccess.Admins)]
     public void AppsWithElevatedRightsRootOrTheDirectoryAreSuggestedForAdministratorsOnly(string permissions, string backend, AppAccess expected)
     {
         var map = string.Join(", ", JsonSerializer.Deserialize<string[]>($"[{permissions}]")!.Select(name => $"{JsonSerializer.Serialize(name)}: {{}}"));
