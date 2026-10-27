@@ -60,7 +60,7 @@ export interface AppManifest {
      * What the app sends out of the box.
      */
     sends: 'none' | 'optional' | 'telemetry' | 'vendorAccount';
-    note?: LocalizedText1;
+    note?: LocalizedText;
   };
   /**
    * Where to report a vulnerability of the app: an `https` URL or a `mailto:` address. The Store shows it on the app's page; `pithyx validate` recommends it for apps with high or critical rights.
@@ -115,7 +115,7 @@ export interface AppManifest {
    * @maxItems 8
    */
   screenshots?: Screenshot[];
-  releaseNotes?: LocalizedText2;
+  releaseNotes?: LocalizedText;
   /**
    * What the app needs to run well, as a hint: the install dialog warns when the box or the app pool has less, and installs anyway.
    */
@@ -190,9 +190,6 @@ export interface LocalizedName {
    *
    * This interface was referenced by `LocalizedName`'s JSON-Schema definition
    * via the `patternProperty` "^[a-z]{2,3}(-[A-Za-z0-9]{1,8})*$".
-   *
-   * This interface was referenced by `LocalizedName1`'s JSON-Schema definition
-   * via the `patternProperty` "^[a-z]{2,3}(-[A-Za-z0-9]{1,8})*$".
    */
   [k: string]: string;
 }
@@ -208,12 +205,6 @@ export interface LocalizedText {
    * The text in the language of the key, a BCP 47 language tag such as `de` or `pt-BR`. At most 500 characters; line breaks are allowed.
    *
    * This interface was referenced by `LocalizedText`'s JSON-Schema definition
-   * via the `patternProperty` "^[a-z]{2,3}(-[A-Za-z0-9]{1,8})*$".
-   *
-   * This interface was referenced by `LocalizedText1`'s JSON-Schema definition
-   * via the `patternProperty` "^[a-z]{2,3}(-[A-Za-z0-9]{1,8})*$".
-   *
-   * This interface was referenced by `LocalizedText2`'s JSON-Schema definition
    * via the `patternProperty` "^[a-z]{2,3}(-[A-Za-z0-9]{1,8})*$".
    */
   [k: string]: string;
@@ -232,28 +223,6 @@ export interface AppAuthor {
   url?: string;
 }
 /**
- * A text in several languages, keyed by BCP 47 language tag, for example the app's description of one or two sentences for the store and the install dialog. `en` is required and used when nothing else matches. At most 500 characters per language; line breaks are allowed.
- */
-export interface LocalizedText1 {
-  /**
-   * The English text, shown when no other language matches. At most 500 characters; line breaks are allowed.
-   */
-  en: string;
-  /**
-   * The text in the language of the key, a BCP 47 language tag such as `de` or `pt-BR`. At most 500 characters; line breaks are allowed.
-   *
-   * This interface was referenced by `LocalizedText`'s JSON-Schema definition
-   * via the `patternProperty` "^[a-z]{2,3}(-[A-Za-z0-9]{1,8})*$".
-   *
-   * This interface was referenced by `LocalizedText1`'s JSON-Schema definition
-   * via the `patternProperty` "^[a-z]{2,3}(-[A-Za-z0-9]{1,8})*$".
-   *
-   * This interface was referenced by `LocalizedText2`'s JSON-Schema definition
-   * via the `patternProperty` "^[a-z]{2,3}(-[A-Za-z0-9]{1,8})*$".
-   */
-  [k: string]: string;
-}
-/**
  * A picture of the app in the package.
  */
 export interface Screenshot {
@@ -261,48 +230,7 @@ export interface Screenshot {
    * The picture's path in the package, under `frontend/`, ending in `.png`, `.jpg`, `.jpeg` or `.webp`. The file must exist and be at most 1 MiB.
    */
   file: string;
-  caption?: LocalizedName1;
-}
-/**
- * A short text in several languages, keyed by BCP 47 language tag, for example the app's name or a storage request's name. `en` is required and used when nothing else matches. One line, at most 60 characters per language.
- */
-export interface LocalizedName1 {
-  /**
-   * The English text, shown when no other language matches. One line, at most 60 characters.
-   */
-  en: string;
-  /**
-   * The text in the language of the key, a BCP 47 language tag such as `de` or `pt-BR`. One line, at most 60 characters.
-   *
-   * This interface was referenced by `LocalizedName`'s JSON-Schema definition
-   * via the `patternProperty` "^[a-z]{2,3}(-[A-Za-z0-9]{1,8})*$".
-   *
-   * This interface was referenced by `LocalizedName1`'s JSON-Schema definition
-   * via the `patternProperty` "^[a-z]{2,3}(-[A-Za-z0-9]{1,8})*$".
-   */
-  [k: string]: string;
-}
-/**
- * A text in several languages, keyed by BCP 47 language tag, for example the app's description of one or two sentences for the store and the install dialog. `en` is required and used when nothing else matches. At most 500 characters per language; line breaks are allowed.
- */
-export interface LocalizedText2 {
-  /**
-   * The English text, shown when no other language matches. At most 500 characters; line breaks are allowed.
-   */
-  en: string;
-  /**
-   * The text in the language of the key, a BCP 47 language tag such as `de` or `pt-BR`. At most 500 characters; line breaks are allowed.
-   *
-   * This interface was referenced by `LocalizedText`'s JSON-Schema definition
-   * via the `patternProperty` "^[a-z]{2,3}(-[A-Za-z0-9]{1,8})*$".
-   *
-   * This interface was referenced by `LocalizedText1`'s JSON-Schema definition
-   * via the `patternProperty` "^[a-z]{2,3}(-[A-Za-z0-9]{1,8})*$".
-   *
-   * This interface was referenced by `LocalizedText2`'s JSON-Schema definition
-   * via the `patternProperty` "^[a-z]{2,3}(-[A-Za-z0-9]{1,8})*$".
-   */
-  [k: string]: string;
+  caption?: LocalizedName;
 }
 /**
  * How the app's windows behave. `defaultSize` is the size of a new window when the user has no remembered size for the app; `minSize` is the smallest size on screens that can fit it, at most `defaultSize` in both dimensions.

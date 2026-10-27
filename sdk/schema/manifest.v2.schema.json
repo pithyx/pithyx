@@ -73,8 +73,7 @@
           "enum": ["none", "optional", "telemetry", "vendorAccount"]
         },
         "note": {
-          "$ref": "#/$defs/LocalizedText",
-          "description": "What exactly the app sends and to whom, in the author's words."
+          "$ref": "#/$defs/LocalizedText"
         }
       },
       "additionalProperties": false
@@ -153,8 +152,7 @@
       }
     },
     "releaseNotes": {
-      "$ref": "#/$defs/LocalizedText",
-      "description": "What is new in this version, shown with every update of the app, in several languages. `en` is required; at most 500 characters per language."
+      "$ref": "#/$defs/LocalizedText"
     },
     "requirements": {
       "description": "What the app needs to run well, as a hint: the install dialog warns when the box or the app pool has less, and installs anyway.",
@@ -799,8 +797,7 @@
           "pattern": "^frontend/([A-Za-z0-9_][A-Za-z0-9._-]*/)*[A-Za-z0-9_][A-Za-z0-9._-]*\\.(png|jpg|jpeg|webp)$"
         },
         "caption": {
-          "$ref": "#/$defs/LocalizedName",
-          "description": "What the picture shows, in several languages."
+          "$ref": "#/$defs/LocalizedName"
         }
       },
       "additionalProperties": false
