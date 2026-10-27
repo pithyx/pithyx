@@ -8,6 +8,7 @@ using Pithyx.Daemon.Auth;
 using Pithyx.Daemon.Database;
 using Pithyx.Daemon.Errors;
 using Pithyx.Daemon.Files;
+using Pithyx.Daemon.Notifications;
 using Pithyx.Daemon.Jobs;
 using Pithyx.Daemon.Permissions;
 using Pithyx.Daemon.Shares;
@@ -43,6 +44,7 @@ public sealed partial class AppService(
     Proxy.AppBackends backendStates,
     StepUps stepUps,
     Audit.AuditLog audit,
+    Notifications.NotificationService notifications,
     Docker.DeviceFs deviceFs,
     TimeProvider time,
     ILogger<AppService> logger)
@@ -77,19 +79,20 @@ public sealed partial class AppService(
 
     /// <summary>
     /// The install or update of a package that <paramref name="userId"/> staged, as a job of that user, or of the box
-    /// (<see cref="JobService.Box"/>) for an automatic update. Elevated rights the app gets newly are granted only when
-    /// <paramref name="caller"/> holds a step-up (D311), or installed revoked when the request says so; the box never
-    /// grants one.
+    /// (<see cref="JobService.Box"/>) for an automatic update. Elevated rights the app gets newly are granted only with
+    /// the consent their tiers ask of <paramref name="caller"/> (D311, D388), or installed revoked when the request says
+    /// so; the box never grants one.
     /// </summary>
     public async Task<Job> StartInstallAsync(long userId, string packageId, InstallAppRequest request, CancellationToken cancellationToken, ClaimsPrincipal? caller = null)
     {
         ArgumentNullException.ThrowIfNull(request);
         var package = packages.Get(userId, packageId);
         var appId = package.AppId;
-        var grantElevated = request.Elevated != false && caller is not null && stepUps.Holds(caller);
-        if (request.Elevated != false && !grantElevated && AddedElevated(package.Manifest, registry.Find(appId)).Count > 0)
+        var added = AddedElevated(package.Manifest, registry.Find(appId));
+        var grantElevated = request.Elevated != false;
+        if (grantElevated && added.Count > 0)
         {
-            throw new PithyxException(ErrorCodes.AuthStepUpRequired);
+            RequireConsent(caller ?? throw new PithyxException(ErrorCodes.AuthStepUpRequired), appId, added, request.ConfirmCritical);
         }
         // A new app that cannot run without a device is not installed while the device is missing (D387).
         if (request.Elevated != false && registry.Find(appId) is null
@@ -173,6 +176,10 @@ public sealed partial class AppService(
                                 ["right"] = right,
                                 ["version"] = package.Version,
                             }, CancellationToken.None);
+                        }
+                        if (caller is not null)
+                        {
+                            await NotifyCriticalAsync(caller, package.Manifest, granted);
                         }
                     }
                     catch
@@ -331,10 +338,7 @@ public sealed partial class AppService(
         }
         var held = app.GrantedElevated;
         var changes = (request.Rights ?? []).Where(change => change.Granted != held.Contains(change.Right)).DistinctBy(change => change.Right).ToList();
-        if (changes.Any(change => change.Granted) && !stepUps.Holds(caller))
-        {
-            throw new PithyxException(ErrorCodes.AuthStepUpRequired);
-        }
+        RequireConsent(caller, appId, [.. changes.Where(change => change.Granted).Select(change => change.Right)], request.ConfirmCritical);
         if (changes.Count == 0)
         {
             return registry.Details(app);
@@ -364,7 +368,56 @@ public sealed partial class AppService(
             await audit.RecordAsync(caller, change.Granted ? Audit.AuditLog.ElevatedGranted : Audit.AuditLog.ElevatedRevoked, appId,
                 new Dictionary<string, string> { ["right"] = change.Right, ["version"] = app.Version }, CancellationToken.None);
         }
+        await NotifyCriticalAsync(caller, app.Manifest, [.. changes.Where(change => change.Granted).Select(change => change.Right)]);
         return registry.Details(RequireInstalled(appId));
+    }
+
+    /// <summary>
+    /// The consent granting <paramref name="rights"/> needs (D388): none for the tier elevated beyond the administrator's
+    /// click, a step-up of the caller's session for the tiers high and critical, and for a critical right also the app's
+    /// id in <paramref name="confirmCritical"/>, which the desktop sends once the administrator typed the app's name.
+    /// </summary>
+    private void RequireConsent(ClaimsPrincipal caller, string appId, IReadOnlyList<string> rights, string? confirmCritical)
+    {
+        var tiers = rights.Select(Manifest.ElevatedRights.TierOf).ToList();
+        if (tiers.Any(tier => tier != Manifest.RiskTier.Elevated) && !stepUps.Holds(caller))
+        {
+            throw new PithyxException(ErrorCodes.AuthStepUpRequired);
+        }
+        if (rights.FirstOrDefault(right => Manifest.ElevatedRights.TierOf(right) == Manifest.RiskTier.Critical) is { } critical && confirmCritical != appId)
+        {
+            throw new PithyxException(ErrorCodes.AppElevatedConfirmationRequired, new Dictionary<string, object?> { ["right"] = critical });
+        }
+    }
+
+    public const string CriticalGrantedCode = "apps.elevated.critical";
+
+    /// <summary>Tells every other administrator that an app got root on the box (D388), on the desktop and the box's channels.</summary>
+    private async Task NotifyCriticalAsync(ClaimsPrincipal caller, JsonElement manifest, IReadOnlyList<string> granted)
+    {
+        if (granted.FirstOrDefault(right => Manifest.ElevatedRights.TierOf(right) == Manifest.RiskTier.Critical) is not { } right)
+        {
+            return;
+        }
+        var name = manifest.GetProperty("name").TryGetProperty("en", out var english) ? english.GetString() : null;
+        try
+        {
+            await notifications.CreateForAdministratorsAsync(
+                new NotificationDraft(CriticalGrantedCode, new Dictionary<string, object?>
+                {
+                    ["app"] = name ?? manifest.GetProperty("id").GetString(),
+                    ["right"] = right,
+                    ["user"] = caller.Identity?.Name ?? "",
+                }, NotificationTone.Warning),
+                CancellationToken.None,
+                except: CurrentUser.Id(caller));
+        }
+#pragma warning disable CA1031 // The right is granted; a failed notification is only logged.
+        catch (Exception exception)
+#pragma warning restore CA1031
+        {
+            LogNotifyFailed(exception, manifest.GetProperty("id").GetString()!);
+        }
     }
 
     /// <summary>
@@ -570,7 +623,7 @@ public sealed partial class AppService(
                                 automatic,
                             },
                             transaction);
-                        var wanted = previous.Manifest.GetProperty("permissions").EnumerateArray().Select(permission => permission.GetString()!).ToList();
+                        var wanted = Manifest.ElevatedRights.PermissionsOf(previous.Manifest);
                         await SyncPermissionsAsync(connection, transaction, appId, wanted, previous.Manifest);
                         // A right the version just left had dropped comes back revoked: only a step-up grants one.
                         await SyncElevatedAsync(connection, transaction, appId, previous.Manifest, grantNew: false, caller.Identity?.Name);
@@ -933,11 +986,10 @@ public sealed partial class AppService(
     /// </summary>
     public static AppAccess SuggestedAccess(JsonElement manifest)
     {
-        var directory = manifest.TryGetProperty("permissions", out var permissions)
-            && permissions.EnumerateArray().Any(permission => permission.GetString() == "directory.read");
+        var directory = Manifest.ElevatedRights.Declares(manifest, "directory.read");
         var backend = manifest.TryGetProperty("backend", out var declared) ? declared : default;
         var root = backend.ValueKind == JsonValueKind.Object && backend.TryGetProperty("root", out var flag) && flag.ValueKind == JsonValueKind.True;
-        var elevated = backend.ValueKind == JsonValueKind.Object && backend.TryGetProperty("elevated", out var rights) && rights.GetArrayLength() > 0;
+        var elevated = Manifest.ElevatedRights.Of(manifest).Count > 0;
         return directory || root || elevated ? AppAccess.Admins : AppAccess.Everybody;
     }
 
@@ -1086,4 +1138,7 @@ public sealed partial class AppService(
 
     [LoggerMessage(Level = LogLevel.Information, Message = "Removed app {AppId}, data: {Data}")]
     private partial void LogRemoved(string appId, AppDataChoice data);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Telling the administrators about the critical right of app {AppId} failed")]
+    private partial void LogNotifyFailed(Exception exception, string appId);
 }

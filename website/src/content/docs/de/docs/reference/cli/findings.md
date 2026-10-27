@@ -53,9 +53,9 @@ Gemeldet von [`validate`](/de/docs/reference/cli/validate/) und [`pack`](/de/doc
   - `reason` = `merge_key`: sie nutzt unter {path} einen Merge-Schlüssel
   - `reason` = `key_not_string`: ein Schlüssel unter {path} ist kein Text
   - `reason` = `other`: sie verletzt eine Regel für Compose-Dateien
+- [`app.elevated.backend_missing`](/de/docs/reference/errors/#app.elevated.backend_missing) (Fehler): Die App verlangt {right}, ein Recht, das nur ein Hintergrunddienst nutzen kann, aber sie hat keinen Hintergrunddienst.
 - [`app.elevated.root_conflict`](/de/docs/reference/errors/#app.elevated.root_conflict) (Fehler): Die App führt ihren Hintergrunddienst als root aus und verlangt {right}. Mit diesem Recht läuft der Dienst direkt auf der Box, wo root die ganze Box beherrschen würde, deshalb lehnt Pithyx die Kombination ab.
 - [`app.elevated.root_required`](/de/docs/reference/errors/#app.elevated.root_required) (Fehler): Die App verlangt {right}, aber nur ein Hintergrunddienst, der als root läuft, kann eine Capability nutzen.
-- [`app.elevated.sideload_only`](/de/docs/reference/errors/#app.elevated.sideload_only) (Fehler): Die App verlangt {right}, den ungefilterten Containerdienst, und das ist root auf der Box. Pithyx gibt dieses Recht nur Apps, die aus einer Datei installiert werden, nie Apps aus einem Katalog.
 - [`app.elevated.unsupported`](/de/docs/reference/errors/#app.elevated.unsupported) (Fehler): Die App verlangt das Recht {right}, das Pithyx keiner App gibt.
 - [`app.icon.invalid`](/de/docs/reference/errors/#app.icon.invalid) (Fehler): Das Symbol der App ist nicht verwendbar: {reason}.
   - `reason` = `too_large`: es ist größer als 64 KB
@@ -81,7 +81,9 @@ Gemeldet von [`validate`](/de/docs/reference/cli/validate/) und [`pack`](/de/doc
 - [`app.manifest.reference_unknown`](/de/docs/reference/errors/#app.manifest.reference_unknown) (Fehler): Das Manifest verweist unter {path} auf {name}, das es nicht deklariert.
 - [`app.manifest.schema_violation`](/de/docs/reference/errors/#app.manifest.schema_violation) (Fehler): Das Manifest der App ist unter {path} ungültig ({keyword}).
 - [`app.manifest.sdk_invalid`](/de/docs/reference/errors/#app.manifest.sdk_invalid) (Fehler): Der SDK-Versionsbereich {sdk} im Manifest ist ungültig.
-- [`app.manifest.version_unsupported`](/de/docs/reference/errors/#app.manifest.version_unsupported) (Fehler): Diese App braucht eine neuere Version von Pithyx (Manifest-Version {version}, diese Box liest Version {supported}).
+- [`app.manifest.version_unsupported`](/de/docs/reference/errors/#app.manifest.version_unsupported) (Fehler): {version}
+  - `version` = `1`: Diese App wurde für eine ältere Version von Pithyx gemacht (Manifest-Version 1, diese Box liest Version {supported}). Bitte ihren Autor um eine neue Version.
+  - `version` = `other`: Diese App braucht eine neuere Version von Pithyx (Manifest-Version {version}, diese Box liest Version {supported}).
 - [`app.manifest.window_size_invalid`](/de/docs/reference/errors/#app.manifest.window_size_invalid) (Fehler): Die kleinste Fenstergröße der App ist größer als ihre Standardgröße.
 - [`app.package.invalid`](/de/docs/reference/errors/#app.package.invalid) (Fehler): Die Datei ist kein gültiges App-Paket: {reason}.
   - `reason` = `gzip`: sie ist nicht mit gzip komprimiert oder beschädigt
@@ -122,6 +124,7 @@ Nur die CLI meldet diese. `cli.backend.unbuilt` kommt vom Vite-Plugin nach `vite
   - `reason` = `unused`: {image} is not used
   - `reason` = `other`: {image} differs
 - `cli.manifest.missing` (Fehler): pithyx.json does not exist in {folder}. Run the command in the project folder of an app, or name that folder.
+- `cli.rights.raw_socket` (Warnung): The app asks for docker.socket.raw, the unfiltered container service: root on the box. Every box asks the administrator to type the app's name to grant it, and the app never updates by itself. If the app only manages containers it starts itself, ask for docker.socket instead.
 
 <!-- /generated -->
 

@@ -1,6 +1,6 @@
 {
-  "$schema": "https://pithyx.org/schema/manifest.v1.schema.json",
-  "manifestVersion": 1,
+  "$schema": "https://pithyx.org/schema/manifest.v2.schema.json",
+  "manifestVersion": 2,
   "id": "com.example.notes",
   "version": "1.1.0",
   "name": {
@@ -9,7 +9,7 @@
   },
   "description": {
     "en": "Notes for everyone on the box.",
-    "de": "Notizen f\u00fcr alle auf der Box."
+    "de": "Notizen für alle auf der Box."
   },
   "author": {
     "name": "Jan Example",
@@ -21,7 +21,12 @@
   "sdk": "^1.0.0",
   "pithyx": ">=0.1.0",
   "dataVersion": 1,
-  "permissions": [],
+  "arch": [
+    "amd64",
+    "arm64"
+  ],
+  "source": "https://example.com/notes",
+  "permissions": {},
   "window": {
     "instances": "multi",
     "defaultSize": {

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import tiers from '../../../../sdk/schema/fixtures/tiers/cases.json';
 import type { PoolList } from '../sdk/store';
 import {
   accessOf,
@@ -7,32 +8,62 @@ import {
   elevatedKind,
   folderPath,
   manifestFacts,
+  tierOf,
   withSubject,
 } from './model';
+
+describe('tierOf', () => {
+  // The shared corpus the box and the CLI are held to (D388).
+  it.each(Object.entries(tiers.cases))('gives %s the tier %s', (right, tier) => {
+    expect(tierOf(right)).toBe(tier);
+  });
+});
 
 describe('manifestFacts', () => {
   it('reads what the install dialog shows', () => {
     const facts = manifestFacts({
       name: { en: 'Chat', de: 'Chat' },
       author: { name: 'Jan Mueller', url: 'https://mueller.example' },
-      permissions: ['notifications', 'directory.read'],
+      permissions: {
+        notifications: { reason: { en: 'Tells you about new messages.' } },
+        'directory.read': {
+          reason: { en: 'Lists who you can chat with.', de: 'Listet Kontakte.' },
+        },
+        'network.internet': {
+          reason: { en: 'Fetches link previews.' },
+          hosts: ['api.example.org'],
+        },
+        'device:/dev/dri/renderD128': { reason: { en: 'Scales images.' }, optional: true },
+      },
       storage: [
         { id: 'attachments', name: { en: 'Attachments' }, access: 'readWrite', required: true },
       ],
-      backend: { root: true, elevated: ['device:/dev/dri/renderD128'] },
+      backend: { root: true },
     });
     expect(facts).toMatchObject({
       author: 'Jan Mueller',
-      permissions: ['notifications', 'directory.read'],
+      permissions: ['notifications', 'directory.read', 'network.internet'],
+      hosts: ['api.example.org'],
       storage: [{ id: 'attachments', access: 'readWrite', required: true }],
       backend: true,
       root: true,
       elevated: ['device:/dev/dri/renderD128'],
     });
+    expect(facts.reasons['directory.read']).toEqual({
+      en: 'Lists who you can chat with.',
+      de: 'Listet Kontakte.',
+    });
+    expect(facts.reasons['device:/dev/dri/renderD128']).toEqual({ en: 'Scales images.' });
+  });
+
+  it('has no reason for a right of an app installed before reasons were required', () => {
+    const facts = manifestFacts({ name: { en: 'Old' }, permissions: { notifications: {} } });
+    expect(facts.permissions).toEqual(['notifications']);
+    expect(facts.reasons).toEqual({});
   });
 
   it('treats a frontend-only manifest as one without backend, root or rights', () => {
-    const facts = manifestFacts({ name: { en: 'Notes' }, permissions: [] });
+    const facts = manifestFacts({ name: { en: 'Notes' }, permissions: {} });
     expect(facts).toMatchObject({
       backend: false,
       root: false,

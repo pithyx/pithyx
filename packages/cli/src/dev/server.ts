@@ -92,7 +92,7 @@ export function createDevServer(options: DevServerOptions): DevServer {
   const { manifest } = options;
   const tokens = options.tokens ?? new TokenStore();
   const shellFolder = options.shellFolder ?? SHELL_FOLDER;
-  const internet = manifest.permissions.includes('network.internet');
+  const internet = 'network.internet' in manifest.permissions;
   const appPrefix = `/apps/${manifest.id}/`;
   const proxy = { appId: manifest.id, tokens, endpoints: options.endpoints, internet };
 

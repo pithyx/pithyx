@@ -5,6 +5,9 @@
       "not_found": "No app with the id {id} is installed.",
       "no_previous": "{id} has no version before its last update to go back to."
     },
+    "arch": {
+      "unsupported": "This app runs only on {supported}, not on this box ({arch})."
+    },
     "backend": {
       "endpoint_unknown": "The app has no backend endpoint named {endpoint}.",
       "missing": "The app has no backend.",
@@ -33,7 +36,8 @@
       "unsupported": "The app asks for the right {right}, which Pithyx does not grant to any app.",
       "root_conflict": "The app runs its background service as root and asks for {right}. That right runs the service directly on the box, where root would control the whole box, so Pithyx refuses the combination.",
       "root_required": "The app asks for {right}, but only a background service that runs as root can use a capability.",
-      "sideload_only": "The app asks for {right}, the unfiltered container service, which is root on the box. Pithyx grants it only to apps installed from a file, never to apps from a catalog."
+      "backend_missing": "The app asks for {right}, a right only a background service can use, but it has no background service.",
+      "confirmation_required": "{right} gives the app full control of the box. Type the app's name in the install dialog to confirm it."
     },
     "icon": {
       "invalid": "The app's icon cannot be used: {reason, select, too_large {it is larger than 64 KB} malformed {it is not a valid SVG file} not_svg {it is not an SVG image} viewbox {its viewBox is missing or not square} doctype {it contains a DOCTYPE} processing_instruction {it contains a processing instruction} element_forbidden {it contains the element {element}} event_attribute {it contains the event attribute {attribute}} external_href {it links to something outside the file} style_import {its styles use @import} style_url {it loads something outside the file with url()} style_escape {its styles contain escapes} other {it breaks a rule for icons}}."
@@ -53,7 +57,7 @@
       "reference_unknown": "The manifest refers to {name} at {path}, which it does not declare.",
       "schema_violation": "The app's manifest is not valid at {path} ({keyword}).",
       "sdk_invalid": "The SDK version range {sdk} in the manifest is not valid.",
-      "version_unsupported": "This app needs a newer version of Pithyx (manifest version {version}, this box reads version {supported}).",
+      "version_unsupported": "{version, select, 1 {This app was made for an older version of Pithyx (manifest version 1, this box reads version {supported}). Ask its author for a new version.} other {This app needs a newer version of Pithyx (manifest version {version}, this box reads version {supported}).}}",
       "window_size_invalid": "The app's smallest window size is larger than its default size."
     },
     "mapping": {

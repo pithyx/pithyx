@@ -28,13 +28,22 @@ Asking for `directory.read` makes the install dialog suggest the app for adminis
 
 ## Example
 
-The manifest declares `"permissions": ["notifications", "directory.read"]`. The board works without either and offers more with them:
+The manifest declares `notifications` and `directory.read`, each with the `reason` the install dialog shows (see [Permissions](/docs/developers/apps/manifest/#permissions)):
+
+```json
+"permissions": {
+  "notifications": { "reason": { "en": "Tells you when a card is assigned to you." } },
+  "directory.read": { "reason": { "en": "Lets you assign cards to other users." } }
+}
+```
+
+The board works without either and offers more with them:
 
 <!-- example: sdk/permissions.ts -->
 
 ```ts
 // A team board that offers what its permissions allow and follows when an administrator changes them.
-// pithyx.json declares: "permissions": ["notifications", "directory.read"]
+// pithyx.json declares "notifications" and "directory.read" in "permissions", each with its "reason".
 import { PithyxError, type DirectoryUser, type PithyxApp } from '@pithyx/sdk';
 
 interface Features {

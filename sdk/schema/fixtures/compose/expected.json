@@ -199,7 +199,7 @@
     {
       "code": "app.compose.right_unused",
       "params": {
-        "path": "/backend/elevated/0",
+        "path": "/permissions/docker.socket",
         "right": "docker.socket"
       }
     }
@@ -882,21 +882,21 @@
     {
       "code": "app.compose.right_unused",
       "params": {
-        "path": "/backend/elevated/0",
+        "path": "/permissions/host.network",
         "right": "host.network"
       }
     },
     {
       "code": "app.compose.right_unused",
       "params": {
-        "path": "/backend/elevated/1",
+        "path": "/permissions/host.pid",
         "right": "host.pid"
       }
     },
     {
       "code": "app.compose.right_unused",
       "params": {
-        "path": "/backend/elevated/3",
+        "path": "/permissions/device:~1dev~1ttyUSB0",
         "right": "device:/dev/ttyUSB0"
       }
     }

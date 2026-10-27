@@ -13,7 +13,7 @@ Diese Seite führt eine App von einem leeren Projekt zu einem installierbaren Pa
 
 Der Befehl `pithyx` hat keinen Befehl, der ein Projekt anlegt. Beginne mit einem beliebigen Frontend-Projekt (die Beispiele nutzen Vite) und lege die Dateien, die das CLI erwartet, im Projektstamm an:
 
-- `pithyx.json`, das [Manifest](/de/docs/developers/apps/manifest/). Füge `"$schema": "./node_modules/@pithyx/sdk/schema/manifest.v1.schema.json"` für die Editor-Unterstützung hinzu.
+- `pithyx.json`, das [Manifest](/de/docs/developers/apps/manifest/). Füge `"$schema": "./node_modules/@pithyx/sdk/schema/manifest.v2.schema.json"` für die Editor-Unterstützung hinzu.
 - `icon.svg`. Das CLI-Paket bringt ein `template-icon.svg` mit; `pithyx validate` warnt, solange `icon.svg` noch dieses Icon ist.
 - Das gebaute Frontend in `dist/` (den Ordner änderst du mit `--frontend <folder>`). Dein `entry` muss `frontend/<file>.html` sein; der Inhalt von `dist/` wird im Paket zu `frontend/`.
 

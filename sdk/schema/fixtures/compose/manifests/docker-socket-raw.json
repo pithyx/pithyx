@@ -1,5 +1,5 @@
 {
-  "manifestVersion": 1,
+  "manifestVersion": 2,
   "id": "com.example.chat",
   "version": "1.2.0",
   "name": {
@@ -10,7 +10,18 @@
   },
   "entry": "frontend/index.html",
   "sdk": "^1.0.0",
-  "permissions": [],
+  "arch": [
+    "amd64",
+    "arm64"
+  ],
+  "source": "https://github.com/example/app",
+  "permissions": {
+    "docker.socket.raw": {
+      "reason": {
+        "en": "Needs docker.socket.raw for its background service."
+      }
+    }
+  },
   "window": {
     "instances": "single",
     "defaultSize": {
@@ -31,9 +42,6 @@
       }
     },
     "lifecycle": "onDemand",
-    "root": false,
-    "elevated": [
-      "docker.socket.raw"
-    ]
+    "root": false
   }
 }

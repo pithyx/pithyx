@@ -12,15 +12,15 @@ public sealed record ManifestValidationResult(IReadOnlyList<ValidationIssue> Iss
 }
 
 /// <summary>
-/// Checks <c>pithyx.json</c> against <c>sdk/schema/manifest.v1.schema.json</c> (embedded at build) and the rules a
+/// Checks <c>pithyx.json</c> against <c>sdk/schema/manifest.v2.schema.json</c> (embedded at build) and the rules a
 /// schema cannot express. <c>@pithyx/cli</c> runs the same checks; the corpus in <c>sdk/schema/fixtures/manifest</c>
 /// holds both to the same verdicts and codes.
 /// </summary>
 public static class ManifestValidator
 {
-    public const int SupportedVersion = 1;
+    public const int SupportedVersion = 2;
 
-    private static readonly Lazy<JsonSchemaCheck> _schema = new(() => JsonSchemaCheck.Load("manifest.v1.schema.json"));
+    private static readonly Lazy<JsonSchemaCheck> _schema = new(() => JsonSchemaCheck.Load("manifest.v2.schema.json"));
 
     /// <summary>
     /// Validates the bytes of <c>pithyx.json</c>. Ids in <c>org.pithyx.*</c> are refused unless
@@ -158,7 +158,7 @@ public static class ManifestValidator
                 }
                 index++;
             }
-            if (!root.GetProperty("permissions").EnumerateArray().Any(permission => permission.GetString() == "files.shares"))
+            if (!ElevatedRights.Declares(root, "files.shares"))
             {
                 issues.Add(new ValidationIssue(ErrorCodes.AppManifestPermissionMissing, ("path", "/fileActions"), ("permission", "files.shares")));
             }
@@ -168,7 +168,32 @@ public static class ManifestValidator
         {
             issues.AddRange(BackendIssues(backend));
         }
+        issues.AddRange(ElevatedIssues(root, hasBackend ? backend : null));
         return issues;
+    }
+
+    private static IEnumerable<ValidationIssue> ElevatedIssues(JsonElement root, JsonElement? backend)
+    {
+        var asRoot = backend is { } declared && declared.TryGetProperty("root", out var flag) && flag.ValueKind == JsonValueKind.True;
+        foreach (var right in ElevatedRights.Of(root))
+        {
+            if (!IsSupportedElevatedRight(right))
+            {
+                yield return new ValidationIssue(ErrorCodes.AppElevatedUnsupported, ("right", right));
+            }
+            else if (backend is null)
+            {
+                yield return new ValidationIssue(ErrorCodes.AppElevatedBackendMissing, ("right", right));
+            }
+            else if (asRoot && NeedsHostNamespace(right))
+            {
+                yield return new ValidationIssue(ErrorCodes.AppElevatedRootConflict, ("right", right));
+            }
+            else if (!asRoot && right.StartsWith(CapabilityPrefix, StringComparison.Ordinal))
+            {
+                yield return new ValidationIssue(ErrorCodes.AppElevatedRootRequired, ("right", right));
+            }
+        }
     }
 
     private static IEnumerable<ValidationIssue> BackendIssues(JsonElement backend)
@@ -203,53 +228,11 @@ public static class ManifestValidator
                 index++;
             }
         }
-
-        var declared = backend.TryGetProperty("elevated", out var declaredRights)
-            ? declaredRights.EnumerateArray().Select(element => element.GetString()!).ToHashSet(StringComparer.Ordinal)
-            : [];
-        if (backend.TryGetProperty("optionalDevices", out var optionalDevices))
-        {
-            var index = 0;
-            foreach (var device in optionalDevices.EnumerateArray().Select(element => element.GetString()!))
-            {
-                if (!declared.Contains(DevicePrefix + device))
-                {
-                    yield return UnknownReference($"/backend/optionalDevices/{index}", device);
-                }
-                index++;
-            }
-        }
-
-        if (backend.TryGetProperty("elevated", out var elevated))
-        {
-            var root = backend.TryGetProperty("root", out var flag) && flag.ValueKind == JsonValueKind.True;
-            foreach (var right in elevated.EnumerateArray().Select(element => element.GetString()!))
-            {
-                if (!IsSupportedElevatedRight(right))
-                {
-                    yield return new ValidationIssue(ErrorCodes.AppElevatedUnsupported, ("right", right));
-                }
-                else if (root && NeedsHostNamespace(right))
-                {
-                    yield return new ValidationIssue(ErrorCodes.AppElevatedRootConflict, ("right", right));
-                }
-                else if (!root && right.StartsWith(CapabilityPrefix, StringComparison.Ordinal))
-                {
-                    yield return new ValidationIssue(ErrorCodes.AppElevatedRootRequired, ("right", right));
-                }
-            }
-        }
     }
 
     public const string DevicePrefix = "device:";
 
     public const string CapabilityPrefix = "capability:";
-
-    /// <summary>Whether the manifest's <c>backend.elevated</c> asks for this right.</summary>
-    public static bool Declares(JsonElement manifest, string right) =>
-        manifest.TryGetProperty("backend", out var backend)
-        && backend.TryGetProperty("elevated", out var elevated)
-        && elevated.EnumerateArray().Any(element => element.GetString() == right);
 
     public const string DockerSocket = "docker.socket";
 

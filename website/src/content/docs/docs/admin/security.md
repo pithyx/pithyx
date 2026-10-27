@@ -1,13 +1,13 @@
 ---
 title: 'Security'
-description: 'Transport, open ports, physical access, SSH, two-factor sign-in, passkeys, the recovery key and what leaves the box.'
+description: 'Transport, open ports, physical access, SSH, two-factor sign-in, passkeys, the recovery key, apps with root access and what leaves the box.'
 status: ready
 audience: admin
 sidebar:
   order: 9
 ---
 
-Pithyx keeps everything on the box: no telemetry, no cloud account, no phone-home. The web desktop speaks HTTPS with a certificate from the box's own certificate authority. This page covers transport, open ports, physical access, SSH, two-factor sign-in, passkeys, the recovery key and the few connections the box makes on its own.
+Pithyx keeps everything on the box: no telemetry, no cloud account, no phone-home. The web desktop speaks HTTPS with a certificate from the box's own certificate authority. This page covers transport, open ports, physical access, SSH, two-factor sign-in, passkeys, the recovery key, apps with root access and the few connections the box makes on its own.
 
 ## HTTPS and certificates
 
@@ -57,6 +57,15 @@ A passkey is bound to the name the box was opened under (the WebAuthn relying pa
 ## The recovery key
 
 First setup shows the recovery key once (`PTHX-` followed by 26 characters). It is the only way to reset the administrator password. To use it, choose "Forgot password?" on the sign-in page, then enter the key, the user name of an administrator and a new password. This signs that user out everywhere, turns off two-factor sign-in and removes the passkeys of that user and issues a new recovery key; the old one stops working. There is one key for the whole box and it is part of the configuration backup. Without the key and the password, the system has to be reinstalled. Other users ask an administrator for a new password.
+
+## Apps with root access
+
+Some apps need a right that is root on the box, today the unfiltered container service `docker.socket.raw` (for example a container manager). Pithyx does not refuse them; granting such a right takes its own red step in the install dialog, the app's name typed in and your password ([Special rights](/docs/admin/apps-and-store/#special-rights)). Once granted:
+
+- The app carries the badge **Root access** in the Store and on its page.
+- **Settings > Security** lists every app with root access and its rights. **Revoke root access** takes the right away at once, without a password; the app's background service restarts without it. Granting it again asks for the full consent.
+- Every other administrator gets the notification "<app> has root access now", also by email or webhook where set up.
+- The app never updates by itself, whatever the update policy says. Read the release notes and install its update with one click in the Store's **Updates** tab.
 
 ## What leaves the box
 

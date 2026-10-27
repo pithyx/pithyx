@@ -1,4 +1,31 @@
 {
+  "arch-empty.json": [
+    {
+      "code": "app.manifest.schema_violation",
+      "params": {
+        "path": "/arch",
+        "keyword": "minItems"
+      }
+    }
+  ],
+  "arch-missing.json": [
+    {
+      "code": "app.manifest.schema_violation",
+      "params": {
+        "path": "/arch",
+        "keyword": "required"
+      }
+    }
+  ],
+  "arch-unknown.json": [
+    {
+      "code": "app.manifest.schema_violation",
+      "params": {
+        "path": "/arch/1",
+        "keyword": "enum"
+      }
+    }
+  ],
   "author-missing.json": [
     {
       "code": "app.manifest.schema_violation",
@@ -142,8 +169,8 @@
     {
       "code": "app.manifest.schema_violation",
       "params": {
-        "path": "/backend/elevated/0",
-        "keyword": "pattern"
+        "path": "/permissions/capability:CAP_NET_ADMIN",
+        "keyword": "additionalProperties"
       }
     }
   ],
@@ -151,8 +178,8 @@
     {
       "code": "app.manifest.schema_violation",
       "params": {
-        "path": "/backend/elevated/0",
-        "keyword": "pattern"
+        "path": "/permissions/device:~1dev~1..~1etc~1shadow",
+        "keyword": "additionalProperties"
       }
     }
   ],
@@ -161,15 +188,6 @@
       "code": "app.elevated.unsupported",
       "params": {
         "right": "host.full"
-      }
-    }
-  ],
-  "elevated-optional-device-unknown.json": [
-    {
-      "code": "app.manifest.reference_unknown",
-      "params": {
-        "path": "/backend/optionalDevices/0",
-        "name": "/dev/dri"
       }
     }
   ],
@@ -205,8 +223,16 @@
     {
       "code": "app.manifest.schema_violation",
       "params": {
-        "path": "/backend/elevated/0",
-        "keyword": "pattern"
+        "path": "/permissions/gpu",
+        "keyword": "additionalProperties"
+      }
+    }
+  ],
+  "elevated-without-backend.json": [
+    {
+      "code": "app.elevated.backend_missing",
+      "params": {
+        "right": "host.network"
       }
     }
   ],
@@ -510,12 +536,66 @@
       "code": "app.manifest.invalid_json"
     }
   ],
-  "permission-duplicate.json": [
+  "permission-host-pattern.json": [
+    {
+      "code": "app.manifest.schema_violation",
+      "params": {
+        "path": "/permissions/network.internet/hosts/0",
+        "keyword": "pattern"
+      }
+    }
+  ],
+  "permission-hosts-not-internet.json": [
+    {
+      "code": "app.manifest.schema_violation",
+      "params": {
+        "path": "/permissions/network.lan/hosts",
+        "keyword": "additionalProperties"
+      }
+    }
+  ],
+  "permission-list.json": [
     {
       "code": "app.manifest.schema_violation",
       "params": {
         "path": "/permissions",
-        "keyword": "uniqueItems"
+        "keyword": "type"
+      }
+    }
+  ],
+  "permission-optional-not-device.json": [
+    {
+      "code": "app.manifest.schema_violation",
+      "params": {
+        "path": "/permissions/network.lan/optional",
+        "keyword": "additionalProperties"
+      }
+    }
+  ],
+  "permission-reason-english-missing.json": [
+    {
+      "code": "app.manifest.schema_violation",
+      "params": {
+        "path": "/permissions/files.read/reason/en",
+        "keyword": "required"
+      }
+    }
+  ],
+  "permission-reason-missing.json": [
+    {
+      "code": "app.manifest.schema_violation",
+      "params": {
+        "path": "/permissions/files.read/reason",
+        "keyword": "required"
+      }
+    }
+  ],
+  "permission-reason-too-long.json": [
+    {
+      "code": "app.manifest.schema_violation",
+      "params": {
+        "path": "/permissions/files.read/reason/en",
+        "keyword": "maxLength"
       }
     }
   ],
@@ -523,8 +603,8 @@
     {
       "code": "app.manifest.schema_violation",
       "params": {
-        "path": "/permissions/0",
-        "keyword": "enum"
+        "path": "/permissions/backend",
+        "keyword": "additionalProperties"
       }
     }
   ],
@@ -607,6 +687,24 @@
       "code": "app.manifest.window_size_invalid"
     }
   ],
+  "source-missing.json": [
+    {
+      "code": "app.manifest.schema_violation",
+      "params": {
+        "path": "/source",
+        "keyword": "required"
+      }
+    }
+  ],
+  "source-word.json": [
+    {
+      "code": "app.manifest.schema_violation",
+      "params": {
+        "path": "/source",
+        "keyword": "pattern"
+      }
+    }
+  ],
   "storage-duplicate.json": [
     {
       "code": "app.manifest.duplicate",
@@ -670,6 +768,15 @@
       }
     }
   ],
+  "version-one.json": [
+    {
+      "code": "app.manifest.version_unsupported",
+      "params": {
+        "version": "1",
+        "supported": 2
+      }
+    }
+  ],
   "version-short.json": [
     {
       "code": "app.manifest.schema_violation",
@@ -683,8 +790,8 @@
     {
       "code": "app.manifest.version_unsupported",
       "params": {
-        "version": "2",
-        "supported": 1
+        "version": "3",
+        "supported": 2
       }
     }
   ],

@@ -13,7 +13,7 @@ This page takes an app from an empty project to a package you can install: build
 
 The `pithyx` command has no command that creates a project. Start from any frontend project (the examples use Vite) and add the files the CLI expects at the project root:
 
-- `pithyx.json`, the [manifest](/docs/developers/apps/manifest/). Add `"$schema": "./node_modules/@pithyx/sdk/schema/manifest.v1.schema.json"` for editor support.
+- `pithyx.json`, the [manifest](/docs/developers/apps/manifest/). Add `"$schema": "./node_modules/@pithyx/sdk/schema/manifest.v2.schema.json"` for editor support.
 - `icon.svg`. The CLI package ships a `template-icon.svg`; `pithyx validate` warns while `icon.svg` is still that icon.
 - The built frontend in `dist/` (change the folder with `--frontend <folder>`). Your `entry` must be `frontend/<file>.html`; the content of `dist/` becomes `frontend/` in the package.
 

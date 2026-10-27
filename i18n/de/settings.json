@@ -159,6 +159,11 @@
       "description": "Konfiguration dieser Box sichern und wiederherstellen",
       "keywords": "backup sicherung wiederherstellen konfiguration export import neuinstallation systemplatte"
     },
+    "security": {
+      "title": "Sicherheit",
+      "description": "Apps mit Root-Zugriff auf die Box und ihn entziehen",
+      "keywords": "sicherheit root zugriff sonderrechte apps docker container socket entziehen vertrauen"
+    },
     "groups": {
       "title": "Gruppen",
       "description": "Gruppen, ihre Mitglieder und Rechte",
@@ -1043,6 +1048,17 @@
     "system": {
       "title": "Kanäle der Box",
       "explain": "Diese Kanäle bekommen die eigenen Warnungen des Systems (Speicher, Updates, die USV, falsche Anmeldungen und mehr) einmal für alle Administratoren. Jeder Benutzer, auch Administratoren, kann im Benutzermenü eigene Kanäle hinzufügen."
+    }
+  },
+  "security": {
+    "intro": "Was auf der Box mehr kann, als eine App sollte.",
+    "root": {
+      "title": "Apps mit Root-Zugriff",
+      "intro": "Diese Apps haben ein Recht, das root auf der Box ist, etwa den ungefilterten Containerdienst: Sie können jede Datei und jede Einstellung lesen und ändern. Sie aktualisieren sich nie von selbst. Entziehst du das Recht, startet der Hintergrunddienst der App ohne es neu.",
+      "none": "Keine App hat Root-Zugriff.",
+      "badge": "Root-Zugriff",
+      "rights": "Rechte: {rights}",
+      "revoke": "Root-Zugriff entziehen"
     }
   }
 }

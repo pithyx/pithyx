@@ -108,6 +108,7 @@ export function StoreSettings({
                 </span>
               </label>
             ))}
+            <p className={styles.muted}>{t('settings.updates.criticalHint')}</p>
           </fieldset>
           <div className={styles.inline}>
             <TextField

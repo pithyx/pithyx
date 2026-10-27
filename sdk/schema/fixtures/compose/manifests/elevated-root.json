@@ -1,5 +1,5 @@
 {
-  "manifestVersion": 1,
+  "manifestVersion": 2,
   "id": "com.example.chat",
   "version": "1.2.0",
   "name": {
@@ -10,7 +10,23 @@
   },
   "entry": "frontend/index.html",
   "sdk": "^1.0.0",
-  "permissions": [],
+  "arch": [
+    "amd64",
+    "arm64"
+  ],
+  "source": "https://github.com/example/app",
+  "permissions": {
+    "capability:NET_ADMIN": {
+      "reason": {
+        "en": "Needs capability:NET_ADMIN for its background service."
+      }
+    },
+    "device:/dev/net/tun": {
+      "reason": {
+        "en": "Needs device:/dev/net/tun for its background service."
+      }
+    }
+  },
   "window": {
     "instances": "single",
     "defaultSize": {
@@ -31,10 +47,6 @@
       }
     },
     "lifecycle": "onDemand",
-    "root": true,
-    "elevated": [
-      "capability:NET_ADMIN",
-      "device:/dev/net/tun"
-    ]
+    "root": true
   }
 }

@@ -15,6 +15,7 @@ import {
   IconRestore,
   IconRoute,
   IconServer2,
+  IconShieldLock,
   IconUsers,
   IconUsersGroup,
   IconWorld,
@@ -34,6 +35,7 @@ import { NetworkPage } from './NetworkPage';
 import { NotificationsPage } from './NotificationsPage';
 import { RegionalPage } from './RegionalPage';
 import { ReverseProxyPage } from './ReverseProxyPage';
+import { SecurityPage } from './SecurityPage';
 import styles from './Settings.module.css';
 import { sharesKey } from './shares';
 import { SharesPage } from './SharesPage';
@@ -50,6 +52,7 @@ type PageId =
   | 'ups'
   | 'notifications'
   | 'backup'
+  | 'security'
   | 'shares'
   | 'homes'
   | 'fileServices'
@@ -74,6 +77,7 @@ const PAGES: readonly SettingsPage[] = [
   { id: 'ups', category: 'system', icon: IconBatteryCharging, Component: UpsPage },
   { id: 'notifications', category: 'system', icon: IconBell, Component: NotificationsPage },
   { id: 'backup', category: 'system', icon: IconRestore, Component: BackupPage },
+  { id: 'security', category: 'system', icon: IconShieldLock, Component: SecurityPage },
   { id: 'shares', category: 'sharing', icon: IconFolders, Component: SharesPage },
   { id: 'homes', category: 'sharing', icon: IconHome, Component: HomesPage },
   { id: 'fileServices', category: 'sharing', icon: IconServer2, Component: FileServicesPage },

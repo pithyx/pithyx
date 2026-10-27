@@ -111,7 +111,7 @@ export type BackendStatus = 'stopped' | 'starting' | 'running' | 'updating' | 'u
 /**
  * Why an `unavailable` backend cannot start until an administrator acts: `storage` (a required storage request has no
  * folder yet; `context.storage` shows it as `unmapped`), `pool` (the app pool is locked or missing) or `device` (a device
- * the app needs, declared under `backend.elevated` and not in `backend.optionalDevices`, is not plugged in; the backend
+ * the app needs, declared in `permissions` without `optional: true`, is not plugged in; the backend
  * starts by itself once it is back).
  */
 export type BackendUnavailableReason = 'storage' | 'pool' | 'device';

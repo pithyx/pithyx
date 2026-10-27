@@ -10,6 +10,7 @@ import {
 } from './compose-yaml';
 import type { Issue } from './issues';
 import { isSupportedElevatedRight } from './manifest';
+import { elevatedRightsOf } from './rights';
 
 /** The allowlist of `@pithyx/sdk/schema/compose.v1.rules.json`, as both the CLI and the box read it. */
 export const COMPOSE_RULES = rules;
@@ -567,9 +568,7 @@ class Checker {
   private hostPath(source: string, path: string): void {
     if (rules.mount.dockerSockets.includes(source)) {
       // The raw socket is the same mount with the other right (D387); declaring both leaves one unused.
-      const raw = (this.manifest.backend?.elevated ?? []).some(
-        (right) => right === rules.mount.dockerSocketRawRight,
-      );
+      const raw = rules.mount.dockerSocketRawRight in this.manifest.permissions;
       this.rights.push({
         name: raw ? rules.mount.dockerSocketRawRight : rules.mount.dockerSocketRight,
         path,
@@ -952,19 +951,22 @@ class Checker {
       }
     });
 
-    const declared = backend?.elevated ?? [];
+    const declared = elevatedRightsOf(this.manifest);
     for (const { name, path } of this.rights) {
       if (!isSupportedElevatedRight(name)) {
         this.add('app.elevated.unsupported', { right: name, path });
-      } else if (!(declared as string[]).includes(name)) {
+      } else if (!declared.includes(name)) {
         this.add('app.compose.right_missing', { path, right: name });
       }
     }
-    declared.forEach((right, index) => {
+    for (const right of declared) {
       if (isSupportedElevatedRight(right) && !this.rights.some((used) => used.name === right)) {
-        this.add('app.compose.right_unused', { path: `/backend/elevated/${String(index)}`, right });
+        this.add('app.compose.right_unused', {
+          path: `/permissions/${escapePointer(right)}`,
+          right,
+        });
       }
-    });
+    }
   }
 }
 

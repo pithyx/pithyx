@@ -47,6 +47,8 @@ interface StoreMethods {
       password?: string;
       totpCode?: string;
       elevated?: boolean;
+      /** The app's id once the administrator typed its name in the critical step (D388). */
+      confirmCritical?: string;
     };
     result: Job;
   };
@@ -62,13 +64,14 @@ interface StoreMethods {
     params: { appId: string; permission: string; granted: boolean };
     result: AppDetails;
   };
-  /** Grants or revokes elevated rights; granting needs a step-up like an install (D311). */
+  /** Grants or revokes elevated rights; granting needs the consent of its tier like an install (D311, D388). */
   'internal.admin.apps.setElevated': {
     params: {
       appId: string;
       rights: AppElevatedState[];
       password?: string;
       totpCode?: string;
+      confirmCritical?: string;
     };
     result: AppDetails;
   };
@@ -272,10 +275,11 @@ export function storeHost(emit: (event: string, data?: unknown) => void): {
         (value.access === undefined || value.access === 'everybody' || value.access === 'admins') &&
         (value.password === undefined || typeof value.password === 'string') &&
         (value.totpCode === undefined || typeof value.totpCode === 'string') &&
-        (value.elevated === undefined || typeof value.elevated === 'boolean'),
+        (value.elevated === undefined || typeof value.elevated === 'boolean') &&
+        (value.confirmCritical === undefined || typeof value.confirmCritical === 'string'),
       handle: (params) =>
         daemon(async () => {
-          const { packageId, pool, access, password, totpCode, elevated } =
+          const { packageId, pool, access, password, totpCode, elevated, confirmCritical } =
             params as StoreMethods['internal.admin.apps.install']['params'];
           return follow(
             unwrap(
@@ -287,6 +291,7 @@ export function storeHost(emit: (event: string, data?: unknown) => void): {
                   ...(password === undefined ? {} : { password }),
                   ...(totpCode === undefined ? {} : { totpCode }),
                   ...(elevated === undefined ? {} : { elevated }),
+                  ...(confirmCritical === undefined ? {} : { confirmCritical }),
                 },
               }),
             ),
@@ -302,10 +307,11 @@ export function storeHost(emit: (event: string, data?: unknown) => void): {
             isRecord(entry) && hasText(entry, 'right') && typeof entry.granted === 'boolean',
         ) &&
         (value.password === undefined || typeof value.password === 'string') &&
-        (value.totpCode === undefined || typeof value.totpCode === 'string'),
+        (value.totpCode === undefined || typeof value.totpCode === 'string') &&
+        (value.confirmCritical === undefined || typeof value.confirmCritical === 'string'),
       handle: (params) =>
         daemon(async () => {
-          const { appId, rights, password, totpCode } =
+          const { appId, rights, password, totpCode, confirmCritical } =
             params as StoreMethods['internal.admin.apps.setElevated']['params'];
           return unwrap(
             await api.PUT('/api/apps/{appId}/elevated', {
@@ -314,6 +320,7 @@ export function storeHost(emit: (event: string, data?: unknown) => void): {
                 rights,
                 ...(password === undefined ? {} : { password }),
                 ...(totpCode === undefined ? {} : { totpCode }),
+                ...(confirmCritical === undefined ? {} : { confirmCritical }),
               },
             }),
           );

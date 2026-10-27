@@ -1,11 +1,12 @@
 import type { AppManifest } from '@pithyx/sdk';
 import composeRules from '@pithyx/sdk/schema/compose.v1.rules.json' with { type: 'json' };
-import schema from '@pithyx/sdk/schema/manifest.v1.schema.json' with { type: 'json' };
+import schema from '@pithyx/sdk/schema/manifest.v2.schema.json' with { type: 'json' };
 import { isValidCron } from './cron';
 import type { Issue } from './issues';
 import { compileSchema, display, isObject, parseStrictJson, schemaViolations } from './json-schema';
+import { DEVICE_PREFIX, elevatedRightsOf } from './rights';
 
-export const SUPPORTED_MANIFEST_VERSION = 1;
+export const SUPPORTED_MANIFEST_VERSION = 2;
 
 /** The namespace of the system apps and the official catalog; the box never accepts it from a sideload. */
 export const RESERVED_ID_PREFIX = 'org.pithyx.';
@@ -19,7 +20,6 @@ export interface ManifestValidation {
   manifest?: AppManifest;
 }
 
-const DEVICE_PREFIX = 'device:';
 const CAPABILITY_PREFIX = 'capability:';
 const elevatedRules = composeRules.elevated;
 const blockedDevice = new RegExp(composeRules.patterns.blockedDevice);
@@ -56,6 +56,24 @@ export function needsHostNamespace(right: string): boolean {
     (right.startsWith(DEVICE_PREFIX) &&
       !elevatedRules.namespacedDevices.includes(right.slice(DEVICE_PREFIX.length)))
   );
+}
+
+/** How much an elevated right can do on the box, and so how much granting it asks (D388). */
+export type RiskTier = 'elevated' | 'high' | 'critical';
+
+/** The tier of an elevated right, from `elevated.tiers` of the compose rules, as the box reads it. */
+export function tierOf(right: string): RiskTier {
+  const tiers = elevatedRules.tiers.rights as Record<string, string | undefined>;
+  // A device below a listed folder has its tier: device:/dev/dri/renderD128 is one node of device:/dev/dri.
+  for (let name = right; ; name = name.slice(0, name.lastIndexOf('/'))) {
+    const tier = tiers[name];
+    if (tier !== undefined) {
+      return tier as RiskTier;
+    }
+    if (!name.startsWith(DEVICE_PREFIX) || name.lastIndexOf('/') <= DEVICE_PREFIX.length) {
+      return elevatedRules.tiers.default as RiskTier;
+    }
+  }
 }
 
 /**
@@ -191,7 +209,7 @@ function semanticIssues(
       });
     }
   });
-  if (manifest.fileActions !== undefined && !manifest.permissions.includes('files.shares')) {
+  if (manifest.fileActions !== undefined && !('files.shares' in manifest.permissions)) {
     issues.push({
       code: 'app.manifest.permission_missing',
       params: { path: '/fileActions', permission: 'files.shares' },
@@ -222,21 +240,17 @@ function semanticIssues(
         );
       }
     });
-    const declared = new Set<string>(backend.elevated ?? []);
-    (backend.optionalDevices ?? []).forEach((device, index) => {
-      if (!declared.has(DEVICE_PREFIX + device)) {
-        issues.push(unknownReference(`/backend/optionalDevices/${String(index)}`, device));
-      }
-    });
-    const root = backend.root === true;
-    for (const right of backend.elevated ?? []) {
-      if (!isSupportedElevatedRight(right)) {
-        issues.push({ code: 'app.elevated.unsupported', params: { right } });
-      } else if (root && needsHostNamespace(right)) {
-        issues.push({ code: 'app.elevated.root_conflict', params: { right } });
-      } else if (!root && right.startsWith(CAPABILITY_PREFIX)) {
-        issues.push({ code: 'app.elevated.root_required', params: { right } });
-      }
+  }
+  const root = backend?.root === true;
+  for (const right of elevatedRightsOf(manifest)) {
+    if (!isSupportedElevatedRight(right)) {
+      issues.push({ code: 'app.elevated.unsupported', params: { right } });
+    } else if (backend === undefined) {
+      issues.push({ code: 'app.elevated.backend_missing', params: { right } });
+    } else if (root && needsHostNamespace(right)) {
+      issues.push({ code: 'app.elevated.root_conflict', params: { right } });
+    } else if (!root && right.startsWith(CAPABILITY_PREFIX)) {
+      issues.push({ code: 'app.elevated.root_required', params: { right } });
     }
   }
   return issues;

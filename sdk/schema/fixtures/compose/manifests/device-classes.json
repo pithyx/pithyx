@@ -1,5 +1,5 @@
 {
-  "manifestVersion": 1,
+  "manifestVersion": 2,
   "id": "com.example.chat",
   "version": "1.2.0",
   "name": {
@@ -10,7 +10,29 @@
   },
   "entry": "frontend/index.html",
   "sdk": "^1.0.0",
-  "permissions": [],
+  "arch": [
+    "amd64",
+    "arm64"
+  ],
+  "source": "https://github.com/example/app",
+  "permissions": {
+    "device:/dev/dri": {
+      "reason": {
+        "en": "Needs device:/dev/dri for its background service."
+      },
+      "optional": true
+    },
+    "device:/dev/serial": {
+      "reason": {
+        "en": "Needs device:/dev/serial for its background service."
+      }
+    },
+    "device:/dev/net/tun": {
+      "reason": {
+        "en": "Needs device:/dev/net/tun for its background service."
+      }
+    }
+  },
   "window": {
     "instances": "single",
     "defaultSize": {
@@ -31,14 +53,6 @@
       }
     },
     "lifecycle": "onDemand",
-    "root": false,
-    "elevated": [
-      "device:/dev/dri",
-      "device:/dev/serial",
-      "device:/dev/net/tun"
-    ],
-    "optionalDevices": [
-      "/dev/dri"
-    ]
+    "root": false
   }
 }

@@ -18,7 +18,7 @@ The box rewrites the file before it runs it: it sets the project name, the netwo
 - Every image is pinned by digest (`name@sha256:<64 hex>`, a tag may stand before the digest).
 - A value that breaks a rule is [`app.compose.value_invalid`](/docs/reference/errors/#app.compose.value_invalid) with a `reason`: `type`, `format`, `range`, `required`, `duplicate`, `reserved`, `interpolation`, `unpinned`, `host_path`, `anonymous`, `no_value`, `cycle` or `image_and_build`.
 - Names used across files must exist: services in `depends_on`, the manifest's endpoints and storage requests ([`app.compose.reference_unknown`](/docs/reference/errors/#app.compose.reference_unknown)), and every storage request must be mounted exactly by the services it lists, read-only for `read` access ([`app.compose.storage_mismatch`](/docs/reference/errors/#app.compose.storage_mismatch)).
-- A key that needs an elevated right (column **Elevated right**) needs that right in the manifest's `backend.elevated`, and a declared right needs its key ([`app.compose.right_missing`](/docs/reference/errors/#app.compose.right_missing), [`app.compose.right_unused`](/docs/reference/errors/#app.compose.right_unused)). The box grants `host.network`, `host.pid`, devices and capabilities (see [Elevated rights](#elevated-rights)); `privileged` and the Docker socket are refused with [`app.elevated.unsupported`](/docs/reference/errors/#app.elevated.unsupported).
+- A key that needs an elevated right (column **Elevated right**) needs that right in the manifest's `permissions`, and a declared right needs its key ([`app.compose.right_missing`](/docs/reference/errors/#app.compose.right_missing), [`app.compose.right_unused`](/docs/reference/errors/#app.compose.right_unused)). The box grants `host.network`, `host.pid`, devices, capabilities and the Docker socket (see [Elevated rights](#elevated-rights)); `privileged` is refused with [`app.elevated.unsupported`](/docs/reference/errors/#app.elevated.unsupported).
 
 ## Top-level keys
 
@@ -116,7 +116,7 @@ Mount targets that are refused (also `/` itself and everything below these), the
 
 ## Elevated rights
 
-An administrator grants each right of `backend.elevated` after confirming with the password and, with two-factor sign-in on, an authenticator code, and can revoke it later; the box then leaves the key out and restarts the backend ([Apps and Store](/docs/admin/apps-and-store/#special-rights)). The lists below are generated from the rules file: the capabilities no app gets, the rights that run a service in the host's user namespace, the devices that work inside the box's user namespace, and the device classes.
+An administrator grants each special right of the manifest's `permissions` and can revoke it later; the box then leaves the key out and restarts the backend ([Apps and Store](/docs/admin/apps-and-store/#special-rights)). Each right has a risk tier (D388, `elevated.tiers`), which decides what granting it asks: `elevated` a hint and a checkbox, `high` a risk text, a checkbox and the password (and TOTP), `critical` (root on the box) a red step of its own where the administrator types the app's name, plus the password; an app holding a `critical` right never updates by itself. A device below a device class (`device:/dev/dri/renderD128`) has the class's tier. The lists below are generated from the rules file: the capabilities no app gets, the rights that run a service in the host's user namespace, the devices that work inside the box's user namespace, the device classes, and the rights of each tier (`*` for every right not named).
 
 <!-- generated:compose-rules elevated -->
 
@@ -124,14 +124,15 @@ An administrator grants each right of `backend.elevated` after confirming with t
 - `host.network`, `host.pid`
 - `/dev/net/tun`
 - `/dev/dri`, `/dev/serial`, `/dev/net/tun`
+- `elevated`: `device:/dev/net/tun`, `device:/dev/dri`, `device:/dev/serial`; `high`: `host.network`, `host.pid`, `docker.socket`, `*`; `critical`: `docker.socket.raw`, `host.full`
 
 <!-- /generated -->
 
 - A service with `network_mode: host` or `pid: host`, or with a device outside the third list, runs in the host's user namespace with the app's uid and the device's group, because Docker refuses the host's network and processes inside a user namespace and a device's group exists only on the host. Root there would be root on the box, so these rights cannot go together with `backend.root` ([`app.elevated.root_conflict`](/docs/reference/errors/#app.elevated.root_conflict)).
 - A capability works only for root, so `capability:<NAME>` needs `backend.root` ([`app.elevated.root_required`](/docs/reference/errors/#app.elevated.root_required)); root stays unprivileged on the box through the user namespace.
-- Device nodes matching the pattern `blockedDevice` (memory, consoles and terminals, disks, ZFS, input devices, watchdogs and others) are refused. When the backend starts, a device that is missing, is no character device or is a link to a blocked one stops the start with [`app.device.unavailable`](/docs/reference/errors/#app.device.unavailable), unless the device is listed in the manifest's `backend.optionalDevices`, which leaves it out.
+- Device nodes matching the pattern `blockedDevice` (memory, consoles and terminals, disks, ZFS, input devices, watchdogs and others) are refused. When the backend starts, a device that is missing, is no character device or is a link to a blocked one stops the start with [`app.device.unavailable`](/docs/reference/errors/#app.device.unavailable), unless its entry in the manifest's `permissions` has `optional: true`, which leaves it out.
 - A device class stands for the nodes of the class plugged in at the start: in `/dev/dri` the character devices `card*` and `renderD*`, below `/dev/serial` the targets of the links that are `/dev/ttyUSB*` or `/dev/ttyACM*`; `/dev/net/tun` is a single node. A node in the class folder keeps its place below the container path; a serial adapter appears under its own path.
-- A mount of the Docker socket gets the box's socket for the app instead (D387): filtered with `docker.socket`, unfiltered with `docker.socket.raw`, which catalogs refuse ([`app.elevated.sideload_only`](/docs/reference/errors/#app.elevated.sideload_only)). Declaring both leaves `docker.socket` unused ([`app.compose.right_unused`](/docs/reference/errors/#app.compose.right_unused)).
+- A mount of the Docker socket gets the box's socket for the app instead (D387): filtered with `docker.socket`, unfiltered with `docker.socket.raw`, which every catalog may ship since D388. Declaring both leaves `docker.socket` unused ([`app.compose.right_unused`](/docs/reference/errors/#app.compose.right_unused)).
 
 ## Source form compose.dev.yaml
 

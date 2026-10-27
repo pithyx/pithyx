@@ -52,6 +52,9 @@ export function UpdatesTab({
                 <span className={styles.tileMeta}>
                   {t('updates.versions', { from: update.installedVersion, to: update.version })}
                 </span>
+                {update.critical && (
+                  <span className={styles.tileMeta}>{t('updates.critical')}</span>
+                )}
                 <span className={styles.badges}>
                   {update.addedPermissions.length > 0 && (
                     <Badge tone="highlight">
@@ -59,6 +62,7 @@ export function UpdatesTab({
                     </Badge>
                   )}
                   {update.elevated && <Badge tone="danger">{t('updates.elevated')}</Badge>}
+                  {update.critical && <Badge tone="danger">{t('elevated.rootBadge')}</Badge>}
                   <Badge tone="neutral">
                     {update.automatic
                       ? t('updates.automatic')

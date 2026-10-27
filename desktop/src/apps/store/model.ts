@@ -1,6 +1,7 @@
+import { elevated as elevatedRules } from '@pithyx/sdk/schema/compose.v1.rules.json';
 import type { AppAccess, PoolList, SubjectGrant } from '../sdk/store';
 
-/** The permissions of manifest v1 the Store explains; any other shows its name with a general text. */
+/** The permissions of the manifest the Store explains; any other name is an elevated right (D388). */
 export const KNOWN_PERMISSIONS = [
   'files.read',
   'files.write',
@@ -16,6 +17,39 @@ export type KnownPermission = (typeof KNOWN_PERMISSIONS)[number];
 
 export function isKnownPermission(permission: string): permission is KnownPermission {
   return (KNOWN_PERMISSIONS as readonly string[]).includes(permission);
+}
+
+/** How much an elevated right can do on the box, and so how much granting it asks (D388). */
+export type RiskTier = 'elevated' | 'high' | 'critical';
+
+/**
+ * The tier of an elevated right from `elevated.tiers` of the compose rules, as the box and the CLI read it: a device
+ * below a listed folder (`device:/dev/dri/renderD128`) has the folder's tier.
+ */
+export function tierOf(right: string): RiskTier {
+  const rights = elevatedRules.tiers.rights as Record<string, string | undefined>;
+  for (let name = right; ; name = name.slice(0, name.lastIndexOf('/'))) {
+    const tier = rights[name];
+    if (tier !== undefined) {
+      return tier as RiskTier;
+    }
+    if (!name.startsWith('device:') || name.lastIndexOf('/') <= 'device:'.length) {
+      return elevatedRules.tiers.default as RiskTier;
+    }
+  }
+}
+
+const TIER_ORDER: readonly RiskTier[] = ['elevated', 'high', 'critical'];
+
+/** The highest tier among the rights, or null for none. */
+export function highestTier(rights: readonly string[]): RiskTier | null {
+  return rights.reduce<RiskTier | null>(
+    (highest, right) =>
+      highest === null || TIER_ORDER.indexOf(tierOf(right)) > TIER_ORDER.indexOf(highest)
+        ? tierOf(right)
+        : highest,
+    null,
+  );
 }
 
 /** The device classes of D387 by their path: a right on one stands for every node of the class that is plugged in. */
@@ -81,13 +115,21 @@ export interface ManifestFacts {
   author: string | null;
   homepage: string | null;
   license: string | null;
+  /** The plain permissions of the manifest's `permissions` map, in its order. */
   permissions: string[];
+  /**
+   * The author's reason for each permission and elevated right by its name (D388). An app installed before reasons
+   * were required has none.
+   */
+  reasons: Record<string, Record<string, string>>;
+  /** The hosts `network.internet` names, if any. */
+  hosts: string[];
   storage: StorageRequest[];
   /** The app brings containers. */
   backend: boolean;
   /** A container runs as root (unprivileged on the host through userns, D304). */
   root: boolean;
-  /** Elevated rights of `backend.elevated` (D311), granted only after a step-up. */
+  /** The elevated rights of the manifest's `permissions` map (D311), each in a risk tier (D388). */
   elevated: string[];
 }
 
@@ -111,13 +153,26 @@ export function manifestFacts(manifest: unknown): ManifestFacts {
   const backend = isRecord(root.backend) ? root.backend : null;
   const author =
     isRecord(root.author) && typeof root.author.name === 'string' ? root.author.name : null;
+  const rights = isRecord(root.permissions) ? root.permissions : {};
+  const names = Object.keys(rights);
+  const reasons: Record<string, Record<string, string>> = {};
+  for (const name of names) {
+    const grant = rights[name];
+    const reason = isRecord(grant) ? texts(grant.reason) : null;
+    if (reason !== null && Object.keys(reason).length > 0) {
+      reasons[name] = reason;
+    }
+  }
+  const internet = rights['network.internet'];
   return {
     name: texts(root.name) ?? {},
     description: texts(root.description),
     author,
     homepage: typeof root.homepage === 'string' ? root.homepage : null,
     license: typeof root.license === 'string' ? root.license : null,
-    permissions: strings(root.permissions),
+    permissions: names.filter(isKnownPermission),
+    reasons,
+    hosts: isRecord(internet) ? strings(internet.hosts) : [],
     storage: (Array.isArray(root.storage) ? root.storage : []).filter(isRecord).map((request) => ({
       id: typeof request.id === 'string' ? request.id : '',
       name: texts(request.name) ?? {},
@@ -126,7 +181,7 @@ export function manifestFacts(manifest: unknown): ManifestFacts {
     })),
     backend: backend !== null,
     root: backend?.root === true,
-    elevated: strings(backend?.elevated),
+    elevated: names.filter((name) => !isKnownPermission(name)),
   };
 }
 

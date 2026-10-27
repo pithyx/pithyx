@@ -827,15 +827,21 @@ public sealed partial class StoreService(
         entry.GetProperty("architectures").EnumerateArray().Any(architecture => architecture.GetString() == BoxArchitecture)
         && VersionRange.Satisfies(options.BoxVersion, entry.GetProperty("pithyx").GetString() ?? "*");
 
-    /// <summary>The newest version of an app in a copy that this box can run.</summary>
+    /// <summary>
+    /// The newest version of an app in a copy that this box can run. A version published with an older manifest (version
+    /// 1, D388) stays in the catalog for good, but this box no longer installs it.
+    /// </summary>
     private (string Version, JsonElement Entry)? Newest(CatalogCopy copy, string appId) =>
         copy.Index.GetProperty("apps").TryGetProperty(appId, out var app)
             ? app.GetProperty("versions").EnumerateObject()
-                .Where(version => Fits(version.Value))
+                .Where(version => Fits(version.Value) && Readable(copy.Manifests[(appId, version.Name)]))
                 .Select(version => ((string Version, JsonElement Entry)?)(version.Name, version.Value))
                 .OrderByDescending(version => version!.Value.Version, Comparer<string>.Create(AppService.CompareVersions))
                 .FirstOrDefault()
             : null;
+
+    private static bool Readable(JsonElement manifest) =>
+        manifest.TryGetProperty("manifestVersion", out var version) && version.ValueKind == JsonValueKind.Number && version.GetInt32() == Manifest.ManifestValidator.SupportedVersion;
 
     private StoreApp Summary(CatalogCopy copy, string appId, string version)
     {
@@ -1070,11 +1076,12 @@ public sealed partial class StoreService(
                     continue;
                 }
                 var manifest = copy.Manifests[(app.Id, newest.Version)];
-                var had = Strings(app.Manifest, "permissions");
-                var added = Strings(manifest, "permissions").Where(permission => !had.Contains(permission)).ToList();
+                var had = Manifest.ElevatedRights.PermissionsOf(app.Manifest);
+                var added = Manifest.ElevatedRights.PermissionsOf(manifest).Except(had, StringComparer.Ordinal).ToList();
                 var elevated = (IsRoot(manifest) && !IsRoot(app.Manifest)) || Manifest.ElevatedRights.Of(manifest).Except(Manifest.ElevatedRights.Of(app.Manifest)).Any();
+                var critical = Manifest.ElevatedRights.IsCritical(app.Manifest) || Manifest.ElevatedRights.IsCritical(manifest);
                 var effective = app.UpdatePolicy ?? policy;
-                updates.Add(new AppUpdate(app.Id, app.Version, newest.Version, copy.CatalogId, added, elevated, effective, effective == UpdatePolicy.Automatic && added.Count == 0 && !elevated));
+                updates.Add(new AppUpdate(app.Id, app.Version, newest.Version, copy.CatalogId, added, elevated, effective, UpdatesItself(effective, added.Count, elevated, critical), critical));
                 break;
             }
         }
@@ -1082,8 +1089,13 @@ public sealed partial class StoreService(
         Changed?.Invoke();
     }
 
-    private static HashSet<string> Strings(JsonElement manifest, string property) =>
-        manifest.TryGetProperty(property, out var values) ? values.EnumerateArray().Select(value => value.GetString()!).ToHashSet(StringComparer.Ordinal) : [];
+    /// <summary>
+    /// Whether the box installs an update by itself (D329, D388): only under the automatic policy, and never when it asks
+    /// for new permissions or elevated rights or the app has a critical right (root on the box), so a hijacked release
+    /// of such an app cannot take over the box unseen. Those updates wait for one click of an administrator.
+    /// </summary>
+    public static bool UpdatesItself(UpdatePolicy policy, int addedPermissions, bool elevated, bool critical) =>
+        policy == UpdatePolicy.Automatic && addedPermissions == 0 && !elevated && !critical;
 
     private static bool IsRoot(JsonElement manifest) =>
         manifest.TryGetProperty("backend", out var backend) && backend.TryGetProperty("root", out var root) && root.ValueKind == JsonValueKind.True;

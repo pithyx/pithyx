@@ -277,7 +277,8 @@
       "notify": "Waits for you",
       "none": "Waits for you"
     },
-    "update": "Update"
+    "update": "Update",
+    "critical": "Has root access: never updates by itself. Install the update with one click after you checked it."
   },
   "settings": {
     "open": "Store settings",
@@ -304,7 +305,8 @@
       "last": "last check: {time}",
       "checkNow": "Check now",
       "checking": "Checking every catalog now.",
-      "notifications": "Administrators get desktop notifications about updates and catalogs that cannot be fetched."
+      "notifications": "Administrators get desktop notifications about updates and catalogs that cannot be fetched.",
+      "criticalHint": "Apps with root access never update by themselves, whatever this setting says."
     },
     "channel": {
       "title": "Channel",
@@ -353,7 +355,7 @@
   "elevated": {
     "section": "Special rights",
     "warning": "These rights reach past the sandbox of the app's background service. Grant them only to apps you trust.",
-    "sectionIntro": "Rights beyond the sandbox of the app's background service. Revoking one restarts the service without it; granting one again needs your password.",
+    "sectionIntro": "Rights beyond the sandbox of the app's background service. Revoking one restarts the service without it; granting a right of high risk or root access again needs your password.",
     "hostNetwork": {
       "title": "The box's network",
       "risk": "Its background service uses the box's own network instead of its own: it sees every connection of the box and can offer services on any port of every network card."
@@ -372,7 +374,6 @@
     },
     "unknown": "A special right this version of Pithyx does not explain.",
     "badge": "Special rights",
-    "grant": "{count, plural, one {Grant this right} other {Grant these rights}}",
     "grantLater": "The app is installed without them; its background service runs without these rights until you grant them on its page.",
     "stepUp": "To grant special rights, confirm with your password{twoFactor, select, true { and a code from your authenticator app} other {}}. The confirmation holds for five minutes.",
     "stepUpHeld": "You confirmed with your password a moment ago; that holds until {time}.",
@@ -398,6 +399,34 @@
     "deviceMissing": "Not plugged in. Plug in the device and try again.",
     "deviceMissingOptional": "Not found. The app runs without it, for example without hardware acceleration.",
     "deviceAbsent": "Not plugged in: its background service does not start until the device is back.",
-    "deviceAbsentOptional": "Not found: the background service runs without it."
+    "deviceAbsentOptional": "Not found: the background service runs without it.",
+    "tier": {
+      "elevated": "Device access",
+      "high": "High risk",
+      "critical": "Root access"
+    },
+    "reason": "Why the app needs it: {reason}",
+    "noReason": "The app gives no reason: it was installed before apps had to name one.",
+    "hosts": "Talks to {hosts}",
+    "consent": {
+      "grant": "Grant these rights",
+      "later": "Install without them; grant them later on the app's page",
+      "elevated": "I allow the devices above",
+      "high": "I understand what the rights above let the app do",
+      "critical": "The next step asks you to confirm root access."
+    },
+    "rootBadge": "Root access",
+    "critical": {
+      "title": "{name} gets root access to the box",
+      "consequences": "With {rights} the app's background service can read and change every file of every user, change passwords and settings, and run any software on the box: the same as root. A broken or hijacked update of the app could take over the box, so Pithyx never updates it by itself.",
+      "trust": "Grant it only to an app whose source you know and whose author you trust.",
+      "typeName": "Type the app's name to confirm: {name}",
+      "pasted": "Pasting is fine, but this is not a joke: this app gets full control of the box.",
+      "continue": "Continue",
+      "back": "Back",
+      "install": "Install with root access",
+      "update": "Update with root access",
+      "grant": "Grant root access"
+    }
   }
 }

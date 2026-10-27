@@ -111,6 +111,12 @@
         "title": "Ein Gerät von {app} fehlt",
         "body": "{app} braucht {path}, und das ist nicht eingesteckt. Ihr Hintergrunddienst läuft erst wieder, wenn das Gerät zurück ist."
       }
+    },
+    "elevated": {
+      "critical": {
+        "title": "{app} hat jetzt Root-Zugriff",
+        "body": "{user} hat {app} das Recht {right} gegeben: Die App kann jetzt die ganze Box steuern. Wenn du das nicht erwartet hast, entziehe es unter Einstellungen > Sicherheit."
+      }
     }
   },
   "desktop": {

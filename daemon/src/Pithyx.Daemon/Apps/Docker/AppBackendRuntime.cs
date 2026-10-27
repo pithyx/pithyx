@@ -172,7 +172,7 @@ public sealed partial class AppBackendRuntime(
         progress?.Invoke(new Jobs.JobProgress(1, 3, 0, 0, "images"));
         var images = await ImagesAsync(app.AppId, version, lockFile, cancellationToken);
 
-        var devices = Devices(app.GrantedElevated, DeviceNodes.Optional(app.Manifest), deviceFs, path => LogOptionalDeviceMissing(app.AppId, path));
+        var devices = Devices(app.GrantedElevated, Manifest.ElevatedRights.OptionalDevices(app.Manifest), deviceFs, path => LogOptionalDeviceMissing(app.AppId, path));
         var project = ComposeRewriter.ProjectName(app.AppId);
         var socket = HoldsDockerSocket(app.GrantedElevated)
             ? dockerProxy.Open(new DockerProxySocket(

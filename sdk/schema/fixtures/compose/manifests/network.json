@@ -1,5 +1,5 @@
 {
-  "manifestVersion": 1,
+  "manifestVersion": 2,
   "id": "com.example.chat",
   "version": "1.2.0",
   "name": {
@@ -10,9 +10,18 @@
   },
   "entry": "frontend/index.html",
   "sdk": "^1.0.0",
-  "permissions": [
-    "network.internet"
+  "arch": [
+    "amd64",
+    "arm64"
   ],
+  "source": "https://github.com/example/app",
+  "permissions": {
+    "network.internet": {
+      "reason": {
+        "en": "Fetches updates from the internet."
+      }
+    }
+  },
   "window": {
     "instances": "single",
     "defaultSize": {

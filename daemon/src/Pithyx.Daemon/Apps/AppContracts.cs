@@ -86,8 +86,9 @@ public sealed record AppPackagePreview(
 /// <param name="Access">Who may use the app after an install; an update keeps who may use it. Defaults to the preview's suggested access.</param>
 /// <param name="Password">The administrator's password, for a package that asks for elevated rights it would get newly (D311); not needed while an earlier step-up of this session is valid.</param>
 /// <param name="TotpCode">A current authenticator code with the password, when two-factor sign-in is on.</param>
-/// <param name="Elevated">For a package whose new elevated rights need a step-up: false installs it with them revoked instead.</param>
-public sealed record InstallAppRequest(string? Pool = null, AppAccess? Access = null, string? Password = null, string? TotpCode = null, bool? Elevated = null);
+/// <param name="Elevated">For a package with new elevated rights: false installs it with them revoked instead.</param>
+/// <param name="ConfirmCritical">The app's id, sent once the administrator typed the app's name in the critical step; granting a critical right needs it (D388).</param>
+public sealed record InstallAppRequest(string? Pool = null, AppAccess? Access = null, string? Password = null, string? TotpCode = null, bool? Elevated = null, string? ConfirmCritical = null);
 
 /// <param name="Enabled">False hides the app from everybody and stops serving its frontend; its data and grants stay.</param>
 public sealed record UpdateAppRequest(bool Enabled);
@@ -153,7 +154,7 @@ public sealed record AppList(IReadOnlyList<AppSummary> Apps);
 /// <param name="Catalog">The catalog it was installed or last updated from; null for a sideload.</param>
 /// <param name="UpdatePolicy">Its own update policy; null follows the box's.</param>
 /// <param name="PreviousVersion">The version before its last update, which a rollback restores with its data; null when there is none.</param>
-/// <param name="Elevated">Each elevated right of the manifest's <c>backend.elevated</c> with whether it is granted (D311).</param>
+/// <param name="Elevated">Each elevated right of the manifest's <c>permissions</c> with its tier and whether it is granted (D311, D388).</param>
 /// <param name="Devices">Each device of the manifest's elevated rights with whether it is optional and plugged in now (D387).</param>
 public sealed record AppDetails(
     string Id,
@@ -173,12 +174,12 @@ public sealed record AppDetails(
     string? Catalog,
     Catalog.UpdatePolicy? UpdatePolicy,
     string? PreviousVersion,
-    IReadOnlyList<AppElevatedState> Elevated,
+    IReadOnlyList<AppElevatedRight> Elevated,
     IReadOnlyList<AppDeviceState> Devices);
 
 /// <summary>A device an app's backend asks for (D387).</summary>
 /// <param name="Path">The device or device class, for example <c>/dev/dri</c>.</param>
-/// <param name="Optional">The backend runs without it (<c>backend.optionalDevices</c>).</param>
+/// <param name="Optional">The backend runs without it (<c>optional</c> on its right).</param>
 /// <param name="Present">At least one node of it is plugged in now.</param>
 public sealed record AppDeviceState(string Path, bool Optional, bool Present);
 
@@ -225,10 +226,17 @@ public sealed record AppPermissionState(string Permission, bool Granted);
 /// <param name="Granted">False until an administrator grants it after a step-up, and after one revoked it; the backend then runs without it.</param>
 public sealed record AppElevatedState(string Right, bool Granted);
 
+/// <summary>An elevated right of an installed app as administrators see it (D311, D388).</summary>
+/// <param name="Right">For example <c>host.network</c> or <c>device:/dev/dri</c>.</param>
+/// <param name="Granted">False until an administrator grants it, and after one revoked it; the backend then runs without it.</param>
+/// <param name="Tier">How much it can do on the box, from the compose rules: what granting it asks, and a critical right keeps the app from updating by itself.</param>
+public sealed record AppElevatedRight(string Right, bool Granted, Manifest.RiskTier Tier);
+
 /// <param name="Rights">Elevated rights of the app's manifest with whether the app keeps them; the others stay as they are.</param>
-/// <param name="Password">The administrator's password; granting needs a step-up (D311), unless an earlier one of this session is valid.</param>
+/// <param name="Password">The administrator's password; granting a right of the tier high or critical needs a step-up (D311, D388), unless an earlier one of this session is valid.</param>
 /// <param name="TotpCode">A current authenticator code with the password, when two-factor sign-in is on.</param>
-public sealed record AppElevatedRequest(IReadOnlyList<AppElevatedState> Rights, string? Password = null, string? TotpCode = null);
+/// <param name="ConfirmCritical">The app's id, sent once the administrator typed the app's name in the critical step; granting a critical right needs it (D388).</param>
+public sealed record AppElevatedRequest(IReadOnlyList<AppElevatedState> Rights, string? Password = null, string? TotpCode = null, string? ConfirmCritical = null);
 
 /// <summary>Every installed app for administrators: the snapshot and every event of <c>apps/admin</c>.</summary>
 /// <param name="Pool">The app pool, or null before the first install.</param>

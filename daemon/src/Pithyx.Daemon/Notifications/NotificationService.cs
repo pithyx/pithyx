@@ -130,10 +130,10 @@ public sealed partial class NotificationService : IDisposable
     }
 
     /// <summary>
-    /// Creates the same notification for every administrator and hands it once to the box's channels (D379). Returns
-    /// how many administrators there are.
+    /// Creates the same notification for every administrator but <paramref name="except"/> and hands it once to the box's
+    /// channels (D379). Returns how many administrators get it.
     /// </summary>
-    public async Task<int> CreateForAdministratorsAsync(NotificationDraft draft, CancellationToken cancellationToken)
+    public async Task<int> CreateForAdministratorsAsync(NotificationDraft draft, CancellationToken cancellationToken, long? except = null)
     {
         ArgumentNullException.ThrowIfNull(draft);
         var parameters = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(JsonSerializer.Serialize(draft.Params, _storage), _storage) ?? [];
@@ -142,7 +142,7 @@ public sealed partial class NotificationService : IDisposable
         await using (var connection = await _connections.OpenAsync(cancellationToken))
         {
             // Deactivated administrators too: they read it when they are back.
-            administrators = [.. (await Permissions.PermissionService.AllUsersAsync(connection, null, asIfActive: true)).Where(user => user.Permissions.IsAdmin).Select(user => user.Id).Order()];
+            administrators = [.. (await Permissions.PermissionService.AllUsersAsync(connection, null, asIfActive: true)).Where(user => user.Permissions.IsAdmin && user.Id != except).Select(user => user.Id).Order()];
         }
         foreach (var administrator in administrators)
         {

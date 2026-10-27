@@ -133,6 +133,9 @@ export function readProject(root: string, options: ProjectOptions = {}): Project
     });
     findings.push(...validation.issues.map(error));
     manifest = validation.manifest;
+    if (manifest !== undefined && 'docker.socket.raw' in manifest.permissions) {
+      findings.push({ level: 'warning', code: 'cli.rights.raw_socket', params: {} });
+    }
   } else {
     findings.push({
       level: 'error',

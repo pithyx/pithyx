@@ -72,6 +72,8 @@ export const pages: ReferencePage[] = [
         'LocalizedText',
         'Permission',
         'ElevatedPermission',
+        'Permissions',
+        'PermissionGrant',
         'WindowLoading',
         'WindowManifest',
         'WindowSize',
