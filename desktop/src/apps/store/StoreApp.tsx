@@ -24,6 +24,7 @@ import { catalogsOf, useStoreState, type CatalogTab } from './storeState';
 import { UpdatesTab } from './UpdatesTab';
 import { InstallDialog } from './InstallDialog';
 import { UninstallDialog } from './UninstallDialog';
+import { ElevatedBadge } from './ElevatedRights';
 import { iconUrl, manifestFacts } from './model';
 import styles from './Store.module.css';
 
@@ -288,6 +289,7 @@ function InstalledTile({
           {!details.enabled && <Badge tone="neutral">{t('installed.disabled')}</Badge>}
           {details.busy && <Badge tone="accent">{t('installed.busy')}</Badge>}
           {!details.available && <Badge tone="danger">{t('installed.unavailable')}</Badge>}
+          <ElevatedBadge details={details} />
         </span>
       </span>
     </button>

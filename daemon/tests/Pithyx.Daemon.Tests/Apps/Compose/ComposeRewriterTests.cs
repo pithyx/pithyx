@@ -32,7 +32,9 @@ public sealed class ComposeRewriterTests
                     mapping.Value.GetProperty("hostPath").GetString()!,
                     mapping.Value.GetProperty("readOnly").GetBoolean(),
                     mapping.Value.GetProperty("gid").ValueKind == JsonValueKind.Number ? mapping.Value.GetProperty("gid").GetInt32() : null)),
-            host.TryGetProperty("internetBridgeName", out var internet) ? internet.GetString() : null));
+            host.TryGetProperty("internetBridgeName", out var internet) ? internet.GetString() : null,
+            host.TryGetProperty("elevated", out var elevated) ? elevated.EnumerateArray().Select(right => right.GetString()!).ToHashSet(StringComparer.Ordinal) : null,
+            host.TryGetProperty("deviceGroups", out var groups) ? groups.EnumerateObject().ToDictionary(group => group.Name, group => group.Value.GetInt32()) : null));
     }
 
     [Theory]

@@ -17,6 +17,8 @@ public static class AuthEndpoints
         services.AddSingleton<LoginRateLimiter>();
         services.AddHostedService<SignInAlerts>();
         services.AddSingleton<AuthService>();
+        services.AddSingleton<StepUps>();
+        services.AddSingleton<Audit.AuditLog>();
         services.AddAuthentication(SessionAuthenticationHandler.SchemeName)
             .AddScheme<Microsoft.AspNetCore.Authentication.AuthenticationSchemeOptions, SessionAuthenticationHandler>(SessionAuthenticationHandler.SchemeName, null);
         services.AddAuthorization(Policies.Add);
@@ -37,6 +39,10 @@ public static class AuthEndpoints
         auth.MapPost("/totp/enroll", EnrollTotpAsync).WithName("EnrollTotp");
         auth.MapPost("/totp/confirm", ConfirmTotpAsync).WithName("ConfirmTotp");
         auth.MapPost("/totp/disable", DisableTotpAsync).WithName("DisableTotp");
+        auth.MapGet("/step-up", GetStepUp).WithName("GetStepUp")
+            .WithDescription("Until when this session holds a step-up (D311), or null.");
+        auth.MapPost("/step-up", StepUpAsync).WithName("StepUp")
+            .WithDescription("Confirms the password and, with two-factor sign-in on, an authenticator code again; holds for five minutes in this session.");
 
         var passkeys = auth.MapGroup("/passkeys");
         passkeys.MapPost("/sign-in/options", PasskeySignInOptions).WithName("PasskeySignInOptions").AllowAnonymous()
@@ -146,6 +152,19 @@ public static class AuthEndpoints
     private static async Task<Ok<UserInfo>> GetSessionAsync(AuthService auth, HttpContext context, CancellationToken cancellationToken) =>
         TypedResults.Ok(await auth.GetUserAsync(CurrentUser.Id(context.User), cancellationToken)
             ?? throw new PithyxException(ErrorCodes.AuthSessionExpired));
+
+    private static Ok<StepUpState> GetStepUp(StepUps stepUps, HttpContext context) =>
+        TypedResults.Ok(new StepUpState(stepUps.Until(context.User)));
+
+    private static async Task<Ok<StepUpState>> StepUpAsync(StepUpRequest request, StepUps stepUps, HttpContext context, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        if (string.IsNullOrEmpty(request.Password))
+        {
+            throw new PithyxException(ErrorCodes.AuthCredentialsInvalid);
+        }
+        return TypedResults.Ok(new StepUpState(await stepUps.EnsureAsync(context, request.Password, request.TotpCode, cancellationToken)));
+    }
 
     private static async Task<Ok<TotpEnrollment>> EnrollTotpAsync(AuthService auth, HttpContext context, CancellationToken cancellationToken) =>
         TypedResults.Ok(await auth.EnrollTotpAsync(CurrentUser.Id(context.User), Environment.MachineName, cancellationToken));

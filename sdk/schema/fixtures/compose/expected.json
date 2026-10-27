@@ -141,6 +141,29 @@
       }
     }
   ],
+  "device-blocked.yaml": [
+    {
+      "code": "app.elevated.unsupported",
+      "params": {
+        "right": "device:/dev/sda",
+        "path": "/services/server/devices/0"
+      }
+    },
+    {
+      "code": "app.elevated.unsupported",
+      "params": {
+        "right": "device:/dev/mem",
+        "path": "/services/server/devices/1"
+      }
+    },
+    {
+      "code": "app.compose.right_missing",
+      "params": {
+        "path": "/services/server/devices/2",
+        "right": "device:/dev/ttyUSB0"
+      }
+    }
+  ],
   "devices-format.yaml": [
     {
       "code": "app.compose.value_invalid",
@@ -816,33 +839,56 @@
       }
     }
   ],
-  "right-unsupported.yaml": [
+  "right-missing.yaml": [
     {
-      "code": "app.elevated.unsupported",
+      "code": "app.compose.right_missing",
       "params": {
         "path": "/services/server/cap_add/0",
         "right": "capability:NET_ADMIN"
       }
     },
     {
-      "code": "app.elevated.unsupported",
+      "code": "app.compose.right_missing",
       "params": {
         "path": "/services/server/devices/0",
         "right": "device:/dev/dri/renderD128"
       }
     },
     {
-      "code": "app.elevated.unsupported",
+      "code": "app.compose.right_missing",
       "params": {
         "path": "/services/server/pid",
         "right": "host.pid"
       }
     },
     {
-      "code": "app.elevated.unsupported",
+      "code": "app.compose.right_missing",
       "params": {
         "path": "/services/discovery/network_mode",
         "right": "host.network"
+      }
+    }
+  ],
+  "right-unused.yaml": [
+    {
+      "code": "app.compose.right_unused",
+      "params": {
+        "path": "/backend/elevated/0",
+        "right": "host.network"
+      }
+    },
+    {
+      "code": "app.compose.right_unused",
+      "params": {
+        "path": "/backend/elevated/1",
+        "right": "host.pid"
+      }
+    },
+    {
+      "code": "app.compose.right_unused",
+      "params": {
+        "path": "/backend/elevated/3",
+        "right": "device:/dev/ttyUSB0"
       }
     }
   ],

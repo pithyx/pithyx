@@ -20,6 +20,7 @@ import { storeCall } from '../sdk/store';
 import { describeProblem, formatDate } from '../storage/shared';
 import { AccessSection } from './AccessSection';
 import { CatalogScreenshots, CatalogVersions, useCatalogDetails } from './CatalogAppPage';
+import { ElevatedBadge, ElevatedSection } from './ElevatedRights';
 import { InstallDialog } from './InstallDialog';
 import { JobProgress, useAppJob } from './jobs';
 import { iconUrl, manifestFacts } from './model';
@@ -159,6 +160,7 @@ export function AppPage({
                   : t('detail.source.sideload')}
               </Badge>
               {details.busy && <Badge tone="accent">{t('installed.busy')}</Badge>}
+              <ElevatedBadge details={details} />
             </span>
           </div>
           <div className={styles.buttons}>
@@ -265,6 +267,8 @@ export function AppPage({
           )}
           {permission.isError && <ErrorNotice error={describeProblem(permission.error)} />}
         </section>
+
+        <ElevatedSection app={app} details={details} />
 
         {facts.storage.length > 0 && (
           <StorageSection app={app} details={details} requests={facts.storage} />

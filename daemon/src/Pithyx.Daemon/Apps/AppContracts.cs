@@ -57,6 +57,8 @@ public enum AppPackageAction
 /// <param name="SuggestedAccess">Who should use the app after an install (D304): administrators only when it asks for elevated rights, root in a container or <c>directory.read</c>, everybody otherwise. An install without access takes it.</param>
 /// <param name="Catalog">The catalog the package comes from; null for an uploaded file (a sideload, unverified).</param>
 /// <param name="KeptData">For an install: an earlier installation was removed with "Keep the data", and the app gets its data and its user id again.</param>
+/// <param name="AddedElevated">Elevated rights the package asks for that the app does not hold or had revoked (D311): installing grants them, so it needs a step-up with password and TOTP.</param>
+/// <param name="RemovedElevated">Elevated rights the installed version had that the package no longer asks for.</param>
 public sealed record AppPackagePreview(
     string PackageId,
     DateTimeOffset ExpiresAt,
@@ -74,11 +76,16 @@ public sealed record AppPackagePreview(
     string Sha256,
     AppAccess SuggestedAccess,
     string? Catalog = null,
-    bool KeptData = false);
+    bool KeptData = false,
+    IReadOnlyList<string>? AddedElevated = null,
+    IReadOnlyList<string>? RemovedElevated = null);
 
 /// <param name="Pool">The pool for the app data; required for the first app, and then always the app pool.</param>
 /// <param name="Access">Who may use the app after an install; an update keeps who may use it. Defaults to the preview's suggested access.</param>
-public sealed record InstallAppRequest(string? Pool = null, AppAccess? Access = null);
+/// <param name="Password">The administrator's password, for a package that asks for elevated rights it would get newly (D311); not needed while an earlier step-up of this session is valid.</param>
+/// <param name="TotpCode">A current authenticator code with the password, when two-factor sign-in is on.</param>
+/// <param name="Elevated">For a package whose new elevated rights need a step-up: false installs it with them revoked instead.</param>
+public sealed record InstallAppRequest(string? Pool = null, AppAccess? Access = null, string? Password = null, string? TotpCode = null, bool? Elevated = null);
 
 /// <param name="Enabled">False hides the app from everybody and stops serving its frontend; its data and grants stay.</param>
 public sealed record UpdateAppRequest(bool Enabled);
@@ -144,6 +151,7 @@ public sealed record AppList(IReadOnlyList<AppSummary> Apps);
 /// <param name="Catalog">The catalog it was installed or last updated from; null for a sideload.</param>
 /// <param name="UpdatePolicy">Its own update policy; null follows the box's.</param>
 /// <param name="PreviousVersion">The version before its last update, which a rollback restores with its data; null when there is none.</param>
+/// <param name="Elevated">Each elevated right of the manifest's <c>backend.elevated</c> with whether it is granted (D311).</param>
 public sealed record AppDetails(
     string Id,
     string Version,
@@ -161,7 +169,8 @@ public sealed record AppDetails(
     IReadOnlyList<AppStorageMapping> Storage,
     string? Catalog,
     Catalog.UpdatePolicy? UpdatePolicy,
-    string? PreviousVersion);
+    string? PreviousVersion,
+    IReadOnlyList<AppElevatedState> Elevated);
 
 /// <summary>A folder in a shared folder that an administrator mapped to one storage request of an app.</summary>
 /// <param name="StorageId">The id of the request in the manifest.</param>
@@ -201,6 +210,15 @@ public sealed record AppUserAccess(long UserId, string Username, string? Display
 /// <param name="Permission">For example <c>notifications</c>.</param>
 /// <param name="Granted">False after an administrator revoked it.</param>
 public sealed record AppPermissionState(string Permission, bool Granted);
+
+/// <param name="Right">For example <c>host.network</c> or <c>device:/dev/dri/renderD128</c>.</param>
+/// <param name="Granted">False until an administrator grants it after a step-up, and after one revoked it; the backend then runs without it.</param>
+public sealed record AppElevatedState(string Right, bool Granted);
+
+/// <param name="Rights">Elevated rights of the app's manifest with whether the app keeps them; the others stay as they are.</param>
+/// <param name="Password">The administrator's password; granting needs a step-up (D311), unless an earlier one of this session is valid.</param>
+/// <param name="TotpCode">A current authenticator code with the password, when two-factor sign-in is on.</param>
+public sealed record AppElevatedRequest(IReadOnlyList<AppElevatedState> Rights, string? Password = null, string? TotpCode = null);
 
 /// <summary>Every installed app for administrators: the snapshot and every event of <c>apps/admin</c>.</summary>
 /// <param name="Pool">The app pool, or null before the first install.</param>

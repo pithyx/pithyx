@@ -206,18 +206,60 @@ public static class ManifestValidator
 
         if (backend.TryGetProperty("elevated", out var elevated))
         {
+            var root = backend.TryGetProperty("root", out var flag) && flag.ValueKind == JsonValueKind.True;
             foreach (var right in elevated.EnumerateArray().Select(element => element.GetString()!))
             {
                 if (!IsSupportedElevatedRight(right))
                 {
                     yield return new ValidationIssue(ErrorCodes.AppElevatedUnsupported, ("right", right));
                 }
+                else if (root && NeedsHostNamespace(right))
+                {
+                    yield return new ValidationIssue(ErrorCodes.AppElevatedRootConflict, ("right", right));
+                }
+                else if (!root && right.StartsWith(CapabilityPrefix, StringComparison.Ordinal))
+                {
+                    yield return new ValidationIssue(ErrorCodes.AppElevatedRootRequired, ("right", right));
+                }
             }
         }
     }
 
-    /// <summary>Whether this version of Pithyx can grant an elevated right the schema accepts: none (D345, A16 follows).</summary>
-    public static bool IsSupportedElevatedRight(string right) => false;
+    public const string DevicePrefix = "device:";
+
+    public const string CapabilityPrefix = "capability:";
+
+    /// <summary>
+    /// Whether this version of Pithyx can grant an elevated right the schema accepts (D311): <c>host.network</c>,
+    /// <c>host.pid</c>, a device node outside the block list and a capability outside the block list. <c>docker.socket</c>
+    /// and <c>host.full</c> stay refused.
+    /// </summary>
+    public static bool IsSupportedElevatedRight(string right)
+    {
+        ArgumentNullException.ThrowIfNull(right);
+        var rules = Compose.ComposeValidator.Rules;
+        if (rules.HostNamespaceRights.Contains(right))
+        {
+            return true;
+        }
+        if (right.StartsWith(DevicePrefix, StringComparison.Ordinal))
+        {
+            return !rules.Matches("blockedDevice", right[DevicePrefix.Length..]);
+        }
+        return right.StartsWith(CapabilityPrefix, StringComparison.Ordinal) && !rules.BlockedCapabilities.Contains(right[CapabilityPrefix.Length..]);
+    }
+
+    /// <summary>
+    /// Whether a granted right runs its service in the host's user namespace: the host's network or processes, or a
+    /// device whose group exists only on the host. Root there would be root on the box, so <c>backend.root</c> refuses it.
+    /// </summary>
+    public static bool NeedsHostNamespace(string right)
+    {
+        ArgumentNullException.ThrowIfNull(right);
+        var rules = Compose.ComposeValidator.Rules;
+        return rules.HostNamespaceRights.Contains(right)
+            || (right.StartsWith(DevicePrefix, StringComparison.Ordinal) && !rules.NamespacedDevices.Contains(right[DevicePrefix.Length..]));
+    }
 
     private static ValidationIssue Duplicate(string path, string value) =>
         new(ErrorCodes.AppManifestDuplicate, ("path", path), ("value", value));

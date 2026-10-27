@@ -233,12 +233,15 @@ function keyOf(entry: LogEntry): string {
   return `${entry.archived ? 'a' : 'c'}${String(entry.id)}`;
 }
 
-/** Readable source names: "Pithyx daemon", "System: kernel", or the app's name. */
+/** Readable source names: "Pithyx daemon", "Audit log" (D311), "System: kernel", or the app's name. */
 function useSourceName(): (source: string) => string {
   const { t } = useTranslation('logs');
   const appName = useAppName();
   return (source) => {
     const { group, name } = describeSource(source);
+    if (source === 'audit') {
+      return t('sources.audit');
+    }
     if (group === 'daemon') {
       return t('sources.daemon');
     }

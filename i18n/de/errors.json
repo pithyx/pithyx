@@ -22,11 +22,16 @@
       "value_invalid": "Die Compose-Datei der App hat unter {path} einen Wert, den Pithyx ablehnt: {reason, select, required {er fehlt} type {er hat den falschen Typ} format {sein Format ist ungültig} range {er liegt außerhalb des erlaubten Bereichs} unpinned {das Image ist nicht mit @sha256 festgelegt} interpolation {er nutzt $ für eine Variable (schreib $$ für ein Dollarzeichen)} no_value {die Variable hat keinen Wert} duplicate {er kommt doppelt vor} reserved {er ist für Pithyx reserviert} host_path {er bindet einen Ordner des Hosts ein} anonymous {das Volume hat keinen Namen} cycle {die Dienste hängen im Kreis voneinander ab} image_and_build {der Dienst hat image und build, nutze nur eins davon} other {er ist ungültig}}.",
       "yaml_invalid": "Die Compose-Datei der App ist nicht lesbar: {reason, select, too_large {sie ist größer als 64 KB} not_utf8 {sie ist kein UTF-8} character {sie enthält einen Tabulator oder ein anderes nicht erlaubtes Zeichen} syntax {sie ist kein gültiges YAML} documents {sie muss genau ein Dokument enthalten} too_deep {sie ist zu tief verschachtelt} directive {sie enthält eine YAML-Direktive} anchor {sie nutzt Anker oder Aliase} tag {sie nutzt YAML-Tags} duplicate_key {{path} kommt doppelt vor} merge_key {sie nutzt unter {path} einen Merge-Schlüssel} key_not_string {ein Schlüssel unter {path} ist kein Text} other {sie verletzt eine Regel für Compose-Dateien}}."
     },
+    "device": {
+      "unavailable": "Das Gerät {path}, das die App braucht, ist nicht da oder kann keiner App gegeben werden, deshalb startet ihr Hintergrunddienst nicht."
+    },
     "docker": {
       "unavailable": "Der Container-Dienst antwortet nicht, deshalb können App-Backends gerade nicht laufen."
     },
     "elevated": {
-      "unsupported": "Die App verlangt das Recht {right}, das diese Version von Pithyx nicht vergibt."
+      "unsupported": "Die App verlangt das Recht {right}, das Pithyx keiner App gibt.",
+      "root_conflict": "Die App führt ihren Hintergrunddienst als root aus und verlangt {right}. Mit diesem Recht läuft der Dienst direkt auf der Box, wo root die ganze Box beherrschen würde, deshalb lehnt Pithyx die Kombination ab.",
+      "root_required": "Die App verlangt {right}, aber nur ein Hintergrunddienst, der als root läuft, kann eine Capability nutzen."
     },
     "icon": {
       "invalid": "Das Symbol der App ist nicht verwendbar: {reason, select, too_large {es ist größer als 64 KB} malformed {es ist keine gültige SVG-Datei} not_svg {es ist kein SVG-Bild} viewbox {seine viewBox fehlt oder ist nicht quadratisch} doctype {es enthält einen DOCTYPE} processing_instruction {es enthält eine Verarbeitungsanweisung} element_forbidden {es enthält das Element {element}} event_attribute {es enthält das Ereignisattribut {attribute}} external_href {es verweist auf etwas außerhalb der Datei} style_import {seine Styles nutzen @import} style_url {es lädt mit url() etwas außerhalb der Datei} style_escape {seine Styles enthalten Escape-Sequenzen} other {es verletzt eine Regel für Symbole}}."
@@ -124,6 +129,9 @@
     },
     "setup": {
       "already_done": "Dieses System ist bereits eingerichtet."
+    },
+    "step_up": {
+      "required": "Bestätige zuerst mit deinem Passwort. Die Bestätigung gilt fünf Minuten."
     },
     "totp": {
       "already_enabled": "Die Zwei-Faktor-Authentifizierung ist bereits aktiviert.",

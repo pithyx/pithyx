@@ -13,6 +13,7 @@ import { describeProblem, formatDate } from '../storage/shared';
 import { SourceBadge } from './CatalogBrowser';
 import { InstallDialog } from './InstallDialog';
 import { manifestFacts } from './model';
+import { ElevatedRightText } from './ElevatedRights';
 import { PermissionText } from './PermissionText';
 import styles from './Store.module.css';
 
@@ -109,9 +110,19 @@ export function CatalogAppPage({
             <CatalogScreenshots details={details.data} name={name} />
             {facts.root && <p className={styles.warning}>{t('install.root')}</p>}
             {facts.elevated.length > 0 && (
-              <p className={styles.warning}>
-                {t('install.elevated', { rights: facts.elevated.join(', ') })}
-              </p>
+              <section className={styles.group} aria-labelledby="store-catalog-elevated">
+                <h3 id="store-catalog-elevated" className={styles.sectionTitle}>
+                  {t('elevated.section')}
+                </h3>
+                <p className={styles.warning}>{t('elevated.warning')}</p>
+                <ul className={styles.permissions}>
+                  {facts.elevated.map((right) => (
+                    <li key={right} className={styles.permission}>
+                      <ElevatedRightText right={right} />
+                    </li>
+                  ))}
+                </ul>
+              </section>
             )}
             <section className={styles.group} aria-labelledby="store-catalog-permissions">
               <h3 id="store-catalog-permissions" className={styles.sectionTitle}>

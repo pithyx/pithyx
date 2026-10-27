@@ -125,12 +125,31 @@ public static class ErrorCodes
     public const string AppComposeYamlInvalid = "app.compose.yaml_invalid";
 
     /// <summary>
-    /// The manifest asks for an elevated right this version of Pithyx does not grant: <c>docker.socket</c>, <c>host.full</c>
-    /// or a capability that reaches the host's secrets; <c>params.right</c> names it. When the Compose file needs it
-    /// (<c>privileged</c>, a mount of the Docker socket, <c>cap_add</c>), <c>params.path</c> is the use.
+    /// The manifest asks for an elevated right this version of Pithyx does not grant (D311): <c>docker.socket</c>,
+    /// <c>host.full</c>, a blocked capability or a blocked device node; <c>params.right</c> names it. When the Compose file
+    /// needs it (<c>privileged</c>, a mount of the Docker socket, <c>cap_add</c>, <c>devices</c>), <c>params.path</c> is the use.
     /// </summary>
     [ErrorStatus(HttpStatusCode.BadRequest)]
     public const string AppElevatedUnsupported = "app.elevated.unsupported";
+
+    /// <summary>
+    /// The manifest runs its backend as root (<c>backend.root</c>) and asks for <c>params.right</c>, which runs a service
+    /// in the host's user namespace (the host network, the host processes or a device other than <c>/dev/net/tun</c>):
+    /// root there would be root on the box (D311).
+    /// </summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string AppElevatedRootConflict = "app.elevated.root_conflict";
+
+    /// <summary>The manifest asks for the capability <c>params.right</c> without <c>backend.root</c>; only root can use a capability (D311).</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string AppElevatedRootRequired = "app.elevated.root_required";
+
+    /// <summary>
+    /// The device node <c>params.path</c> the app holds the right for is missing, is no character device, or is a link to
+    /// a node no app gets (D311), so its backend does not start.
+    /// </summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string AppDeviceUnavailable = "app.device.unavailable";
 
     /// <summary>Docker did not start or does not answer, so no app backend can run now.</summary>
     [ErrorStatus(HttpStatusCode.ServiceUnavailable)]
@@ -397,6 +416,13 @@ public static class ErrorCodes
 
     [ErrorStatus(HttpStatusCode.Conflict)]
     public const string AuthSetupAlreadyDone = "auth.setup.already_done";
+
+    /// <summary>
+    /// The action needs a step-up first (D311): the password again and, with two-factor sign-in on, an authenticator
+    /// code. A step-up holds for five minutes in the session that made it.
+    /// </summary>
+    [ErrorStatus(HttpStatusCode.Forbidden)]
+    public const string AuthStepUpRequired = "auth.step_up.required";
 
     [ErrorStatus(HttpStatusCode.Conflict)]
     public const string AuthTotpAlreadyEnabled = "auth.totp.already_enabled";

@@ -53,7 +53,9 @@ Reported by [`validate`](/docs/reference/cli/validate/) and [`pack`](/docs/refer
   - `reason` = `merge_key`: it uses a merge key at {path}
   - `reason` = `key_not_string`: a key at {path} is not text
   - `reason` = `other`: it breaks a rule for Compose files
-- [`app.elevated.unsupported`](/docs/reference/errors/#app.elevated.unsupported) (error): The app asks for the right {right}, which this version of Pithyx does not grant.
+- [`app.elevated.root_conflict`](/docs/reference/errors/#app.elevated.root_conflict) (error): The app runs its background service as root and asks for {right}. That right runs the service directly on the box, where root would control the whole box, so Pithyx refuses the combination.
+- [`app.elevated.root_required`](/docs/reference/errors/#app.elevated.root_required) (error): The app asks for {right}, but only a background service that runs as root can use a capability.
+- [`app.elevated.unsupported`](/docs/reference/errors/#app.elevated.unsupported) (error): The app asks for the right {right}, which Pithyx does not grant to any app.
 - [`app.icon.invalid`](/docs/reference/errors/#app.icon.invalid) (error): The app's icon cannot be used: {reason}.
   - `reason` = `too_large`: it is larger than 64 KB
   - `reason` = `malformed`: it is not a valid SVG file

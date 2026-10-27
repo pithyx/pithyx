@@ -55,7 +55,7 @@ public static class BackupDatabase
         [BackupCategory.Storage] = ["snapshot_schedules", "storage_schedules"],
         [BackupCategory.System] = ["system_region"],
         [BackupCategory.Certificates] = ["tls_issued"],
-        [BackupCategory.Apps] = ["apps", "app_permissions", "storage_mappings", "app_storage", "catalogs"],
+        [BackupCategory.Apps] = ["apps", "app_permissions", "app_elevated", "storage_mappings", "app_storage", "catalogs"],
         [BackupCategory.ReverseProxy] = ["proxy_hosts", "proxy_redirects", "proxy_streams"],
     }.ToFrozenDictionary();
 
@@ -80,7 +80,7 @@ public static class BackupDatabase
     public static readonly FrozenSet<string> NotBackedUp = new[]
     {
         "sessions", "jobs", "notifications", "storage_alert_notices", "storage_schedule_runs", "trash_items",
-        "network_config", "network_pending", "system_updates", "proxy_sessions", "proxy_acme",
+        "network_config", "network_pending", "system_updates", "proxy_sessions", "proxy_acme", "audit_log",
     }.ToFrozenSet();
 
     /// <summary>Copies the live database to <paramref name="path"/> without its runtime state.</summary>

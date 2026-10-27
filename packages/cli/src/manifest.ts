@@ -1,4 +1,5 @@
 import type { AppManifest } from '@pithyx/sdk';
+import composeRules from '@pithyx/sdk/schema/compose.v1.rules.json' with { type: 'json' };
 import schema from '@pithyx/sdk/schema/manifest.v1.schema.json' with { type: 'json' };
 import { isValidCron } from './cron';
 import type { Issue } from './issues';
@@ -18,11 +19,39 @@ export interface ManifestValidation {
   manifest?: AppManifest;
 }
 
-/** Whether this version of Pithyx can grant an elevated right the schema accepts: none (D345, A16 follows). */
-// The parameter stays for the day A16 grants rights again.
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-export function isSupportedElevatedRight(_right: string): boolean {
-  return false;
+const DEVICE_PREFIX = 'device:';
+const CAPABILITY_PREFIX = 'capability:';
+const elevatedRules = composeRules.elevated;
+const blockedDevice = new RegExp(composeRules.patterns.blockedDevice);
+
+/**
+ * Whether this version of Pithyx can grant an elevated right the schema accepts (D311): `host.network`, `host.pid`, a
+ * device node outside the block list and a capability outside the block list. `docker.socket` and `host.full` stay
+ * refused.
+ */
+export function isSupportedElevatedRight(right: string): boolean {
+  if (elevatedRules.hostNamespaceRights.includes(right)) {
+    return true;
+  }
+  if (right.startsWith(DEVICE_PREFIX)) {
+    return !blockedDevice.test(right.slice(DEVICE_PREFIX.length));
+  }
+  return (
+    right.startsWith(CAPABILITY_PREFIX) &&
+    !elevatedRules.blockedCapabilities.includes(right.slice(CAPABILITY_PREFIX.length))
+  );
+}
+
+/**
+ * Whether a granted right runs its service in the host's user namespace: the host's network or processes, or a device
+ * whose group exists only on the host. Root there would be root on the box, so `backend.root` refuses it.
+ */
+export function needsHostNamespace(right: string): boolean {
+  return (
+    elevatedRules.hostNamespaceRights.includes(right) ||
+    (right.startsWith(DEVICE_PREFIX) &&
+      !elevatedRules.namespacedDevices.includes(right.slice(DEVICE_PREFIX.length)))
+  );
 }
 
 /**
@@ -189,9 +218,14 @@ function semanticIssues(
         );
       }
     });
+    const root = backend.root === true;
     for (const right of backend.elevated ?? []) {
       if (!isSupportedElevatedRight(right)) {
         issues.push({ code: 'app.elevated.unsupported', params: { right } });
+      } else if (root && needsHostNamespace(right)) {
+        issues.push({ code: 'app.elevated.root_conflict', params: { right } });
+      } else if (!root && right.startsWith(CAPABILITY_PREFIX)) {
+        issues.push({ code: 'app.elevated.root_required', params: { right } });
       }
     }
   }

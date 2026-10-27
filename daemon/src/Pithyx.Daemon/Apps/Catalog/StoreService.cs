@@ -1072,7 +1072,7 @@ public sealed partial class StoreService(
                 var manifest = copy.Manifests[(app.Id, newest.Version)];
                 var had = Strings(app.Manifest, "permissions");
                 var added = Strings(manifest, "permissions").Where(permission => !had.Contains(permission)).ToList();
-                var elevated = (IsRoot(manifest) && !IsRoot(app.Manifest)) || Elevated(manifest).Except(Elevated(app.Manifest)).Any();
+                var elevated = (IsRoot(manifest) && !IsRoot(app.Manifest)) || Manifest.ElevatedRights.Of(manifest).Except(Manifest.ElevatedRights.Of(app.Manifest)).Any();
                 var effective = app.UpdatePolicy ?? policy;
                 updates.Add(new AppUpdate(app.Id, app.Version, newest.Version, copy.CatalogId, added, elevated, effective, effective == UpdatePolicy.Automatic && added.Count == 0 && !elevated));
                 break;
@@ -1087,11 +1087,6 @@ public sealed partial class StoreService(
 
     private static bool IsRoot(JsonElement manifest) =>
         manifest.TryGetProperty("backend", out var backend) && backend.TryGetProperty("root", out var root) && root.ValueKind == JsonValueKind.True;
-
-    private static IEnumerable<string> Elevated(JsonElement manifest) =>
-        manifest.TryGetProperty("backend", out var backend) && backend.TryGetProperty("elevated", out var rights)
-            ? rights.EnumerateArray().Select(right => right.GetString()!)
-            : [];
 
     /// <summary>
     /// After a check: automatic updates start as jobs of the box (one failure does not stop the others), and the
