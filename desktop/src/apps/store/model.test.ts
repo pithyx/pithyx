@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import type { PoolList } from '../sdk/store';
-import { accessOf, appPools, elevatedKind, folderPath, manifestFacts, withSubject } from './model';
+import {
+  accessOf,
+  appPools,
+  deviceNote,
+  elevatedKind,
+  folderPath,
+  manifestFacts,
+  withSubject,
+} from './model';
 
 describe('manifestFacts', () => {
   it('reads what the install dialog shows', () => {
@@ -97,6 +105,37 @@ describe('elevatedKind', () => {
       kind: 'capability',
       value: 'NET_ADMIN',
     });
-    expect(elevatedKind('docker.socket')).toEqual({ kind: 'unknown', value: 'docker.socket' });
+    expect(elevatedKind('docker.socket')).toEqual({ kind: 'dockerSocket' });
+    expect(elevatedKind('docker.socket.raw')).toEqual({ kind: 'dockerSocketRaw' });
+    expect(elevatedKind('device:/dev/dri')).toEqual({
+      kind: 'device',
+      value: '/dev/dri',
+      deviceClass: 'dri',
+    });
+    expect(elevatedKind('host.full')).toEqual({ kind: 'unknown', value: 'host.full' });
+  });
+});
+
+describe('deviceNote', () => {
+  const devices = [
+    { path: '/dev/serial', optional: false, present: false },
+    { path: '/dev/dri', optional: true, present: false },
+    { path: '/dev/net/tun', optional: false, present: true },
+  ];
+
+  it('stops the install for a missing required device and only hints at an optional one', () => {
+    expect(deviceNote('device:/dev/serial', devices, 'install')).toBe('elevated.deviceMissing');
+    expect(deviceNote('device:/dev/dri', devices, 'install')).toBe(
+      'elevated.deviceMissingOptional',
+    );
+    expect(deviceNote('device:/dev/net/tun', devices, 'install')).toBeNull();
+  });
+
+  it('says on the app page what the background service does without it', () => {
+    expect(deviceNote('device:/dev/serial', devices, 'installed')).toBe('elevated.deviceAbsent');
+    expect(deviceNote('device:/dev/dri', devices, 'installed')).toBe(
+      'elevated.deviceAbsentOptional',
+    );
+    expect(deviceNote('host.network', devices, 'installed')).toBeNull();
   });
 });

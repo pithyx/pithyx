@@ -195,19 +195,28 @@
       }
     }
   ],
+  "docker-socket-both.yaml": [
+    {
+      "code": "app.compose.right_unused",
+      "params": {
+        "path": "/backend/elevated/0",
+        "right": "docker.socket"
+      }
+    }
+  ],
   "docker-socket.yaml": [
     {
-      "code": "app.elevated.unsupported",
+      "code": "app.compose.right_missing",
       "params": {
-        "right": "docker.socket",
-        "path": "/services/server/volumes/0"
+        "path": "/services/server/volumes/0",
+        "right": "docker.socket"
       }
     },
     {
-      "code": "app.elevated.unsupported",
+      "code": "app.compose.right_missing",
       "params": {
-        "right": "docker.socket",
-        "path": "/services/server/volumes/1"
+        "path": "/services/server/volumes/1",
+        "right": "docker.socket"
       }
     }
   ],

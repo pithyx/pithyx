@@ -13,6 +13,6 @@
       "capability:NET_ADMIN",
       "device:/dev/net/tun"
     ],
-    "deviceGroups": {}
+    "devices": {}
   }
 }

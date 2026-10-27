@@ -43,6 +43,7 @@ public sealed partial class AppService(
     Proxy.AppBackends backendStates,
     StepUps stepUps,
     Audit.AuditLog audit,
+    Docker.DeviceFs deviceFs,
     TimeProvider time,
     ILogger<AppService> logger)
 {
@@ -89,6 +90,12 @@ public sealed partial class AppService(
         if (request.Elevated != false && !grantElevated && AddedElevated(package.Manifest, registry.Find(appId)).Count > 0)
         {
             throw new PithyxException(ErrorCodes.AuthStepUpRequired);
+        }
+        // A new app that cannot run without a device is not installed while the device is missing (D387).
+        if (request.Elevated != false && registry.Find(appId) is null
+            && AppRegistry.DevicesOf(package.Manifest, deviceFs).FirstOrDefault(device => !device.Optional && !device.Present) is { } missing)
+        {
+            throw new PithyxException(ErrorCodes.AppDeviceMissing, new Dictionary<string, object?> { ["path"] = missing.Path });
         }
         var pool = ChoosePool(request.Pool);
         storage.RequirePool(pool);
@@ -456,6 +463,7 @@ public sealed partial class AppService(
                     if (hadBackend)
                     {
                         await backends.StopAsync(appId, pool, context.Cancellation);
+                        await backends.RemoveSpawnedAsync(appId, context.Cancellation);
                     }
                     // The held snapshot of the last update would keep the dataset from going; without the app it has no use.
                     if (pool is not null && removed?.Previous?.Snapshot is { } snapshot)
@@ -685,7 +693,8 @@ public sealed partial class AppService(
             package.Origin?.Catalog,
             installed is null && registry.Pool is { } pool && storage.RootOf(pool, package.AppId) is not null,
             AddedElevated(package.Manifest, installed),
-            [.. (installed?.ElevatedRights.Select(state => state.Right) ?? []).Except(Manifest.ElevatedRights.Of(package.Manifest), StringComparer.Ordinal)]);
+            [.. (installed?.ElevatedRights.Select(state => state.Right) ?? []).Except(Manifest.ElevatedRights.Of(package.Manifest), StringComparer.Ordinal)],
+            AppRegistry.DevicesOf(package.Manifest, deviceFs));
     }
 
     /// <summary>

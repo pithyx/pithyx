@@ -12,8 +12,13 @@
     "elevated": [
       "device:/dev/ttyUSB0"
     ],
-    "deviceGroups": {
-      "/dev/ttyUSB0": 20
+    "devices": {
+      "/dev/ttyUSB0": [
+        {
+          "path": "/dev/ttyUSB0",
+          "gid": 20
+        }
+      ]
     }
   }
 }

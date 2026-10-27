@@ -106,6 +106,12 @@
       },
       "expected": "The device /dev/ttyUSB0 the app needs is not there or cannot be given to an app, so its background service does not start."
     },
+    "app.device.missing": {
+      "params": {
+        "path": "/dev/serial"
+      },
+      "expected": "The app needs the device /dev/serial, and none is plugged in. Plug in the device and try again."
+    },
     "app.docker.unavailable": {
       "params": {},
       "expected": "The container service does not answer, so app backends cannot run right now."
@@ -121,6 +127,12 @@
         "right": "capability:NET_ADMIN"
       },
       "expected": "The app asks for capability:NET_ADMIN, but only a background service that runs as root can use a capability."
+    },
+    "app.elevated.sideload_only": {
+      "params": {
+        "right": "docker.socket.raw"
+      },
+      "expected": "The app asks for docker.socket.raw, the unfiltered container service, which is root on the box. Pithyx grants it only to apps installed from a file, never to apps from a catalog."
     },
     "app.elevated.unsupported": {
       "params": {

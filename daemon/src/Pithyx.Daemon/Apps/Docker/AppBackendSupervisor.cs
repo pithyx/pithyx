@@ -31,6 +31,7 @@ public sealed partial class AppBackendSupervisor(
     AppBackends backends,
     AppLeases leases,
     PoolInventory pools,
+    AppDevices devices,
     TimeProvider time,
     ILogger<AppBackendSupervisor> logger) : BackgroundService
 {
@@ -124,6 +125,7 @@ public sealed partial class AppBackendSupervisor(
         pools.Changed += Signal;
         registry.Changed += Signal;
         leases.Changed += Signal;
+        devices.Changed += Signal;
         backends.Changed += OnBackendChanged;
         return base.StartAsync(cancellationToken);
     }
@@ -134,6 +136,7 @@ public sealed partial class AppBackendSupervisor(
         pools.Changed -= Signal;
         registry.Changed -= Signal;
         leases.Changed -= Signal;
+        devices.Changed -= Signal;
         backends.Changed -= OnBackendChanged;
         return base.StopAsync(cancellationToken);
     }
@@ -283,9 +286,10 @@ public sealed partial class AppBackendSupervisor(
         return Min(Min(decision.RecheckAt, holdEnds), nextSchedule);
     }
 
-    /// <summary>Whether the app may run now: enabled, its pool reachable, its required folders mapped.</summary>
+    /// <summary>Whether the app may run now: enabled, its pool reachable, its required folders mapped and its required devices there (D387).</summary>
     private bool IsRunnable(InstalledApp app) =>
-        app.Enabled && registry.IsAvailable(app.Id) && AppBackendRuntime.UnmappedRequired(BackendApp.Of(app)).Count == 0;
+        app.Enabled && registry.IsAvailable(app.Id) && AppBackendRuntime.UnmappedRequired(BackendApp.Of(app)).Count == 0
+        && devices.MissingRequired(app).Count == 0;
 
     /// <summary>Starts a backend the caller holds with <see cref="AppRegistry.TryBegin"/>.</summary>
     private async Task StartAsync(BackendApp app, AppState state, CancellationToken stoppingToken)

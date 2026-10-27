@@ -4,7 +4,7 @@
     "server": {
       "image": "sha256:1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c",
       "devices": [
-        "/dev/dri/renderD128",
+        "/dev/dri/renderD128:/dev/dri/renderD128:rw",
         "/dev/ttyUSB0:/dev/zigbee:rw"
       ],
       "pid": "host",

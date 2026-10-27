@@ -18,11 +18,25 @@ export function isKnownPermission(permission: string): permission is KnownPermis
   return (KNOWN_PERMISSIONS as readonly string[]).includes(permission);
 }
 
-/** What kind of elevated right a manifest names (D311), for its title and risk text; the value is its device or capability. */
+/** The device classes of D387 by their path: a right on one stands for every node of the class that is plugged in. */
+export const DEVICE_CLASSES = {
+  '/dev/dri': 'dri',
+  '/dev/serial': 'serial',
+  '/dev/net/tun': 'tun',
+} as const;
+
+export type DeviceClass = (typeof DEVICE_CLASSES)[keyof typeof DEVICE_CLASSES];
+
+/**
+ * What kind of elevated right a manifest names (D311, D387), for its title and risk text; the value is its device or
+ * capability, and a device class has its name.
+ */
 export type ElevatedKind =
   | { kind: 'hostNetwork' }
   | { kind: 'hostPid' }
-  | { kind: 'device'; value: string }
+  | { kind: 'dockerSocket' }
+  | { kind: 'dockerSocketRaw' }
+  | { kind: 'device'; value: string; deviceClass?: DeviceClass }
   | { kind: 'capability'; value: string }
   | { kind: 'unknown'; value: string };
 
@@ -33,8 +47,18 @@ export function elevatedKind(right: string): ElevatedKind {
   if (right === 'host.pid') {
     return { kind: 'hostPid' };
   }
+  if (right === 'docker.socket') {
+    return { kind: 'dockerSocket' };
+  }
+  if (right === 'docker.socket.raw') {
+    return { kind: 'dockerSocketRaw' };
+  }
   if (right.startsWith('device:')) {
-    return { kind: 'device', value: right.slice('device:'.length) };
+    const value = right.slice('device:'.length);
+    const deviceClass = (DEVICE_CLASSES as Record<string, DeviceClass | undefined>)[value];
+    return deviceClass === undefined
+      ? { kind: 'device', value }
+      : { kind: 'device', value, deviceClass };
   }
   if (right.startsWith('capability:')) {
     return { kind: 'capability', value: right.slice('capability:'.length) };
@@ -153,4 +177,45 @@ export function folderPath(input: string): string {
 /** The icon URL of an installed app, as the topic `apps` names it: it changes with every package. */
 export function iconUrl(app: { id: string; sha256: string }): string {
   return `/api/apps/${app.id}/icon?v=${app.sha256.slice(0, 12)}`;
+}
+
+/** The texts under a device right in the Store. */
+export type DeviceNoteKey =
+  | 'elevated.deviceOptional'
+  | 'elevated.deviceMissing'
+  | 'elevated.deviceMissingOptional'
+  | 'elevated.deviceAbsent'
+  | 'elevated.deviceAbsentOptional';
+
+/** A device of an app with whether it is optional and plugged in now, as the daemon reports it (D387). */
+export interface DeviceState {
+  path: string;
+  optional: boolean;
+  present: boolean;
+}
+
+/**
+ * The line under a device right: in the install dialog a missing required device stops the install and a missing
+ * optional one is only a hint; on an installed app's page a missing one says what its background service does.
+ */
+export function deviceNote(
+  right: string,
+  devices: readonly DeviceState[] | null | undefined,
+  where: 'install' | 'installed',
+): DeviceNoteKey | null {
+  const parsed = elevatedKind(right);
+  if (parsed.kind !== 'device') {
+    return null;
+  }
+  const device = devices?.find((entry) => entry.path === parsed.value);
+  if (device === undefined) {
+    return null;
+  }
+  if (device.present) {
+    return device.optional ? 'elevated.deviceOptional' : null;
+  }
+  if (where === 'install') {
+    return device.optional ? 'elevated.deviceMissingOptional' : 'elevated.deviceMissing';
+  }
+  return device.optional ? 'elevated.deviceAbsentOptional' : 'elevated.deviceAbsent';
 }

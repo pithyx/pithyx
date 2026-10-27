@@ -151,6 +151,20 @@ public static class ErrorCodes
     [ErrorStatus(HttpStatusCode.Conflict)]
     public const string AppDeviceUnavailable = "app.device.unavailable";
 
+    /// <summary>
+    /// The app needs the device <c>params.path</c> (a node or a device class, D387), and no such device is plugged in, so it
+    /// cannot be installed now; plugging it in and trying again helps.
+    /// </summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string AppDeviceMissing = "app.device.missing";
+
+    /// <summary>
+    /// The right <c>params.right</c> (<c>docker.socket.raw</c>, root on the box) is only for apps installed from a file, never
+    /// from a catalog (D387).
+    /// </summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string AppElevatedSideloadOnly = "app.elevated.sideload_only";
+
     /// <summary>Docker did not start or does not answer, so no app backend can run now.</summary>
     [ErrorStatus(HttpStatusCode.ServiceUnavailable)]
     public const string AppDockerUnavailable = "app.docker.unavailable";

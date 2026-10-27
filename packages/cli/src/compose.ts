@@ -566,7 +566,14 @@ class Checker {
 
   private hostPath(source: string, path: string): void {
     if (rules.mount.dockerSockets.includes(source)) {
-      this.rights.push({ name: rules.mount.dockerSocketRight, path });
+      // The raw socket is the same mount with the other right (D387); declaring both leaves one unused.
+      const raw = (this.manifest.backend?.elevated ?? []).some(
+        (right) => right === rules.mount.dockerSocketRawRight,
+      );
+      this.rights.push({
+        name: raw ? rules.mount.dockerSocketRawRight : rules.mount.dockerSocketRight,
+        path,
+      });
     } else {
       this.invalid(path, 'host_path');
     }

@@ -23,7 +23,8 @@
       "yaml_invalid": "Die Compose-Datei der App ist nicht lesbar: {reason, select, too_large {sie ist größer als 64 KB} not_utf8 {sie ist kein UTF-8} character {sie enthält einen Tabulator oder ein anderes nicht erlaubtes Zeichen} syntax {sie ist kein gültiges YAML} documents {sie muss genau ein Dokument enthalten} too_deep {sie ist zu tief verschachtelt} directive {sie enthält eine YAML-Direktive} anchor {sie nutzt Anker oder Aliase} tag {sie nutzt YAML-Tags} duplicate_key {{path} kommt doppelt vor} merge_key {sie nutzt unter {path} einen Merge-Schlüssel} key_not_string {ein Schlüssel unter {path} ist kein Text} other {sie verletzt eine Regel für Compose-Dateien}}."
     },
     "device": {
-      "unavailable": "Das Gerät {path}, das die App braucht, ist nicht da oder kann keiner App gegeben werden, deshalb startet ihr Hintergrunddienst nicht."
+      "unavailable": "Das Gerät {path}, das die App braucht, ist nicht da oder kann keiner App gegeben werden, deshalb startet ihr Hintergrunddienst nicht.",
+      "missing": "Die App braucht das Gerät {path}, und keins ist eingesteckt. Steck das Gerät ein und versuch es noch einmal."
     },
     "docker": {
       "unavailable": "Der Container-Dienst antwortet nicht, deshalb können App-Backends gerade nicht laufen."
@@ -31,7 +32,8 @@
     "elevated": {
       "unsupported": "Die App verlangt das Recht {right}, das Pithyx keiner App gibt.",
       "root_conflict": "Die App führt ihren Hintergrunddienst als root aus und verlangt {right}. Mit diesem Recht läuft der Dienst direkt auf der Box, wo root die ganze Box beherrschen würde, deshalb lehnt Pithyx die Kombination ab.",
-      "root_required": "Die App verlangt {right}, aber nur ein Hintergrunddienst, der als root läuft, kann eine Capability nutzen."
+      "root_required": "Die App verlangt {right}, aber nur ein Hintergrunddienst, der als root läuft, kann eine Capability nutzen.",
+      "sideload_only": "Die App verlangt {right}, den ungefilterten Containerdienst, und das ist root auf der Box. Pithyx gibt dieses Recht nur Apps, die aus einer Datei installiert werden, nie Apps aus einem Katalog."
     },
     "icon": {
       "invalid": "Das Symbol der App ist nicht verwendbar: {reason, select, too_large {es ist größer als 64 KB} malformed {es ist keine gültige SVG-Datei} not_svg {es ist kein SVG-Bild} viewbox {seine viewBox fehlt oder ist nicht quadratisch} doctype {es enthält einen DOCTYPE} processing_instruction {es enthält eine Verarbeitungsanweisung} element_forbidden {es enthält das Element {element}} event_attribute {es enthält das Ereignisattribut {attribute}} external_href {es verweist auf etwas außerhalb der Datei} style_import {seine Styles nutzen @import} style_url {es lädt mit url() etwas außerhalb der Datei} style_escape {seine Styles enthalten Escape-Sequenzen} other {es verletzt eine Regel für Symbole}}."

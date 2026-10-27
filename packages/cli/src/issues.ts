@@ -23,6 +23,7 @@ export interface Issue {
     | 'app.elevated.unsupported'
     | 'app.elevated.root_conflict'
     | 'app.elevated.root_required'
+    | 'app.elevated.sideload_only'
     | 'app.icon.invalid'
     | 'app.package.invalid'
     | 'app.package.layout_invalid'

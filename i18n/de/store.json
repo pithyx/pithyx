@@ -380,6 +380,24 @@
     "code": "Code aus deiner Authenticator-App",
     "grantTitle": "Sonderrecht geben",
     "confirm": "Geben",
-    "cancel": "Abbrechen"
+    "cancel": "Abbrechen",
+    "dockerSocket": {
+      "title": "Eigene Container",
+      "risk": "Ihr Hintergrunddienst startet und steuert weitere Container über einen gefilterten Containerdienst. Er sieht nur die Container, die er selbst gestartet hat; sie laufen in der Sandbox der App, ohne Netzwerk, Dateien oder Geräte der Box. Mit der Internet-Berechtigung kann er Images herunterladen."
+    },
+    "dockerSocketRaw": {
+      "title": "Der ganze Containerdienst",
+      "risk": "Ihr Hintergrunddienst steuert den Containerdienst der Box ohne jeden Filter. Das ist dasselbe wie root auf der Box: Er kann jede Datei, jede App und jede Einstellung lesen und ändern. Gib dieses Recht nur einer App, die du selbst geschrieben hast oder der du ganz vertraust."
+    },
+    "deviceClass": {
+      "dri": "Grafikkarten (/dev/dri)",
+      "serial": "USB-Seriell-Adapter (/dev/serial)",
+      "tun": "Netzwerktunnel (/dev/net/tun)"
+    },
+    "deviceOptional": "Optional: Die App läuft auch ohne.",
+    "deviceMissing": "Nicht eingesteckt. Steck das Gerät ein und versuch es noch einmal.",
+    "deviceMissingOptional": "Nicht gefunden. Die App läuft ohne, zum Beispiel ohne Hardwarebeschleunigung.",
+    "deviceAbsent": "Nicht eingesteckt: Ihr Hintergrunddienst startet erst, wenn das Gerät wieder da ist.",
+    "deviceAbsentOptional": "Nicht gefunden: Der Hintergrunddienst läuft ohne."
   }
 }

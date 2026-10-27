@@ -105,6 +105,12 @@
         "body": "{app} {version} kann installiert werden.",
         "action": "Installieren"
       }
+    },
+    "device": {
+      "missing": {
+        "title": "Ein Gerät von {app} fehlt",
+        "body": "{app} braucht {path}, und das ist nicht eingesteckt. Ihr Hintergrunddienst läuft erst wieder, wenn das Gerät zurück ist."
+      }
     }
   },
   "desktop": {

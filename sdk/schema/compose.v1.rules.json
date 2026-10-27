@@ -73,7 +73,7 @@
     },
     "volumes": {
       "type": "mounts",
-      "description": "Named volumes to mount, in the short form `VOLUME:TARGET[:ro|rw]` or the long form. Host paths are refused."
+      "description": "Named volumes to mount, in the short form `VOLUME:TARGET[:ro|rw]` or the long form. Host paths are refused, except the Docker socket (`/var/run/docker.sock` or `/run/docker.sock` as the source) with the right `docker.socket` or `docker.socket.raw`."
     },
     "tmpfs": {
       "type": "tmpfs",
@@ -186,7 +186,7 @@
     "devices": {
       "type": "devices",
       "right": "device:",
-      "description": "Device nodes, `HOST[:CONTAINER[:PERMISSIONS]]`; each device needs its own right `device:<host path>`."
+      "description": "Device nodes, `HOST[:CONTAINER[:PERMISSIONS]]`; each device needs its own right `device:<host path>`. A device class (`/dev/dri`, `/dev/serial`, `/dev/net/tun`) stands for every node of the class present at the start."
     },
     "cap_drop": {
       "type": "capabilities",
@@ -239,7 +239,8 @@
     },
     "reservedTargets": ["/proc", "/sys", "/dev"],
     "dockerSockets": ["/var/run/docker.sock", "/run/docker.sock"],
-    "dockerSocketRight": "docker.socket"
+    "dockerSocketRight": "docker.socket",
+    "dockerSocketRawRight": "docker.socket.raw"
   },
   "elevated": {
     "$comment": "Which elevated rights of the manifest's backend.elevated the box grants (D311). `blockedCapabilities` are never granted. A right of `hostNamespaceRights`, and a device outside `namespacedDevices`, runs its service in the host's user namespace (Docker refuses the host network and process namespaces inside a user namespace, and a device's group exists only on the host), so it cannot go together with `backend.root`: root there would be root on the box. A capability only works for root, so `capability:` needs `backend.root`.",
@@ -264,7 +265,13 @@
       "WAKE_ALARM"
     ],
     "hostNamespaceRights": ["host.network", "host.pid"],
-    "namespacedDevices": ["/dev/net/tun"]
+    "namespacedDevices": ["/dev/net/tun"],
+    "deviceClasses": {
+      "$comment": "Device classes (D387): a device right on one of these paths names every node of the class that is present when the backend starts, with its group. `nodes` matches the names of the character devices directly in the folder; `links` matches the targets of the links below it, which are taken instead of the links. A class that is a single node is taken as it is.",
+      "/dev/dri": { "nodes": "^(?:card[0-9]+|renderD[0-9]+)$" },
+      "/dev/serial": { "links": "^(?:/dev/tty(?:USB|ACM)[0-9]+)$" },
+      "/dev/net/tun": {}
+    }
   },
   "dependsOn": {
     "keys": {

@@ -186,6 +186,7 @@ describe('loading placeholder', () => {
     const blocked = { ...base, backendStatus: 'unavailable' };
     expect(loadingPhase({ ...blocked, backendReason: 'storage' })).toBe('storage');
     expect(loadingPhase({ ...blocked, backendReason: 'pool' })).toBe('pool');
+    expect(loadingPhase({ ...blocked, backendReason: 'device' })).toBe('device');
     expect(loadingPhase({ ...blocked, backendReason: null })).toBe('loading');
     expect(loadingPhase({ ...blocked, backendReason: 'storage', connected: true })).toBe('ready');
   });

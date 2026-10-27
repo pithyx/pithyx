@@ -23,7 +23,8 @@
       "yaml_invalid": "The app's Compose file cannot be read: {reason, select, too_large {it is larger than 64 KB} not_utf8 {it is not UTF-8} character {it contains a tab or another character that is not allowed} syntax {it is not valid YAML} documents {it must contain exactly one document} too_deep {it is nested too deeply} directive {it contains a YAML directive} anchor {it uses anchors or aliases} tag {it uses YAML tags} duplicate_key {{path} appears twice} merge_key {it uses a merge key at {path}} key_not_string {a key at {path} is not text} other {it breaks a rule for Compose files}}."
     },
     "device": {
-      "unavailable": "The device {path} the app needs is not there or cannot be given to an app, so its background service does not start."
+      "unavailable": "The device {path} the app needs is not there or cannot be given to an app, so its background service does not start.",
+      "missing": "The app needs the device {path}, and none is plugged in. Plug in the device and try again."
     },
     "docker": {
       "unavailable": "The container service does not answer, so app backends cannot run right now."
@@ -31,7 +32,8 @@
     "elevated": {
       "unsupported": "The app asks for the right {right}, which Pithyx does not grant to any app.",
       "root_conflict": "The app runs its background service as root and asks for {right}. That right runs the service directly on the box, where root would control the whole box, so Pithyx refuses the combination.",
-      "root_required": "The app asks for {right}, but only a background service that runs as root can use a capability."
+      "root_required": "The app asks for {right}, but only a background service that runs as root can use a capability.",
+      "sideload_only": "The app asks for {right}, the unfiltered container service, which is root on the box. Pithyx grants it only to apps installed from a file, never to apps from a catalog."
     },
     "icon": {
       "invalid": "The app's icon cannot be used: {reason, select, too_large {it is larger than 64 KB} malformed {it is not a valid SVG file} not_svg {it is not an SVG image} viewbox {its viewBox is missing or not square} doctype {it contains a DOCTYPE} processing_instruction {it contains a processing instruction} element_forbidden {it contains the element {element}} event_attribute {it contains the event attribute {attribute}} external_href {it links to something outside the file} style_import {its styles use @import} style_url {it loads something outside the file with url()} style_escape {its styles contain escapes} other {it breaks a rule for icons}}."

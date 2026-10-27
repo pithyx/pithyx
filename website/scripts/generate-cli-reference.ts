@@ -1042,6 +1042,7 @@ interface ComposeRules {
     reservedTargets: string[];
     dockerSockets: string[];
     dockerSocketRight: string;
+    dockerSocketRawRight: string;
   };
   dependsOn: { keys: Record<string, KeyRule> };
   dev: { service: Record<string, KeyRule>; build: { keys: Record<string, KeyRule> } };
@@ -1050,6 +1051,7 @@ interface ComposeRules {
     blockedCapabilities: string[];
     hostNamespaceRights: string[];
     namespacedDevices: string[];
+    deviceClasses: Record<string, { nodes?: string; links?: string } | string>;
   };
   refused: Record<string, Record<string, string>>;
   descriptions?: {
@@ -1176,7 +1178,7 @@ function composePart(part: string, locale: Locale): string {
     case 'reserved':
       return [
         `- ${rules.mount.reservedTargets.map(code).join(', ')}`,
-        `- ${rules.mount.dockerSockets.map(code).join(', ')}: ${code(rules.mount.dockerSocketRight)}`,
+        `- ${rules.mount.dockerSockets.map(code).join(', ')}: ${code(rules.mount.dockerSocketRight)}, ${code(rules.mount.dockerSocketRawRight)}`,
         `- ${rules.reservedLabelPrefixes.map(code).join(', ')}`,
       ].join('\n');
     case 'elevated':
@@ -1184,6 +1186,10 @@ function composePart(part: string, locale: Locale): string {
         `- ${rules.elevated.blockedCapabilities.map(code).join(', ')}`,
         `- ${rules.elevated.hostNamespaceRights.map(code).join(', ')}`,
         `- ${rules.elevated.namespacedDevices.map(code).join(', ')}`,
+        `- ${Object.keys(rules.elevated.deviceClasses)
+          .filter((name) => !name.startsWith('$'))
+          .map(code)
+          .join(', ')}`,
       ].join('\n');
     case 'types':
       return table(

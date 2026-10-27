@@ -15,9 +15,19 @@
       "device:/dev/dri/renderD128",
       "device:/dev/ttyUSB0"
     ],
-    "deviceGroups": {
-      "/dev/dri/renderD128": 105,
-      "/dev/ttyUSB0": 20
+    "devices": {
+      "/dev/dri/renderD128": [
+        {
+          "path": "/dev/dri/renderD128",
+          "gid": 105
+        }
+      ],
+      "/dev/ttyUSB0": [
+        {
+          "path": "/dev/ttyUSB0",
+          "gid": 20
+        }
+      ]
     }
   }
 }

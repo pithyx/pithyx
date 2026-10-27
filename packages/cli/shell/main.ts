@@ -68,6 +68,7 @@ const BACKEND_STATES: ShellBackend[] = [
   'unavailable',
   'unavailable:storage',
   'unavailable:pool',
+  'unavailable:device',
 ];
 const STORAGE_STATES: StorageState[] = ['ready', 'unmapped', 'locked', 'unavailable'];
 const UNLOAD_REASONS: UnloadReason[] = ['logout', 'shutdown', 'restart', 'update'];
@@ -632,12 +633,14 @@ function openWindow(): void {
               : (text[state.locale] ?? text[language] ?? text.en),
           ),
         ]
-      : state.backend === 'unavailable:storage' || state.backend === 'unavailable:pool'
+      : state.backend === 'unavailable:storage' ||
+          state.backend === 'unavailable:pool' ||
+          state.backend === 'unavailable:device'
         ? [
             h(
               'span',
               {},
-              t(state.backend === 'unavailable:storage' ? 'window.storage' : 'window.pool', {
+              t(`window.${state.backend.slice('unavailable:'.length)}`, {
                 name: appName(),
               }),
             ),

@@ -22,6 +22,9 @@ public sealed class AppBackends
     /// <summary>The reason of an <see cref="Unavailable"/> backend whose app pool is locked or missing.</summary>
     public const string ReasonPool = "pool";
 
+    /// <summary>A required device of the app is not plugged in (D387).</summary>
+    public const string ReasonDevice = "device";
+
     private readonly ConcurrentDictionary<string, IReadOnlyDictionary<string, Uri>> _running = new(StringComparer.Ordinal);
     private readonly ConcurrentDictionary<string, string> _status = new(StringComparer.Ordinal);
 

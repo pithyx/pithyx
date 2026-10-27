@@ -65,7 +65,6 @@ public sealed class ManifestValidatorTests
     }
 
     [Theory]
-    [InlineData("docker.socket")]
     [InlineData("host.full")]
     [InlineData("capability:BPF")]
     [InlineData("capability:SYS_ADMIN")]
@@ -83,6 +82,10 @@ public sealed class ManifestValidatorTests
     [InlineData("device:/dev/net/tun")]
     [InlineData("host.network")]
     [InlineData("host.pid")]
+    [InlineData("device:/dev/dri")]
+    [InlineData("device:/dev/serial")]
+    [InlineData("docker.socket")]
+    [InlineData("docker.socket.raw")]
     public void RightsOfD311AreGranted(string right) =>
         Assert.True(ManifestValidator.IsSupportedElevatedRight(right));
 }

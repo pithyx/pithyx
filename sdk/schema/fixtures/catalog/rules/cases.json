@@ -1180,6 +1180,37 @@
           }
         }
       ]
+    },
+    {
+      "name": "the raw Docker socket in a catalog",
+      "manifest": {
+        "backend": {
+          "compose": "backend/compose.yaml",
+          "endpoints": {
+            "api": {
+              "service": "server",
+              "port": 8080
+            }
+          },
+          "lifecycle": "onDemand",
+          "elevated": [
+            "docker.socket.raw"
+          ]
+        }
+      },
+      "files": {
+        "backend/compose.dev.yaml": {
+          "text": "services:\n  server:\n    build: ./server\n    volumes:\n      - /var/run/docker.sock:/var/run/docker.sock\n"
+        }
+      },
+      "expected": [
+        {
+          "code": "app.elevated.sideload_only",
+          "params": {
+            "right": "docker.socket.raw"
+          }
+        }
+      ]
     }
   ]
 }

@@ -200,6 +200,10 @@ public static class CatalogRules
             return result.Issues;
         }
         var issues = new List<ValidationIssue>();
+        if (ManifestValidator.Declares(manifest, ManifestValidator.DockerSocketRaw))
+        {
+            issues.Add(new ValidationIssue(ErrorCodes.AppElevatedSideloadOnly, ("right", ManifestValidator.DockerSocketRaw)));
+        }
         var id = manifest.GetProperty("id").GetString()!;
         if (id != folder)
         {

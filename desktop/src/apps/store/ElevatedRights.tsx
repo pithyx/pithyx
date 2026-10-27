@@ -9,31 +9,45 @@ import type { AppDetails } from '../sdk/store';
 import { storeCall } from '../sdk/store';
 import { describeProblem } from '../storage/shared';
 import { useAppChange } from './AppPage';
-import { elevatedKind } from './model';
+import { type DeviceNoteKey, deviceNote, elevatedKind } from './model';
 import styles from './Store.module.css';
 
-/** An elevated right with what it lets the app's background service do and why that is a risk (D311). */
-export function ElevatedRightText({ right, id }: { right: string; id?: string }) {
+/**
+ * An elevated right with what it lets the app's background service do and why that is a risk (D311, D387), and for a
+ * device whether it is plugged in.
+ */
+export function ElevatedRightText({
+  right,
+  id,
+  note,
+}: {
+  right: string;
+  id?: string;
+  note?: DeviceNoteKey | null;
+}) {
   const { t } = useTranslation('store');
   const parsed = elevatedKind(right);
   return (
     <span className={styles.permissionText} id={id}>
       <span className={styles.permissionTitle}>
         {parsed.kind === 'device'
-          ? t('elevated.device.title', { path: parsed.value })
+          ? parsed.deviceClass === undefined
+            ? t('elevated.device.title', { path: parsed.value })
+            : t(`elevated.deviceClass.${parsed.deviceClass}`)
           : parsed.kind === 'capability'
             ? t('elevated.capability.title', { name: parsed.value })
             : parsed.kind === 'unknown'
               ? parsed.value
               : t(`elevated.${parsed.kind}.title`)}
       </span>
-      <span className={styles.muted}>
+      <span className={parsed.kind === 'dockerSocketRaw' ? styles.warning : styles.muted}>
         {parsed.kind === 'capability'
           ? t('elevated.capability.risk', { name: parsed.value })
           : parsed.kind === 'unknown'
             ? t('elevated.unknown')
             : t(`elevated.${parsed.kind}.risk`)}
       </span>
+      {note != null && <span className={styles.notice}>{t(note)}</span>}
     </span>
   );
 }
@@ -163,7 +177,11 @@ export function ElevatedSection({ app, details }: { app: PithyxApp; details: App
       <ul className={styles.permissions}>
         {details.elevated.map((entry) => (
           <li key={entry.right} className={styles.permission}>
-            <ElevatedRightText right={entry.right} id={`store-elevated-${entry.right}`} />
+            <ElevatedRightText
+              right={entry.right}
+              id={`store-elevated-${entry.right}`}
+              note={deviceNote(entry.right, details.devices, 'installed')}
+            />
             <Switch
               aria-labelledby={`store-elevated-${entry.right}`}
               isSelected={entry.granted}

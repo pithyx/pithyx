@@ -204,6 +204,22 @@ public static class ManifestValidator
             }
         }
 
+        var declared = backend.TryGetProperty("elevated", out var declaredRights)
+            ? declaredRights.EnumerateArray().Select(element => element.GetString()!).ToHashSet(StringComparer.Ordinal)
+            : [];
+        if (backend.TryGetProperty("optionalDevices", out var optionalDevices))
+        {
+            var index = 0;
+            foreach (var device in optionalDevices.EnumerateArray().Select(element => element.GetString()!))
+            {
+                if (!declared.Contains(DevicePrefix + device))
+                {
+                    yield return UnknownReference($"/backend/optionalDevices/{index}", device);
+                }
+                index++;
+            }
+        }
+
         if (backend.TryGetProperty("elevated", out var elevated))
         {
             var root = backend.TryGetProperty("root", out var flag) && flag.ValueKind == JsonValueKind.True;
@@ -229,16 +245,26 @@ public static class ManifestValidator
 
     public const string CapabilityPrefix = "capability:";
 
+    /// <summary>Whether the manifest's <c>backend.elevated</c> asks for this right.</summary>
+    public static bool Declares(JsonElement manifest, string right) =>
+        manifest.TryGetProperty("backend", out var backend)
+        && backend.TryGetProperty("elevated", out var elevated)
+        && elevated.EnumerateArray().Any(element => element.GetString() == right);
+
+    public const string DockerSocket = "docker.socket";
+
+    public const string DockerSocketRaw = "docker.socket.raw";
+
     /// <summary>
-    /// Whether this version of Pithyx can grant an elevated right the schema accepts (D311): <c>host.network</c>,
-    /// <c>host.pid</c>, a device node outside the block list and a capability outside the block list. <c>docker.socket</c>
-    /// and <c>host.full</c> stay refused.
+    /// Whether this version of Pithyx can grant an elevated right the schema accepts (D311, D387): <c>host.network</c>,
+    /// <c>host.pid</c>, <c>docker.socket</c>, <c>docker.socket.raw</c>, a device node or class outside the block list and a
+    /// capability outside the block list. <c>host.full</c> stays refused.
     /// </summary>
     public static bool IsSupportedElevatedRight(string right)
     {
         ArgumentNullException.ThrowIfNull(right);
         var rules = Compose.ComposeValidator.Rules;
-        if (rules.HostNamespaceRights.Contains(right))
+        if (rules.HostNamespaceRights.Contains(right) || right is DockerSocket or DockerSocketRaw)
         {
             return true;
         }
