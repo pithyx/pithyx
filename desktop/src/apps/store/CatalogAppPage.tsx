@@ -11,6 +11,12 @@ import { manifestText } from '../installed';
 import { storeCall, type StoreAppDetails, type StoreAppSummary } from '../sdk/store';
 import { describeProblem, formatDate } from '../storage/shared';
 import { SourceBadge } from './CatalogBrowser';
+import {
+  IncompatibleBadge,
+  IncompatibleNotice,
+  readsManifest,
+  useVersionReason,
+} from './Incompatible';
 import { InstallDialog } from './InstallDialog';
 import { manifestFacts } from './model';
 import { ElevatedRightText } from './ElevatedRights';
@@ -38,7 +44,12 @@ export function CatalogAppPage({
   const [installing, setInstalling] = useState<{ update: boolean } | null>(null);
   const details = useCatalogDetails(app, entry.catalog, entry.id);
   const summary = details.data?.app ?? entry;
-  const facts = details.data === undefined ? null : manifestFacts(details.data.manifest);
+  const incompatible = summary.incompatible;
+  // A manifest of another version than this box reads has no rights or Store information to show.
+  const facts =
+    details.data === undefined || !readsManifest(incompatible)
+      ? null
+      : manifestFacts(details.data.manifest);
   const name = manifestText(summary.name, i18n.language);
   const description =
     summary.description === null ? null : manifestText(summary.description, i18n.language);
@@ -66,6 +77,7 @@ export function CatalogAppPage({
             <span className={styles.badges}>
               <SourceBadge kind={summary.kind} />
               <MaturityBadge maturity={summary.maturity} />
+              {incompatible !== null && <IncompatibleBadge />}
               {installed && (
                 <Badge tone="neutral">
                   {t('catalog.installedVersion', { version: summary.installedVersion })}
@@ -74,7 +86,7 @@ export function CatalogAppPage({
             </span>
           </div>
           <div className={styles.buttons}>
-            {(!installed || summary.update) && (
+            {incompatible === null && (!installed || summary.update) && (
               <Button
                 variant="primary"
                 onPress={() => {
@@ -100,6 +112,7 @@ export function CatalogAppPage({
           </div>
         </header>
         {description !== null && description !== '' && <p>{description}</p>}
+        {incompatible !== null && <IncompatibleNotice incompatible={incompatible} />}
         {summary.kind === 'custom' && <p className={styles.notice}>{t('catalog.unverified')}</p>}
         {details.isPending && (
           <p className={styles.loading} role="status">
@@ -107,11 +120,11 @@ export function CatalogAppPage({
           </p>
         )}
         {details.isError && <ErrorNotice error={describeProblem(details.error)} />}
-        {details.data !== undefined && facts !== null && (
+        {details.data !== undefined && (
           <>
             <CatalogScreenshots details={details.data} name={name} />
-            {facts.root && <p className={styles.warning}>{t('install.root')}</p>}
-            {facts.elevated.length > 0 && (
+            {facts?.root === true && <p className={styles.warning}>{t('install.root')}</p>}
+            {facts !== null && facts.elevated.length > 0 && (
               <section className={styles.group} aria-labelledby="store-catalog-elevated">
                 <h3 id="store-catalog-elevated" className={styles.sectionTitle}>
                   {t('elevated.section')}
@@ -126,29 +139,31 @@ export function CatalogAppPage({
                 </ul>
               </section>
             )}
-            <section className={styles.group} aria-labelledby="store-catalog-permissions">
-              <h3 id="store-catalog-permissions" className={styles.sectionTitle}>
-                {t('detail.permissions.title')}
-              </h3>
-              <p className={styles.muted}>
-                {facts.backend ? t('install.backend.yes') : t('install.backend.no')}
-              </p>
-              {facts.permissions.length === 0 ? (
-                <p className={styles.muted}>{t('install.noPermissions')}</p>
-              ) : (
-                <ul className={styles.permissions}>
-                  {facts.permissions.map((permission) => (
-                    <li key={permission} className={styles.permission}>
-                      <PermissionText
-                        permission={permission}
-                        reason={facts.reasons[permission]}
-                        hosts={facts.hosts}
-                      />
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </section>
+            {facts !== null && (
+              <section className={styles.group} aria-labelledby="store-catalog-permissions">
+                <h3 id="store-catalog-permissions" className={styles.sectionTitle}>
+                  {t('detail.permissions.title')}
+                </h3>
+                <p className={styles.muted}>
+                  {facts.backend ? t('install.backend.yes') : t('install.backend.no')}
+                </p>
+                {facts.permissions.length === 0 ? (
+                  <p className={styles.muted}>{t('install.noPermissions')}</p>
+                ) : (
+                  <ul className={styles.permissions}>
+                    {facts.permissions.map((permission) => (
+                      <li key={permission} className={styles.permission}>
+                        <PermissionText
+                          permission={permission}
+                          reason={facts.reasons[permission]}
+                          hosts={facts.hosts}
+                        />
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </section>
+            )}
             <section className={styles.group} aria-labelledby="store-catalog-facts">
               <h3 id="store-catalog-facts" className={styles.sectionTitle}>
                 {t('detail.facts.title')}
@@ -158,7 +173,7 @@ export function CatalogAppPage({
                 <dd>{summary.author ?? '-'}</dd>
                 <dt>{t('detail.facts.license')}</dt>
                 <dd>{summary.license}</dd>
-                <StoreInfoRows facts={facts} />
+                {facts !== null && <StoreInfoRows facts={facts} />}
                 <dt>{t('catalog.catalog')}</dt>
                 <dd className={styles.breakable}>{summary.catalog}</dd>
                 {details.data.homepage !== null && (
@@ -243,6 +258,7 @@ export function CatalogScreenshots({ details, name }: { details: StoreAppDetails
 export function CatalogVersions({ details }: { details: StoreAppDetails }) {
   const { t } = useTranslation('store');
   const locale = useFormatLocale();
+  const reason = useVersionReason();
   return (
     <section className={styles.group} aria-labelledby="store-catalog-versions">
       <h3 id="store-catalog-versions" className={styles.sectionTitle}>
@@ -255,7 +271,7 @@ export function CatalogVersions({ details }: { details: StoreAppDetails }) {
               <span className={styles.permissionTitle}>{version.version}</span>
               <span className={styles.muted}>
                 {formatDate(version.publishedAt, locale)}
-                {!version.fits && ` · ${t('catalog.needs', { range: version.pithyx })}`}
+                {version.incompatible !== null && ` · ${reason(version.incompatible)}`}
               </span>
             </span>
           </li>

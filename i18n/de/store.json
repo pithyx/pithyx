@@ -241,7 +241,7 @@
     "search": "Apps suchen",
     "searchPlaceholder": "Name, Beschreibung oder Entwickler",
     "loading": "Apps werden geladen",
-    "empty": "Dieser Katalog hat noch keine Apps für diese Box.",
+    "empty": "Dieser Katalog hat noch keine Apps.",
     "noMatch": "Keine App passt zu „{query}“.",
     "apps": "Apps",
     "newNotice": "{name} wurde noch nicht abgerufen.",
@@ -267,7 +267,19 @@
     "needs": "braucht Pithyx {range}",
     "category": "Kategorie",
     "allCategories": "Alle Kategorien",
-    "noCategoryMatch": "Keine App in dieser Kategorie passt."
+    "noCategoryMatch": "Keine App in dieser Kategorie passt.",
+    "incompatible": "Nicht kompatibel",
+    "incompatibleReason": {
+      "box": "Diese App braucht Pithyx {range}; diese Box hat {version}. Nach einem Systemupdate lässt sie sich vielleicht installieren.",
+      "architecture": "Diese App ist nicht für den Prozessor dieser Box ({box}) gebaut; sie läuft auf {architectures}.",
+      "manifestOld": "Diese Version wurde für ein älteres Pithyx gemacht (Manifest-Version {manifest}), das diese Box nicht mehr installiert. Ihr Entwickler muss eine angepasste Version veröffentlichen.",
+      "manifestNew": "Diese Version wurde für ein neueres Pithyx gemacht (Manifest-Version {manifest}). Nach einem Systemupdate lässt sie sich vielleicht installieren."
+    },
+    "versionReason": {
+      "architecture": "nicht für {box}",
+      "manifestOld": "älteres App-Format",
+      "manifestNew": "neueres App-Format"
+    }
   },
   "updates": {
     "title": "Updates",

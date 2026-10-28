@@ -6,6 +6,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using Microsoft.Extensions.DependencyInjection;
+using Pithyx.Daemon.Apps.Docker;
 using Pithyx.Daemon.Jobs;
 using Pithyx.Daemon.Tests.Apps.Packages;
 using Pithyx.Daemon.Tests.Auth;
@@ -43,9 +44,10 @@ internal sealed class LocalCatalog
     /// Adds a version and commits a new index; <paramref name="extra"/> goes into the manifest. With
     /// <paramref name="compose"/> the version has a backend with the images of <see cref="TarBuilder.BackendLock"/>.
     /// </summary>
-    public void Publish(string appId, string version, string extra = "", string pithyx = "*", string permissions = "\"notifications\"", string? compose = null)
+    public void Publish(string appId, string version, string extra = "", string pithyx = "*", string permissions = "\"notifications\"", string? compose = null, string[]? architectures = null, int manifestVersion = 2)
     {
-        var manifest = TarBuilder.Manifest(appId, version, permissions, (compose is null ? "" : TarBuilder.BackendManifest) + extra);
+        var manifest = TarBuilder.Manifest(appId, version, permissions, (compose is null ? "" : TarBuilder.BackendManifest) + extra)
+            .Replace("\"manifestVersion\": 2,", $"\"manifestVersion\": {manifestVersion},", StringComparison.Ordinal);
         var builder = TarBuilder.MinimalPackage(appId, version, manifest);
         if (compose is not null)
         {
@@ -63,7 +65,7 @@ internal sealed class LocalCatalog
             ["package"] = FileEntry(package),
             ["manifest"] = FileEntry(Encoding.UTF8.GetBytes(manifest)),
             ["icon"] = FileEntry(Encoding.UTF8.GetBytes(TarBuilder.Icon)),
-            ["architectures"] = new JsonArray("amd64", "arm64"),
+            ["architectures"] = new JsonArray([.. (architectures ?? ["amd64", "arm64"]).Select(architecture => JsonValue.Create(architecture))]),
             ["pithyx"] = pithyx,
             ["license"] = "MIT",
             ["source"] = new JsonObject { ["repository"] = "https://example.com/apps", ["commit"] = new string('a', 40), ["path"] = $"apps/{appId}" },
@@ -393,6 +395,44 @@ public sealed class StoreApiTests : IDisposable
         Assert.Equal("1.0.0", (await _admin.GetFromJsonAsync<JsonElement>("/api/store/apps", Token)).GetProperty("apps").EnumerateArray().Single().GetProperty("version").GetString());
         using var staged = await _admin.PostAsync($"/api/store/catalogs/{_catalog.CatalogId}/apps/{AppId}/2.0.0/package", null, Token);
         Assert.Equal("app.package.box_too_old", await staged.ErrorCodeAsync());
+    }
+
+    [Fact]
+    public async Task AnAppTheBoxCannotRunStaysInTheStoreWithWhy()
+    {
+        await _admin.SetupAdminAsync();
+        var other = ImagesLock.HostArchitecture == "amd64" ? "arm64" : "amd64";
+        _catalog.Publish(AppId, "2.0.0", pithyx: ">=99.0.0");
+        _catalog.Publish("com.example.oldie", "1.0.0", manifestVersion: 1);
+        _catalog.Publish("com.example.future", "1.0.0", manifestVersion: 3);
+        _catalog.Publish("com.example.elsewhere", "1.0.0", architectures: [other]);
+        await AddCatalogAsync();
+
+        var listed = (await _admin.GetFromJsonAsync<JsonElement>("/api/store/apps", Token)).GetProperty("apps").EnumerateArray()
+            .ToDictionary(app => app.GetProperty("id").GetString()!, app => app.GetProperty("incompatible"));
+        Assert.Equal("box", listed[AppId].GetProperty("reason").GetString());
+        Assert.Equal(">=99.0.0", listed[AppId].GetProperty("pithyx").GetString());
+        Assert.Equal("manifestOld", listed["com.example.oldie"].GetProperty("reason").GetString());
+        Assert.Equal(1, listed["com.example.oldie"].GetProperty("manifestVersion").GetInt32());
+        Assert.Equal("manifestNew", listed["com.example.future"].GetProperty("reason").GetString());
+        Assert.Equal("architecture", listed["com.example.elsewhere"].GetProperty("reason").GetString());
+        Assert.Equal([other], listed["com.example.elsewhere"].GetProperty("architectures").EnumerateArray().Select(architecture => architecture.GetString()));
+
+        // The page shows the app and its versions with why; installing stays refused.
+        var details = await _admin.GetFromJsonAsync<JsonElement>($"/api/store/catalogs/{_catalog.CatalogId}/apps/{AppId}", Token);
+        Assert.Equal("2.0.0", details.GetProperty("app").GetProperty("version").GetString());
+        var version = details.GetProperty("versions").EnumerateArray().Single();
+        Assert.False(version.GetProperty("fits").GetBoolean());
+        Assert.Equal("box", version.GetProperty("incompatible").GetProperty("reason").GetString());
+        using var staged = await _admin.PostAsync($"/api/store/catalogs/{_catalog.CatalogId}/apps/{AppId}/2.0.0/package", null, Token);
+        Assert.Equal("app.package.box_too_old", await staged.ErrorCodeAsync());
+
+        // An app with a version this box can run shows that one, without a reason.
+        _catalog.Publish(AppId, "1.0.0");
+        await CheckAsync();
+        var fitting = (await _admin.GetFromJsonAsync<JsonElement>("/api/store/apps", Token)).GetProperty("apps").EnumerateArray().Single(app => app.GetProperty("id").GetString() == AppId);
+        Assert.Equal("1.0.0", fitting.GetProperty("version").GetString());
+        Assert.Equal(JsonValueKind.Null, fitting.GetProperty("incompatible").ValueKind);
     }
 
     [Fact]

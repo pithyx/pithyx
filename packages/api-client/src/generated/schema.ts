@@ -7708,7 +7708,7 @@ export type components = {
             /** @description The pool name for scrubs; empty for self-tests. */
             target: string;
         };
-        /** @description An app of a catalog, at the newest version this box can run. */
+        /** @description An app of a catalog, at the newest version this box can run, or at its newest version when it can run none. */
         StoreApp: {
             /** @description The author's name, if the manifest has one. */
             author: null | string;
@@ -7724,6 +7724,8 @@ export type components = {
             icon: string;
             /** @description The app id. */
             id: string;
+            /** @description Why this box cannot install a catalog version, with what the user needs to know (D393). */
+            incompatible: null | components["schemas"]["StoreIncompatible"];
             /** @description The installed version, if the app is installed. */
             installedVersion: null | string;
             /** @description Its search words from the manifest, empty without. */
@@ -7740,16 +7742,16 @@ export type components = {
             };
             /** @description The installed app is older than Version. */
             update: boolean;
-            /** @description The newest version for this box. */
+            /** @description The newest version for this box, or the newest version when the box can run none. */
             version: string;
         };
         /** @description The detail page of a catalog app. */
         StoreAppDetails: {
-            /** @description The app at its newest fitting version. */
+            /** @description The app at its newest fitting version, or at its newest version with why it does not fit. */
             app: components["schemas"]["StoreApp"];
             /** @description The manifest's homepage, if any. */
             homepage: null | string;
-            /** @description That version's manifest. */
+            /** @description That version's manifest; of another manifest version when `App.Incompatible` says so. */
             manifest: components["schemas"]["JsonElement"];
             /** @description URLs of its screenshots, in order. */
             screenshots: string[];
@@ -7769,8 +7771,10 @@ export type components = {
              * @description Its data version, if it declares one.
              */
             dataVersion: null | number;
-            /** @description This box can install it (its version and architecture). */
+            /** @description This box can install it (its version, architecture and manifest version). */
             fits: boolean;
+            /** @description Why this box cannot install a catalog version, with what the user needs to know (D393). */
+            incompatible: null | components["schemas"]["StoreIncompatible"];
             /** @description The range of Pithyx versions it runs on. */
             pithyx: string;
             /**
@@ -7786,6 +7790,29 @@ export type components = {
          * @enum {unknown}
          */
         StoreChannel: "stable" | "beta";
+        /** @description Why this box cannot install a catalog version, with what the user needs to know (D393). */
+        StoreIncompatible: {
+            /** @description The architectures the version is built for. */
+            architectures: string[];
+            /** @description The box's architecture. */
+            boxArchitecture: string;
+            /** @description The box's Pithyx version. */
+            boxVersion: string;
+            /**
+             * Format: int32
+             * @description The version's manifest version.
+             */
+            manifestVersion: null | number;
+            /** @description The range of Pithyx versions the version runs on. */
+            pithyx: string;
+            /** @description The reason. */
+            reason: components["schemas"]["StoreIncompatibleReason"];
+        };
+        /**
+         * @description Why this box cannot install a catalog version (D393).
+         * @enum {unknown}
+         */
+        StoreIncompatibleReason: "box" | "architecture" | "manifestOld" | "manifestNew";
         /** @description The Store's settings (D329). */
         StoreSettings: {
             /** @description The branch every catalog is read from. */

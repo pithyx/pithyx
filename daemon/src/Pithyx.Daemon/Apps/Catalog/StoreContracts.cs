@@ -111,21 +111,47 @@ public sealed record AddCatalogRequest(string Url);
 /// <param name="RegistryToken">user:token to pull the catalog's private images; empty removes it, null leaves it.</param>
 public sealed record UpdateCatalogRequest(bool? Enabled = null, string? RegistryToken = null);
 
-/// <summary>An app of a catalog, at the newest version this box can run.</summary>
+/// <summary>Why this box cannot install a catalog version (D393).</summary>
+public enum StoreIncompatibleReason
+{
+    /// <summary>The box's Pithyx version is outside the version's range: a system update may help.</summary>
+    Box,
+
+    /// <summary>The version is not built for the box's processor architecture.</summary>
+    Architecture,
+
+    /// <summary>The version was published with an older manifest version than the box reads (D388).</summary>
+    ManifestOld,
+
+    /// <summary>The version was published with a newer manifest version than the box reads: a system update may help.</summary>
+    ManifestNew,
+}
+
+/// <summary>Why this box cannot install a catalog version, with what the user needs to know (D393).</summary>
+/// <param name="Reason">The reason.</param>
+/// <param name="Pithyx">The range of Pithyx versions the version runs on.</param>
+/// <param name="BoxVersion">The box's Pithyx version.</param>
+/// <param name="Architectures">The architectures the version is built for.</param>
+/// <param name="BoxArchitecture">The box's architecture.</param>
+/// <param name="ManifestVersion">The version's manifest version.</param>
+public sealed record StoreIncompatible(StoreIncompatibleReason Reason, string Pithyx, string BoxVersion, IReadOnlyList<string> Architectures, string BoxArchitecture, int? ManifestVersion);
+
+/// <summary>An app of a catalog, at the newest version this box can run, or at its newest version when it can run none.</summary>
 /// <param name="Catalog">The catalog's id.</param>
 /// <param name="Kind">The catalog's kind; custom ones are unverified.</param>
 /// <param name="Id">The app id.</param>
-/// <param name="Version">The newest version for this box.</param>
+/// <param name="Version">The newest version for this box, or the newest version when the box can run none.</param>
 /// <param name="Name">Names by language.</param>
 /// <param name="Description">Descriptions by language, if any.</param>
 /// <param name="Author">The author's name, if the manifest has one.</param>
 /// <param name="License">The SPDX license.</param>
 /// <param name="Icon">The icon's URL.</param>
 /// <param name="InstalledVersion">The installed version, if the app is installed.</param>
-/// <param name="Update">The installed app is older than <paramref name="Version"/>.</param>
+/// <param name="Update">The installed app is older than <paramref name="Version"/> and the box can install it.</param>
 /// <param name="Categories">Its categories from the manifest (D389), empty without.</param>
 /// <param name="Keywords">Its search words from the manifest, empty without.</param>
 /// <param name="Maturity">Its maturity: <c>stable</c> (also without the field), <c>beta</c> or <c>experimental</c>.</param>
+/// <param name="Incompatible">Set when this box can install no version of the app: why, for <paramref name="Version"/> (D393).</param>
 public sealed record StoreApp(
     string Catalog,
     CatalogKind Kind,
@@ -140,7 +166,8 @@ public sealed record StoreApp(
     bool Update,
     IReadOnlyList<string> Categories,
     IReadOnlyList<string> Keywords,
-    string Maturity);
+    string Maturity,
+    StoreIncompatible? Incompatible);
 
 /// <summary>Apps of the enabled catalogs, sorted by name.</summary>
 public sealed record StoreAppList(IReadOnlyList<StoreApp> Apps);
@@ -149,13 +176,14 @@ public sealed record StoreAppList(IReadOnlyList<StoreApp> Apps);
 /// <param name="Version">The version.</param>
 /// <param name="PublishedAt">When the catalog published it.</param>
 /// <param name="Pithyx">The range of Pithyx versions it runs on.</param>
-/// <param name="Fits">This box can install it (its version and architecture).</param>
+/// <param name="Fits">This box can install it (its version, architecture and manifest version).</param>
 /// <param name="DataVersion">Its data version, if it declares one.</param>
-public sealed record StoreAppVersion(string Version, DateTimeOffset PublishedAt, string Pithyx, bool Fits, int? DataVersion);
+/// <param name="Incompatible">Why this box cannot install it, when it does not fit.</param>
+public sealed record StoreAppVersion(string Version, DateTimeOffset PublishedAt, string Pithyx, bool Fits, int? DataVersion, StoreIncompatible? Incompatible);
 
 /// <summary>The detail page of a catalog app.</summary>
-/// <param name="App">The app at its newest fitting version.</param>
-/// <param name="Manifest">That version's manifest.</param>
+/// <param name="App">The app at its newest fitting version, or at its newest version with why it does not fit.</param>
+/// <param name="Manifest">That version's manifest; of another manifest version when <c>App.Incompatible</c> says so.</param>
 /// <param name="Screenshots">URLs of its screenshots, in order.</param>
 /// <param name="Homepage">The manifest's homepage, if any.</param>
 /// <param name="Source">Where its source is: the catalog repository at the commit CI built, in the app's folder.</param>

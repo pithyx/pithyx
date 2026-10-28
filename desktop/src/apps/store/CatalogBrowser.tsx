@@ -9,6 +9,7 @@ import { manifestText } from '../installed';
 import { storeCall, type CatalogInfo, type StoreAppSummary } from '../sdk/store';
 import { describeProblem } from '../storage/shared';
 import { CATEGORIES, inCategory } from './model';
+import { IncompatibleBadge } from './Incompatible';
 import { MaturityBadge } from './StoreInfo';
 import { catalogName } from './storeState';
 import styles from './Store.module.css';
@@ -136,6 +137,7 @@ export function CatalogBrowser({
                   <span className={styles.badges}>
                     <SourceBadge kind={entry.kind} />
                     <MaturityBadge maturity={entry.maturity} />
+                    {entry.incompatible !== null && <IncompatibleBadge />}
                     {entry.installedVersion !== null && (
                       <Badge tone={entry.update ? 'highlight' : 'neutral'}>
                         {entry.update ? t('catalog.updateAvailable') : t('catalog.installed')}
