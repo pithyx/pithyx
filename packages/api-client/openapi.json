@@ -21136,7 +21136,7 @@
           },
           "update": {
             "type": "boolean",
-            "description": "The installed app is older than Version."
+            "description": "The installed app is older than Version and the box can install it."
           },
           "categories": {
             "type": "array",

@@ -7740,7 +7740,7 @@ export type components = {
             name: {
                 [key: string]: string;
             };
-            /** @description The installed app is older than Version. */
+            /** @description The installed app is older than Version and the box can install it. */
             update: boolean;
             /** @description The newest version for this box, or the newest version when the box can run none. */
             version: string;
