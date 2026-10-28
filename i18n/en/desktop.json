@@ -46,7 +46,8 @@
     "startupApps": "Open at sign-in",
     "channels": "Notification channels",
     "passkeys": "Passkeys",
-    "trust": "Trust this device"
+    "trust": "Trust this device",
+    "preferences": "Personal settings"
   },
   "error": {
     "title": "Something went wrong",
@@ -199,7 +200,8 @@
         "monitor": "Resource Monitor",
         "logs": "Log Center",
         "about": "About Pithyx",
-        "store": "Store"
+        "store": "Store",
+        "preferences": "Personal settings"
       }
     },
     "photos": "Photos",
@@ -381,5 +383,23 @@
       "intro": "Switch off a kind of notification to mute it: it still lands in your list as read, but without a toast, email or webhook.",
       "none": "None of your apps sorts its notifications into kinds."
     }
+  },
+  "preferences": {
+    "account": "Account and security",
+    "desktop": "Desktop",
+    "apps": "Apps",
+    "notifications": "Notifications",
+    "on": "On",
+    "off": "Off",
+    "twoFactorHint": "A code from an authenticator app when you sign in.",
+    "passkeysHint": "Sign in with a passkey instead of the password, on devices that trust the box.",
+    "trustHint": "Install the box's root certificate on this device: no more warnings, and passkeys work.",
+    "languageAuto": "Automatic ({language})",
+    "thisDevice": "On this device.",
+    "everyDevice": "On every device.",
+    "getDesktopHint": "Take over the windows of another of your devices.",
+    "fileDefaultsHint": "Which app opens a file type in Files.",
+    "startupAppsHint": "Apps that open when you sign in.",
+    "channelsHint": "Email and push services for your notifications, and which kinds of app notifications you get."
   }
 }

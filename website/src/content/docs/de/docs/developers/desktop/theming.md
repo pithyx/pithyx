@@ -36,15 +36,15 @@ Ein Test (`packages/ui/src/contrast.test.ts`) parst `tokens.css`, löst jedes Th
 
 ![Das Kontomenü im dunklen Design mit geöffnetem Untermenü Darstellung: Wie das System, Hell und Dunkel](../../../../../../assets/screenshots/theming-appearance.de.webp)
 
-_Darstellung im Kontomenü; Akzentfarbe und Hintergrundbild sind die Einträge darunter._
+_Darstellung im Kontomenü; Persönliche Einstellungen hat sie auch, mit Akzentfarbe und Hintergrundbild._
 
 Das Wurzelelement hat `color-scheme: light dark`, und jede semantische Farbe ist ein Paar `light-dark(a, b)`. Setzt du `data-theme="light"` oder `data-theme="dark"` auf `<html>`, erzwingt das ein Schema.
 
-Das Konto-Menü hat **Darstellung** mit **Wie das System**, **Hell** und **Dunkel**. Die Wahl wird pro Browser in `localStorage` gespeichert (`pithyx.theme`); "Wie das System" entfernt den Schlüssel. Die gespeicherte Wahl wird vor dem ersten Rendern angewendet, damit die Seite nicht aufblitzt.
+Das Kontomenü und Persönliche Einstellungen haben **Darstellung** mit **Wie das System**, **Hell** und **Dunkel**. Die Wahl wird pro Browser in `localStorage` gespeichert (`pithyx.theme`); "Wie das System" entfernt den Schlüssel. Die gespeicherte Wahl wird vor dem ersten Rendern angewendet, damit die Seite nicht aufblitzt.
 
 ## Akzente
 
-Es gibt sechs Presets: Petrol (der Standard), Ocean, Indigo, Plum, Moss und Graphite. Der Eintrag im Konto-Menü heißt **Akzentfarbe**. Das Preset wird mit `<html data-accent="...">` gesetzt. Die Liste ist absichtlich kuratiert: keine freie Farbauswahl, weil jedes Preset in beiden Themes auf Kontrast geprüft ist, und kein rotes Preset, damit ein Akzent nie wie ein Fehler aussieht.
+Es gibt sechs Presets: Petrol (der Standard), Ocean, Indigo, Plum, Moss und Graphite. Die Zeile in Persönliche Einstellungen heißt **Akzentfarbe**. Das Preset wird mit `<html data-accent="...">` gesetzt. Die Liste ist absichtlich kuratiert: keine freie Farbauswahl, weil jedes Preset in beiden Themes auf Kontrast geprüft ist, und kein rotes Preset, damit ein Akzent nie wie ein Fehler aussieht.
 
 Der Akzent und das Hintergrundbild (**Pithyx-Boxen** oder **Schlicht**) werden pro Benutzer im Daemon gespeichert und sind auf jedem Gerät gleich (`PUT /api/desktop/appearance`). Der Browser behält eine Kopie, damit das erste Zeichnen passt. Um einen Akzent hinzuzufügen, trägst du ihn in `ACCENTS` in `desktop/src/theme/appearance.ts` ein, fügst in `tokens.css` einen Block `[data-accent='x']` mit den fünf Akzent-Tokens hinzu und ergänzt `menu.accents.x` auf Englisch und Deutsch.
 

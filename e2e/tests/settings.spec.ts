@@ -1,7 +1,13 @@
 import AxeBuilder from '@axe-core/playwright';
 import type { Page } from '@playwright/test';
 import { expect, test } from './fixtures';
-import { appWindow, openAccountMenu, openFromStart, signInAsAdmin } from './session';
+import {
+  appWindow,
+  choosePersonalSetting,
+  openAccountMenu,
+  openFromStart,
+  signInAsAdmin,
+} from './session';
 
 const TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'];
 const headers = { 'X-Pithyx-Request': '1' };
@@ -135,17 +141,15 @@ test('the system region sets the formats everyone sees', async ({ page }) => {
   }
 });
 
-test('theme, accent color and wallpaper are in the account menu', async ({ page }) => {
+test('accent color and wallpaper are in Personal settings, the theme also in the account menu', async ({
+  page,
+}) => {
   await signInAsAdmin(page);
   try {
-    await openAccountMenu(page);
-    await page.getByRole('menuitem', { name: 'Accent color' }).click();
-    await page.getByRole('menuitemradio', { name: 'Moss' }).click();
+    await choosePersonalSetting(page, 'Accent color', 'Moss');
     await expect(page.locator('html')).toHaveAttribute('data-accent', 'moss');
 
-    await openAccountMenu(page);
-    await page.getByRole('menuitem', { name: 'Wallpaper' }).click();
-    await page.getByRole('menuitemradio', { name: 'Plain' }).click();
+    await choosePersonalSetting(page, 'Wallpaper', 'Plain');
     await expect(page.locator('svg[data-plain]')).toHaveCount(1);
 
     await openAccountMenu(page);

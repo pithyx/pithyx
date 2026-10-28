@@ -13,7 +13,7 @@ Benachrichtigungen erscheinen im Desktop von allen, für die sie gedacht sind. K
 Es gibt zwei Arten von Kanälen:
 
 - **Kanäle der Box** unter Einstellungen > **Benachrichtigungen** (nur Administratoren) bekommen die eigenen Warnungen des Systems einmal für alle Administratoren: Speicherprobleme, Updates, die USV, wiederholt falsche Anmeldungen, Zertifikate, die sich nicht erneuern ließen, und mehr.
-- **Eigene Kanäle eines Benutzers** im Benutzermenü unter **Benachrichtigungskanäle** bekommen, was diesen Benutzer im Desktop erreicht: seine Aufgabenergebnisse, Warnungen für Administratoren und Nachrichten von Apps, die über den Desktop hinaus senden dürfen. Jeder Benutzer kann bis zu 10 anlegen, auch Administratoren.
+- **Eigene Kanäle eines Benutzers** in **Persönliche Einstellungen** unter **Benachrichtigungskanäle** bekommen, was diesen Benutzer im Desktop erreicht: seine Aufgabenergebnisse, Warnungen für Administratoren und Nachrichten von Apps, die über den Desktop hinaus senden dürfen. Jeder Benutzer kann bis zu 10 anlegen, auch Administratoren.
 
 ## Der E-Mail-Server
 

@@ -1,6 +1,6 @@
 import { type Page } from '@playwright/test';
 import { expect, test } from './fixtures';
-import { appWindow, openAccountMenu, openFromDesktop, signInAsAdmin } from './session';
+import { appWindow, openFromDesktop, openPersonalSettings, signInAsAdmin } from './session';
 
 /** Resolves with the next layout the desktop saved, or the next one that contains `containing`. */
 async function layoutSaved(page: Page, containing = ''): Promise<string> {
@@ -61,8 +61,8 @@ test('another device gets this desktop', async ({ browser }) => {
   const second = await phone.newPage();
   await signInAsAdmin(second);
   await expect(appWindow(second, 'Storage')).toHaveCount(0);
-  await openAccountMenu(second);
-  await second.getByRole('menuitem', { name: 'Get desktop from' }).click();
+  const settings = await openPersonalSettings(second);
+  await settings.getByRole('button', { name: 'Get desktop from', exact: true }).click();
   await second
     .getByRole('menuitem', { name: /^Chrome on / })
     .first()
@@ -106,11 +106,11 @@ test('two tabs of one browser do not overwrite each other unnoticed', async ({ b
   await context.close();
 });
 
-test('apps chosen in the account menu open after signing in, once', async ({ page }) => {
+test('apps chosen in Personal settings open after signing in, once', async ({ page }) => {
   await signInAsAdmin(page);
   try {
-    await openAccountMenu(page);
-    await page.getByRole('menuitem', { name: 'Open at sign-in' }).click();
+    const settings = await openPersonalSettings(page);
+    await settings.getByRole('button', { name: 'Open at sign-in', exact: true }).click();
     const dialog = page.getByRole('dialog', { name: 'Open at sign-in' });
     const saved = page.waitForResponse(
       (response) =>

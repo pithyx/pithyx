@@ -17,7 +17,7 @@ Zum Anmelden gibst du auf der Seite **Willkommen zurück** deinen **Benutzername
 
 Es gibt auch eine Einrichtungsseite (**Pithyx einrichten**, **Administrator anlegen**). Sie erscheint nur, wenn eine Box überhaupt keine Benutzer hat, zum Beispiel nach einem Zurücksetzen. Auf einer Box, die mit dem Installer installiert wurde, siehst du sie nicht.
 
-Die Zwei-Faktor-Anmeldung ist optional. Um sie einzuschalten, öffne das Pithyx-Menü, klicke auf deinen Namen und wähle **Zwei-Faktor-Authentifizierung**. Siehe [Dein Konto](/de/docs/user/account/).
+Die Zwei-Faktor-Anmeldung ist optional. Um sie einzuschalten, öffne das Pithyx-Menü, klicke auf deinen Namen, wähle **Persönliche Einstellungen** und dann **Zwei-Faktor-Authentifizierung**. Siehe [Dein Konto](/de/docs/user/account/).
 
 ## Der Wiederherstellungsschlüssel
 

@@ -56,7 +56,7 @@ Antwortet eine App fünf Sekunden lang nicht, sagt ein Dialog, dass die App nich
 
 ## Die Taskleiste
 
-![Das Pithyx-Menü im dunklen Design mit geöffnetem Kontomenü von Anna Weber: Zwei-Faktor-Authentifizierung, Sprache, Darstellung, Akzentfarbe, Hintergrundbild, Desktop holen von und Position der Taskleiste](../../../../../assets/screenshots/desktop-account-menu.de.webp)
+![Das Pithyx-Menü im dunklen Design mit geöffnetem Kontomenü von Anna Weber: Persönliche Einstellungen und Darstellung](../../../../../assets/screenshots/desktop-account-menu.de.webp)
 
 _Das Kontomenü öffnet sich, wenn du unten im Pithyx-Menü auf deinen Namen klickst._
 
@@ -74,18 +74,13 @@ Laufen mehr Apps, als Platz haben, werden ihre Schaltflächen schmaler und lasse
 
 Klicke auf eine laufende App, um sie nach vorn zu holen. Klicke noch einmal auf die aktive App, um sie zu minimieren. Klicke mit der rechten Maustaste auf eine laufende App (oder drücke darauf **Umschalt+F10**) für **Minimieren** oder **Wiederherstellen**, **Zum Desktop hinzufügen** und **Schließen**.
 
-Um die Taskleiste zu verschieben, öffne das Pithyx-Menü, klicke auf deinen Namen, wähle **Position der Taskleiste** und dann **Unten**, **Oben**, **Links** oder **Rechts**. Auf Handys bleibt die Taskleiste immer unten und der Eintrag fehlt.
+Um die Taskleiste zu verschieben, öffne **Persönliche Einstellungen** (im Pithyx-Menü auf deinen Namen klicken), wähle **Position der Taskleiste** und dann **Unten**, **Oben**, **Links** oder **Rechts**. Auf Handys bleibt die Taskleiste immer unten und die Zeile fehlt.
 
-**Das Pithyx-Menü** öffnest du mit der Schaltfläche links in der Taskleiste oder indem du die Windows- oder Befehlstaste (Command) drückst und loslässt. Es listet deine Apps auf und hat ein Suchfeld. Die Suche findet Apps nur nach ihrem Namen; Einstellungen und Dateien findet sie dort nicht, und die Liste der zuletzt benutzten Dateien bleibt leer. Dein Kontomenü (klicke auf deinen Namen) enthält:
+**Das Pithyx-Menü** öffnest du mit der Schaltfläche links in der Taskleiste oder indem du die Windows- oder Befehlstaste (Command) drückst und loslässt. Es listet deine Apps auf und hat ein Suchfeld. Die Suche findet Apps nur nach ihrem Namen; Einstellungen und Dateien findet sie dort nicht, und die Liste der zuletzt benutzten Dateien bleibt leer. Dein Kontomenü (klicke auf deinen Namen) enthält **Persönliche Einstellungen** und **Darstellung**. In Persönliche Einstellungen ([Dein Konto](/de/docs/user/account/#persönliche-einstellungen)) findest du außerdem:
 
-- **Zwei-Faktor-Authentifizierung**
-- **Sprache**
-- **Darstellung**, **Akzentfarbe** und **Hintergrundbild**
 - **Standard-Apps**: die Dateitypen, die sich in Dateien immer auf eine Art öffnen sollen, jeweils mit **Vergessen** ([Dateien](/de/docs/user/files/))
 - **Beim Anmelden öffnen**: hake bis zu 10 Apps an, die sich bei jeder Anmeldung öffnen, auf jedem Gerät, in der Reihenfolge, in der du sie angehakt hast. Ein Neuladen der Seite bringt nur deine Fenster zurück, und eine App, die schon offen ist, öffnet sich nicht doppelt. Eine App kann als **Von der App empfohlen** markiert sein; angehakt wird sie nie für dich.
 - **Benachrichtigungskanäle**: deine Benachrichtigungen per E-Mail oder an einen Push-Dienst wie ntfy oder Gotify senden ([Konto](/de/docs/user/account/#benachrichtigungen-per-e-mail-oder-push))
-- **Desktop holen von**
-- **Position der Taskleiste** (nicht auf Handys)
 
 Unten im Pithyx-Menü, neben deinem Namen, stehen der Knopf **Abmelden** und, für Administratoren und Benutzer mit dem Recht **Neu starten und herunterfahren**, der Knopf **Ein/Aus** mit **Neu starten** und **Herunterfahren**. Beides meldet alle Benutzer ab und beendet Dateiübertragungen.
 
@@ -136,7 +131,7 @@ Die Box merkt sich deine Fenster für jeden Browser, den du benutzt: welche Apps
 - Gespeicherte Layouts laufen 90 Tage nach dem letzten Speichern ab.
 - Ein Fenster einer App, die entfernt wurde oder die du nicht mehr benutzen darfst, wird übersprungen. Eine Benachrichtigung sagt dir, wie viele es waren.
 - Deine Desktop-Elemente, Akzentfarbe und Hintergrundbild sind auf allen Geräten gleich. Das Theme und die Sprache gehören zum Gerät.
-- Um die Anordnung eines anderen Geräts zu übernehmen, öffne dein Kontomenü, klicke auf **Desktop holen von** und wähle das Gerät. Gibt es keines, steht in der Liste **Keine anderen Geräte**. Der Desktop folgt dir nicht von selbst zwischen Geräten.
+- Um die Anordnung eines anderen Geräts zu übernehmen, öffne **Persönliche Einstellungen**, klicke auf **Desktop holen von** und wähle das Gerät. Gibt es keines, steht in der Liste **Keine anderen Geräte**. Der Desktop folgt dir nicht von selbst zwischen Geräten.
 
 ## Handys und Tablets
 

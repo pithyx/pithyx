@@ -13,7 +13,7 @@ Notifications show up in the desktop of everyone they are for. Channels take the
 There are two kinds of channels:
 
 - **Channels of the box**, in Settings > **Notifications** (administrators only), get the system's own alerts once for all administrators: storage problems, updates, the UPS, repeated failed sign-ins, certificates that could not be renewed and more.
-- **A user's own channels**, in the user menu under **Notification channels**, get what reaches that user in the desktop: their job results, alerts for administrators, and messages of apps that may send beyond the desktop. Every user can add up to 10, administrators too.
+- **A user's own channels**, in **Personal settings** under **Notification channels**, get what reaches that user in the desktop: their job results, alerts for administrators, and messages of apps that may send beyond the desktop. Every user can add up to 10, administrators too.
 
 ## The email server
 

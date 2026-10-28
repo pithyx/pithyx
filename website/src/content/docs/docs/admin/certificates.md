@@ -25,7 +25,7 @@ In **Trust this box**, the page first says whether the device you are using trus
 - **Linux**: copy the file to `/usr/local/share/ca-certificates/` and run `sudo update-ca-certificates`.
 - **Firefox** keeps its own store: Settings, Privacy and Security, Certificates, View Certificates, Authorities, Import, and trust it to identify websites.
 
-Afterwards restart the browser, open the box again by its name and choose **Check again**. Every user sees the same steps without the fingerprint: after signing in on a device that does not trust the box, the desktop shows a hint with **Trust this device**, and the account menu has the entry **Trust this device** ([Your account](/docs/user/account/#trusting-the-box-on-this-device)).
+Afterwards restart the browser, open the box again by its name and choose **Check again**. Every user sees the same steps without the fingerprint: after signing in on a device that does not trust the box, the desktop shows a hint with **Trust this device**, and **Personal settings** has the row **Trust this device** ([Your account](/docs/user/account/#trusting-the-box-on-this-device)).
 
 The box tells a trusting device from another by registering its service worker: browsers refuse service workers on a connection with a certificate warning. Once the device trusts the box, the worker runs and keeps the desktop's files of the current version in the browser, and [passkeys](/docs/user/account/#passkeys) can be used. Over plain HTTP, such as the installer's live system, nothing is checked and no hint appears.
 

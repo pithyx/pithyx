@@ -44,13 +44,13 @@ The administrator you created in the installer is in the group `sudo` and gets r
 
 ## Two-factor sign-in
 
-Every user can turn on two-factor sign-in (TOTP) in the account menu under **Two-factor authentication**: scan the QR code or enter the key, enter a code, choose **Turn on**, and keep the 10 recovery codes shown once; each works once. The codes use SHA-1, 6 digits and 30 seconds. At sign-in, enter the code or choose "Use a recovery code instead"; the challenge is valid for 5 minutes. Turning it off needs the password. After 5 failed attempts for one user from one address, or 30 from one address, in 5 minutes, further attempts are refused for a while. Sessions end after 7 days without use or 30 days in total.
+Every user can turn on two-factor sign-in (TOTP) in **Personal settings** under **Two-factor authentication**: scan the QR code or enter the key, enter a code, choose **Turn on**, and keep the 10 recovery codes shown once; each works once. The codes use SHA-1, 6 digits and 30 seconds. At sign-in, enter the code or choose "Use a recovery code instead"; the challenge is valid for 5 minutes. Turning it off needs the password. After 5 failed attempts for one user from one address, or 30 from one address, in 5 minutes, further attempts are refused for a while. Sessions end after 7 days without use or 30 days in total.
 
 SMB, SFTP, WebDAV and FTP use the password only.
 
 ## Passkeys
 
-Every user can add passkeys in the account menu under **Passkeys** ([Your account](/docs/user/account/#passkeys)). A passkey replaces both the password and the second factor at the desktop sign-in; file services keep the password. Pithyx asks for discoverable credentials with user verification required (the device's PIN, fingerprint or face) and no attestation. It never asks a metadata service, so nothing leaves the box. Adding one needs the current password; each user has up to 20.
+Every user can add passkeys in **Personal settings** under **Passkeys** ([Your account](/docs/user/account/#passkeys)). A passkey replaces both the password and the second factor at the desktop sign-in; file services keep the password. Pithyx asks for discoverable credentials with user verification required (the device's PIN, fingerprint or face) and no attestation. It never asks a metadata service, so nothing leaves the box. Adding one needs the current password; each user has up to 20.
 
 A passkey is bound to the name the box was opened under (the WebAuthn relying party), so it works only there and only over HTTPS on a device that trusts the box; the box refuses passkeys for an address with `auth.passkey.unavailable`. Each sign-in uses a one-time challenge valid for 5 minutes and checks the signature counter. Failed passkey sign-ins count towards the limit of 30 per address in 5 minutes. A deactivated account or one without the desktop sign-in right is refused after the passkey check, as with the password. Resetting a password with the recovery key removes that administrator's passkeys. Passkeys are part of the configuration backup (part **Users and groups**).
 

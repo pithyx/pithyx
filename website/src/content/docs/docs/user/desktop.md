@@ -56,7 +56,7 @@ If an app does not answer for five seconds, a dialog says that the app is not re
 
 ## The taskbar
 
-![The Pithyx menu in the dark theme with the account menu of Anna Weber open: Two-factor authentication, Language, Appearance, Accent color, Wallpaper, Get desktop from and Taskbar position](../../../../assets/screenshots/desktop-account-menu.webp)
+![The Pithyx menu in the dark theme with the account menu of Anna Weber open: Personal settings and Appearance](../../../../assets/screenshots/desktop-account-menu.webp)
 
 _The account menu opens when you click your name at the bottom of the Pithyx menu._
 
@@ -74,18 +74,13 @@ When more apps run than fit, their buttons get narrower and then scroll: turn th
 
 Click a running app to bring it to the front. Click the active app again to minimize it. Right-click a running app (or press **Shift+F10** on it) for **Minimize** or **Restore**, **Add to desktop** and **Close**.
 
-To move the taskbar, open the Pithyx menu, click your name, choose **Taskbar position** and pick **Bottom**, **Top**, **Left** or **Right**. On phones the taskbar always stays at the bottom and the entry is missing.
+To move the taskbar, open **Personal settings** (in the Pithyx menu, click your name), choose **Taskbar position** and pick **Bottom**, **Top**, **Left** or **Right**. On phones the taskbar always stays at the bottom and the row is missing.
 
-**The Pithyx menu** opens with the button at the left of the taskbar, or by pressing and releasing the Windows or Command key. It lists your apps and has a search field. The search field finds apps by name only; settings and files are not found there, and the list of recent files stays empty. Your account menu (click your name) has:
+**The Pithyx menu** opens with the button at the left of the taskbar, or by pressing and releasing the Windows or Command key. It lists your apps and has a search field. The search field finds apps by name only; settings and files are not found there, and the list of recent files stays empty. Your account menu (click your name) has **Personal settings** and **Appearance**. Personal settings ([Your account](/docs/user/account/#personal-settings)) also has:
 
-- **Two-factor authentication**
-- **Language**
-- **Appearance**, **Accent color** and **Wallpaper**
 - **Default apps**: the file types you chose to always open one way in Files, each with **Forget** ([Files](/docs/user/files/))
 - **Open at sign-in**: tick up to 10 apps that open each time you sign in, on every device, in the order you ticked them. A reload of the page only brings back your windows, and an app that is already open is not opened twice. An app may be marked **Suggested by the app**; it is never ticked for you.
 - **Notification channels**: send your notifications by email or to a push service such as ntfy or Gotify ([Account](/docs/user/account/#notifications-by-email-or-push))
-- **Get desktop from**
-- **Taskbar position** (not on phones)
 
 At the bottom of the Pithyx menu, next to your name, are the **Sign out** button and, for administrators and users with the right **Restart and shut down**, the **Power options** button with **Restart** and **Shut down**. Both sign every user out and stop file transfers.
 
@@ -136,7 +131,7 @@ The box remembers your windows for each browser you use: which apps are open, wh
 - Saved layouts expire 90 days after the last save.
 - A window of an app that was removed, or that you may no longer use, is skipped. A notification tells you how many.
 - Your desktop items, accent color and wallpaper are the same on all devices. The theme and the language belong to the device.
-- To copy the arrangement of another device, open your account menu, click **Get desktop from** and pick the device. If there is none, the list says **No other devices**. The desktop does not follow you between devices by itself.
+- To copy the arrangement of another device, open **Personal settings**, click **Get desktop from** and pick the device. If there is none, the list says **No other devices**. The desktop does not follow you between devices by itself.
 
 ## Phones and tablets
 
