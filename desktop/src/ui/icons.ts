@@ -93,6 +93,7 @@ export { default as IconTerminal2 } from '@tabler/icons-react/dist/esm/icons/Ico
 export { default as IconTrash } from '@tabler/icons-react/dist/esm/icons/IconTrash.mjs';
 export { default as IconTrashX } from '@tabler/icons-react/dist/esm/icons/IconTrashX.mjs';
 export { default as IconUpload } from '@tabler/icons-react/dist/esm/icons/IconUpload.mjs';
+export { default as IconUserCog } from '@tabler/icons-react/dist/esm/icons/IconUserCog.mjs';
 export { default as IconUsers } from '@tabler/icons-react/dist/esm/icons/IconUsers.mjs';
 export { default as IconUsersGroup } from '@tabler/icons-react/dist/esm/icons/IconUsersGroup.mjs';
 export { default as IconWallpaper } from '@tabler/icons-react/dist/esm/icons/IconWallpaper.mjs';

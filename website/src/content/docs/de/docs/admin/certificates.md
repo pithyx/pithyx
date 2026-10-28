@@ -25,7 +25,7 @@ Unter **Dieser Box vertrauen** sagt die Seite zuerst, ob das Gerät, an dem du s
 - **Linux**: Kopiere die Datei nach `/usr/local/share/ca-certificates/` und führe `sudo update-ca-certificates` aus.
 - **Firefox** hat einen eigenen Speicher: Einstellungen, Datenschutz und Sicherheit, Zertifikate, Zertifikate anzeigen, Zertifizierungsstellen, Importieren, und ihm für Websites vertrauen.
 
-Starte danach den Browser neu, öffne die Box wieder über ihren Namen und wähle **Erneut prüfen**. Jeder Benutzer sieht dieselben Schritte ohne den Fingerabdruck: Nach der Anmeldung auf einem Gerät, das der Box nicht vertraut, zeigt der Desktop einen Hinweis mit **Diesem Gerät vertrauen**, und das Kontomenü hat den Eintrag **Diesem Gerät vertrauen** ([Dein Konto](/de/docs/user/account/#der-box-auf-diesem-gerät-vertrauen)).
+Starte danach den Browser neu, öffne die Box wieder über ihren Namen und wähle **Erneut prüfen**. Jeder Benutzer sieht dieselben Schritte ohne den Fingerabdruck: Nach der Anmeldung auf einem Gerät, das der Box nicht vertraut, zeigt der Desktop einen Hinweis mit **Diesem Gerät vertrauen**, und **Persönliche Einstellungen** hat die Zeile **Diesem Gerät vertrauen** ([Dein Konto](/de/docs/user/account/#der-box-auf-diesem-gerät-vertrauen)).
 
 Ob ein Gerät der Box vertraut, erkennt die Box daran, dass sich ihr Service Worker registrieren lässt: Browser verweigern Service Worker auf einer Verbindung mit Zertifikatswarnung. Sobald das Gerät der Box vertraut, läuft der Worker und behält die Dateien des Desktops der aktuellen Version im Browser, und [Passkeys](/de/docs/user/account/#passkeys) lassen sich nutzen. Über einfaches HTTP, etwa im Live-System des Installers, wird nichts geprüft und kein Hinweis gezeigt.
 

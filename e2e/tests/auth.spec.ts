@@ -1,6 +1,6 @@
 import { type Page } from '@playwright/test';
 import { expect, test } from './fixtures';
-import { admin, openAccountMenu, openFromDesktop } from './session';
+import { admin, openAccountMenu, openFromDesktop, openPersonalSettings } from './session';
 import { totp } from './totp';
 
 const password = 'correct horse battery';
@@ -123,8 +123,8 @@ test('setup, recovery key, TOTP sign-in and password reset with the recovery key
   });
 
   await test.step('turn on two-factor authentication', async () => {
-    await openAccountMenu(page);
-    await page.getByRole('menuitem', { name: 'Two-factor authentication' }).click();
+    const settings = await openPersonalSettings(page);
+    await settings.getByRole('button', { name: 'Two-factor authentication', exact: true }).click();
     const dialog = page.getByRole('dialog', { name: 'Two-factor authentication' });
     await dialog.getByRole('button', { name: 'Set up' }).click();
     await expect(

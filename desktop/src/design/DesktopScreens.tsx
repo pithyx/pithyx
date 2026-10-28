@@ -1,10 +1,10 @@
 import {
   IconAlertTriangle,
-  IconLanguage,
   IconLogout,
   IconNetwork,
   IconPalette,
   IconShieldLock,
+  IconUserCog,
 } from '../ui/icons';
 import type { ReactNode } from 'react';
 import { Header, MenuSection } from 'react-aria-components';
@@ -165,15 +165,10 @@ function UserMenu({ trigger, open }: { trigger: ReactNode; open: boolean }) {
             <Header className={styles.menuHeader}>
               {t('menu.signedInAs', { name: user.name })}
             </Header>
-            <MenuItem icon={<IconPalette size={18} stroke={1.75} />}>
-              {t('menu.personalization')}
+            <MenuItem icon={<IconUserCog size={18} stroke={1.75} />}>
+              {t('menu.preferences')}
             </MenuItem>
-            <MenuItem icon={<IconShieldLock size={18} stroke={1.75} />}>
-              {t('menu.twoFactor')}
-            </MenuItem>
-            <MenuItem icon={<IconLanguage size={18} stroke={1.75} />}>
-              {t('menu.language')}
-            </MenuItem>
+            <MenuItem icon={<IconPalette size={18} stroke={1.75} />}>{t('menu.theme')}</MenuItem>
           </MenuSection>
           <MenuSeparator />
           <MenuItem icon={<IconLogout size={18} stroke={1.75} />}>{t('menu.signOut')}</MenuItem>

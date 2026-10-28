@@ -36,15 +36,15 @@ A test (`packages/ui/src/contrast.test.ts`) parses `tokens.css`, resolves every 
 
 ![The account menu in the dark theme with the submenu Appearance open: Like the system, Light and Dark](../../../../../assets/screenshots/theming-appearance.webp)
 
-_Appearance in the account menu; Accent color and Wallpaper are the entries below it._
+_Appearance in the account menu; Personal settings has it too, with Accent color and Wallpaper._
 
 The root element has `color-scheme: light dark`, and every semantic color is a `light-dark(a, b)` pair. Setting `data-theme="light"` or `data-theme="dark"` on `<html>` forces a scheme.
 
-The account menu has **Appearance** with **Like the system**, **Light** and **Dark**. The choice is saved per browser in `localStorage` (`pithyx.theme`); "like the system" removes the key. The stored choice is applied before the first render, so the page does not flash.
+The account menu and Personal settings have **Appearance** with **Like the system**, **Light** and **Dark**. The choice is saved per browser in `localStorage` (`pithyx.theme`); "like the system" removes the key. The stored choice is applied before the first render, so the page does not flash.
 
 ## Accents
 
-There are six presets: petrol (the default), ocean, indigo, plum, moss and graphite. The account menu entry is **Accent color**. The preset is set with `<html data-accent="...">`. The list is curated on purpose: no free color picker, because every preset is contrast-checked in both themes, and no red preset, so an accent never looks like an error.
+There are six presets: petrol (the default), ocean, indigo, plum, moss and graphite. The row in Personal settings is **Accent color**. The preset is set with `<html data-accent="...">`. The list is curated on purpose: no free color picker, because every preset is contrast-checked in both themes, and no red preset, so an accent never looks like an error.
 
 The accent and the wallpaper (**Pithyx boxes** or **Plain**) are saved on the daemon per user and are the same on every device (`PUT /api/desktop/appearance`). The browser keeps a copy so that the first paint matches. To add an accent, add it to `ACCENTS` in `desktop/src/theme/appearance.ts`, add a `[data-accent='x']` block with the five accent tokens to `tokens.css`, and add `menu.accents.x` in English and German.
 

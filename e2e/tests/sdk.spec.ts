@@ -5,7 +5,7 @@ import { expect, test } from './fixtures';
 import { installProbe } from './probe';
 import {
   appWindow,
-  openAccountMenu,
+  choosePersonalSetting,
   openFilesInShared,
   openFromDesktop,
   openFromStart,
@@ -95,9 +95,7 @@ test('lifecycle events reach the app: focus, blur, minimize, restore, theme and 
   await expect(events).toContainText('themeChange');
   await expect(app.locator('html')).toHaveAttribute('data-pithyx-theme', 'dark');
 
-  await openAccountMenu(page);
-  await page.getByRole('menuitem', { name: 'Language' }).click();
-  await page.getByRole('menuitemradio', { name: 'Deutsch' }).click();
+  await choosePersonalSetting(page, 'Language', 'Deutsch');
   await expect(app.getByRole('heading', { name: 'SDK-Demo' })).toBeVisible();
   await expect(app.locator('[data-fact="locale"]')).toHaveText(/^de/);
 });

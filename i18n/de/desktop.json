@@ -46,7 +46,8 @@
     "startupApps": "Beim Anmelden öffnen",
     "channels": "Benachrichtigungskanäle",
     "passkeys": "Passkeys",
-    "trust": "Diesem Gerät vertrauen"
+    "trust": "Diesem Gerät vertrauen",
+    "preferences": "Persönliche Einstellungen"
   },
   "error": {
     "title": "Etwas ist schiefgelaufen",
@@ -199,7 +200,8 @@
         "monitor": "Ressourcenmonitor",
         "logs": "Protokoll-Center",
         "about": "Über Pithyx",
-        "store": "Store"
+        "store": "Store",
+        "preferences": "Persönliche Einstellungen"
       }
     },
     "photos": "Fotos",
@@ -381,5 +383,23 @@
       "intro": "Schalte eine Art von Benachrichtigung aus, um sie stummzuschalten: Sie landet weiter als gelesen in deiner Liste, aber ohne Toast, E-Mail oder Webhook.",
       "none": "Keine deiner Apps sortiert ihre Benachrichtigungen nach Arten."
     }
+  },
+  "preferences": {
+    "account": "Konto und Sicherheit",
+    "desktop": "Desktop",
+    "apps": "Apps",
+    "notifications": "Benachrichtigungen",
+    "on": "An",
+    "off": "Aus",
+    "twoFactorHint": "Ein Code aus einer Authenticator-App bei der Anmeldung.",
+    "passkeysHint": "Mit einem Passkey statt dem Passwort anmelden, auf Geräten, die der Box vertrauen.",
+    "trustHint": "Installiere das Stammzertifikat der Box auf diesem Gerät: keine Warnungen mehr, und Passkeys funktionieren.",
+    "languageAuto": "Automatisch ({language})",
+    "thisDevice": "Auf diesem Gerät.",
+    "everyDevice": "Auf allen Geräten.",
+    "getDesktopHint": "Übernimm die Fenster eines anderen deiner Geräte.",
+    "fileDefaultsHint": "Welche App einen Dateityp in Dateien öffnet.",
+    "startupAppsHint": "Apps, die sich bei der Anmeldung öffnen.",
+    "channelsHint": "E-Mail und Push-Dienste für deine Benachrichtigungen, und welche Arten von App-Benachrichtigungen du bekommst."
   }
 }

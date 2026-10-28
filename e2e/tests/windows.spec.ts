@@ -1,6 +1,6 @@
 import { type Locator, type Page } from '@playwright/test';
 import { expect, test } from './fixtures';
-import { appWindow, openAccountMenu, openFromDesktop, signInAsAdmin } from './session';
+import { appWindow, choosePersonalSetting, openFromDesktop, signInAsAdmin } from './session';
 
 async function zIndex(window: Locator): Promise<number> {
   return Number(await window.evaluate((element) => getComputedStyle(element).zIndex));
@@ -222,9 +222,7 @@ test('keyboard shortcuts and the window menu', async ({ page }) => {
 test('the taskbar moves to the left and back', async ({ page }) => {
   const taskbar = page.getByRole('navigation', { name: 'Taskbar' });
   const moveTaskbar = async (position: string) => {
-    await openAccountMenu(page);
-    await page.getByRole('menuitem', { name: 'Taskbar position' }).click();
-    await page.getByRole('menuitemradio', { name: position }).click();
+    await choosePersonalSetting(page, 'Taskbar position', position);
   };
   await moveTaskbar('Left');
   const viewport = page.viewportSize();

@@ -17,7 +17,7 @@ To sign in, enter your **User name** and **Password** on the page **Welcome back
 
 A setup page (**Set up Pithyx**, **Create administrator**) exists too. It appears only when a box has no users at all, for example after a reset. On a box installed with the installer you do not see it.
 
-Two-factor sign-in is optional. To turn it on, open the Pithyx menu, click your name and choose **Two-factor authentication**. See [Your account](/docs/user/account/).
+Two-factor sign-in is optional. To turn it on, open the Pithyx menu, click your name, choose **Personal settings** and then **Two-factor authentication**. See [Your account](/docs/user/account/).
 
 ## The recovery key
 

@@ -60,6 +60,7 @@ describe('isAppAllowed', () => {
   it('gives the rest to everybody and nothing unknown', () => {
     expect(isAppAllowed(coreAppIds.about, user)).toBe(true);
     expect(isAppAllowed(coreAppIds.about, undefined)).toBe(true);
+    expect(isAppAllowed(coreAppIds.preferences, user)).toBe(true);
     expect(isAppAllowed(coreAppIds.files, undefined)).toBe(false);
     expect(isAppAllowed('nope', admin)).toBe(false);
   });

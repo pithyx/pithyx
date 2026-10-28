@@ -23,7 +23,10 @@ public sealed class CoreAppsTests
         Assert.Equal(CoreApps.Files, CoreApps.LegacyIds["files"]);
         Assert.Equal(CoreApps.Logs, CoreApps.LegacyIds["logs"]);
         Assert.False(CoreApps.LegacyIds.ContainsKey("demo"));
-        Assert.Equal(CoreApps.All.Count, CoreApps.LegacyIds.Count);
+        Assert.Equal(CoreApps.All.Count - 1, CoreApps.LegacyIds.Count);
         Assert.False(CoreApps.LegacyIds.ContainsKey("disks"));
+        // Personal settings came after the rename and never had a short id.
+        Assert.False(CoreApps.LegacyIds.ContainsKey("preferences"));
+        Assert.Null(CoreApps.LegacyIdOf(CoreApps.Preferences));
     }
 }

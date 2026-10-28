@@ -54,10 +54,29 @@ export async function openAccountMenu(page: Page, name = admin.displayName) {
   await expect(page.getByRole('menu', { name: `Account menu for ${name}` })).toBeVisible();
 }
 
+/** Opens Personal settings from the account menu (D392) and returns its window. */
+export async function openPersonalSettings(page: Page, name = admin.displayName) {
+  await openAccountMenu(page, name);
+  await page.getByRole('menuitem', { name: 'Personal settings' }).click();
+  const window = appWindow(page, 'Personal settings');
+  await expect(window).toBeVisible();
+  return window;
+}
+
+/** Picks one choice of a setting in Personal settings, such as the taskbar position. */
+export async function choosePersonalSetting(page: Page, setting: string, choice: string) {
+  const window = await openPersonalSettings(page);
+  await window.getByRole('button', { name: setting, exact: true }).click();
+  await page.getByRole('menuitemradio', { name: choice }).click();
+}
+
 /** Opens an app from the start menu; apps without a desktop shortcut open this way. */
 export async function openFromStart(page: Page, name: string) {
   await page.getByRole('button', { name: 'Pithyx menu' }).click();
-  await page.getByRole('dialog', { name: 'Pithyx menu' }).getByRole('row', { name }).click();
+  await page
+    .getByRole('dialog', { name: 'Pithyx menu' })
+    .getByRole('row', { name, exact: true })
+    .click();
 }
 
 /**

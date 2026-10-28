@@ -9,6 +9,21 @@ sidebar:
 
 Dein Konto sind dein Benutzername und dein Passwort auf der Box. Dasselbe Passwort meldet dich am Desktop und an Dateidiensten wie SMB und SFTP an. Du kannst dein eigenes Passwort nicht selbst ändern: Ein Administrator setzt ein neues. Du kannst die Zwei-Faktor-Anmeldung einschalten, dich auf einem Gerät, das der Box vertraut, mit einem Passkey anmelden und Sprache, Theme, Akzentfarbe und Hintergrundbild wählen.
 
+## Persönliche Einstellungen
+
+![Persönliche Einstellungen mit den Gruppen Konto und Sicherheit und Desktop: Zwei-Faktor-Authentifizierung, Passkeys, Sprache, Darstellung, Akzentfarbe, Hintergrundbild, Position der Taskleiste und Desktop holen von](../../../../../assets/screenshots/personal-settings.de.webp)
+
+_Persönliche Einstellungen; Apps und Benachrichtigungen folgen weiter unten._
+
+Alles, was du für dich selbst einstellst, steht in **Persönliche Einstellungen**: Öffne das Pithyx-Menü, klicke auf deinen Namen und wähle **Persönliche Einstellungen**. Es ist eine App wie die anderen und steht deshalb auch im Pithyx-Menü. Das Fenster hat vier Gruppen:
+
+- **Konto und Sicherheit**: **Zwei-Faktor-Authentifizierung** (mit **An** oder **Aus**), **Passkeys** und, solange dieses Gerät der Box nicht vertraut, **Diesem Gerät vertrauen**.
+- **Desktop**: **Sprache**, **Darstellung**, **Akzentfarbe**, **Hintergrundbild**, **Position der Taskleiste** (nicht auf Handys) und **Desktop holen von**. Jede Zeile sagt, ob die Wahl zu diesem Gerät oder zu allen Geräten gehört.
+- **Apps**: **Standard-Apps** und **Beim Anmelden öffnen** ([Der Desktop](/de/docs/user/desktop/#die-taskleiste)).
+- **Benachrichtigungen**: **Benachrichtigungskanäle**.
+
+Das Kontomenü selbst hat nur noch **Persönliche Einstellungen** und **Darstellung**, damit du schnell zwischen hell und dunkel wechseln kannst.
+
 ## Das Passwort ändern
 
 Pithyx kennt keinen Weg, dass Benutzer ihr eigenes Passwort ändern, und kein Zurücksetzen per E-Mail. Bitte einen Administrator, ein neues zu setzen. Der Administrator macht das unter Einstellungen > **Benutzer** mit **Neues Passwort**. Du wirst dann überall abgemeldet und meldest dich mit dem neuen Passwort an. Auch die Dateidienste nutzen das neue Passwort.
@@ -36,7 +51,7 @@ Die Zwei-Faktor-Anmeldung verlangt zusätzlich zu deinem Passwort einen Code aus
 
 So schaltest du sie ein:
 
-1. Öffne das Pithyx-Menü, klicke auf deinen Namen und wähle **Zwei-Faktor-Authentifizierung**.
+1. Öffne **Persönliche Einstellungen** und wähle **Zwei-Faktor-Authentifizierung**.
 2. Klicke auf **Einrichten**.
 3. Scanne den QR-Code mit deiner Authenticator-App, oder gib den darunter angezeigten Schlüssel von Hand ein.
 4. Tippe den Code, den die App zeigt, in **Code** ein und klicke auf **Einschalten**.
@@ -54,7 +69,7 @@ Bewahre die Wiederherstellungscodes sicher auf. Wenn du sowohl dein Handy als au
 
 ## Der Box auf diesem Gerät vertrauen
 
-Die Box stellt ihr Zertifikat selbst aus, deshalb warnt ein Browser davor, bis das Gerät dem Root-Zertifikat der Box vertraut. Solange er warnt, zeigt der Desktop den Hinweis „Dieses Gerät vertraut der Box noch nicht, deshalb warnt der Browser und Passkeys bleiben aus.“ mit **Diesem Gerät vertrauen**; **Auf diesem Gerät nicht mehr zeigen** blendet ihn in diesem Browser aus. Dieselben Schritte findest du im Pithyx-Menü unter deinem Namen bei **Diesem Gerät vertrauen**, solange das Gerät der Box nicht vertraut.
+Die Box stellt ihr Zertifikat selbst aus, deshalb warnt ein Browser davor, bis das Gerät dem Root-Zertifikat der Box vertraut. Solange er warnt, zeigt der Desktop den Hinweis „Dieses Gerät vertraut der Box noch nicht, deshalb warnt der Browser und Passkeys bleiben aus.“ mit **Diesem Gerät vertrauen**; **Auf diesem Gerät nicht mehr zeigen** blendet ihn in diesem Browser aus. Dieselben Schritte findest du in **Persönliche Einstellungen** unter **Diesem Gerät vertrauen**, solange das Gerät der Box nicht vertraut.
 
 Der Dialog bietet **Root-Zertifikat herunterladen** und die Schritte für Windows, macOS, iPhone und iPad, Android, Linux und Firefox. Starte nach der Installation den Browser neu, öffne die Box wieder über ihren Namen und wähle **Erneut prüfen**; dann steht dort „Dieses Gerät vertraut der Box.“ Administratoren finden dieselben Schritte mit dem Fingerabdruck des Zertifikats unter Einstellungen > **Zertifikate** ([Zertifikate](/de/docs/admin/certificates/#der-box-auf-einem-gerät-vertrauen)).
 
@@ -72,7 +87,7 @@ Passkeys brauchen:
 
 So fügst du einen hinzu:
 
-1. Öffne das Pithyx-Menü, klicke auf deinen Namen und wähle **Passkeys**.
+1. Öffne **Persönliche Einstellungen** und wähle **Passkeys**.
 2. Klicke auf **Passkey hinzufügen**.
 3. Gib ihm einen **Namen**, zum Beispiel das Gerät oder den Passwortmanager, in dem er liegt, tippe dein **Aktuelles Passwort** ein und klicke auf **Hinzufügen**.
 4. Bestätige auf deinem Gerät. Die Liste zeigt den Passkey dann mit dem Namen der Box, zu dem er gehört.
@@ -90,12 +105,12 @@ Pithyx zeigt keine Liste deiner Sitzungen und kann deine anderen Geräte nicht v
 - Du bleibst bis zu 7 Tage angemeldet, ohne den Desktop zu benutzen, und höchstens 30 Tage insgesamt. Ein offener Desktop hält die Sitzung bis zur 30-Tage-Grenze am Leben.
 - **Abmelden** beendet nur die Sitzung dieses Browsers.
 - Setzt ein Administrator ein neues Passwort für dich oder deaktiviert er dein Konto, enden alle deine Sitzungen. Deine Passkeys bleiben; ein deaktiviertes Konto kann sie nicht nutzen.
-- Jeder Browser wird über ein Cookie als Gerät erkannt, mit dem die Box sich deine Fenster merkt. Um die Anordnung eines anderen Geräts zu übernehmen, öffne dein Kontomenü und wähle **Desktop holen von**. Siehe [Layout pro Gerät](/de/docs/user/desktop/#layout-pro-gerät).
+- Jeder Browser wird über ein Cookie als Gerät erkannt, mit dem die Box sich deine Fenster merkt. Um die Anordnung eines anderen Geräts zu übernehmen, öffne **Persönliche Einstellungen** und wähle **Desktop holen von**. Siehe [Layout pro Gerät](/de/docs/user/desktop/#layout-pro-gerät).
 - Eine abgelaufene Sitzung zeigt „Deine Sitzung ist abgelaufen. Melde dich bitte erneut an.“
 
 ## Sprache, Theme und Akzentfarbe
 
-Öffne das Pithyx-Menü, klicke auf deinen Namen und wähle:
+In **Persönliche Einstellungen** unter **Desktop**:
 
 - **Sprache**: **Automatisch** (folgt deinem Browser, Englisch oder Deutsch) oder eine Sprache mit ihrem eigenen Namen. Die Wahl gehört zu diesem Gerät. Die Anmeldeseite hat eine eigene Sprachauswahl.
 - **Darstellung**: **Wie das System**, **Hell** oder **Dunkel**. Auch das gehört zu diesem Gerät.
@@ -108,4 +123,4 @@ Deinen Anzeigenamen legt ein Administrator fest; du kannst ihn nicht selbst bear
 
 ## Benachrichtigungen per E-Mail oder Push
 
-Öffne das Pithyx-Menü, klick auf deinen Namen und wähle **Benachrichtigungskanäle**, um deine Benachrichtigungen auch ohne offenen Desktop zu bekommen: per **E-Mail** (sobald ein Administrator den E-Mail-Server eingerichtet hat) oder als **Webhook** an einen Push-Dienst wie ntfy oder Gotify. Jeder Kanal wählt seine **Ereignisse** und die am wenigsten ernste Benachrichtigung, die er bekommt (**Mindestens**); **Test senden** prüft ihn sofort. Bis zu 10 Kanäle pro Benutzer. Die Nachrichten sind in der Sprache deines Desktops. Unter **Benachrichtigungen von Apps** im selben Dialog schaltest du einzelne Arten von Benachrichtigungen deiner Apps aus, etwa die Erwähnungen eines Chats, wenn die App sie nach Arten sortiert: Sie landen weiter als gelesen in deiner Liste, aber ohne Toast, E-Mail oder Webhook. Details, Formate und Grenzen: [Benachrichtigungen per E-Mail und Webhook](/de/docs/admin/notifications/).
+Öffne **Persönliche Einstellungen** und wähle **Benachrichtigungskanäle**, um deine Benachrichtigungen auch ohne offenen Desktop zu bekommen: per **E-Mail** (sobald ein Administrator den E-Mail-Server eingerichtet hat) oder als **Webhook** an einen Push-Dienst wie ntfy oder Gotify. Jeder Kanal wählt seine **Ereignisse** und die am wenigsten ernste Benachrichtigung, die er bekommt (**Mindestens**); **Test senden** prüft ihn sofort. Bis zu 10 Kanäle pro Benutzer. Die Nachrichten sind in der Sprache deines Desktops. Unter **Benachrichtigungen von Apps** im selben Dialog schaltest du einzelne Arten von Benachrichtigungen deiner Apps aus, etwa die Erwähnungen eines Chats, wenn die App sie nach Arten sortiert: Sie landen weiter als gelesen in deiner Liste, aber ohne Toast, E-Mail oder Webhook. Details, Formate und Grenzen: [Benachrichtigungen per E-Mail und Webhook](/de/docs/admin/notifications/).

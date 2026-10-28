@@ -6,9 +6,10 @@ import { expect, test } from './fixtures';
 import {
   appWindow,
   openAccountMenu,
-  openFromDesktop,
   openFilesInShared,
+  openFromDesktop,
   openFromStart,
+  openPersonalSettings,
   signInAsAdmin,
 } from './session';
 
@@ -83,6 +84,11 @@ test('the desktop with windows, menus and the start menu has no accessibility vi
   await openAccountMenu(page);
   await expect(page.getByRole('menu', { name: 'Account menu for Ada Admin' })).toBeVisible();
   expect(await violations(page)).toEqual([]);
+  await page.keyboard.press('Escape');
+
+  const settings = await openPersonalSettings(page);
+  await expect(settings.getByRole('heading', { name: 'Account and security' })).toBeVisible();
+  expect(await violations(page)).toEqual([]);
 });
 
 test('the Files app, its menu and its recycle bin have no accessibility violations', async ({
@@ -144,7 +150,7 @@ test.describe('phone', () => {
       .getByRole('button', { name: 'Account menu for Ada Admin' })
       .tap();
     await expect(page.getByRole('menu', { name: 'Account menu for Ada Admin' })).toBeVisible();
-    await expect(page.getByRole('menuitem', { name: 'Two-factor authentication' })).toBeVisible();
+    await expect(page.getByRole('menuitem', { name: 'Personal settings' })).toBeVisible();
     expect(await violations(page)).toEqual([]);
   });
 });

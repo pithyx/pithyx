@@ -7,6 +7,7 @@ import {
   IconListDetails,
   IconSearch,
   IconSettings,
+  IconUserCog,
 } from '../ui/icons';
 import { lazy, type ComponentType, type LazyExoticComponent } from 'react';
 import type { AppGlyph, AppTone } from '../shell/types';
@@ -155,6 +156,21 @@ export const coreApps: readonly AppEntry[] = [
     },
     Component: lazy(() =>
       import('./about/AboutApp').then(({ AboutApp }) => ({ default: AboutApp })),
+    ),
+  },
+  {
+    id: coreAppIds.preferences,
+    icon: IconUserCog,
+    tone: 'ocean',
+    window: {
+      instances: 'single',
+      defaultSize: { width: 640, height: 640 },
+      minSize: { width: 320, height: 360 },
+    },
+    Component: lazy(() =>
+      import('./preferences/PreferencesApp').then(({ PreferencesApp }) => ({
+        default: PreferencesApp,
+      })),
     ),
   },
   {
