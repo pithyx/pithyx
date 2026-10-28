@@ -39,11 +39,19 @@ internal sealed class LocalCatalog
 
     public long Sequence { get; private set; }
 
-    /// <summary>Adds a version and commits a new index; <paramref name="extra"/> goes into the manifest.</summary>
-    public void Publish(string appId, string version, string extra = "", string pithyx = "*")
+    /// <summary>
+    /// Adds a version and commits a new index; <paramref name="extra"/> goes into the manifest. With
+    /// <paramref name="compose"/> the version has a backend with the images of <see cref="TarBuilder.BackendLock"/>.
+    /// </summary>
+    public void Publish(string appId, string version, string extra = "", string pithyx = "*", string permissions = "\"notifications\"", string? compose = null)
     {
-        var manifest = TarBuilder.Manifest(appId, version, "\"notifications\"", extra);
-        var package = TarBuilder.MinimalPackage(appId, version, manifest).End().Gzip();
+        var manifest = TarBuilder.Manifest(appId, version, permissions, (compose is null ? "" : TarBuilder.BackendManifest) + extra);
+        var builder = TarBuilder.MinimalPackage(appId, version, manifest);
+        if (compose is not null)
+        {
+            builder.File("backend/compose.yaml", compose).File("backend/images.lock.json", TarBuilder.BackendLock());
+        }
+        var package = builder.End().Gzip();
         var folder = Path.Combine(Folder, "apps", appId, version);
         Directory.CreateDirectory(folder);
         File.WriteAllBytes(Path.Combine(folder, $"{appId}-{version}.pithyxapp"), package);
@@ -60,6 +68,10 @@ internal sealed class LocalCatalog
             ["license"] = "MIT",
             ["source"] = new JsonObject { ["repository"] = "https://example.com/apps", ["commit"] = new string('a', 40), ["path"] = $"apps/{appId}" },
         };
+        if (compose is not null)
+        {
+            entry["images"] = JsonNode.Parse(TarBuilder.BackendLock())!["images"]!.DeepClone();
+        }
         if (_apps[appId] is not JsonObject app)
         {
             app = new JsonObject { ["versions"] = new JsonObject() };
@@ -258,6 +270,49 @@ public sealed class StoreApiTests : IDisposable
         await CheckAsync();
         Assert.Equal("1.0.0", (await AppAsync()).GetProperty("version").GetString());
         Assert.False((await StoreAsync()).GetProperty("updates").EnumerateArray().Single().GetProperty("automatic").GetBoolean());
+    }
+
+    [Fact]
+    public async Task TheStoreFindsAnAppByItsKeywordsAndListsItsCategories()
+    {
+        await _admin.SetupAdminAsync();
+        _catalog.Publish(AppId, "1.0.0", ",\n  \"categories\": [\"productivity\", \"office\"],\n  \"keywords\": [\"Jotter\", \"memo\"],\n  \"maturity\": \"beta\"");
+        await AddCatalogAsync();
+
+        // Neither the id nor the name says "jott", only a keyword, in any case.
+        var listed = (await _admin.GetFromJsonAsync<JsonElement>("/api/store/apps?q=JOTT", Token)).GetProperty("apps").EnumerateArray().Single();
+        Assert.Equal(AppId, listed.GetProperty("id").GetString());
+        Assert.Equal(["productivity", "office"], listed.GetProperty("categories").EnumerateArray().Select(category => category.GetString()));
+        Assert.Equal(["Jotter", "memo"], listed.GetProperty("keywords").EnumerateArray().Select(keyword => keyword.GetString()));
+        Assert.Equal("beta", listed.GetProperty("maturity").GetString());
+        Assert.Empty((await _admin.GetFromJsonAsync<JsonElement>("/api/store/apps?q=diary", Token)).GetProperty("apps").EnumerateArray());
+    }
+
+    [Fact]
+    public async Task AnAppWithRootAccessIsNeverUpdatedByTheBoxItself()
+    {
+        await _admin.SetupAdminAsync();
+        const string compose = TarBuilder.BackendCompose + "    volumes: ['/var/run/docker.sock:/var/run/docker.sock']\n";
+        _catalog.Publish(AppId, "1.0.0", permissions: "\"docker.socket.raw\"", compose: compose);
+        await AddCatalogAsync();
+        using (var staged = await _admin.PostAsync($"/api/store/catalogs/{_catalog.CatalogId}/apps/{AppId}/1.0.0/package", null, Token))
+        {
+            var packageId = (await staged.JsonAsync()).GetProperty("packageId").GetString();
+            using var install = await _admin.PostAsJsonAsync($"/api/apps/packages/{packageId}/install", new { pool = Pool, password = AuthApi.AdminPassword, confirmCritical = AppId }, Token);
+            Assert.Equal(HttpStatusCode.Accepted, install.StatusCode);
+            await FinishedAsync(await install.JsonAsync());
+        }
+        using (var settings = await _admin.PutAsJsonAsync("/api/store/settings", new { policy = "automatic", time = "03:00", channel = "stable" }, Token))
+        {
+            Assert.Equal(HttpStatusCode.OK, settings.StatusCode);
+        }
+
+        // The same rights and nothing added: an automatic update for any other app.
+        _catalog.Publish(AppId, "1.0.1", permissions: "\"docker.socket.raw\"", compose: compose);
+        await CheckAsync();
+        var update = (await StoreAsync()).GetProperty("updates").EnumerateArray().Single();
+        Assert.Equal(("1.0.1", true, false), (update.GetProperty("version").GetString(), update.GetProperty("critical").GetBoolean(), update.GetProperty("automatic").GetBoolean()));
+        Assert.Equal("1.0.0", (await AppAsync()).GetProperty("version").GetString());
     }
 
     [Fact]

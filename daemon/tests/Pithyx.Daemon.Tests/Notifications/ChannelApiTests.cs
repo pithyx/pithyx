@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Pithyx.Daemon.Notifications;
+using Pithyx.Daemon.Tests.Apps.Packages;
 using Pithyx.Daemon.Tests.Support;
 using static Pithyx.Daemon.Tests.Auth.AuthApi;
 using static Pithyx.Daemon.Tests.Jobs.JobTestSupport;
@@ -110,6 +111,37 @@ public sealed class ChannelApiTests : IAsyncLifetime
         Assert.StartsWith("The power failed; the battery is at 80 %.", request.Body, StringComparison.Ordinal);
         await Task.Delay(300, Token);
         Assert.True(_hook.IsEmpty, "One alert for two administrators, and no app text without notifications.external.");
+    }
+
+    [Fact]
+    public async Task AMutedAppCategoryReachesNoChannel()
+    {
+        const string appId = "com.example.alpha";
+        var manifest = TarBuilder.Manifest(appId, "1.0.0", "\"notifications\", \"notifications.external\"",
+            ",\n  \"notifications\": { \"categories\": [{ \"id\": \"messages\", \"name\": { \"en\": \"Messages\" } }, { \"id\": \"mentions\", \"name\": { \"en\": \"Mentions\" } }] }");
+        using (var upload = await _admin.PutAsync("/api/apps/packages", new ByteArrayContent(TarBuilder.MinimalPackage(appId, "1.0.0", manifest).End().Gzip()), Token))
+        {
+            var packageId = (await upload.JsonAsync()).GetProperty("packageId").GetString();
+            using var install = await _admin.PostAsJsonAsync($"/api/apps/packages/{packageId}/install", new { pool = "pithyxtestm" }, Token);
+            Assert.Equal(HttpStatusCode.Accepted, install.StatusCode);
+            await WaitUntilAsync(async () => (await OkAsync(_admin.GetAsync("/api/apps", Token))).GetProperty("apps").EnumerateArray().Any(app => app.GetProperty("id").GetString() == appId), "the install");
+        }
+        await OkAsync(_admin.PostAsJsonAsync("/api/notifications/channels", Hook(_hook.Url, ["apps"], "info"), Token));
+        await _notifications.SetMutedAsync(_adminId, appId, "mentions", true, Token);
+
+        string[] categories = ["messages", "mentions"];
+        await _notifications.CreateForAppAsync(_adminId, appId, new AppNotifyRequest("You were mentioned", Category: "mentions"), categories, Token);
+        await _notifications.CreateForAppAsync(_adminId, appId, new AppNotifyRequest("New message", Category: "messages"), categories, Token);
+
+        // The install's own notification may reach the channel too; the muted one never does.
+        var bodies = new List<string>();
+        while (!bodies.Any(body => body.Contains("New message", StringComparison.Ordinal)))
+        {
+            bodies.Add((await _hook.NextAsync()).Body);
+        }
+        await Task.Delay(300, Token);
+        Assert.True(_hook.IsEmpty);
+        Assert.DoesNotContain(bodies, body => body.Contains("mentioned", StringComparison.Ordinal));
     }
 
     [Fact]
