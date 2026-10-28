@@ -71,8 +71,9 @@ public static class ErrorCodes
 
     /// <summary>
     /// A name refers to something that is not declared: a volume missing from the Compose file's top-level
-    /// <c>volumes</c>, a service in <c>depends_on</c>, or a service of the manifest's <c>backend.endpoints</c> or
-    /// <c>storage[].services</c> missing from the Compose file; <c>params.path</c> is the reference (in the Compose file for
+    /// <c>volumes</c>, a service in <c>depends_on</c>, a service of the manifest's <c>backend.endpoints</c>,
+    /// <c>backend.network.services</c> or <c>storage[].services</c> missing from the Compose file, or a volume of
+    /// <c>backend.backup.exclude</c> it does not declare; <c>params.path</c> is the reference (in the Compose file for
     /// <c>/services/...</c>, in the manifest for <c>/backend/...</c> and <c>/storage/...</c>), <c>params.name</c> the name.
     /// </summary>
     [ErrorStatus(HttpStatusCode.BadRequest)]

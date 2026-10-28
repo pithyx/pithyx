@@ -129,6 +129,7 @@ export const pages: ReferencePage[] = [
         'BackendEndpoint',
         'BackendHealth',
         'BackendSchedule',
+        'BackendBackup',
       ],
     },
   },
