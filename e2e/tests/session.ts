@@ -73,7 +73,10 @@ export async function choosePersonalSetting(page: Page, setting: string, choice:
 /** Opens an app from the start menu; apps without a desktop shortcut open this way. */
 export async function openFromStart(page: Page, name: string) {
   await page.getByRole('button', { name: 'Pithyx menu' }).click();
-  await page.getByRole('dialog', { name: 'Pithyx menu' }).getByRole('row', { name }).click();
+  await page
+    .getByRole('dialog', { name: 'Pithyx menu' })
+    .getByRole('row', { name, exact: true })
+    .click();
 }
 
 /**
