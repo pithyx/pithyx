@@ -223,6 +223,13 @@
         "endpoint": "api",
         "path": "/jobs/cleanup"
       }
-    ]
+    ],
+    "backup": {
+      "exclude": [
+        "cache",
+        "data/thumbnails"
+      ],
+      "stop": true
+    }
   }
 }

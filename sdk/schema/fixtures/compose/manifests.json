@@ -1,4 +1,5 @@
 {
+  "invalid/backup-volume-missing.yaml": "backup.json",
   "invalid/docker-socket-both.yaml": "docker-socket-both.json",
   "invalid/network-service-missing.yaml": "network.json",
   "invalid/right-unused.yaml": "elevated.json",
@@ -6,6 +7,7 @@
   "invalid/storage-not-mounted.yaml": "storage.json",
   "invalid/storage-read-write.yaml": "storage.json",
   "invalid/storage-service-missing.yaml": "storage.json",
+  "valid/backup.yaml": "backup.json",
   "valid/device-classes.yaml": "device-classes.json",
   "valid/docker-socket-raw.yaml": "docker-socket-raw.json",
   "valid/docker-socket.yaml": "docker-socket.json",

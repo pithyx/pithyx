@@ -1014,6 +1014,19 @@ public static partial class ComposeValidator
                     index++;
                 }
             }
+            if (backend?.TryGetProperty("backup", out var backup) == true && backup.TryGetProperty("exclude", out var exclude))
+            {
+                var index = 0;
+                foreach (var excluded in exclude.EnumerateArray())
+                {
+                    var volume = excluded.GetString()!.Split('/')[0];
+                    if (!_declaredVolumes.Contains(volume))
+                    {
+                        Add(ErrorCodes.AppComposeReferenceUnknown, ("path", Child("/backend/backup/exclude", index.ToString(CultureInfo.InvariantCulture))), ("name", volume));
+                    }
+                    index++;
+                }
+            }
 
             if (manifest.TryGetProperty("storage", out var storage))
             {

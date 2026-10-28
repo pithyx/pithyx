@@ -44,6 +44,33 @@
       }
     }
   ],
+  "backup-empty.json": [
+    {
+      "code": "app.manifest.schema_violation",
+      "params": {
+        "path": "/backend/backup",
+        "keyword": "minProperties"
+      }
+    }
+  ],
+  "backup-exclude-parent.json": [
+    {
+      "code": "app.manifest.schema_violation",
+      "params": {
+        "path": "/backend/backup/exclude/0",
+        "keyword": "pattern"
+      }
+    }
+  ],
+  "backup-stop-string.json": [
+    {
+      "code": "app.manifest.schema_violation",
+      "params": {
+        "path": "/backend/backup/stop",
+        "keyword": "type"
+      }
+    }
+  ],
   "byte-order-mark.json": [
     {
       "code": "app.manifest.invalid_json"

@@ -15,6 +15,15 @@
       }
     }
   ],
+  "backup-volume-missing.yaml": [
+    {
+      "code": "app.compose.reference_unknown",
+      "params": {
+        "path": "/backend/backup/exclude/0",
+        "name": "cache"
+      }
+    }
+  ],
   "bom.yaml": [
     {
       "code": "app.compose.yaml_invalid",

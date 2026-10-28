@@ -926,6 +926,16 @@ class Checker {
       }
     });
 
+    backend?.backup?.exclude?.forEach((excluded, index) => {
+      const volume = excluded.split('/')[0] ?? excluded;
+      if (!this.declaredVolumes.has(volume)) {
+        this.add('app.compose.reference_unknown', {
+          path: `/backend/backup/exclude/${String(index)}`,
+          name: volume,
+        });
+      }
+    });
+
     this.manifest.storage?.forEach((request, index) => {
       const listed = request.services ?? [];
       listed.forEach((name, serviceIndex) => {

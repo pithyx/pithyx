@@ -19,6 +19,10 @@ export type ServiceName = string;
  * A path on a backend endpoint, starting with `/`.
  */
 export type BackendPath = string;
+/**
+ * A named volume of the Compose file, optionally followed by a path inside it, with `/` between the parts. No part is empty, `.` or `..`.
+ */
+export type BackupPath = string;
 
 /**
  * The app manifest (`pithyx.json` at the root of an app package), version 2 (D388). It tells the daemon and the desktop what the app is, what it may do and why, and how its window and backend behave. The icon is always `icon.svg` next to it. This schema is a stable contract: a new optional field is a minor change, anything else a major one. Unknown fields are errors.
@@ -417,6 +421,7 @@ export interface BackendManifest {
    * @maxItems 16
    */
   schedules?: BackendSchedule[];
+  backup?: BackendBackup;
 }
 /**
  * A port of a backend service that the proxy offers to the app's windows. Container ports never appear in a URL: the endpoint `api` is `/apps/<id>/api/`, every other endpoint `<name>` is `/apps/<id>/api-<name>/`.
@@ -458,4 +463,20 @@ export interface BackendSchedule {
    */
   endpoint: string;
   path: BackendPath;
+}
+/**
+ * How a backup of the app's data should treat the backend's volumes (D391). Reserved for the app backup that is planned: the box and `pithyx validate` check it, but nothing uses it yet. Mapped storage folders belong to their shared folders and are never part of the app's backup.
+ */
+export interface BackendBackup {
+  /**
+   * Folders a backup leaves out because the app can rebuild them, such as caches or thumbnails: a named volume of the Compose file, optionally followed by a path inside it, for example `cache` or `data/thumbnails`.
+   *
+   * @minItems 1
+   * @maxItems 32
+   */
+  exclude?: BackupPath[];
+  /**
+   * Stop the backend while the backup takes its snapshot, for data that is not safe to copy while it changes. Default false: the snapshot is taken while the backend runs and is consistent as after a power loss, which most databases recover from.
+   */
+  stop?: boolean;
 }
