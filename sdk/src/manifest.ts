@@ -19,6 +19,7 @@ export type {
   AppAuthor,
   AppId,
   AppManifest,
+  BackendBackup,
   BackendEndpoint,
   BackendHealth,
   BackendManifest,
