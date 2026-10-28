@@ -426,6 +426,11 @@ export function plan(
       }
       // A stable version goes straight to latest; publish-sdk.sh refuses it without --latest.
       const prerelease = facts.sdkVersion.includes('-');
+      if (!prerelease && options.latest !== true) {
+        throw new PlanError(
+          `${facts.sdkVersion} is a stable version: it is published as latest, pass --latest (only after the owner's approval)`,
+        );
+      }
       if (options.latest === true && !prerelease) {
         args.push('--latest');
       }
@@ -617,6 +622,12 @@ async function menu(facts: Facts): Promise<number> {
     }
     if (choice === 'update') {
       options.sign = /^y/i.test(await prompt.question('Sign it with the beta key? [y/N] '));
+    }
+    if (choice === 'publish-sdk') {
+      const question = facts.sdkVersion.includes('-')
+        ? `Also move latest to ${facts.sdkVersion}? [y/N] `
+        : `Publish ${facts.sdkVersion} as latest, the version npm installs by default? [y/N] `;
+      options.latest = /^y/i.test(await prompt.question(question));
     }
     if (choice === 'status') {
       return 0;

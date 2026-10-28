@@ -87,6 +87,8 @@ describe('the release plan', () => {
     expect(commands(plan('publish-sdk', [], { latest: true, otp: '123456' }, stable))).toEqual([
       '/repo/tools/release/publish-sdk.sh --otp 123456 --latest',
     ]);
+    expect(() => plan('publish-sdk', [], { otp: '123456' }, stable)).toThrow(/--latest/);
+    expect(() => plan('publish-sdk', [], { 'npm-dry-run': true }, stable)).toThrow(/--latest/);
   });
 
   it('keeps a baseline only of an image that was built', () => {

@@ -38,7 +38,7 @@ tools/release/pithyx-release            # the menu
 - `update` builds from the packages of the last `image/build.sh` run. When they are of another version it stops and says so; `--build-image` builds the image of the version first.
 - The baseline of an update is `--since <file>`, `--full`, or the package list of `--minimum` (default `1.0.0`) from `image/baseline/`, else from `image/out/`. Without one it names the command that keeps it.
 - The channel is beta for a prerelease version and stable otherwise. A beta file is signed with `~/.config/pithyx-dev/pithyx-beta-1.pem`; a stable file needs `--key` and `--key-id pithyx-release-1`, which only the owner holds.
-- `publish-sdk.sh` never moves `latest` to a prerelease; `pithyx-release publish-sdk --latest` adds `npm dist-tag add <package>@<version> latest` for all three packages, with the same `--otp`.
+- `publish-sdk.sh` never moves `latest` to a prerelease; `pithyx-release publish-sdk --latest` adds `npm dist-tag add <package>@<version> latest` for all three packages, with the same `--otp`. A stable version always goes to `latest`, so `publish-sdk` refuses it without `--latest` before anything runs; the menu asks for it.
 
 Steps that need a particular machine stay there: images need mmdebstrap and the build packages (a dev VM), stable signatures the release key. Updating a box from a file before publishing it is described under [Switching the update source](/docs/install/update-source/).
 
