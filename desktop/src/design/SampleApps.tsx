@@ -15,7 +15,6 @@ import {
   IconPhoto,
   IconServer2,
   IconUsers,
-  IconUsersGroup,
 } from '../ui/icons';
 import { useState } from 'react';
 import { ToggleButton, ToggleButtonGroup } from 'react-aria-components';
@@ -234,7 +233,6 @@ const settingsTiles = [
   { id: 'shares', icon: IconFolders },
   { id: 'fileServices', icon: IconServer2 },
   { id: 'users', icon: IconUsers },
-  { id: 'groups', icon: IconUsersGroup },
 ] as const;
 
 export function SettingsContent() {

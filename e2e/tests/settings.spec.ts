@@ -109,10 +109,18 @@ test('the Info Center, Network, File services and Users pages open from the navi
   await expect(settings.getByLabel('Workgroup')).toHaveValue('HOME-LAB');
   expect(await violations(page)).toEqual([]);
 
-  await openSettingsPage(settings, 'Users');
-  await expect(settings.getByRole('heading', { name: 'Users', level: 1 })).toBeVisible();
+  await openSettingsPage(settings, 'Users and groups');
+  await expect(settings.getByRole('heading', { name: 'Users and groups', level: 1 })).toBeVisible();
   await expect(settings.getByRole('button', { name: 'Create user' })).toBeVisible();
-  await expect(settings.getByRole('table', { name: 'Groups' })).toHaveCount(0);
+  // The groups are a tab of their own (D394).
+  await expect(settings.getByRole('grid', { name: 'Groups' })).toHaveCount(0);
+  await settings
+    .getByRole('grid', { name: 'Users' })
+    .getByRole('row', { name: /^Ada Admin/ })
+    .click();
+  await expect(settings.getByRole('complementary', { name: 'Details' })).toContainText(
+    'Special rights',
+  );
   expect(await violations(page)).toEqual([]);
 });
 
@@ -194,8 +202,8 @@ test('groups and their rights reach their members, and the editors are accessibl
   });
   expect(user.ok()).toBe(true);
   const userId = ((await user.json()) as { id: number }).id;
-  await openSettingsPage(settings, 'Groups');
-  await expect(settings.getByRole('heading', { name: 'Groups', level: 1 })).toBeVisible();
+  await openSettingsPage(settings, 'Users and groups');
+  await settings.getByRole('tab', { name: /^Groups/ }).click();
 
   // A group with the new user, created on the page.
   await settings.getByRole('button', { name: 'Create group' }).click();
@@ -206,11 +214,12 @@ test('groups and their rights reach their members, and the editors are accessibl
   await expect(create.getByRole('checkbox', { name: 'e2e-rights' })).toBeChecked();
   await create.getByRole('button', { name: 'Create' }).click();
   await expect(create).toHaveCount(0);
-  const groups = settings.getByRole('table', { name: 'Groups' });
-  await expect(groups.getByRole('row', { name: /^e2e-media / })).toContainText('e2e-rights');
+  const groups = settings.getByRole('grid', { name: 'Groups' });
+  await expect(groups.getByRole('row', { name: /^e2e-media/ })).toContainText('e2e-rights');
 
   // FTP for the group, then the user's own rights show it as given by the group.
-  await groups.getByRole('button', { name: 'Rights of the group e2e-media' }).click();
+  await groups.getByRole('row', { name: /^e2e-media/ }).click();
+  await settings.getByRole('button', { name: 'Rights', exact: true }).click();
   const groupRights = page.getByRole('dialog', { name: 'Rights of the group e2e-media' });
   await groupRights.getByText('FTP', { exact: true }).click();
   await expect(groupRights.getByRole('checkbox', { name: 'FTP', exact: true })).toBeChecked();
@@ -218,12 +227,10 @@ test('groups and their rights reach their members, and the editors are accessibl
   await groupRights.getByRole('button', { name: 'Save rights' }).click();
   await expect(groupRights).toHaveCount(0);
 
-  await openSettingsPage(settings, 'Users');
-  const users = settings.getByRole('table', { name: 'Users' });
-  await users
-    .getByRole('row', { name: /^e2e-rights/ })
-    .getByRole('button', { name: 'Rights', exact: true })
-    .click();
+  await settings.getByRole('tab', { name: /^Users/ }).click();
+  const users = settings.getByRole('grid', { name: 'Users' });
+  await users.getByRole('row', { name: /^e2e-rights/ }).click();
+  await settings.getByRole('button', { name: 'Rights', exact: true }).click();
   const userRights = page.getByRole('dialog', { name: 'Rights of e2e-rights' });
   await expect(userRights.getByRole('checkbox', { name: 'FTP', exact: true })).toBeChecked();
   await expect(userRights.getByRole('checkbox', { name: 'FTP', exact: true })).toBeDisabled();

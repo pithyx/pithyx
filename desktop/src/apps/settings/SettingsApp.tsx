@@ -16,8 +16,8 @@ type Place = SettingsPageId | 'overview';
 /** The page named by launch arguments such as `{ page: 'users' }`, if any. */
 function pageOf(args: unknown): SettingsPageId | null {
   const asked = (args as { page?: unknown } | null)?.page;
-  // The reverse proxy is a tab of Network since the design pass (#325).
-  const page = asked === 'reverseProxy' ? 'network' : asked;
+  // The reverse proxy is a tab of Network and the groups one of Users since the design pass (#325).
+  const page = asked === 'reverseProxy' ? 'network' : asked === 'groups' ? 'users' : asked;
   return SETTINGS_PAGES.find((entry) => entry.id === page)?.id ?? null;
 }
 

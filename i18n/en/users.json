@@ -6,7 +6,9 @@
     "uid": "User id",
     "home": "Home",
     "actions": "Actions",
-    "groups": "Groups"
+    "groups": "Groups",
+    "twoFactor": "2FA",
+    "state": "State"
   },
   "badge": {
     "admin": "Administrator",
@@ -104,7 +106,8 @@
       "submit": "Delete group",
       "label": "Delete group {name}"
     },
-    "rights": "Rights of the group {name}"
+    "rights": "Rights of the group {name}",
+    "toolbar": "Group actions"
   },
   "grants": {
     "button": "Rights",
@@ -139,5 +142,28 @@
       "read": "Read",
       "readWrite": "Read and write"
     }
+  },
+  "tabs": {
+    "label": "Users and groups"
+  },
+  "toolbar": "User actions",
+  "search": "Search users",
+  "noMatch": "No user matches the search.",
+  "twoFactor": {
+    "on": "On",
+    "off": "Off"
+  },
+  "state": {
+    "active": "Active"
+  },
+  "details": {
+    "label": "Details",
+    "account": "Account",
+    "user": "User",
+    "noServices": "No file services",
+    "yes": "Yes",
+    "no": "No",
+    "editRights": "Edit rights",
+    "noGroups": "No groups"
   }
 }

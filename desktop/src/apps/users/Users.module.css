@@ -1,54 +1,13 @@
-.page {
-  container-type: inline-size;
+.panel {
   display: grid;
-  gap: var(--space-6);
-  padding: 0;
-}
-
-.section {
-  display: grid;
-  gap: var(--space-4);
-}
-
-.head {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start;
-  justify-content: space-between;
   gap: var(--space-3);
-}
-
-.title {
-  margin: 0 0 var(--space-1);
-  font-size: var(--font-size-lg);
-  font-weight: var(--font-weight-semibold);
+  padding-top: var(--space-3);
 }
 
 .muted {
   margin: 0;
   color: var(--color-text-muted);
   font-size: var(--font-size-sm);
-}
-
-.table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: var(--font-size-sm);
-  font-variant-numeric: tabular-nums;
-}
-
-.table th,
-.table td {
-  padding: var(--space-2) var(--space-3);
-  border-bottom: 1px solid var(--color-border);
-  text-align: start;
-  vertical-align: top;
-}
-
-.table thead th {
-  color: var(--color-text-muted);
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-semibold);
 }
 
 .name {
@@ -59,20 +18,75 @@
   display: inline-flex;
   flex-wrap: wrap;
   gap: var(--space-1);
-  margin-inline-start: var(--space-2);
 }
 
-.actions {
+.nameCell {
+  display: grid;
+  min-width: 0;
+}
+
+.nameCell > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.check {
   display: inline-flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
+  align-items: center;
   gap: var(--space-1);
+  color: var(--color-success);
 }
 
-@container (width < 640px) {
-  .optional {
-    display: none;
-  }
+/* The details pane of the selected user. */
+.details {
+  display: grid;
+  align-content: start;
+  gap: var(--space-2);
+  font-size: var(--font-size-sm);
+}
+
+.detailsHead {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-2);
+}
+
+.avatar {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: var(--radius-full);
+  background: var(--color-accent-subtle);
+  color: var(--color-accent);
+  font-weight: var(--font-weight-semibold);
+}
+
+.detailsTitle {
+  margin: var(--space-2) 0 0;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+}
+
+.facts {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: var(--space-1) var(--space-3);
+  margin: 0;
+}
+
+.facts dd {
+  margin: 0;
+  color: var(--color-text-muted);
+  text-align: end;
+}
+
+.path {
+  font-family: var(--font-mono);
+  overflow-wrap: anywhere;
 }
 
 .form {

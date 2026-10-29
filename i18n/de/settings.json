@@ -167,9 +167,9 @@
       "keywords": "smb samba sftp ssh netzlaufwerk protokoll firewall"
     },
     "users": {
-      "title": "Benutzer",
-      "description": "Konten, Passwörter und Administratoren",
-      "keywords": "benutzer konto passwort administrator anmeldung personen"
+      "title": "Benutzer und Gruppen",
+      "description": "Konten, Passwörter, Gruppen und ihre Rechte",
+      "keywords": "benutzer konto passwort administrator anmeldung personen gruppe team mitglieder rechte berechtigungen"
     },
     "updates": {
       "title": "Updates",
@@ -190,11 +190,6 @@
       "title": "Sicherheit",
       "description": "Apps mit Root-Zugriff auf die Box und ihn entziehen",
       "keywords": "sicherheit root zugriff sonderrechte apps docker container socket entziehen vertrauen"
-    },
-    "groups": {
-      "title": "Gruppen",
-      "description": "Gruppen, ihre Mitglieder und Rechte",
-      "keywords": "gruppe team mitglieder rechte berechtigungen"
     },
     "notifications": {
       "title": "Benachrichtigungen",

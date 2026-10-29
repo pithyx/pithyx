@@ -29,7 +29,7 @@ The account menu itself only has **Personal settings** and **Appearance**, so yo
 
 ## Changing the password
 
-Pithyx has no way for users to change their own password and no reset by email. Ask an administrator to set a new one. The administrator does this in Settings > **Users** with **New password**. You are then signed out everywhere and sign in with the new password. File services use the new password too.
+Pithyx has no way for users to change their own password and no reset by email. Ask an administrator to set a new one. The administrator does this in Settings > **Users and groups** with **New password**. You are then signed out everywhere and sign in with the new password. File services use the new password too.
 
 A password must have:
 

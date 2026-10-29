@@ -58,7 +58,7 @@ Benutzer bekommen einen Home-Ordner auf dem ersten Pool mit dem Pithyx-Layout, s
 
 Pithyx kennt keine Einladungslinks. Ein Administrator legt jedes Konto an:
 
-1. Öffne Einstellungen > **Benutzer**.
+1. Öffne Einstellungen > **Benutzer und Gruppen**.
 2. Klicke auf **Benutzer anlegen** und gib einen Benutzernamen, einen optionalen Anzeigenamen und ein Passwort ein. Jeder Benutzer ist außerdem in der Gruppe `users`.
 3. Gib der Person das Passwort persönlich oder über einen anderen sicheren Kanal weiter.
 4. Stelle die Rechte im Dialog **Rechte** ein.

@@ -13,12 +13,10 @@ import {
   IconServer2,
   IconShieldLock,
   IconUsers,
-  IconUsersGroup,
   IconWorld,
   type TablerIcon,
 } from '../../ui/icons';
-import { GroupsPage } from '../users/GroupsPage';
-import { UsersPage } from '../users/UsersPage';
+import { UsersAndGroupsPage } from '../users/UsersAndGroupsPage';
 import { BackupPage } from './BackupPage';
 import { CertificatesPage } from './CertificatesPage';
 import { FileServicesPage } from './FileServicesPage';
@@ -45,8 +43,7 @@ export type SettingsPageId =
   | 'shares'
   | 'homes'
   | 'fileServices'
-  | 'users'
-  | 'groups';
+  | 'users';
 
 export interface SettingsPageInfo {
   id: SettingsPageId;
@@ -67,8 +64,7 @@ export const SETTINGS_PAGES: readonly SettingsPageInfo[] = [
   { id: 'regional', group: 'system', icon: IconWorld, Component: RegionalPage },
   { id: 'ups', group: 'system', icon: IconBatteryCharging, Component: UpsPage },
   { id: 'backup', group: 'system', icon: IconRestore, Component: BackupPage },
-  { id: 'users', group: 'access', icon: IconUsers, Component: UsersPage },
-  { id: 'groups', group: 'access', icon: IconUsersGroup, Component: GroupsPage },
+  { id: 'users', group: 'access', icon: IconUsers, Component: UsersAndGroupsPage },
   { id: 'shares', group: 'access', icon: IconFolders, Component: SharesPage },
   { id: 'homes', group: 'access', icon: IconHome, Component: HomesPage },
   { id: 'fileServices', group: 'access', icon: IconServer2, Component: FileServicesPage },

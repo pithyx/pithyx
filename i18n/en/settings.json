@@ -167,9 +167,9 @@
       "keywords": "smb samba sftp ssh network drive protocol firewall"
     },
     "users": {
-      "title": "Users",
-      "description": "Accounts, passwords and administrators",
-      "keywords": "user account password administrator login people"
+      "title": "Users and groups",
+      "description": "Accounts, passwords, groups and their rights",
+      "keywords": "user account password administrator login people group team members rights permissions"
     },
     "updates": {
       "title": "Updates",
@@ -190,11 +190,6 @@
       "title": "Security",
       "description": "Apps with root access to the box, and revoking it",
       "keywords": "security root access special rights apps docker container socket revoke trust"
-    },
-    "groups": {
-      "title": "Groups",
-      "description": "Groups, their members and rights",
-      "keywords": "group team members rights permissions"
     },
     "notifications": {
       "title": "Notifications",

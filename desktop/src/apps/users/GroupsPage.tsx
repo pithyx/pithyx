@@ -3,8 +3,17 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ErrorNotice } from '../../errors/ErrorNotice';
-import { Badge, Button, Checkbox, TextField } from '@pithyx/ui';
-import { IconPlus } from '../../ui/icons';
+import {
+  Badge,
+  Button,
+  Checkbox,
+  DataTable,
+  TextField,
+  Toolbar,
+  ToolbarSeparator,
+  type DataTableColumn,
+} from '@pithyx/ui';
+import { IconPencil, IconPlus, IconShieldLock, IconTrash } from '../../ui/icons';
 import { describeProblem, usersCall, type GroupSummary, type UserSummary } from '../sdk/users';
 import { FormDialog } from './FormDialog';
 import { groupsKey, useGroups, usersKey, useUsers } from './queries';
@@ -18,112 +27,134 @@ type Action =
   | { kind: 'delete'; group: GroupSummary };
 
 /**
- * The Groups page of Settings: the built-in group "users" with everybody, and the groups of the administrators with
- * their members, created, edited and deleted here. Every group is a Linux group with a gid that is never reused.
+ * The groups of Settings (D394): the built-in group "users" with everybody, and the groups of the administrators with
+ * their members, in a table with **Create group** and the actions on the selected group. Every group is a Linux group
+ * with a gid that is never reused.
  */
-export function GroupsPage({ app }: { app: PithyxApp }) {
+export function GroupsPanel({ app }: { app: PithyxApp }) {
   const { t } = useTranslation('users');
   const [action, setAction] = useState<Action | null>(null);
+  const [selectedId, setSelectedId] = useState<number | null>(null);
   const groups = useGroups(app);
   const users = useUsers(app).data ?? [];
   const names = new Map(users.map((user) => [user.id, user.displayName ?? user.username]));
   const close = () => {
     setAction(null);
   };
+  const items = groups.data ?? [];
+  const selected = items.find((group) => group.id === selectedId);
+  const own = selected !== undefined && !selected.builtin ? selected : undefined;
+  const columns: DataTableColumn<GroupSummary>[] = [
+    {
+      id: 'name',
+      label: t('column.name'),
+      cell: (group) => (
+        <span className={styles.nameCell}>
+          <span className={styles.name}>
+            {group.name}
+            {group.builtin && (
+              <>
+                {' '}
+                <Badge tone="neutral">{t('groups.badge.builtin')}</Badge>
+              </>
+            )}
+          </span>
+          <span className={styles.muted}>
+            {group.builtin ? t('groups.builtinDescription') : group.description}
+          </span>
+        </span>
+      ),
+      sortValue: (group) => group.name,
+      isRowHeader: true,
+    },
+    {
+      id: 'members',
+      label: t('groups.column.members'),
+      cell: (group) =>
+        group.builtin
+          ? t('groups.everybody', { count: group.memberIds.length })
+          : group.memberIds.length === 0
+            ? t('groups.noMembers')
+            : group.memberIds.map((id) => names.get(id) ?? '').join(', '),
+    },
+    {
+      id: 'gid',
+      label: t('groups.column.gid'),
+      align: 'end',
+      muted: true,
+      width: 110,
+      cell: (group) => group.id,
+      sortValue: (group) => group.id,
+    },
+  ];
   return (
-    <section className={`${styles.page} ${styles.section}`}>
-      <div className={styles.head}>
-        <div>
-          <p className={styles.muted}>{t('groups.intro')}</p>
-        </div>
+    <div className={styles.panel}>
+      <Toolbar aria-label={t('groups.toolbar')}>
         <Button
           variant="primary"
           onPress={() => {
             setAction({ kind: 'create' });
           }}
         >
-          <IconPlus size={16} stroke={1.75} aria-hidden />
+          <IconPlus size={18} stroke={1.75} aria-hidden />
           {t('groups.create.button')}
         </Button>
-      </div>
+        <ToolbarSeparator />
+        <Button
+          isDisabled={own === undefined}
+          onPress={() => {
+            if (own !== undefined) {
+              setAction({ kind: 'edit', group: own });
+            }
+          }}
+        >
+          <IconPencil size={18} stroke={1.75} aria-hidden />
+          {t('edit.button')}
+        </Button>
+        <Button
+          isDisabled={selected === undefined}
+          onPress={() => {
+            if (selected !== undefined) {
+              setAction({ kind: 'rights', group: selected });
+            }
+          }}
+        >
+          <IconShieldLock size={18} stroke={1.75} aria-hidden />
+          {t('grants.button')}
+        </Button>
+        <Button
+          isDisabled={own === undefined}
+          onPress={() => {
+            if (own !== undefined) {
+              setAction({ kind: 'delete', group: own });
+            }
+          }}
+        >
+          <IconTrash size={18} stroke={1.75} aria-hidden />
+          {t('delete.button')}
+        </Button>
+      </Toolbar>
       {groups.isError && <ErrorNotice error={describeProblem(groups.error)} />}
       {groups.data !== undefined && (
-        <table className={styles.table}>
-          <caption className="visually-hidden">{t('groups.title')}</caption>
-          <thead>
-            <tr>
-              <th scope="col">{t('column.name')}</th>
-              <th scope="col">{t('groups.column.members')}</th>
-              <th scope="col" className={styles.optional}>
-                {t('groups.column.gid')}
-              </th>
-              <th scope="col">
-                <span className="visually-hidden">{t('column.actions')}</span>
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {groups.data.map((group) => (
-              <tr key={group.id}>
-                <th scope="row">
-                  <span className={styles.name}>{group.name}</span>
-                  {group.builtin && (
-                    <span className={styles.badges}>
-                      <Badge tone="neutral">{t('groups.badge.builtin')}</Badge>
-                    </span>
-                  )}
-                  <span className={styles.hint}>
-                    {group.builtin ? t('groups.builtinDescription') : group.description}
-                  </span>
-                </th>
-                <td>
-                  {group.builtin
-                    ? t('groups.everybody', { count: group.memberIds.length })
-                    : group.memberIds.length === 0
-                      ? t('groups.noMembers')
-                      : group.memberIds.map((id) => names.get(id) ?? '').join(', ')}
-                </td>
-                <td className={styles.optional}>{group.id}</td>
-                <td>
-                  <span className={styles.actions}>
-                    <Button
-                      size="sm"
-                      aria-label={t('groups.rights', { name: group.name })}
-                      onPress={() => {
-                        setAction({ kind: 'rights', group });
-                      }}
-                    >
-                      {t('grants.button')}
-                    </Button>
-                    {!group.builtin && (
-                      <>
-                        <Button
-                          size="sm"
-                          aria-label={t('groups.edit.label', { name: group.name })}
-                          onPress={() => {
-                            setAction({ kind: 'edit', group });
-                          }}
-                        >
-                          {t('edit.button')}
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="danger"
-                          aria-label={t('groups.delete.label', { name: group.name })}
-                          onPress={() => {
-                            setAction({ kind: 'delete', group });
-                          }}
-                        >
-                          {t('delete.button')}
-                        </Button>
-                      </>
-                    )}
-                  </span>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <DataTable
+          aria-label={t('groups.title')}
+          columns={columns}
+          items={items}
+          getKey={(group) => group.id}
+          density="comfortable"
+          selectionMode="single"
+          selectedKeys={selected === undefined ? new Set() : new Set([selected.id])}
+          onSelectionChange={(keys) => {
+            const [first] = keys === 'all' ? [] : [...keys];
+            setSelectedId(first === undefined ? null : Number(first));
+          }}
+          onRowAction={(key) => {
+            const group = items.find((entry) => entry.id === Number(key));
+            if (group !== undefined && !group.builtin) {
+              setAction({ kind: 'edit', group });
+            }
+          }}
+        />
       )}
       {action?.kind === 'create' && <GroupDialog app={app} users={users} onClose={close} />}
       {action?.kind === 'edit' && (
@@ -135,7 +166,7 @@ export function GroupsPage({ app }: { app: PithyxApp }) {
       {action?.kind === 'delete' && (
         <DeleteGroupDialog app={app} group={action.group} onClose={close} />
       )}
-    </section>
+    </div>
   );
 }
 

@@ -6,7 +6,9 @@
     "uid": "Benutzer-ID",
     "home": "Home",
     "actions": "Aktionen",
-    "groups": "Gruppen"
+    "groups": "Gruppen",
+    "twoFactor": "2FA",
+    "state": "Status"
   },
   "badge": {
     "admin": "Administrator",
@@ -104,7 +106,8 @@
       "submit": "Gruppe löschen",
       "label": "Gruppe {name} löschen"
     },
-    "rights": "Rechte der Gruppe {name}"
+    "rights": "Rechte der Gruppe {name}",
+    "toolbar": "Aktionen für Gruppen"
   },
   "grants": {
     "button": "Rechte",
@@ -139,5 +142,28 @@
       "read": "Lesen",
       "readWrite": "Lesen und schreiben"
     }
+  },
+  "tabs": {
+    "label": "Benutzer und Gruppen"
+  },
+  "toolbar": "Aktionen für Benutzer",
+  "search": "Benutzer suchen",
+  "noMatch": "Kein Benutzer passt zur Suche.",
+  "twoFactor": {
+    "on": "An",
+    "off": "Aus"
+  },
+  "state": {
+    "active": "Aktiv"
+  },
+  "details": {
+    "label": "Details",
+    "account": "Konto",
+    "user": "Benutzer",
+    "noServices": "Keine Dateidienste",
+    "yes": "Ja",
+    "no": "Nein",
+    "editRights": "Rechte bearbeiten",
+    "noGroups": "Keine Gruppen"
   }
 }

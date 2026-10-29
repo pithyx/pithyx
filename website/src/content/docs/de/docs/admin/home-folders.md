@@ -26,7 +26,7 @@ Dateien, die in der SMB-Freigabe `homes` gelöscht werden, landen in keinem Papi
 
 ## Der Home-Pool
 
-Jedes Home ist ein Dataset `<pool>/pithyx/homes/<benutzer>`, eingehängt unter `/<pool>/homes/<benutzer>`. Sobald es den ersten Pool mit dem Pithyx-Layout gibt, wird er zum Home-Pool, und jeder Benutzer ohne Home bekommt dort eines; ein Benutzer, der vorher angelegt wurde, bekommt sein Home, sobald der Pool da ist. Später angelegte Benutzer bekommen ihres sofort. Die Seite **Benutzer** zeigt den Pfad jedes Homes oder „Noch kein Pool“.
+Jedes Home ist ein Dataset `<pool>/pithyx/homes/<benutzer>`, eingehängt unter `/<pool>/homes/<benutzer>`. Sobald es den ersten Pool mit dem Pithyx-Layout gibt, wird er zum Home-Pool, und jeder Benutzer ohne Home bekommt dort eines; ein Benutzer, der vorher angelegt wurde, bekommt sein Home, sobald der Pool da ist. Später angelegte Benutzer bekommen ihres sofort. Die Details eines Benutzers unter Einstellungen > **Benutzer und Gruppen** zeigen den Pfad seines Homes oder „Noch kein Pool“.
 
 Um alle Homes auf einen anderen Pool umzuziehen, wähle den Pool unter **Umziehen nach** und dann **Home-Ordner umziehen**. Ein Pool wird nur angeboten, solange er online, beschreibbar, entsperrt ist und das Pithyx-Layout hat; außerdem braucht er Platz für alle Homes ([`homes.pool.no_space`](/de/docs/reference/errors/#homes.pool.no_space)). Der Umzug läuft als Job, ein Home nach dem anderen:
 
@@ -44,7 +44,7 @@ Ein Home auf einem Pool, der fehlt (zerstört oder exportiert und nicht wieder i
 
 ## Wenn ein Benutzer gelöscht wird
 
-Beim Löschen eines Benutzers unter Einstellungen > **Benutzer** fragt Pithyx, was mit dem Home-Ordner passiert:
+Beim Löschen eines Benutzers unter Einstellungen > **Benutzer und Gruppen** fragt Pithyx, was mit dem Home-Ordner passiert:
 
 - **Behalten** (die Vorgabe): Das Home bleibt, umbenannt in `<name>.deleted-<benutzer-id>`, damit der Name für einen neuen Benutzer frei ist. Administratoren sehen es unter **homes**.
 - **Dateien in einen freigegebenen Ordner verschieben**: Ein neuer Ordner mit dem Namen des Benutzers im gewählten freigegebenen Ordner bekommt alle Dateien, danach wird das Home samt Papierkorb gelöscht. Das läuft als Job.

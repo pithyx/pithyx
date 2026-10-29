@@ -15,7 +15,7 @@ Pithyx has no password reset by email. A user who forgot a password asks an admi
 
 _Forgot password? opens this form. Only administrators can reset their password here, with the recovery key._
 
-**A normal user** asks an administrator. The administrator opens Settings > **Users** and uses **New password** for that user. The user is signed out everywhere and signs in with the new password. File services (SMB and SFTP) get the new password too.
+**A normal user** asks an administrator. The administrator opens Settings > **Users and groups** and uses **New password** for that user. The user is signed out everywhere and signs in with the new password. File services (SMB and SFTP) get the new password too.
 
 **An administrator** uses the recovery key:
 
@@ -27,7 +27,7 @@ _Forgot password? opens this form. Only administrators can reset their password 
 
 What the reset does: it changes the password, turns off two-factor sign-in, removes the passkeys of that administrator and ends their sessions. It works for any administrator account, including a deactivated one. Anything wrong (user name, key, or an account that is not an administrator) gives the same message, "The user name or recovery key is incorrect." After five failed attempts within five minutes, further attempts are paused for a short time.
 
-**Another administrator** can also set your password in Settings > **Users**, if one is still signed in.
+**Another administrator** can also set your password in Settings > **Users and groups**, if one is still signed in.
 
 If you lost the recovery key and no administrator can sign in, nothing resets the password. Reinstall (see below). There is no password reset on the console.
 

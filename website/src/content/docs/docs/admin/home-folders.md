@@ -26,7 +26,7 @@ Files deleted in the SMB share `homes` do not go to a recycle bin; they are gone
 
 ## The home pool
 
-Each home is a dataset `<pool>/pithyx/homes/<user>`, mounted at `/<pool>/homes/<user>`. When the first pool with the Pithyx layout exists, it becomes the home pool, and every user without a home gets one there; a user created before that gets the home as soon as the pool is there. Users created later get theirs at once. The **Users** page shows each home's path, or "No pool yet".
+Each home is a dataset `<pool>/pithyx/homes/<user>`, mounted at `/<pool>/homes/<user>`. When the first pool with the Pithyx layout exists, it becomes the home pool, and every user without a home gets one there; a user created before that gets the home as soon as the pool is there. Users created later get theirs at once. The details of a user in Settings > **Users and groups** show the home's path, or "No pool yet".
 
 To move every home to another pool, choose the pool under **Move to** and **Move home folders**. A pool is offered only while it is online, writable, has the Pithyx layout and is unlocked; it also needs room for all homes ([`homes.pool.no_space`](/docs/reference/errors/#homes.pool.no_space)). The move runs as a job, one home after the other:
 
@@ -44,7 +44,7 @@ A home on a pool that is gone (destroyed, or exported and not imported again) ca
 
 ## When a user is deleted
 
-Deleting a user in Settings > **Users** asks what happens to the home folder:
+Deleting a user in Settings > **Users and groups** asks what happens to the home folder:
 
 - **Keep it** (the default): the home stays, renamed to `<name>.deleted-<user id>`, so the name is free for a new user. Administrators see it below **homes**.
 - **Move its files into a shared folder**: a new folder named after the user in the shared folder you choose gets every file, then the home is deleted with its recycle bin. This runs as a job.

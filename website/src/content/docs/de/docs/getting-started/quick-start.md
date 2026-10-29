@@ -33,6 +33,6 @@ Der Installer legt das Owner-Konto schon an, deshalb gibt es keine eigene Einric
 
 1. Öffne **Speicher** und lege einen Pool auf deinen Daten-Festplatten an.
 2. Öffne Einstellungen > **Freigegebene Ordner** und lege freigegebene Ordner auf dem Pool an.
-3. Lege Benutzer unter Einstellungen > **Benutzer** an und gib ihnen Zugriff auf die freigegebenen Ordner. Siehe [Benutzer und Gruppen](/de/docs/admin/users-and-groups/).
+3. Lege Benutzer unter Einstellungen > **Benutzer und Gruppen** an und gib ihnen Zugriff auf die freigegebenen Ordner. Siehe [Benutzer und Gruppen](/de/docs/admin/users-and-groups/).
 4. Schalte unter Einstellungen > **Dateidienste** die Dateidienste ein, die du brauchst ([Dateidienste](/de/docs/admin/file-services/)), und verbinde dich von deinen Geräten aus ([Von anderen Geräten zugreifen](/de/docs/user/file-access/)).
 5. Erstelle unter Einstellungen > **Backup und Wiederherstellung** ein Konfigurationsbackup. Siehe [Konfigurationsbackup](/de/docs/admin/backup/).

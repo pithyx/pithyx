@@ -58,7 +58,7 @@ Users get a home folder on the first pool with the Pithyx layout once one exists
 
 Pithyx has no invitation links. An administrator creates each account:
 
-1. Open Settings > **Users**.
+1. Open Settings > **Users and groups**.
 2. Click **Create user** and enter a user name, an optional display name and a password. Every user is also in the group `users`.
 3. Give the person the password in person or through another safe channel.
 4. Set the rights with the **Rights** dialog.
