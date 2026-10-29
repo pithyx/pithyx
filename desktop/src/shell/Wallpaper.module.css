@@ -49,23 +49,24 @@
   fill: var(--amber-600);
 }
 
-/* The box is the logo: nearly opaque on the light wallpaper, half on the dark one, with a soft shadow. */
+/* The boxes are the logo: the front one nearly opaque on the light wallpaper and half on the dark one, the ones
+   behind fading with their depth; each with a soft shadow. */
 .cube {
-  opacity: 0.9;
+  opacity: calc(0.45 + 0.45 * var(--depth));
   filter: drop-shadow(0 24px 40px rgb(0 0 0 / 30%));
 }
 
 :global(:root[data-theme='dark']) .cube {
-  opacity: 0.5;
+  opacity: calc(0.5 * var(--depth));
 }
 
 @media (prefers-color-scheme: dark) {
   :global(:root:not([data-theme='light'])) .cube {
-    opacity: 0.5;
+    opacity: calc(0.5 * var(--depth));
   }
 }
 
-/* The plain wallpaper keeps the colors and the glow without the box. */
+/* The plain wallpaper keeps the colors and the glow without the boxes. */
 .wallpaper[data-plain] g {
   display: none;
 }
