@@ -43,12 +43,9 @@ export function UsersPage({ app }: { app: PithyxApp }) {
     setAction(null);
   };
   return (
-    <section className={`${styles.page} ${styles.section}`} aria-labelledby="users-title">
+    <section className={`${styles.page} ${styles.section}`}>
       <div className={styles.head}>
         <div>
-          <h2 id="users-title" className={styles.title}>
-            {t('title')}
-          </h2>
           <p className={styles.muted}>{t('intro')}</p>
         </div>
         <Button

@@ -73,7 +73,6 @@ export function NetworkPage({ app }: { app: PithyxApp }) {
     <div className={styles.content}>
       <header className={styles.pageHeader}>
         <div>
-          <h2 className={styles.pageTitle}>{t('pages.network.title')}</h2>
           <p className={styles.muted}>{t('network.intro')}</p>
         </div>
       </header>

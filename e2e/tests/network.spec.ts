@@ -9,7 +9,7 @@ async function openNetwork(page: Page) {
   await openFromStart(page, 'Settings');
   const settings = appWindow(page, 'Settings');
   await openSettingsPage(settings, 'Network');
-  await expect(settings.getByRole('heading', { name: 'Network', level: 2 })).toBeVisible();
+  await expect(settings.getByRole('heading', { name: 'Network', level: 1 })).toBeVisible();
   return settings;
 }
 

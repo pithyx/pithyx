@@ -42,7 +42,6 @@ export function NotificationsPage({ app }: { app: PithyxApp }) {
     <div className={styles.content}>
       <header className={styles.pageHeader}>
         <div>
-          <h2 className={styles.pageTitle}>{t('pages.notifications.title')}</h2>
           <p className={styles.muted}>{t('pages.notifications.description')}</p>
         </div>
       </header>

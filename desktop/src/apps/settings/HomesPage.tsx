@@ -45,7 +45,6 @@ export function HomesPage({ app }: { app: PithyxApp }) {
     <div className={styles.content}>
       <header className={styles.pageHeader}>
         <div>
-          <h2 className={styles.pageTitle}>{t('pages.homes.title')}</h2>
           <p className={styles.muted}>{t('homes.intro')}</p>
         </div>
       </header>

@@ -26,7 +26,7 @@ test('the page checks the channel, refuses an untrusted file, installs a verifie
   await openFromStart(page, 'Settings');
   const settings = appWindow(page, 'Settings');
   await openSettingsPage(settings, 'Updates');
-  await expect(settings.getByRole('heading', { name: 'Updates', level: 2 })).toBeVisible();
+  await expect(settings.getByRole('heading', { name: 'Updates', level: 1 })).toBeVisible();
   const channel = settings.getByRole('combobox', { name: 'Channel' });
   await channel.selectOption('stable');
   const uploadInput = settings

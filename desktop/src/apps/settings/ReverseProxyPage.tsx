@@ -33,7 +33,6 @@ export function ReverseProxyPage({ app }: { app: PithyxApp }) {
     <div className={styles.content}>
       <header className={styles.pageHeader}>
         <div>
-          <h2 className={styles.pageTitle}>{t('pages.reverseProxy.title')}</h2>
           <p className={styles.muted}>{t('proxy.intro')}</p>
         </div>
       </header>

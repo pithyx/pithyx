@@ -43,7 +43,6 @@ export function SharesPage({ app }: { app: PithyxApp }) {
     <div className={styles.content}>
       <header className={styles.pageHeader}>
         <div>
-          <h2 className={styles.pageTitle}>{t('shares.title')}</h2>
           <p className={styles.muted}>{t('shares.intro')}</p>
         </div>
         <div className={styles.buttons}>

@@ -47,7 +47,7 @@ test('Settings has no storage page and no link to Storage', async ({ page }) => 
   await signInAsAdmin(page);
   await openFromStart(page, 'Settings');
   const settings = appWindow(page, 'Settings');
-  await expect(settings.getByRole('heading', { name: 'Overview', level: 2 })).toBeVisible();
+  await expect(settings.getByRole('heading', { name: 'Overview', level: 1 })).toBeVisible();
   await expect(settings.getByRole('button', { name: /^Storage|Pools/ })).toHaveCount(0);
 });
 

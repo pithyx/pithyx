@@ -31,12 +31,9 @@ export function GroupsPage({ app }: { app: PithyxApp }) {
     setAction(null);
   };
   return (
-    <section className={`${styles.page} ${styles.section}`} aria-labelledby="groups-title">
+    <section className={`${styles.page} ${styles.section}`}>
       <div className={styles.head}>
         <div>
-          <h2 id="groups-title" className={styles.title}>
-            {t('groups.title')}
-          </h2>
           <p className={styles.muted}>{t('groups.intro')}</p>
         </div>
         <Button

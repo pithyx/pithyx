@@ -63,7 +63,6 @@ export function UpdatesPage({ app }: { app: PithyxApp }) {
     <div className={styles.content}>
       <header className={styles.pageHeader}>
         <div>
-          <h2 className={styles.pageTitle}>{t('pages.updates.title')}</h2>
           <p className={styles.muted}>{t('updates.intro')}</p>
         </div>
       </header>

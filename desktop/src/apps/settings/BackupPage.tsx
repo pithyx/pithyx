@@ -33,7 +33,6 @@ export function BackupPage({ app }: { app: PithyxApp }) {
     <div className={styles.content}>
       <header className={styles.pageHeader}>
         <div>
-          <h2 className={styles.pageTitle}>{t('pages.backup.title')}</h2>
           <p className={styles.muted}>{t('backup.intro')}</p>
         </div>
       </header>

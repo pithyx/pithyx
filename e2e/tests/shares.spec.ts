@@ -14,7 +14,7 @@ async function openSharedFolders(page: Page) {
   await openFromStart(page, 'Settings');
   const settings = appWindow(page, 'Settings');
   await openSettingsPage(settings, 'Shared folders');
-  await expect(settings.getByRole('heading', { name: 'Shared folders', level: 2 })).toBeVisible();
+  await expect(settings.getByRole('heading', { name: 'Shared folders', level: 1 })).toBeVisible();
   return settings;
 }
 

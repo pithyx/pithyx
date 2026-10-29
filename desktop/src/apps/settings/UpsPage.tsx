@@ -32,7 +32,6 @@ export function UpsPage({ app }: { app: PithyxApp }) {
     <div className={styles.content}>
       <header className={styles.pageHeader}>
         <div>
-          <h2 className={styles.pageTitle}>{t('pages.ups.title')}</h2>
           <p className={styles.muted}>{t('ups.intro')}</p>
         </div>
       </header>

@@ -31,7 +31,6 @@ export function RegionalPage({ app }: { app: PithyxApp }) {
     <div className={styles.content}>
       <header className={styles.pageHeader}>
         <div>
-          <h2 className={styles.pageTitle}>{t('pages.regional.title')}</h2>
           <p className={styles.muted}>{t('regional.intro')}</p>
         </div>
       </header>

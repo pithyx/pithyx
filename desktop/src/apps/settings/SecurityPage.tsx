@@ -28,7 +28,6 @@ export function SecurityPage({ app }: { app: PithyxApp }) {
     <div className={styles.content}>
       <header className={styles.pageHeader}>
         <div>
-          <h2 className={styles.pageTitle}>{t('pages.security.title')}</h2>
           <p className={styles.muted}>{t('security.intro')}</p>
         </div>
       </header>

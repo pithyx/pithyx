@@ -29,7 +29,7 @@ async function openSettings(page: Page) {
   await signInAsAdmin(page);
   await openFromStart(page, 'Settings');
   const settings = appWindow(page, 'Settings');
-  await expect(settings.getByRole('heading', { name: 'Overview', level: 2 })).toBeVisible();
+  await expect(settings.getByRole('heading', { name: 'Overview', level: 1 })).toBeVisible();
   return settings;
 }
 
@@ -66,7 +66,7 @@ test('Settings opens with the overview and a grouped navigation with a search', 
   await expect(navigation.getByRole('button', { name: 'Network', exact: true })).toHaveCount(0);
   await navigation.getByRole('button', { name: 'Regional settings', exact: true }).click();
   await expect(
-    settings.getByRole('heading', { name: 'Regional settings', level: 2 }),
+    settings.getByRole('heading', { name: 'Regional settings', level: 1 }),
   ).toBeVisible();
   await search.fill('');
   await openSettingsPage(settings, 'Overview');
@@ -78,18 +78,18 @@ test('the Info Center, Network, File services and Users pages open from the navi
 }) => {
   const settings = await openSettings(page);
   await openSettingsPage(settings, 'Info Center');
-  await expect(settings.getByRole('heading', { name: 'Info Center', level: 2 })).toBeVisible();
+  await expect(settings.getByRole('heading', { name: 'Info Center', level: 1 })).toBeVisible();
   await expect(settings.getByText('Pithyx version')).toBeVisible();
   await expect(settings.getByText('Logical processors')).toBeVisible();
   expect(await violations(page)).toEqual([]);
 
   await openSettingsPage(settings, 'Network');
   await expect(settings.getByRole('heading', { name: 'Host name and name servers' })).toBeVisible();
-  await expect(settings.getByRole('heading', { name: 'Network', level: 2 })).toBeVisible();
+  await expect(settings.getByRole('heading', { name: 'Network', level: 1 })).toBeVisible();
   expect(await violations(page)).toEqual([]);
 
   await openSettingsPage(settings, 'File services');
-  await expect(settings.getByRole('heading', { name: 'File services', level: 2 })).toBeVisible();
+  await expect(settings.getByRole('heading', { name: 'File services', level: 1 })).toBeVisible();
   await expect(
     settings.getByRole('switch', { name: 'Offer shared folders over SMB' }),
   ).toBeChecked();
@@ -103,7 +103,7 @@ test('the Info Center, Network, File services and Users pages open from the navi
   expect(await violations(page)).toEqual([]);
 
   await openSettingsPage(settings, 'Users');
-  await expect(settings.getByRole('heading', { name: 'Users', level: 2 })).toBeVisible();
+  await expect(settings.getByRole('heading', { name: 'Users', level: 1 })).toBeVisible();
   await expect(settings.getByRole('button', { name: 'Create user' })).toBeVisible();
   await expect(settings.getByRole('table', { name: 'Groups' })).toHaveCount(0);
   expect(await violations(page)).toEqual([]);
@@ -188,7 +188,7 @@ test('groups and their rights reach their members, and the editors are accessibl
   expect(user.ok()).toBe(true);
   const userId = ((await user.json()) as { id: number }).id;
   await openSettingsPage(settings, 'Groups');
-  await expect(settings.getByRole('heading', { name: 'Groups', level: 2 })).toBeVisible();
+  await expect(settings.getByRole('heading', { name: 'Groups', level: 1 })).toBeVisible();
 
   // A group with the new user, created on the page.
   await settings.getByRole('button', { name: 'Create group' }).click();
@@ -242,7 +242,7 @@ test('a configuration backup downloads encrypted and is checked before a restore
   const settings = await openSettings(page);
   await openSettingsPage(settings, 'Backup and restore');
   await expect(
-    settings.getByRole('heading', { name: 'Backup and restore', level: 2 }),
+    settings.getByRole('heading', { name: 'Backup and restore', level: 1 }),
   ).toBeVisible();
   expect(await violations(page)).toEqual([]);
 

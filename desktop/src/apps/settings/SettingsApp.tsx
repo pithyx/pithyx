@@ -110,7 +110,7 @@ export function SettingsApp({ app }: SdkAppProps) {
           }}
         />
       }
-      {...(page === undefined ? { title: t('overview.page') } : {})}
+      title={page === undefined ? t('overview.page') : t(`pages.${page.id}.title`)}
     >
       {page === undefined ? (
         <OverviewPage app={app} pages={SETTINGS_PAGES} onOpen={open} />

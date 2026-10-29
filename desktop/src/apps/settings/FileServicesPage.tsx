@@ -29,7 +29,6 @@ export function FileServicesPage({ app }: { app: PithyxApp }) {
     <div className={styles.content}>
       <header className={styles.pageHeader}>
         <div>
-          <h2 className={styles.pageTitle}>{t('pages.fileServices.title')}</h2>
           <p className={styles.muted}>{t('fileServices.intro')}</p>
         </div>
       </header>
