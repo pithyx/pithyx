@@ -214,6 +214,10 @@ function bundleGraph(): Plugin {
   };
 }
 
+// The modules of tables and virtualized lists, which only apps use (D400).
+const tableModules =
+  /[\\/](packages[\\/]ui[\\/]src[\\/]DataTable|react-aria-components[\\/]dist[\\/]private[\\/](Table|TableLayout|Virtualizer)\.mjs|react-stately[\\/]dist[\\/]private[\\/](layout|table|virtualizer)[\\/]|react-aria[\\/]dist[\\/]private[\\/](table|virtualizer)[\\/]|@tanstack[\\/](virtual-core|react-virtual)[\\/])/;
+
 const signIn: readonly string[] = signInNamespaces;
 const desktopShell: readonly string[] = desktopNamespaces;
 
@@ -273,10 +277,15 @@ export default defineConfig({
             {
               name: 'shared',
               test: (id) =>
-                !/[\\/](sdk[\\/]src|desktop[\\/]src[\\/]apps[\\/][^\\/]+)[\\/]/.test(id),
+                !/[\\/](sdk[\\/]src|desktop[\\/]src[\\/]apps[\\/][^\\/]+)[\\/]/.test(id) &&
+                !tableModules.test(id),
               minShareCount: 2,
               priority: 1,
             },
+            // Tables and virtualized lists are code of apps only (DataTable, the folder list, the Log Center): in the
+            // shared chunk they would count toward the desktop as soon as two apps use them (D400). This group comes
+            // after the shared one, so it keeps only what the desktop itself never loads.
+            { name: 'tables', test: tableModules, minShareCount: 2, priority: 0 },
           ],
         },
       },

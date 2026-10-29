@@ -363,7 +363,8 @@ const validators: Record<MethodName, (params: unknown) => boolean> = {
     isRelativePath(p.path) &&
     isPage(p) &&
     isOneOf(p.sort, ['name', 'size', 'modified']) &&
-    isOneOf(p.order, ['asc', 'desc']),
+    isOneOf(p.order, ['asc', 'desc']) &&
+    (p.query === undefined || typeof p.query === 'string'),
   'files.open': (p) => isRecord(p) && isLocation(p.location) && isRelativePath(p.path),
   'files.shares': isRecord,
   'files.watch': (p) => inLocation(p) && isRelativePath(p.path),

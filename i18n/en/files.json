@@ -5,6 +5,8 @@
   "path": "Path",
   "search": "Search in {folder}",
   "searchPlaceholder": "Search",
+  "searchResults": "{count, plural, one {# match} other {# matches}}",
+  "searchEmpty": "Nothing in this folder has “{query}” in its name.",
   "places": {
     "title": "Places",
     "home": "Home",
@@ -168,5 +170,10 @@
     "location": "Location",
     "opened": "Opened",
     "show": "Show in {location}"
+  },
+  "tree": {
+    "expand": "Show the folders in {name}",
+    "collapse": "Hide the folders in {name}",
+    "more": "More in {name}"
   }
 }

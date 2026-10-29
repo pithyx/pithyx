@@ -62,6 +62,7 @@ public static class FileEndpoints
             .WithDescription(
                 "One page of a folder. Paths are relative to the share with / as separator; \".\" and \"..\" are refused. "
                 + "sort is name (natural order, ignoring case), size or modified, order asc or desc; pass nextCursor as cursor for the next page. "
+                + "query keeps only the entries whose name contains it, ignoring case, in this folder only; total then counts the matches. "
                 + "Subscribe to topic for live changes of the folder.");
         files.MapGet("/entry", StatAsync).WithName("GetFileEntry");
         files.MapGet("/content", DownloadAsync)
@@ -157,10 +158,11 @@ public static class FileEndpoints
         string? order,
         int? limit,
         string? cursor,
+        string? query,
         FileService files,
         HttpContext context,
         CancellationToken cancellationToken) =>
-        TypedResults.Ok(await files.ListAsync(context.User, shareId, path, Parse(sort, FileSort.Name), Parse(order, SortOrder.Asc), limit, cursor, cancellationToken));
+        TypedResults.Ok(await files.ListAsync(context.User, shareId, path, Parse(sort, FileSort.Name), Parse(order, SortOrder.Asc), limit, cursor, cancellationToken, query: query));
 
     // Query values are the same lowercase words as in JSON.
     private static T Parse<T>(string? value, T fallback) where T : struct, Enum =>

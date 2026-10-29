@@ -320,7 +320,16 @@
       "more": "Load more",
       "name": "File name",
       "readOnly": "You can only read this shared folder. Choose another one to save here.",
-      "exists": "A file with this name exists. Saving replaces it."
+      "exists": "A file with this name exists. Saving replaces it.",
+      "places": "Places",
+      "up": "Up one level",
+      "readOnlyPlace": "Read only",
+      "types": "Shows only files of the types {types}.",
+      "columns": {
+        "name": "Name",
+        "modified": "Modified",
+        "size": "Size"
+      }
     },
     "loading": {
       "label": "{name} is loading",

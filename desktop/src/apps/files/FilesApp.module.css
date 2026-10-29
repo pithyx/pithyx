@@ -15,7 +15,7 @@
   border-top: 0;
 }
 
-/* The address bar: back, forward, up, the path in a field and refresh. */
+/* The address bar: back, forward, up, the path in a field, refresh and the search in the folder. */
 .toolbar {
   display: flex;
   flex: none;
@@ -24,6 +24,18 @@
   min-width: 0;
   padding: var(--space-1) var(--space-2);
   border-bottom: 1px solid var(--color-border);
+}
+
+.search {
+  flex: 0 1 240px;
+  align-self: center;
+  min-width: 140px;
+  min-height: 30px;
+  margin-left: var(--space-1);
+}
+
+.search input {
+  min-height: 28px;
 }
 
 .breadcrumb {
@@ -600,6 +612,17 @@
     font-size: 0.8em;
   }
 
+  /* The search takes a row of its own, so the path keeps room for targets of 24 px. */
+  .toolbar {
+    flex-wrap: wrap;
+    row-gap: var(--space-1);
+  }
+
+  .search {
+    flex-basis: 100%;
+    margin-left: 0;
+  }
+
   .header,
   .row {
     grid-template-columns: minmax(0, 1fr);
@@ -713,6 +736,81 @@
 .sideLock {
   flex: none;
   color: var(--color-text-muted);
+}
+
+/* The folder tree: each level indented, a toggle before every folder that may have subfolders. */
+.tree {
+  display: grid;
+  gap: 1px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.treeRow {
+  display: flex;
+  align-items: center;
+  padding-inline-start: calc(var(--depth, 0) * var(--space-3));
+  gap: 1px;
+}
+
+.treeRow > .sideItem {
+  flex: 1;
+  min-width: 0;
+}
+
+.twisty,
+.twistySpace {
+  flex: none;
+  width: 24px;
+  min-height: 24px;
+}
+
+.twisty {
+  display: inline-grid;
+  place-items: center;
+  height: var(--row-height);
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-tag);
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+}
+
+.twisty:hover {
+  background: var(--pithyx-color-hover);
+  color: var(--color-text);
+}
+
+.twisty:focus-visible {
+  outline: 2px solid var(--pithyx-color-focus);
+  outline-offset: -2px;
+}
+
+.twisty > svg {
+  transition: transform var(--duration-fast) var(--ease-standard);
+}
+
+.twisty[aria-expanded='true'] > svg {
+  transform: rotate(90deg);
+}
+
+.treeMore {
+  color: var(--color-text-muted);
+}
+
+@media (pointer: coarse) {
+  .twisty,
+  .twistySpace {
+    width: 36px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .twisty > svg {
+    transition: none;
+  }
 }
 
 /* The details pane of D394 on the right, switched from the command bar. */

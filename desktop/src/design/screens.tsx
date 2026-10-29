@@ -10,6 +10,7 @@ import {
   WindowStatesScene,
   type SceneContext,
 } from './DesktopScreens';
+import { FileDialogScene } from './FileDialogScene';
 import { labels } from './labels';
 import { LogoScreen } from './LogoScreen';
 import { PatternAppScene, PatternsScreen, RecentFilesScene } from './PatternScreens';
@@ -265,6 +266,32 @@ export const screens: ScreenDefinition[] = [
     description:
       'The Recent place of Files (#333): name with the file type icon, the location as a link to the folder, when it was opened and the size. Compare with f-files.',
     render: (context) => <RecentFilesScene context={context} />,
+  },
+  {
+    id: 'file-dialog-save',
+    group: 'patterns',
+    title: 'App file dialog: save',
+    description:
+      'The dialog an app opens with files.saveAs (#324): the places with a lock on read-only folders, up and the path in a field, the folder as a table, the file name below. Compare with f-files.',
+    render: (context) => (
+      <FileDialogScene
+        context={context}
+        request={{ kind: 'save', multiple: false, extensions: [], suggestedName: 'Notes.md' }}
+      />
+    ),
+  },
+  {
+    id: 'file-dialog-pick',
+    group: 'patterns',
+    title: 'App file dialog: choose',
+    description:
+      'The dialog of files.pick with several files and a type filter: only the pictures and folders are listed, and the line below says which types.',
+    render: (context) => (
+      <FileDialogScene
+        context={context}
+        request={{ kind: 'pick', multiple: true, extensions: ['jpg', 'png'], suggestedName: '' }}
+      />
+    ),
   },
   ...storageScreens,
 ];

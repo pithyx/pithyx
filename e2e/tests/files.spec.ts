@@ -294,6 +294,73 @@ test('selecting everything in a large folder sends no list of names', async ({ p
   await expect(filesWindow(page).getByText('1 item', { exact: true })).toBeVisible();
 });
 
+test('a search keeps the matching names of the folder and deletes only what it shows', async ({
+  page,
+}) => {
+  const files: Record<string, string> = { 'notes.txt': '' };
+  for (let i = 0; i < 250; i++) {
+    files[`Holiday ${String(i)}.jpg`] = '';
+  }
+  prepare('e2e-search', files);
+  await openFolder(page, 'e2e-search');
+  await expect(filesWindow(page).getByText('251 items')).toBeVisible();
+
+  const search = filesWindow(page).getByRole('searchbox', { name: 'Search in e2e-search' });
+  await search.fill('holiday 24');
+  await expect(filesWindow(page).getByText('11 matches')).toBeVisible();
+  await expect(row(page, 'Holiday 24.jpg')).toBeVisible();
+  await expect(row(page, 'notes.txt')).toHaveCount(0);
+
+  await row(page, 'Holiday 24.jpg').click();
+  await page.keyboard.press('Control+a');
+  await expect(filesWindow(page).getByText('11 selected')).toBeVisible();
+  const request = page.waitForRequest('**/api/files/operations');
+  await page.keyboard.press('Delete');
+  const body = (await request).postDataJSON() as { items?: unknown[]; allIn?: unknown };
+  expect(body.allIn).toBeUndefined();
+  expect(body.items).toHaveLength(11);
+  await expect(filesWindow(page).getByText('Nothing in this folder has')).toBeVisible();
+
+  await search.fill('');
+  await expect(filesWindow(page).getByText('240 items')).toBeVisible();
+  expect(existsSync(join(shared, 'e2e-search', 'notes.txt'))).toBe(true);
+});
+
+test('the folder tree in the navigation opens subfolders and follows the folder on view', async ({
+  page,
+}) => {
+  prepare('e2e-tree');
+  prepare(join('e2e-tree', 'inner', 'deep'));
+  await signInAsAdmin(page);
+  await openFilesInShared(page);
+  const side = filesWindow(page).getByRole('navigation', { name: 'Shares and recycle bin' });
+  const path = filesWindow(page).getByRole('navigation', { name: 'Path' });
+
+  await side.getByRole('button', { name: 'Show the folders in e2e-tree' }).click();
+  await side.getByRole('button', { name: 'inner', exact: true }).click();
+  await expect(path.getByRole('button', { name: 'inner', exact: true })).toHaveAttribute(
+    'aria-current',
+    'page',
+  );
+  await expect(side.getByRole('button', { name: 'inner', exact: true })).toHaveAttribute(
+    'aria-current',
+    'page',
+  );
+
+  await enter(page, 'deep');
+  const deep = side.getByRole('button', { name: 'deep', exact: true });
+  await expect(deep).toHaveAttribute('aria-current', 'page');
+  // A folder without subfolders has no toggle once that is known.
+  await expect(side.getByRole('button', { name: 'Show the folders in deep' })).toHaveCount(0);
+
+  await side.getByRole('button', { name: 'Hide the folders in e2e-tree' }).click();
+  await expect(deep).toHaveCount(0);
+  await expect(side.getByRole('button', { name: 'e2e-tree', exact: true })).toHaveAttribute(
+    'aria-current',
+    'page',
+  );
+});
+
 test('works with the keyboard alone', async ({ page }) => {
   prepare('e2e-keys/inner', { 'deep.txt': 'd' });
   await openFolder(page, 'e2e-keys');

@@ -606,6 +606,11 @@ export interface PithyxApp {
         sort?: SortKey;
         /** Ascending or descending; `asc` when left out. */
         order?: SortOrder;
+        /**
+         * Keeps only the entries of this folder whose name contains it, ignoring case; `total` then counts the matches.
+         * Subfolders are not searched.
+         */
+        query?: string;
       },
     ): Promise<FolderPage>;
     /**
