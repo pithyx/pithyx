@@ -16,6 +16,7 @@ import { JobList } from '../shell/JobList';
 import { NotificationPanel } from '../shell/NotificationPanel';
 import { ToastStack } from '../shell/Notifications';
 import { StartMenu, type StartResults } from '../shell/StartMenu';
+import { FolderTiles, StatusTiles } from '../shell/StartTiles';
 import { StickyNote } from '../shell/StickyNote';
 import { Taskbar } from '../shell/Taskbar';
 import type { RunningApp, TaskbarPosition } from '../shell/types';
@@ -41,7 +42,10 @@ import {
   notifications,
   now,
   startApps,
-  recent,
+  startPools,
+  startSample,
+  startShares,
+  startUpdates,
   searchFiles,
   searchQuery,
   useApps,
@@ -265,6 +269,9 @@ function useSearchResults(apps: Apps): StartResults {
   };
 }
 
+// The gallery's buttons do nothing.
+const ignore = () => undefined;
+
 export function StartMenuScene({
   context,
   search,
@@ -277,7 +284,7 @@ export function StartMenuScene({
   const apps = useApps();
   const results = useSearchResults(apps);
   const currentUser = useUser();
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const query = search ? searchQuery[i18n.language === 'de' ? 'de' : 'en'] : '';
   return (
     <DesktopScene
@@ -287,9 +294,24 @@ export function StartMenuScene({
         <StartMenu
           position={context.taskbar}
           query={query}
-          apps={startApps.map((id) => apps[id])}
-          recent={recent}
+          groups={[
+            { id: 'system', title: t('start.system'), apps: startApps.map((id) => apps[id]) },
+          ]}
           results={results}
+          tiles={
+            <>
+              <StatusTiles
+                pools={startPools}
+                sample={startSample}
+                updates={startUpdates}
+                locale={context.locale}
+                onOpen={ignore}
+              />
+              <FolderTiles shares={startShares} onFolder={ignore} />
+            </>
+          }
+          onHome={ignore}
+          onPreferences={ignore}
           user={currentUser}
           userMenu={(trigger) => <UserMenu trigger={trigger} open={userMenuOpen} />}
         />

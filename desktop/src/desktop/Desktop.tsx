@@ -38,6 +38,8 @@ import { bannerAlert, useStorageAlerts } from '../shell/storageAlerts';
 import { useReportLanguage } from '../notifications/language';
 import { BoxStatus } from '../shell/BoxStatus';
 import { StartMenu } from '../shell/StartMenu';
+import { StartTiles } from '../shell/StartTiles';
+import { showInFiles } from '../items/fileTargets';
 import { Taskbar } from '../shell/Taskbar';
 import type { RunningApp, TaskbarPosition } from '../shell/types';
 import { setNotificationPanelOpen } from '../shell/toasts';
@@ -446,6 +448,19 @@ export function Desktop({ user, entering }: { user: User; entering: boolean }) {
     icon: app.icon,
     tone: app.tone,
   }));
+  // The menu's app list (D394): System only for administrators, then the other apps, then what is the user's own.
+  const coreIds: ReadonlySet<string> = new Set(Object.values(coreAppIds));
+  const own = (id: string) => id === coreAppIds.preferences;
+  const system = (id: string) => permissions.admin && coreIds.has(id) && !own(id);
+  const startGroups = [
+    { id: 'system', title: t('start.system'), apps: apps.filter((app) => system(app.id)) },
+    {
+      id: 'apps',
+      title: t('start.apps'),
+      apps: apps.filter((app) => !system(app.id) && !own(app.id)),
+    },
+    { id: 'you', title: t('start.you'), apps: apps.filter((app) => own(app.id)) },
+  ];
   const needle = query.trim().toLocaleLowerCase(i18n.language);
   const matches = apps
     .filter((app) => needle !== '' && app.name.toLocaleLowerCase(i18n.language).includes(needle))
@@ -532,9 +547,28 @@ export function Desktop({ user, entering }: { user: User; entering: boolean }) {
                 position={taskbarPosition}
                 query={query}
                 onQueryChange={setQuery}
-                apps={apps}
-                recent={[]}
+                groups={startGroups}
                 results={{ apps: matches, settings: [], files: [] }}
+                tiles={
+                  <StartTiles
+                    isAdmin={permissions.admin}
+                    locale={locale}
+                    onOpen={(app) => {
+                      open(coreAppIds[app]);
+                    }}
+                    onFolder={(share) => {
+                      closeStart(false);
+                      showInFiles(share, '');
+                    }}
+                  />
+                }
+                onHome={() => {
+                  closeStart(false);
+                  openApp(coreAppIds.files);
+                }}
+                onPreferences={() => {
+                  open(coreAppIds.preferences);
+                }}
                 user={{
                   name,
                   initials: initialsOf(name),

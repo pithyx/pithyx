@@ -1,18 +1,21 @@
 import {
   IconCornerDownLeft,
   IconExternalLink,
+  IconHome,
   IconLogout,
   IconPlus,
   IconPower,
   IconRotateClockwise,
-  IconSelector,
+  IconUserCog,
 } from '../ui/icons';
 import type { TablerIcon } from '../ui/icons';
 import { useState, type ReactNode, type Ref } from 'react';
 import {
   Button as AriaButton,
   GridList,
+  GridListHeader,
   GridListItem,
+  GridListSection,
   Header,
   ListBox,
   ListBoxItem,
@@ -38,6 +41,13 @@ export interface StartEntry {
   detail?: string;
   app?: Pick<AppInfo, 'icon' | 'tone'>;
   icon?: TablerIcon;
+}
+
+/** A group of the app list: System (administrators only), Apps or You. */
+export interface StartGroup {
+  id: string;
+  title: string;
+  apps: AppInfo[];
 }
 
 export interface StartResults {
@@ -77,15 +87,20 @@ export interface StartMenuProps {
   position: TaskbarPosition;
   query: string;
   onQueryChange?: (query: string) => void;
-  apps: AppInfo[];
-  recent: StartEntry[];
+  groups: StartGroup[];
   results: StartResults;
+  /** The tile area beside the app list: status for administrators, then files and folders. */
+  tiles?: ReactNode;
   user: { name: string; initials: string; role: string };
   /** Wraps the profile button in the account menu (two-factor, language, desktop, taskbar). */
   userMenu?: (trigger: ReactNode) => ReactNode;
   menuRef?: Ref<HTMLDivElement>;
   /** Opens an app or a search result by its id. */
   onOpen?: (id: string) => void;
+  /** Opens Files in the user's home folder. */
+  onHome?: () => void;
+  /** Opens Personal settings. */
+  onPreferences?: () => void;
   /** Puts a shortcut to an app on the desktop; the app tiles' context menu offers it when set. */
   onAddToDesktop?: (id: string) => void;
   onSignOut?: () => void;
@@ -95,43 +110,47 @@ export interface StartMenuProps {
   onPower?: (action: 'restart' | 'shutdown') => void;
 }
 
-/** Start menu with search. Results are grouped into apps, settings and files; Enter opens the first one. */
+/**
+ * The Pithyx menu attached to the taskbar (D394): a rail with the account, home, personal settings, sign out and power,
+ * the searchable app list grouped by area, and the tiles. Search results are grouped into apps, settings and files;
+ * Enter opens the first one.
+ */
 export function StartMenu({
   position,
   query,
   onQueryChange,
-  apps,
-  recent,
+  groups,
   results,
+  tiles,
   user,
   userMenu,
   menuRef,
   onOpen,
+  onHome,
+  onPreferences,
   onAddToDesktop,
   onSignOut,
   power = true,
   onPower,
 }: StartMenuProps) {
   const { t } = useTranslation();
-  const groups = [
+  const resultGroups = [
     { key: 'apps', title: t('start.results.apps'), entries: results.apps },
     { key: 'settings', title: t('start.results.settings'), entries: results.settings },
     { key: 'files', title: t('start.results.files'), entries: results.files },
   ].filter((group) => group.entries.length > 0);
-  const firstId = groups[0]?.entries[0]?.id;
+  const firstId = resultGroups[0]?.entries[0]?.id;
+  const apps = groups.flatMap((group) => group.apps);
   const [menu, setMenu] = useState<{ app: AppInfo; x: number; y: number } | null>(null);
   const profile = (
-    <AriaButton className={styles.user} aria-label={t('start.userMenu', { name: user.name })}>
+    <AriaButton
+      className={styles.railButton}
+      aria-label={t('start.userMenu', { name: user.name })}
+      data-role={user.role}
+    >
       <span className={styles.avatar} aria-hidden>
         {user.initials}
       </span>
-      <span className={styles.entryText}>
-        <span className={styles.entryName}>{user.name}</span>
-        <span className={styles.entryDetail}>{user.role}</span>
-      </span>
-      {userMenu !== undefined && (
-        <IconSelector className={styles.userChevron} size={16} stroke={1.75} aria-hidden />
-      )}
     </AriaButton>
   );
 
@@ -143,137 +162,169 @@ export function StartMenu({
       aria-label={t('start.label')}
       data-position={position}
     >
-      <div className={styles.search}>
-        <SearchField
-          label={t('start.searchLabel')}
-          placeholder={t('start.search')}
-          value={query}
-          onChange={(value) => onQueryChange?.(value)}
-          onSubmit={() => {
-            if (firstId !== undefined) {
-              onOpen?.(firstId);
-            }
+      <nav className={styles.rail} aria-label={t('start.rail')}>
+        {userMenu === undefined ? profile : userMenu(profile)}
+        {onHome !== undefined && (
+          <IconButton label={t('start.home')} className={styles.railButton} onPress={onHome}>
+            <IconHome size={20} stroke={1.75} />
+          </IconButton>
+        )}
+        <span className={styles.railSpacer} />
+        {onPreferences !== undefined && (
+          <IconButton
+            label={t('menu.preferences')}
+            className={styles.railButton}
+            onPress={onPreferences}
+          >
+            <IconUserCog size={20} stroke={1.75} />
+          </IconButton>
+        )}
+        <IconButton
+          label={t('menu.signOut')}
+          className={styles.railButton}
+          onPress={() => {
+            onSignOut?.();
           }}
-          autoFocus
-        />
-      </div>
-
-      {query === '' ? (
-        <div className={styles.body}>
-          <section
-            className={styles.section}
-            aria-labelledby="start-apps"
-            onKeyDown={(event) => {
-              if (event.key !== 'ContextMenu' && !(event.key === 'F10' && event.shiftKey)) {
-                return;
-              }
-              const tile =
-                event.target instanceof Element ? event.target.closest('[data-app]') : null;
-              const app = apps.find((entry) => entry.id === tile?.getAttribute('data-app'));
-              if (tile !== null && app !== undefined) {
-                event.preventDefault();
-                const rect = tile.getBoundingClientRect();
-                setMenu({ app, x: rect.left, y: rect.bottom });
+        >
+          <IconLogout size={20} stroke={1.75} />
+        </IconButton>
+        {power && (
+          <MenuTrigger>
+            <IconButton label={t('start.power')} className={styles.railButton}>
+              <IconPower size={20} stroke={1.75} />
+            </IconButton>
+            <MenuPopover placement={position === 'top' ? 'bottom start' : 'top start'}>
+              <Menu
+                aria-label={t('start.power')}
+                onAction={(key) => {
+                  onPower?.(key === 'shutdown' ? 'shutdown' : 'restart');
+                }}
+              >
+                <MenuItem id="restart" icon={<IconRotateClockwise size={18} stroke={1.75} />}>
+                  {t('start.restart')}
+                </MenuItem>
+                <MenuItem id="shutdown" icon={<IconPower size={18} stroke={1.75} />} tone="danger">
+                  {t('start.shutDown')}
+                </MenuItem>
+              </Menu>
+            </MenuPopover>
+          </MenuTrigger>
+        )}
+      </nav>
+      <div className={styles.appColumn}>
+        <div className={styles.search}>
+          <SearchField
+            label={t('start.searchLabel')}
+            placeholder={t('start.search')}
+            value={query}
+            onChange={(value) => onQueryChange?.(value)}
+            onSubmit={() => {
+              if (firstId !== undefined) {
+                onOpen?.(firstId);
               }
             }}
-          >
-            <h3 id="start-apps" className={styles.sectionTitle}>
-              {t('start.apps')}
-            </h3>
-            <GridList
-              aria-labelledby="start-apps"
-              layout="grid"
-              className={styles.apps}
-              items={apps}
-              onAction={(key) => onOpen?.(String(key))}
+            autoFocus
+          />
+        </div>
+
+        {query === '' ? (
+          <div className={styles.body}>
+            <section
+              className={styles.section}
+              aria-label={t('start.apps')}
+              onKeyDown={(event) => {
+                if (event.key !== 'ContextMenu' && !(event.key === 'F10' && event.shiftKey)) {
+                  return;
+                }
+                const tile =
+                  event.target instanceof Element ? event.target.closest('[data-app]') : null;
+                const app = apps.find((entry) => entry.id === tile?.getAttribute('data-app'));
+                if (tile !== null && app !== undefined) {
+                  event.preventDefault();
+                  const rect = tile.getBoundingClientRect();
+                  setMenu({ app, x: rect.left, y: rect.bottom });
+                }
+              }}
             >
-              {(app) => (
-                <GridListItem
-                  className={styles.tile}
-                  textValue={app.name}
-                  onContextMenu={(event) => {
-                    event.preventDefault();
-                    setMenu({ app, x: event.clientX, y: event.clientY });
-                  }}
-                  data-app={app.id}
-                >
-                  <AppIcon app={app} size={40} />
-                  <span className={styles.tileName}>{app.name}</span>
-                </GridListItem>
-              )}
-            </GridList>
-          </section>
-          {recent.length > 0 && (
-            <section className={styles.section} aria-labelledby="start-recent">
-              <h3 id="start-recent" className={styles.sectionTitle}>
-                {t('start.recent')}
-              </h3>
-              <ListBox
-                aria-labelledby="start-recent"
-                className={styles.list}
-                items={recent}
+              <GridList
+                aria-label={t('start.apps')}
+                className={styles.apps}
                 onAction={(key) => onOpen?.(String(key))}
               >
-                {(entry) => (
-                  <ListBoxItem className={styles.entry} textValue={entry.name}>
-                    <EntryIcon entry={entry} />
-                    <span className={styles.entryText}>
-                      <span className={styles.entryName}>{entry.name}</span>
-                      {entry.detail !== undefined && (
-                        <span className={styles.entryDetail}>{entry.detail}</span>
-                      )}
-                    </span>
-                  </ListBoxItem>
-                )}
-              </ListBox>
-            </section>
-          )}
-        </div>
-      ) : (
-        <div className={styles.body}>
-          {groups.length === 0 ? (
-            <p className={styles.empty}>{t('start.noResults', { query })}</p>
-          ) : (
-            <ListBox
-              aria-label={t('start.resultsLabel')}
-              className={styles.list}
-              selectionMode="single"
-              defaultSelectedKeys={firstId === undefined ? [] : [firstId]}
-              onAction={(key) => onOpen?.(String(key))}
-            >
-              {groups.map((group) => (
-                <ListBoxSection key={group.key} className={styles.group}>
-                  <Header className={styles.sectionTitle}>{group.title}</Header>
-                  {group.entries.map((entry) => (
-                    <ListBoxItem
-                      key={entry.id}
-                      id={entry.id}
-                      className={styles.entry}
-                      textValue={entry.name}
-                    >
-                      <EntryIcon entry={entry} />
-                      <span className={styles.entryText}>
-                        <span className={styles.entryName}>
-                          <Highlight text={entry.name} query={query} />
-                        </span>
-                        {entry.detail !== undefined && (
-                          <span className={styles.entryDetail}>{entry.detail}</span>
-                        )}
-                      </span>
-                      {entry.id === firstId && (
-                        <span className={styles.enterHint}>
-                          <IconCornerDownLeft size={14} stroke={2} aria-hidden />
-                          {t('start.openHint')}
-                        </span>
-                      )}
-                    </ListBoxItem>
+                {groups
+                  .filter((group) => group.apps.length > 0)
+                  .map((group) => (
+                    <GridListSection key={group.id} className={styles.group}>
+                      <GridListHeader className={styles.sectionTitle}>{group.title}</GridListHeader>
+                      {group.apps.map((app) => (
+                        <GridListItem
+                          key={app.id}
+                          id={app.id}
+                          className={styles.tile}
+                          textValue={app.name}
+                          onContextMenu={(event) => {
+                            event.preventDefault();
+                            setMenu({ app, x: event.clientX, y: event.clientY });
+                          }}
+                          data-app={app.id}
+                        >
+                          <AppIcon app={app} size={28} />
+                          <span className={styles.tileName}>{app.name}</span>
+                        </GridListItem>
+                      ))}
+                    </GridListSection>
                   ))}
-                </ListBoxSection>
-              ))}
-            </ListBox>
-          )}
-        </div>
-      )}
+              </GridList>
+            </section>
+          </div>
+        ) : (
+          <div className={styles.body}>
+            {resultGroups.length === 0 ? (
+              <p className={styles.empty}>{t('start.noResults', { query })}</p>
+            ) : (
+              <ListBox
+                aria-label={t('start.resultsLabel')}
+                className={styles.list}
+                selectionMode="single"
+                defaultSelectedKeys={firstId === undefined ? [] : [firstId]}
+                onAction={(key) => onOpen?.(String(key))}
+              >
+                {resultGroups.map((group) => (
+                  <ListBoxSection key={group.key} className={styles.group}>
+                    <Header className={styles.sectionTitle}>{group.title}</Header>
+                    {group.entries.map((entry) => (
+                      <ListBoxItem
+                        key={entry.id}
+                        id={entry.id}
+                        className={styles.entry}
+                        textValue={entry.name}
+                      >
+                        <EntryIcon entry={entry} />
+                        <span className={styles.entryText}>
+                          <span className={styles.entryName}>
+                            <Highlight text={entry.name} query={query} />
+                          </span>
+                          {entry.detail !== undefined && (
+                            <span className={styles.entryDetail}>{entry.detail}</span>
+                          )}
+                        </span>
+                        {entry.id === firstId && (
+                          <span className={styles.enterHint}>
+                            <IconCornerDownLeft size={14} stroke={2} aria-hidden />
+                            {t('start.openHint')}
+                          </span>
+                        )}
+                      </ListBoxItem>
+                    ))}
+                  </ListBoxSection>
+                ))}
+              </ListBox>
+            )}
+          </div>
+        )}
+      </div>
+
+      {tiles !== undefined && query === '' && <div className={styles.tiles}>{tiles}</div>}
 
       {menu !== null && (
         <ContextMenuPopover
@@ -306,46 +357,6 @@ export function StartMenu({
           </Menu>
         </ContextMenuPopover>
       )}
-
-      <footer className={styles.footer}>
-        {userMenu === undefined ? profile : userMenu(profile)}
-        <div className={styles.footerActions}>
-          <IconButton
-            label={t('menu.signOut')}
-            onPress={() => {
-              onSignOut?.();
-            }}
-          >
-            <IconLogout size={20} stroke={1.75} />
-          </IconButton>
-          {power && (
-            <MenuTrigger>
-              <IconButton label={t('start.power')}>
-                <IconPower size={20} stroke={1.75} />
-              </IconButton>
-              <MenuPopover placement={position === 'top' ? 'bottom end' : 'top end'}>
-                <Menu
-                  aria-label={t('start.power')}
-                  onAction={(key) => {
-                    onPower?.(key === 'shutdown' ? 'shutdown' : 'restart');
-                  }}
-                >
-                  <MenuItem id="restart" icon={<IconRotateClockwise size={18} stroke={1.75} />}>
-                    {t('start.restart')}
-                  </MenuItem>
-                  <MenuItem
-                    id="shutdown"
-                    icon={<IconPower size={18} stroke={1.75} />}
-                    tone="danger"
-                  >
-                    {t('start.shutDown')}
-                  </MenuItem>
-                </Menu>
-              </MenuPopover>
-            </MenuTrigger>
-          )}
-        </div>
-      </footer>
     </div>
   );
 }
