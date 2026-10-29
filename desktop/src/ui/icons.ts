@@ -100,3 +100,10 @@ export { default as IconWallpaper } from '@tabler/icons-react/dist/esm/icons/Ico
 export { default as IconWorld } from '@tabler/icons-react/dist/esm/icons/IconWorld.mjs';
 export { default as IconX } from '@tabler/icons-react/dist/esm/icons/IconX.mjs';
 export { default as IconZoomReset } from '@tabler/icons-react/dist/esm/icons/IconZoomReset.mjs';
+export { default as IconBolt } from '@tabler/icons-react/dist/esm/icons/IconBolt.mjs';
+export { default as IconLock } from '@tabler/icons-react/dist/esm/icons/IconLock.mjs';
+export { default as IconUserPlus } from '@tabler/icons-react/dist/esm/icons/IconUserPlus.mjs';
+export { default as IconArrowsUpDown } from '@tabler/icons-react/dist/esm/icons/IconArrowsUpDown.mjs';
+export { default as IconShield } from '@tabler/icons-react/dist/esm/icons/IconShield.mjs';
+export { default as IconPlugConnected } from '@tabler/icons-react/dist/esm/icons/IconPlugConnected.mjs';
+export { default as IconCircleCheck } from '@tabler/icons-react/dist/esm/icons/IconCircleCheck.mjs';

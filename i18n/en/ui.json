@@ -5,5 +5,28 @@
   },
   "search": {
     "clear": "Clear search"
+  },
+  "frame": {
+    "back": "Back"
+  },
+  "nav": {
+    "search": "Search",
+    "noResults": "Nothing matches the search."
+  },
+  "select": {
+    "placeholder": "Choose"
+  },
+  "actionBar": {
+    "apply": "Apply",
+    "discard": "Discard"
+  },
+  "card": {
+    "details": "Details"
+  },
+  "attention": {
+    "title": "Needs attention",
+    "warning": "Warning",
+    "danger": "Error",
+    "info": "Note"
   }
 }

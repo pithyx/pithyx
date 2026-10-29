@@ -284,6 +284,101 @@ export const pages: ReferencePage[] = [
     },
   },
   {
+    id: 'app-frame',
+    package: 'ui',
+    exports: {
+      '@pithyx/ui': [
+        'AppFrame',
+        'AppFrameProps',
+        'AppFrameView',
+        'NavList',
+        'NavListProps',
+        'NavGroup',
+        'NavItem',
+      ],
+    },
+  },
+  {
+    id: 'toolbar',
+    package: 'ui',
+    exports: {
+      '@pithyx/ui': ['Toolbar', 'ToolbarProps', 'ToolbarSeparator'],
+    },
+  },
+  {
+    id: 'tabs',
+    package: 'ui',
+    exports: {
+      '@pithyx/ui': [
+        'Tabs',
+        'TabsProps',
+        'TabList',
+        'TabListProps',
+        'Tab',
+        'TabProps',
+        'TabPanel',
+        'TabPanelProps',
+      ],
+    },
+  },
+  {
+    id: 'data-table',
+    package: 'ui',
+    exports: {
+      '@pithyx/ui': ['DataTable', 'DataTableProps', 'DataTableColumn'],
+    },
+  },
+  {
+    id: 'form',
+    package: 'ui',
+    exports: {
+      '@pithyx/ui': [
+        'FormSection',
+        'FormSectionProps',
+        'FormRow',
+        'FormRowProps',
+        'ActionBar',
+        'ActionBarProps',
+      ],
+    },
+  },
+  {
+    id: 'radio-group',
+    package: 'ui',
+    exports: {
+      '@pithyx/ui': ['RadioGroup', 'RadioGroupProps', 'Radio', 'RadioProps'],
+    },
+  },
+  {
+    id: 'select',
+    package: 'ui',
+    exports: {
+      '@pithyx/ui': ['Select', 'SelectProps', 'SelectOption'],
+    },
+  },
+  {
+    id: 'card',
+    package: 'ui',
+    exports: {
+      '@pithyx/ui': ['Card', 'CardProps', 'Meter', 'MeterProps'],
+    },
+  },
+  {
+    id: 'status',
+    package: 'ui',
+    exports: {
+      '@pithyx/ui': [
+        'StatusBadge',
+        'StatusTone',
+        'AttentionList',
+        'AttentionListProps',
+        'AttentionItem',
+        'SummaryTiles',
+        'SummaryTile',
+      ],
+    },
+  },
+  {
     id: 'ui-provider',
     package: 'ui',
     exports: {
