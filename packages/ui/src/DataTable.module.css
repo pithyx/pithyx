@@ -33,8 +33,10 @@
   min-height: 0;
 }
 
+/* A narrow container scrolls the table sideways instead of squeezing its columns below a readable width. */
 .table {
   width: 100%;
+  min-width: calc(var(--columns) * 110px);
   border-collapse: separate;
   border-spacing: 0;
   table-layout: fixed;

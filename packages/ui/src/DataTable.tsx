@@ -1,5 +1,5 @@
 import { IconChevronDown, IconChevronUp } from './icons';
-import { useState, type ReactNode } from 'react';
+import { useState, type CSSProperties, type ReactNode } from 'react';
 import {
   Cell,
   Column,
@@ -144,6 +144,7 @@ export function DataTable<T>({
     <Table
       aria-label={label}
       className={cx(styles.table, styles[density], className)}
+      style={{ '--columns': columns.length } as CSSProperties}
       selectionMode={selectionMode}
       selectionBehavior="replace"
       {...(selectedKeys === undefined ? {} : { selectedKeys })}
