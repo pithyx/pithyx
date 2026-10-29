@@ -272,7 +272,6 @@
 /* A paragraph inside a FormSection, above or instead of its rows. */
 .sectionIntro {
   margin: 0;
-  padding: var(--space-3) var(--space-4) 0;
   color: var(--color-text-muted);
   font-size: var(--font-size-sm);
 }

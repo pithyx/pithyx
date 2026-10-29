@@ -1072,12 +1072,13 @@
       "password": "Passwort",
       "passwordSet": "Ein Passwort ist gespeichert. Gib nur ein neues ein, um es zu ersetzen.",
       "from": "Absenderadresse",
-      "save": "Speichern"
+      "applyNote": "Ein Test über einen Kanal zeigt, ob der Server funktioniert."
     },
     "system": {
       "title": "Kanäle der Box",
       "explain": "Diese Kanäle bekommen die eigenen Warnungen des Systems (Speicher, Updates, die USV, falsche Anmeldungen und mehr) einmal für alle Administratoren. Jeder Benutzer, auch Administratoren, kann im Benutzermenü eigene Kanäle hinzufügen."
-    }
+    },
+    "tabs": "Benachrichtigungen der Box"
   },
   "security": {
     "intro": "Was auf der Box mehr kann, als eine App sollte.",

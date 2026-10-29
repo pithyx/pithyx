@@ -17,7 +17,7 @@ There are two kinds of channels:
 
 ## The email server
 
-Email channels send through one SMTP server, which an administrator sets in Settings > **Notifications** > **Email server**: its name, the port, the encryption (**TLS**, usually port 465, **STARTTLS**, usually 587, or **None**, only for a server in the local network), a user name and password if it needs them, and the sender address. The password is never shown again; leave the field empty to keep it. An empty server name removes the server; email channels then fail with [`notifications.smtp.missing`](/docs/reference/errors/#notifications.smtp.missing), and a new one cannot be added.
+Email channels send through one SMTP server, which an administrator sets in Settings > **Notifications** > **Email server**: its name, the port, the encryption (**TLS**, usually port 465, **STARTTLS**, usually 587, or **None**, only for a server in the local network), a user name and password if it needs them, and the sender address; **Apply** in the bar at the bottom saves them and **Discard** drops the changes. The password is never shown again; leave the field empty to keep it. An empty server name removes the server; email channels then fail with [`notifications.smtp.missing`](/docs/reference/errors/#notifications.smtp.missing), and a new one cannot be added.
 
 ## Adding a channel
 
