@@ -66,7 +66,8 @@ export function prefetchFolder(
 
 /**
  * Applies a change to every cached order and search of a folder, so switching the sort column shows it too. A search
- * takes in only the entries whose name matches it.
+ * takes in only the entries whose name matches it. A removed name past the loaded pages cannot be counted, so such a
+ * cache is read again (a deletion within a search often removes names the folder's own list has not loaded yet).
  */
 export function changeFolder(
   client: QueryClient,
@@ -85,8 +86,19 @@ export function changeFolder(
           ? full
           : { ...full, changed: full.changed.filter((entry) => matchesQuery(entry.name, query)) };
       client.setQueryData(key, applyChange(data, kept, sort, order));
+      if (removesUnloaded(data, kept, query)) {
+        void client.invalidateQueries({ queryKey: key, exact: true });
+      }
     }
   }
+}
+
+function removesUnloaded(data: FolderPages, change: FolderChange, query: string): boolean {
+  if (data.pages.at(-1)?.nextCursor === null) {
+    return false;
+  }
+  const loaded = new Set(loadedEntries(data).map((entry) => entry.name));
+  return change.removed.some((name) => matchesQuery(name, query) && !loaded.has(name));
 }
 
 /**

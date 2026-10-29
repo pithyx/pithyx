@@ -612,9 +612,15 @@
     font-size: 0.8em;
   }
 
+  /* The search takes a row of its own, so the path keeps room for targets of 24 px. */
+  .toolbar {
+    flex-wrap: wrap;
+    row-gap: var(--space-1);
+  }
+
   .search {
-    flex-basis: 140px;
-    min-width: 96px;
+    flex-basis: 100%;
+    margin-left: 0;
   }
 
   .header,
