@@ -48,6 +48,8 @@
 }
 
 .rail {
+  grid-row: 1;
+  grid-column: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -85,6 +87,8 @@
 }
 
 .appColumn {
+  grid-row: 1;
+  grid-column: 2;
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
   min-height: 0;
@@ -92,6 +96,8 @@
 }
 
 .tiles {
+  grid-row: 1;
+  grid-column: 3;
   display: flex;
   flex-direction: column;
   gap: var(--space-4);

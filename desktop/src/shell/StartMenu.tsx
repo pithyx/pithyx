@@ -13,9 +13,7 @@ import { useState, type ReactNode, type Ref } from 'react';
 import {
   Button as AriaButton,
   GridList,
-  GridListHeader,
   GridListItem,
-  GridListSection,
   Header,
   ListBox,
   ListBoxItem,
@@ -162,55 +160,6 @@ export function StartMenu({
       aria-label={t('start.label')}
       data-position={position}
     >
-      <nav className={styles.rail} aria-label={t('start.rail')}>
-        {userMenu === undefined ? profile : userMenu(profile)}
-        {onHome !== undefined && (
-          <IconButton label={t('start.home')} className={styles.railButton} onPress={onHome}>
-            <IconHome size={20} stroke={1.75} />
-          </IconButton>
-        )}
-        <span className={styles.railSpacer} />
-        {onPreferences !== undefined && (
-          <IconButton
-            label={t('menu.preferences')}
-            className={styles.railButton}
-            onPress={onPreferences}
-          >
-            <IconUserCog size={20} stroke={1.75} />
-          </IconButton>
-        )}
-        <IconButton
-          label={t('menu.signOut')}
-          className={styles.railButton}
-          onPress={() => {
-            onSignOut?.();
-          }}
-        >
-          <IconLogout size={20} stroke={1.75} />
-        </IconButton>
-        {power && (
-          <MenuTrigger>
-            <IconButton label={t('start.power')} className={styles.railButton}>
-              <IconPower size={20} stroke={1.75} />
-            </IconButton>
-            <MenuPopover placement={position === 'top' ? 'bottom start' : 'top start'}>
-              <Menu
-                aria-label={t('start.power')}
-                onAction={(key) => {
-                  onPower?.(key === 'shutdown' ? 'shutdown' : 'restart');
-                }}
-              >
-                <MenuItem id="restart" icon={<IconRotateClockwise size={18} stroke={1.75} />}>
-                  {t('start.restart')}
-                </MenuItem>
-                <MenuItem id="shutdown" icon={<IconPower size={18} stroke={1.75} />} tone="danger">
-                  {t('start.shutDown')}
-                </MenuItem>
-              </Menu>
-            </MenuPopover>
-          </MenuTrigger>
-        )}
-      </nav>
       <div className={styles.appColumn}>
         <div className={styles.search}>
           <SearchField
@@ -246,20 +195,21 @@ export function StartMenu({
                 }
               }}
             >
-              <GridList
-                aria-label={t('start.apps')}
-                className={styles.apps}
-                onAction={(key) => onOpen?.(String(key))}
-              >
-                {groups
-                  .filter((group) => group.apps.length > 0)
-                  .map((group) => (
-                    <GridListSection key={group.id} className={styles.group}>
-                      <GridListHeader className={styles.sectionTitle}>{group.title}</GridListHeader>
-                      {group.apps.map((app) => (
+              {groups
+                .filter((group) => group.apps.length > 0)
+                .map((group) => (
+                  <div key={group.id} className={styles.group}>
+                    <h3 id={`start-${group.id}`} className={styles.sectionTitle}>
+                      {group.title}
+                    </h3>
+                    <GridList
+                      aria-labelledby={`start-${group.id}`}
+                      className={styles.apps}
+                      items={group.apps}
+                      onAction={(key) => onOpen?.(String(key))}
+                    >
+                      {(app) => (
                         <GridListItem
-                          key={app.id}
-                          id={app.id}
                           className={styles.tile}
                           textValue={app.name}
                           onContextMenu={(event) => {
@@ -271,10 +221,10 @@ export function StartMenu({
                           <AppIcon app={app} size={28} />
                           <span className={styles.tileName}>{app.name}</span>
                         </GridListItem>
-                      ))}
-                    </GridListSection>
-                  ))}
-              </GridList>
+                      )}
+                    </GridList>
+                  </div>
+                ))}
             </section>
           </div>
         ) : (
@@ -325,6 +275,57 @@ export function StartMenu({
       </div>
 
       {tiles !== undefined && query === '' && <div className={styles.tiles}>{tiles}</div>}
+
+      {/* Last in the focus order, after the list and the tiles, but drawn at the left edge. */}
+      <nav className={styles.rail} aria-label={t('start.rail')}>
+        {userMenu === undefined ? profile : userMenu(profile)}
+        {onHome !== undefined && (
+          <IconButton label={t('start.home')} className={styles.railButton} onPress={onHome}>
+            <IconHome size={20} stroke={1.75} />
+          </IconButton>
+        )}
+        <span className={styles.railSpacer} />
+        {onPreferences !== undefined && (
+          <IconButton
+            label={t('menu.preferences')}
+            className={styles.railButton}
+            onPress={onPreferences}
+          >
+            <IconUserCog size={20} stroke={1.75} />
+          </IconButton>
+        )}
+        <IconButton
+          label={t('menu.signOut')}
+          className={styles.railButton}
+          onPress={() => {
+            onSignOut?.();
+          }}
+        >
+          <IconLogout size={20} stroke={1.75} />
+        </IconButton>
+        {power && (
+          <MenuTrigger>
+            <IconButton label={t('start.power')} className={styles.railButton}>
+              <IconPower size={20} stroke={1.75} />
+            </IconButton>
+            <MenuPopover placement={position === 'top' ? 'bottom start' : 'top start'}>
+              <Menu
+                aria-label={t('start.power')}
+                onAction={(key) => {
+                  onPower?.(key === 'shutdown' ? 'shutdown' : 'restart');
+                }}
+              >
+                <MenuItem id="restart" icon={<IconRotateClockwise size={18} stroke={1.75} />}>
+                  {t('start.restart')}
+                </MenuItem>
+                <MenuItem id="shutdown" icon={<IconPower size={18} stroke={1.75} />} tone="danger">
+                  {t('start.shutDown')}
+                </MenuItem>
+              </Menu>
+            </MenuPopover>
+          </MenuTrigger>
+        )}
+      </nav>
 
       {menu !== null && (
         <ContextMenuPopover
