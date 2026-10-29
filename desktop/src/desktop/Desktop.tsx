@@ -36,6 +36,7 @@ import { itemsQuery, settleItemWrites } from '../items/query';
 import { listenForMetaTap } from '../shell/metaTap';
 import { bannerAlert, useStorageAlerts } from '../shell/storageAlerts';
 import { useReportLanguage } from '../notifications/language';
+import { BoxStatus } from '../shell/BoxStatus';
 import { StartMenu } from '../shell/StartMenu';
 import { Taskbar } from '../shell/Taskbar';
 import type { RunningApp, TaskbarPosition } from '../shell/types';
@@ -509,6 +510,18 @@ export function Desktop({ user, entering }: { user: User; entering: boolean }) {
             }}
             now={now}
             locale={locale}
+            {...(permissions.admin
+              ? {
+                  boxStatus: (
+                    <BoxStatus
+                      locale={locale}
+                      onOpen={(app) => {
+                        open(app === 'storage' ? coreAppIds.storage : coreAppIds.monitor);
+                      }}
+                    />
+                  ),
+                }
+              : {})}
           />
         }
         overlays={

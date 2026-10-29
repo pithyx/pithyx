@@ -76,7 +76,12 @@
     },
     "appMenu": "Menü für {name}",
     "addToDesktop": "Zum Desktop hinzufügen",
-    "shortcutAdded": "{name} zum Desktop hinzugefügt"
+    "shortcutAdded": "{name} zum Desktop hinzugefügt",
+    "poolState": "{state, select, ONLINE {intakt} DEGRADED {beeinträchtigt} other {braucht Aufmerksamkeit}}",
+    "poolStatus": "Pool {name}, {state}. Speicher öffnen",
+    "cpuStatus": "Prozessor zu {value} ausgelastet. Ressourcenmonitor öffnen",
+    "networkStatus": "Netzwerk {value}. Ressourcenmonitor öffnen",
+    "rate": "{size}/s"
   },
   "start": {
     "label": "Pithyx-Menü",

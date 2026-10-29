@@ -262,6 +262,66 @@
   font-size: var(--font-size-xs);
 }
 
+/* The box's state for administrators: small chips that open the matching app. */
+.boxStatus {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 9px;
+  border: 0;
+  border-radius: var(--radius-control);
+  background: transparent;
+  color: var(--color-text-muted);
+  font: inherit;
+  font-size: var(--font-size-xs);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.chip b {
+  color: var(--color-text);
+  font-weight: var(--font-weight-medium);
+  font-variant-numeric: tabular-nums;
+}
+
+.chip[data-hovered] {
+  background: var(--color-surface-hover);
+}
+
+.chip[data-focus-visible] {
+  outline: 2px solid var(--color-focus);
+  outline-offset: -2px;
+}
+
+.dot {
+  width: 7px;
+  height: 7px;
+  border-radius: var(--radius-full);
+  background: var(--color-success);
+}
+
+.dot[data-tone='warning'] {
+  background: var(--color-warning);
+}
+
+.dot[data-tone='danger'] {
+  background: var(--color-danger);
+}
+
+.separator {
+  width: 1px;
+  height: 22px;
+  margin: 0 var(--space-1);
+  background: var(--color-border);
+}
+
 /* Left and right: a vertical bar with icon-only apps and the status area at the end. Expanded and medium only. */
 .taskbar[data-position='left'],
 .taskbar[data-position='right'] {
@@ -327,6 +387,10 @@
   height: 22px;
 }
 
+.taskbar:is([data-position='left'], [data-position='right']) .boxStatus {
+  display: none;
+}
+
 .taskbar:is([data-position='left'], [data-position='right']) .status {
   flex-direction: column;
   margin: auto 0 0;
@@ -352,6 +416,10 @@
 
 /* Medium: icon-only app buttons. */
 @media (max-width: 1023px) {
+  .boxStatus {
+    display: none;
+  }
+
   .apps > li {
     flex-basis: 48px;
   }
