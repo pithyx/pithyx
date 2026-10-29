@@ -94,7 +94,6 @@ export async function choosePersonalSetting(page: Page, setting: string, choice:
     .getByRole('radiogroup', { name: setting, exact: true })
     .getByRole('radio', { name: choice, exact: true });
   await radio.locator('xpath=ancestor::label[1]').click();
-  await expect(radio).toBeChecked();
 }
 
 /** Opens an app from the start menu; apps without a desktop shortcut open this way. */

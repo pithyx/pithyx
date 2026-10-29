@@ -168,7 +168,12 @@ test('accent color and wallpaper are in Personal settings, the theme also in the
     await expect(page.locator('html')).toHaveAttribute('data-accent', 'moss');
 
     await choosePersonalSetting(page, 'Wallpaper', 'Plain');
-    await expect(page.locator('svg[data-plain]')).toHaveCount(1);
+    // The desktop's wallpaper, not the preview of Plain in the open Personal settings.
+    await expect(
+      page.locator(
+        'xpath=//*[local-name()="svg" and @data-plain and not(ancestor::*[@role="region"])]',
+      ),
+    ).toHaveCount(1);
 
     await openAccountMenu(page);
     await page.getByRole('menuitem', { name: 'Appearance' }).click();

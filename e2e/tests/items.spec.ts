@@ -17,7 +17,13 @@ async function box(locator: Locator) {
   // boundingBox() does not wait, and expect.poll does not retry a callback that throws: a new icon that is still
   // arriving from the daemon must be on screen first.
   await locator.waitFor({ state: 'visible' });
-  const rect = await locator.boundingBox();
+  // The icon can still be drawn anew between the wait and the measurement, which leaves it without a box for a moment.
+  const until = Date.now() + 5000;
+  let rect = await locator.boundingBox();
+  while (rect === null && Date.now() < until) {
+    await locator.page().waitForTimeout(50);
+    rect = await locator.boundingBox();
+  }
   if (rect === null) {
     throw new Error('element has no box');
   }
