@@ -681,15 +681,13 @@
     }
   },
   "regional": {
-    "intro": "Language, formats and time of the box. Everyone can still choose their own language in the user menu.",
+    "intro": "Language, formats and time of the box. Everyone can still choose their own language in Personal settings.",
     "languageTitle": "Language and formats",
     "language": "System language",
     "languageHint": "The sign-in page uses it, and so does everyone whose browser asks for a language Pithyx does not have.",
     "formats": "Formats",
     "formatsLanguage": "Like the language",
     "formatsHint": "How dates, times and numbers look for everyone, for example 31.12.2026 or 12/31/2026.",
-    "preview": "Example: {preview}",
-    "saveLanguage": "Save language and formats",
     "timeTitle": "Date and time",
     "now": "Time on the box",
     "sync": "Clock",
@@ -698,8 +696,9 @@
     "zone": "Time zone",
     "servers": "Time servers",
     "serversHint": "Host names or addresses, separated by spaces. Leave empty for the default servers.",
-    "saveTime": "Save time settings",
-    "saved": "Saved."
+    "saved": "Saved.",
+    "example": "Example",
+    "applyNote": "Applies to the sign-in page and to everyone who has not chosen their own language or formats."
   },
   "restorePoints": {
     "explain": "What are restore points?",

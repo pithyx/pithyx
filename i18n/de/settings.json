@@ -681,15 +681,13 @@
     }
   },
   "regional": {
-    "intro": "Sprache, Formate und Uhrzeit der Box. Deine eigene Sprache wählst du weiterhin im Benutzermenü.",
+    "intro": "Sprache, Formate und Uhrzeit der Box. Deine eigene Sprache wählst du weiterhin in den Persönlichen Einstellungen.",
     "languageTitle": "Sprache und Formate",
     "language": "Systemsprache",
     "languageHint": "Die Anmeldeseite nutzt sie, und alle, deren Browser eine Sprache verlangt, die Pithyx nicht hat.",
     "formats": "Formate",
     "formatsLanguage": "Wie die Sprache",
     "formatsHint": "Wie Datum, Uhrzeit und Zahlen für alle aussehen, zum Beispiel 31.12.2026 oder 12/31/2026.",
-    "preview": "Beispiel: {preview}",
-    "saveLanguage": "Sprache und Formate speichern",
     "timeTitle": "Datum und Uhrzeit",
     "now": "Uhrzeit der Box",
     "sync": "Uhr",
@@ -698,8 +696,9 @@
     "zone": "Zeitzone",
     "servers": "Zeitserver",
     "serversHint": "Hostnamen oder Adressen, durch Leerzeichen getrennt. Leer lassen für die Standardserver.",
-    "saveTime": "Zeiteinstellungen speichern",
-    "saved": "Gespeichert."
+    "saved": "Gespeichert.",
+    "example": "Beispiel",
+    "applyNote": "Gilt für die Anmeldeseite und für alle, die keine eigene Sprache und keine eigenen Formate gewählt haben."
   },
   "restorePoints": {
     "explain": "Was sind Wiederherstellungspunkte?",

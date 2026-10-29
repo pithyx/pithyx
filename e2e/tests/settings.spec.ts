@@ -49,7 +49,7 @@ test('Settings opens with the overview and a grouped navigation with a search', 
     'Shared folders',
     'Home folders',
     'File services',
-    'Users',
+    'Users and groups',
   ]) {
     await expect(navigation.getByRole('button', { name: item, exact: true })).toBeVisible();
   }
@@ -127,13 +127,14 @@ test('the Info Center, Network, File services and Users pages open from the navi
 test('the time zone and time servers are checked and saved', async ({ page }) => {
   const settings = await openSettings(page);
   await openSettingsPage(settings, 'Regional settings');
-  await settings.getByLabel('Time zone').selectOption('Europe/Vienna');
+  await settings.getByRole('button', { name: /Time zone/ }).click();
+  await page.getByRole('option', { name: 'Europe/Vienna', exact: true }).click();
   await settings.getByLabel('Time servers').fill('0.pool.ntp.org 1.pool.ntp.org');
-  await settings.getByRole('button', { name: 'Save time settings' }).click();
+  await settings.getByRole('button', { name: 'Apply', exact: true }).click();
   await expect(settings.getByRole('status').filter({ hasText: 'Saved.' })).toBeVisible();
 
   await settings.getByLabel('Time servers').fill('not-a-host!');
-  await settings.getByRole('button', { name: 'Save time settings' }).click();
+  await settings.getByRole('button', { name: 'Apply', exact: true }).click();
   await expect(settings).toContainText('is neither a host name nor an address');
   expect(await violations(page)).toEqual([]);
 });
@@ -142,10 +143,10 @@ test('the system region sets the formats everyone sees', async ({ page }) => {
   const settings = await openSettings(page);
   try {
     await openSettingsPage(settings, 'Regional settings');
-    const formats = settings.getByLabel('Formats', { exact: true });
-    await formats.selectOption('DE');
+    await settings.getByRole('button', { name: /Formats/ }).click();
+    await page.getByRole('option', { name: 'Germany', exact: true }).click();
     await expect(settings).toContainText('1.234.567,89');
-    await settings.getByRole('button', { name: 'Save language and formats' }).click();
+    await settings.getByRole('button', { name: 'Apply', exact: true }).click();
     await expect(settings.getByRole('status').filter({ hasText: 'Saved.' })).toBeVisible();
 
     const setup = (await (await page.request.get('/api/setup')).json()) as { region: string };
