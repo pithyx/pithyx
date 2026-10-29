@@ -132,7 +132,7 @@ export async function openTarget(share: number, path: string, how?: OpenWith): P
           )
         : asAction(how);
     const folder = parentOf(path);
-    if (action.kind !== 'openFolder' && action.kind !== 'none') {
+    if (action.kind === 'view' || action.kind === 'app') {
       noteRecentFile(share, path);
     }
     switch (action.kind) {

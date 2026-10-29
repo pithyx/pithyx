@@ -814,13 +814,15 @@
 }
 
 /* The Recent place: a table of files from anywhere, each with its folder as a link. */
-.recent {
-  min-height: 0;
-  overflow: auto;
+/* A narrow window keeps the name and the location, the link to the folder. */
+@container pithyx-table (width < 600px) {
+  .recent :is(th, td):nth-child(n + 3) {
+    display: none;
+  }
 }
 
 .recentName {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   gap: 8px;
   min-width: 0;
