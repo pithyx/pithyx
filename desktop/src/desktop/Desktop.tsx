@@ -39,7 +39,7 @@ import { useReportLanguage } from '../notifications/language';
 import { BoxStatus } from '../shell/BoxStatus';
 import { StartMenu } from '../shell/StartMenu';
 import { StartTiles } from '../shell/StartTiles';
-import { showInFiles } from '../items/fileTargets';
+import { openTarget, showInFiles, showRecentInFiles } from '../items/fileTargets';
 import { Taskbar } from '../shell/Taskbar';
 import type { RunningApp, TaskbarPosition } from '../shell/types';
 import { setNotificationPanelOpen } from '../shell/toasts';
@@ -559,6 +559,14 @@ export function Desktop({ user, entering }: { user: User; entering: boolean }) {
                     onFolder={(share) => {
                       closeStart(false);
                       showInFiles(share, '');
+                    }}
+                    onFile={(file) => {
+                      closeStart(false);
+                      void openTarget(file.share, file.path);
+                    }}
+                    onRecent={() => {
+                      closeStart(false);
+                      showRecentInFiles();
                     }}
                   />
                 }

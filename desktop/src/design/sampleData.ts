@@ -1,3 +1,4 @@
+import type { RecentFile } from '../apps/files/recent';
 // Sample content for the design mockups. Interface text comes from i18n; what stays here is user data (names of
 // files, folders, pools and notes) and raw values that the formatters turn into localized text.
 import {
@@ -102,10 +103,43 @@ export const startShares = [
   { id: 3, name: 'media', kind: 'share', access: 'read', unavailable: null },
 ] as unknown as components['schemas']['ShareInfo'][];
 
-export const recent: StartEntry[] = [
-  { id: 'r1', name: 'Tax return 2025.pdf', detail: '/home/alex/Documents', icon: IconFileTypePdf },
-  { id: 'r2', name: 'network-plan.txt', detail: '/home/alex/Desktop', icon: IconFileText },
-  { id: 'r3', name: 'backup-2026-09.zip', detail: '/shares/backup', icon: IconFileZip },
+/** Recent files of the menu and of Files' Recent place (#333), newest first. */
+export const startRecent: RecentFile[] = [
+  {
+    share: 2,
+    path: 'Documents/Tax return 2025.pdf',
+    size: 482_133,
+    modified: '2026-10-28T09:12:00Z',
+    openedAt: '2026-10-29T08:41:00Z',
+  },
+  {
+    share: 1,
+    path: 'network-plan.txt',
+    size: 2_311,
+    modified: '2026-10-28T16:02:00Z',
+    openedAt: '2026-10-28T16:05:00Z',
+  },
+  {
+    share: 2,
+    path: 'Photos 2026/Lake.jpg',
+    size: 3_904_221,
+    modified: '2026-10-12T11:30:00Z',
+    openedAt: '2026-10-27T19:20:00Z',
+  },
+  {
+    share: 3,
+    path: 'Music/Live set.flac',
+    size: 61_220_480,
+    modified: '2026-09-02T20:00:00Z',
+    openedAt: '2026-10-25T21:47:00Z',
+  },
+  {
+    share: 1,
+    path: 'Backups/backup-2026-09.zip',
+    size: 912_004_112,
+    modified: '2026-09-30T03:00:00Z',
+    openedAt: '2026-10-21T10:03:00Z',
+  },
 ];
 
 /** A query that matches the Photos app in each language. */

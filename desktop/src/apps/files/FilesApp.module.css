@@ -812,3 +812,36 @@
     display: none;
   }
 }
+
+/* The Recent place: a table of files from anywhere, each with its folder as a link. */
+.recent {
+  min-height: 0;
+  overflow: auto;
+}
+
+.recentName {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.recentLocation {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.recentLocation[data-hovered] {
+  color: var(--pithyx-color-accent);
+  text-decoration: underline;
+}
+
+.recentLocation[data-focus-visible] {
+  outline: 2px solid var(--pithyx-color-focus);
+  outline-offset: 2px;
+}
