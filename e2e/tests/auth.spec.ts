@@ -123,7 +123,7 @@ test('setup, recovery key, TOTP sign-in and password reset with the recovery key
   });
 
   await test.step('turn on two-factor authentication', async () => {
-    const settings = await openPersonalSettings(page);
+    const settings = await openPersonalSettings(page, 'Sign-in and security');
     await settings.getByRole('button', { name: 'Two-factor authentication', exact: true }).click();
     const dialog = page.getByRole('dialog', { name: 'Two-factor authentication' });
     await dialog.getByRole('button', { name: 'Set up' }).click();

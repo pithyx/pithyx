@@ -412,8 +412,6 @@
     }
   },
   "preferences": {
-    "account": "Account and security",
-    "desktop": "Desktop",
     "apps": "Apps",
     "notifications": "Notifications",
     "on": "On",
@@ -423,10 +421,55 @@
     "trustHint": "Install the box's root certificate on this device: no more warnings, and passkeys work.",
     "languageAuto": "Automatic ({language})",
     "thisDevice": "On this device.",
-    "everyDevice": "On every device.",
     "getDesktopHint": "Take over the windows of another of your devices.",
     "fileDefaultsHint": "Which app opens a file type in Files.",
     "startupAppsHint": "Apps that open when you sign in.",
-    "channelsHint": "Email and push services for your notifications, and which kinds of app notifications you get."
+    "channelsHint": "Email and push services for your notifications, and which kinds of app notifications you get.",
+    "navigation": "Personal settings",
+    "search": "Search",
+    "pages": {
+      "account": "Account",
+      "security": "Sign-in and security",
+      "appearance": "Appearance",
+      "language": "Language and region",
+      "notifications": "Notifications",
+      "apps": "Apps",
+      "access": "What I can use"
+    },
+    "accountNote": "An administrator changes them",
+    "name": "Name",
+    "username": "Login name",
+    "role": "Role",
+    "groups": "Groups",
+    "noGroups": "No groups",
+    "signIn": "Sign-in",
+    "appearanceNote": "The theme applies to this device, the accent color and the wallpaper to every device.",
+    "desktopAndTaskbar": "Desktop and taskbar",
+    "otherDevices": "Other devices",
+    "regionNote": "Dates, times and number formats follow the region and time zone an administrator set in Settings.",
+    "adminHasAll": "As an administrator you may use everything.",
+    "shares": "Shared folders",
+    "noShares": "No shared folder is open to you.",
+    "loading": "Loading...",
+    "read": "Read",
+    "readWrite": "Read and write",
+    "services": "File services",
+    "protocol": {
+      "smb": "SMB (network drives)",
+      "webdav": "WebDAV",
+      "sftp": "SFTP",
+      "ftp": "FTP"
+    },
+    "appsYouOpen": "Apps you may open",
+    "noApps": "Only the apps for everyone",
+    "rights": "Special rights",
+    "right": {
+      "desktopLogin": "Sign in to the desktop",
+      "sshLogin": "Sign in over SSH",
+      "power": "Restart and shut down"
+    },
+    "yes": "Yes",
+    "no": "No",
+    "theme": "Theme"
   }
 }

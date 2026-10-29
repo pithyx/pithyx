@@ -412,8 +412,6 @@
     }
   },
   "preferences": {
-    "account": "Konto und Sicherheit",
-    "desktop": "Desktop",
     "apps": "Apps",
     "notifications": "Benachrichtigungen",
     "on": "An",
@@ -423,10 +421,55 @@
     "trustHint": "Installiere das Stammzertifikat der Box auf diesem Gerät: keine Warnungen mehr, und Passkeys funktionieren.",
     "languageAuto": "Automatisch ({language})",
     "thisDevice": "Auf diesem Gerät.",
-    "everyDevice": "Auf allen Geräten.",
     "getDesktopHint": "Übernimm die Fenster eines anderen deiner Geräte.",
     "fileDefaultsHint": "Welche App einen Dateityp in Dateien öffnet.",
     "startupAppsHint": "Apps, die sich bei der Anmeldung öffnen.",
-    "channelsHint": "E-Mail und Push-Dienste für deine Benachrichtigungen, und welche Arten von App-Benachrichtigungen du bekommst."
+    "channelsHint": "E-Mail und Push-Dienste für deine Benachrichtigungen, und welche Arten von App-Benachrichtigungen du bekommst.",
+    "navigation": "Persönliche Einstellungen",
+    "search": "Suchen",
+    "pages": {
+      "account": "Konto",
+      "security": "Anmeldung und Sicherheit",
+      "appearance": "Darstellung",
+      "language": "Sprache und Region",
+      "notifications": "Benachrichtigungen",
+      "apps": "Apps",
+      "access": "Was ich nutzen darf"
+    },
+    "accountNote": "Ein Administrator ändert sie",
+    "name": "Name",
+    "username": "Anmeldename",
+    "role": "Rolle",
+    "groups": "Gruppen",
+    "noGroups": "Keine Gruppen",
+    "signIn": "Anmeldung",
+    "appearanceNote": "Das Farbschema gilt für dieses Gerät, Akzentfarbe und Hintergrundbild für alle Geräte.",
+    "desktopAndTaskbar": "Desktop und Taskleiste",
+    "otherDevices": "Andere Geräte",
+    "regionNote": "Datum, Uhrzeit und Zahlenformate folgen der Region und Zeitzone, die ein Administrator in den Einstellungen gesetzt hat.",
+    "adminHasAll": "Als Administrator darfst du alles nutzen.",
+    "shares": "Freigegebene Ordner",
+    "noShares": "Dir ist kein freigegebener Ordner offen.",
+    "loading": "Wird geladen...",
+    "read": "Lesen",
+    "readWrite": "Lesen und schreiben",
+    "services": "Dateidienste",
+    "protocol": {
+      "smb": "SMB (Netzlaufwerke)",
+      "webdav": "WebDAV",
+      "sftp": "SFTP",
+      "ftp": "FTP"
+    },
+    "appsYouOpen": "Apps, die du öffnen darfst",
+    "noApps": "Nur die Apps für alle",
+    "rights": "Besondere Rechte",
+    "right": {
+      "desktopLogin": "Am Desktop anmelden",
+      "sshLogin": "Über SSH anmelden",
+      "power": "Neu starten und herunterfahren"
+    },
+    "yes": "Ja",
+    "no": "Nein",
+    "theme": "Farbschema"
   }
 }

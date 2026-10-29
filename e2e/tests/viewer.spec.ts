@@ -215,7 +215,7 @@ test('Open with remembers a choice for the file type until it is forgotten', asy
   await plan.dblclick();
   expect((await second).suggestedFilename()).toBe('plan.md');
 
-  const settings = await openPersonalSettings(page);
+  const settings = await openPersonalSettings(page, 'Apps');
   await settings.getByRole('button', { name: 'Default apps', exact: true }).click();
   const defaults = page.getByRole('dialog', { name: 'Default apps' });
   await expect(defaults.getByText('.md')).toBeVisible();

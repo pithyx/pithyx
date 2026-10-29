@@ -54,20 +54,45 @@ export async function openAccountMenu(page: Page, name = admin.displayName) {
   await expect(page.getByRole('menu', { name: `Account menu for ${name}` })).toBeVisible();
 }
 
-/** Opens Personal settings from the account menu (D392) and returns its window. */
-export async function openPersonalSettings(page: Page, name = admin.displayName) {
+/**
+ * Opens Personal settings from the account menu (D392) and returns its window; with a page name, also that page of its
+ * navigation (D394).
+ */
+export async function openPersonalSettings(
+  page: Page,
+  pageName?: string,
+  name = admin.displayName,
+) {
   await openAccountMenu(page, name);
   await page.getByRole('menuitem', { name: 'Personal settings' }).click();
   const window = appWindow(page, 'Personal settings');
   await expect(window).toBeVisible();
+  if (pageName !== undefined) {
+    await window
+      .getByRole('navigation', { name: 'Personal settings' })
+      .getByRole('button', { name: pageName, exact: true })
+      .click();
+    await expect(window.getByRole('heading', { name: pageName, level: 1 })).toBeVisible();
+  }
   return window;
 }
 
+/** The page of Personal settings each choice is on. */
+const PERSONAL_SETTING_PAGES: Record<string, string> = {
+  'Taskbar position': 'Appearance',
+  'Accent color': 'Appearance',
+  Wallpaper: 'Appearance',
+  Theme: 'Appearance',
+  Language: 'Language and region',
+};
+
 /** Picks one choice of a setting in Personal settings, such as the taskbar position. */
 export async function choosePersonalSetting(page: Page, setting: string, choice: string) {
-  const window = await openPersonalSettings(page);
-  await window.getByRole('button', { name: setting, exact: true }).click();
-  await page.getByRole('menuitemradio', { name: choice }).click();
+  const window = await openPersonalSettings(page, PERSONAL_SETTING_PAGES[setting]);
+  await window
+    .getByRole('radiogroup', { name: setting, exact: true })
+    .getByRole('radio', { name: choice, exact: true })
+    .check();
 }
 
 /** Opens an app from the start menu; apps without a desktop shortcut open this way. */

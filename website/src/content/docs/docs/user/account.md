@@ -15,12 +15,15 @@ Your account is your user name and password on the box. The same password signs 
 
 _Personal settings; Apps and Notifications follow further down._
 
-Everything you set for yourself is in **Personal settings**: open the Pithyx menu and click **Personal settings** in its left bar, or click your initials there and choose **Personal settings**. It is an app like the others, so it is also in the Pithyx menu. The window has four groups:
+Everything you set for yourself is in **Personal settings**: open the Pithyx menu and click **Personal settings** in its left bar, or click your initials there and choose **Personal settings**. It is an app like the others, so it is also in the Pithyx menu. Its navigation on the left (with a search field) has one page per area; on a phone the navigation is a list you open a page from, and **Back** returns to it:
 
-- **Account and security**: **Two-factor authentication** (with **On** or **Off**), **Passkeys** and, while this device does not trust the box, **Trust this device**.
-- **Desktop**: **Language**, **Appearance**, **Accent color**, **Wallpaper**, **Taskbar position** (not on phones) and **Get desktop from**. Each row says whether the choice belongs to this device or to every device.
-- **Apps**: **Default apps** and **Open at sign-in** ([The desktop](/docs/user/desktop/#the-taskbar)).
+- **Account**: your name, login name, role and groups. An administrator changes them.
+- **Sign-in and security**: **Two-factor authentication** (with **On** or **Off**), **Passkeys** and, while this device does not trust the box, **Trust this device**.
+- **Appearance**: **Theme**, **Accent color** and **Wallpaper** as pictures to pick, **Taskbar position** (not on phones) and **Get desktop from**. Every choice applies at once.
+- **Language and region**: **Language**.
 - **Notifications**: **Notification channels**.
+- **Apps**: **Default apps** and **Open at sign-in** ([The desktop](/docs/user/desktop/#the-taskbar)).
+- **What I can use**: the shared folders you reach with your access, the file services, the apps you may open and your special rights, as the box decides them. Administrators may use everything.
 
 The account menu itself only has **Personal settings** and **Appearance**, so you can switch between light and dark quickly.
 
@@ -110,10 +113,10 @@ Pithyx does not show a list of your sessions and cannot sign out your other devi
 
 ## Language, theme and accent
 
-In **Personal settings**, under **Desktop**:
+In **Personal settings**, on the pages **Appearance** and **Language and region**:
 
 - **Language**: **Automatic** (follows your browser, English or German) or a language by its own name. The choice belongs to this device. The sign-in page has its own language selector.
-- **Appearance**: **Like the system**, **Light** or **Dark**. This also belongs to this device.
+- **Theme**: **Light**, **Dark** or **Like the system**. This also belongs to this device.
 - **Accent color**: **Petrol**, **Ocean**, **Indigo**, **Plum**, **Moss** or **Graphite**. It is saved for your account and is the same on all your devices.
 - **Wallpaper**: **Pithyx boxes** or **Plain**, also saved for your account.
 

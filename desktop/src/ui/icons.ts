@@ -38,6 +38,7 @@ export { default as IconCloudDownload } from '@tabler/icons-react/dist/esm/icons
 export { default as IconDownload } from '@tabler/icons-react/dist/esm/icons/IconDownload.mjs';
 export { default as IconExternalLink } from '@tabler/icons-react/dist/esm/icons/IconExternalLink.mjs';
 export { default as IconEye } from '@tabler/icons-react/dist/esm/icons/IconEye.mjs';
+export { default as IconEyeCheck } from '@tabler/icons-react/dist/esm/icons/IconEyeCheck.mjs';
 export { default as IconEyeOff } from '@tabler/icons-react/dist/esm/icons/IconEyeOff.mjs';
 export { default as IconFilter } from '@tabler/icons-react/dist/esm/icons/IconFilter.mjs';
 export { default as IconFingerprint } from '@tabler/icons-react/dist/esm/icons/IconFingerprint.mjs';
@@ -67,6 +68,7 @@ export { default as IconLoader2 } from '@tabler/icons-react/dist/esm/icons/IconL
 export { default as IconLogout } from '@tabler/icons-react/dist/esm/icons/IconLogout.mjs';
 export { default as IconMenu2 } from '@tabler/icons-react/dist/esm/icons/IconMenu2.mjs';
 export { default as IconMinus } from '@tabler/icons-react/dist/esm/icons/IconMinus.mjs';
+export { default as IconMoon } from '@tabler/icons-react/dist/esm/icons/IconMoon.mjs';
 export { default as IconMovie } from '@tabler/icons-react/dist/esm/icons/IconMovie.mjs';
 export { default as IconNetwork } from '@tabler/icons-react/dist/esm/icons/IconNetwork.mjs';
 export { default as IconNote } from '@tabler/icons-react/dist/esm/icons/IconNote.mjs';
@@ -88,6 +90,7 @@ export { default as IconSearch } from '@tabler/icons-react/dist/esm/icons/IconSe
 export { default as IconSelector } from '@tabler/icons-react/dist/esm/icons/IconSelector.mjs';
 export { default as IconServer2 } from '@tabler/icons-react/dist/esm/icons/IconServer2.mjs';
 export { default as IconSettings } from '@tabler/icons-react/dist/esm/icons/IconSettings.mjs';
+export { default as IconSun } from '@tabler/icons-react/dist/esm/icons/IconSun.mjs';
 export { default as IconShieldLock } from '@tabler/icons-react/dist/esm/icons/IconShieldLock.mjs';
 export { default as IconSquare } from '@tabler/icons-react/dist/esm/icons/IconSquare.mjs';
 export { default as IconTerminal2 } from '@tabler/icons-react/dist/esm/icons/IconTerminal2.mjs';
@@ -95,6 +98,7 @@ export { default as IconTrash } from '@tabler/icons-react/dist/esm/icons/IconTra
 export { default as IconTrashX } from '@tabler/icons-react/dist/esm/icons/IconTrashX.mjs';
 export { default as IconUpload } from '@tabler/icons-react/dist/esm/icons/IconUpload.mjs';
 export { default as IconUserCog } from '@tabler/icons-react/dist/esm/icons/IconUserCog.mjs';
+export { default as IconUser } from '@tabler/icons-react/dist/esm/icons/IconUser.mjs';
 export { default as IconUsers } from '@tabler/icons-react/dist/esm/icons/IconUsers.mjs';
 export { default as IconUsersGroup } from '@tabler/icons-react/dist/esm/icons/IconUsersGroup.mjs';
 export { default as IconWallpaper } from '@tabler/icons-react/dist/esm/icons/IconWallpaper.mjs';

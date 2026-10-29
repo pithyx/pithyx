@@ -87,7 +87,11 @@ test('the desktop with windows, menus and the start menu has no accessibility vi
   await page.keyboard.press('Escape');
 
   const settings = await openPersonalSettings(page);
-  await expect(settings.getByRole('heading', { name: 'Account and security' })).toBeVisible();
+  await expect(settings.getByRole('heading', { name: 'Account', level: 1 })).toBeVisible();
+  expect(await violations(page)).toEqual([]);
+  await openPersonalSettings(page, 'Appearance');
+  expect(await violations(page)).toEqual([]);
+  await openPersonalSettings(page, 'What I can use');
   expect(await violations(page)).toEqual([]);
 });
 

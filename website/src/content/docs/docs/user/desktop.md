@@ -75,7 +75,7 @@ When more apps run than fit, their buttons get narrower and then scroll: turn th
 
 Click a running app to bring it to the front. Click the active app again to minimize it. Right-click a running app (or press **Shift+F10** on it) for **Minimize** or **Restore**, **Add to desktop** and **Close**.
 
-To move the taskbar, open **Personal settings** (in the Pithyx menu's left bar), choose **Taskbar position** and pick **Bottom**, **Top**, **Left** or **Right**. On phones the taskbar always stays at the bottom and the row is missing.
+To move the taskbar, open **Personal settings** (in the Pithyx menu's left bar), go to **Appearance**, find **Taskbar position** and pick **Bottom**, **Top**, **Left** or **Right**. On phones the taskbar always stays at the bottom and the row is missing.
 
 **The Pithyx menu** opens above the taskbar, attached to the button at its left, or by pressing and releasing the Windows or Command key. It has three parts:
 

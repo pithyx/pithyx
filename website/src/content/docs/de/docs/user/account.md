@@ -15,12 +15,15 @@ Dein Konto sind dein Benutzername und dein Passwort auf der Box. Dasselbe Passwo
 
 _Persönliche Einstellungen; Apps und Benachrichtigungen folgen weiter unten._
 
-Alles, was du für dich selbst einstellst, steht in **Persönliche Einstellungen**: Öffne das Pithyx-Menü und klicke in seiner linken Leiste auf **Persönliche Einstellungen**, oder klicke dort auf deine Initialen und wähle **Persönliche Einstellungen**. Es ist eine App wie die anderen und steht deshalb auch im Pithyx-Menü. Das Fenster hat vier Gruppen:
+Alles, was du für dich selbst einstellst, steht in **Persönliche Einstellungen**: Öffne das Pithyx-Menü und klicke in seiner linken Leiste auf **Persönliche Einstellungen**, oder klicke dort auf deine Initialen und wähle **Persönliche Einstellungen**. Es ist eine App wie die anderen und steht deshalb auch im Pithyx-Menü. Seine Navigation links (mit einem Suchfeld) hat eine Seite pro Bereich; auf dem Handy ist die Navigation eine Liste, aus der du eine Seite öffnest, und **Zurück** führt wieder hin:
 
-- **Konto und Sicherheit**: **Zwei-Faktor-Authentifizierung** (mit **An** oder **Aus**), **Passkeys** und, solange dieses Gerät der Box nicht vertraut, **Diesem Gerät vertrauen**.
-- **Desktop**: **Sprache**, **Darstellung**, **Akzentfarbe**, **Hintergrundbild**, **Position der Taskleiste** (nicht auf Handys) und **Desktop holen von**. Jede Zeile sagt, ob die Wahl zu diesem Gerät oder zu allen Geräten gehört.
-- **Apps**: **Standard-Apps** und **Beim Anmelden öffnen** ([Der Desktop](/de/docs/user/desktop/#die-taskleiste)).
+- **Konto**: dein Name, Anmeldename, deine Rolle und Gruppen. Ein Administrator ändert sie.
+- **Anmeldung und Sicherheit**: **Zwei-Faktor-Authentifizierung** (mit **An** oder **Aus**), **Passkeys** und, solange dieses Gerät der Box nicht vertraut, **Diesem Gerät vertrauen**.
+- **Darstellung**: **Farbschema**, **Akzentfarbe** und **Hintergrundbild** als Bilder zur Auswahl, **Position der Taskleiste** (nicht auf Handys) und **Desktop holen von**. Jede Wahl gilt sofort.
+- **Sprache und Region**: **Sprache**.
 - **Benachrichtigungen**: **Benachrichtigungskanäle**.
+- **Apps**: **Standard-Apps** und **Beim Anmelden öffnen** ([Der Desktop](/de/docs/user/desktop/#die-taskleiste)).
+- **Was ich nutzen darf**: die freigegebenen Ordner, die du erreichst, mit deinem Zugriff, die Dateidienste, die Apps, die du öffnen darfst, und deine besonderen Rechte, so wie die Box sie entscheidet. Administratoren dürfen alles nutzen.
 
 Das Kontomenü selbst hat nur noch **Persönliche Einstellungen** und **Darstellung**, damit du schnell zwischen hell und dunkel wechseln kannst.
 
@@ -110,10 +113,10 @@ Pithyx zeigt keine Liste deiner Sitzungen und kann deine anderen Geräte nicht v
 
 ## Sprache, Theme und Akzentfarbe
 
-In **Persönliche Einstellungen** unter **Desktop**:
+In **Persönliche Einstellungen** auf den Seiten **Darstellung** und **Sprache und Region**:
 
 - **Sprache**: **Automatisch** (folgt deinem Browser, Englisch oder Deutsch) oder eine Sprache mit ihrem eigenen Namen. Die Wahl gehört zu diesem Gerät. Die Anmeldeseite hat eine eigene Sprachauswahl.
-- **Darstellung**: **Wie das System**, **Hell** oder **Dunkel**. Auch das gehört zu diesem Gerät.
+- **Farbschema**: **Hell**, **Dunkel** oder **Wie das System**. Auch das gehört zu diesem Gerät.
 - **Akzentfarbe**: **Petrol**, **Ozean**, **Indigo**, **Pflaume**, **Moos** oder **Graphit**. Sie wird für dein Konto gespeichert und ist auf allen deinen Geräten gleich.
 - **Hintergrundbild**: **Pithyx-Boxen** oder **Schlicht**, ebenfalls für dein Konto gespeichert.
 

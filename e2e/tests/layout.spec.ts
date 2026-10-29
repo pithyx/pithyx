@@ -61,7 +61,7 @@ test('another device gets this desktop', async ({ browser }) => {
   const second = await phone.newPage();
   await signInAsAdmin(second);
   await expect(appWindow(second, 'Storage')).toHaveCount(0);
-  const settings = await openPersonalSettings(second);
+  const settings = await openPersonalSettings(second, 'Appearance');
   await settings.getByRole('button', { name: 'Get desktop from', exact: true }).click();
   await second
     .getByRole('menuitem', { name: /^Chrome on / })
@@ -109,7 +109,7 @@ test('two tabs of one browser do not overwrite each other unnoticed', async ({ b
 test('apps chosen in Personal settings open after signing in, once', async ({ page }) => {
   await signInAsAdmin(page);
   try {
-    const settings = await openPersonalSettings(page);
+    const settings = await openPersonalSettings(page, 'Apps');
     await settings.getByRole('button', { name: 'Open at sign-in', exact: true }).click();
     const dialog = page.getByRole('dialog', { name: 'Open at sign-in' });
     const saved = page.waitForResponse(
