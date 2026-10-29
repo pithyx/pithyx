@@ -75,7 +75,7 @@ i18n/     translation files (en is the reference)
 website/  landing page and docs at pithyx.org (Astro + Starlight, GitHub Pages, D340)
 ```
 
-- One monorepo, one product version (the npm packages have their own, see Workflow). Nested rules: `daemon/CLAUDE.md` (architecture, paths, operations, VMs), `desktop/CLAUDE.md` (responsive, accessibility, performance, layout memory), `website/CLAUDE.md` (where docs live and how to write them); equally binding.
+- One monorepo, one product version (the npm packages have their own, see Workflow). Nested rules: `daemon/CLAUDE.md` (architecture, paths, operations, VMs), `desktop/CLAUDE.md` (responsive, accessibility, performance, layout memory, and the design rules of D394, which also bind `packages/ui`), `website/CLAUDE.md` (where docs live and how to write them); equally binding.
 - No developer docs in markdown outside `website/`; the code documents itself. Allowed markdown outside `website/`: README, CLAUDE (root and per top-level folder), CONTRIBUTING, DECISIONS, CHANGELOG, SECURITY, and the GitHub templates GitHub needs in `.github/` (`pull_request_template.md`; the issue forms in `.github/ISSUE_TEMPLATE/` are YAML). No other markdown for agents; state lives in this file.
 - `website/` publishes every docs page also as Markdown (`<page>.md`), `/llms.txt` (index), `/llms/<area>.txt` (one area) and `/llms-full.txt` (everything). API and SDK references are generated from OpenAPI and TSDoc.
 - An API change updates daemon, generated client, SDK and desktop in the same commit. Never edit generated files.
