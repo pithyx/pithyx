@@ -160,5 +160,6 @@
     "delete": "Delete",
     "list": "List",
     "tiles": "Tiles"
-  }
+  },
+  "detailsEmpty": "Select an item to see its details."
 }

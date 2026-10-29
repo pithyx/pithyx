@@ -160,5 +160,6 @@
     "delete": "Löschen",
     "list": "Liste",
     "tiles": "Kacheln"
-  }
+  },
+  "detailsEmpty": "Wähle ein Element aus, um seine Details zu sehen."
 }

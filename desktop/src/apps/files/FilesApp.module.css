@@ -94,7 +94,7 @@
   position: relative;
   display: grid;
   flex: 1;
-  grid-template-columns: 210px minmax(0, 1fr);
+  grid-template-columns: 210px minmax(0, 1fr) auto;
   min-height: 0;
 }
 
@@ -713,4 +713,102 @@
 .sideLock {
   flex: none;
   color: var(--color-text-muted);
+}
+
+/* The details pane of D394 on the right, switched from the command bar. */
+.detailsToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 28px;
+  padding: 0 var(--space-3);
+  border: 0;
+  border-radius: var(--radius-control);
+  background: transparent;
+  color: var(--color-text);
+  font: inherit;
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+}
+
+.detailsToggle[data-hovered] {
+  background: var(--color-surface-hover);
+}
+
+.detailsToggle[data-selected] {
+  background: var(--color-selection-strong);
+}
+
+.detailsToggle[data-focus-visible] {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.details {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  width: var(--details-width);
+  min-height: 0;
+  padding: var(--space-4);
+  overflow: auto;
+  border-left: 1px solid var(--color-border);
+  background: var(--color-surface-2);
+  font-size: var(--font-size-sm);
+}
+
+.detailsEmpty {
+  margin: 0;
+  color: var(--color-text-muted);
+}
+
+.preview {
+  display: grid;
+  place-items: center;
+  height: 140px;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+  background: var(--color-surface-1);
+  color: var(--color-text-muted);
+}
+
+.preview > img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.detailsName {
+  margin: 0;
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
+  overflow-wrap: anywhere;
+}
+
+.facts {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--space-1) var(--space-4);
+  margin: 0;
+}
+
+.facts dt {
+  color: var(--color-text-muted);
+}
+
+.facts dd {
+  margin: 0;
+}
+
+.detailsActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+@container files (width < 760px) {
+  .details {
+    display: none;
+  }
 }

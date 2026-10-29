@@ -12,6 +12,7 @@ import {
   type PithyxApp,
 } from '@pithyx/sdk';
 import { Fragment, useEffect, useEffectEvent, useRef, useState, type DragEvent } from 'react';
+import { ToggleButton } from 'react-aria-components';
 import { useTranslation } from 'react-i18next';
 import { useStore } from 'zustand';
 import { Button, Checkbox, cx, Dialog, IconButton, Toolbar, ToolbarSeparator } from '@pithyx/ui';
@@ -27,6 +28,10 @@ import {
   IconFolderPlus,
   IconHome,
   IconLayoutGrid,
+  IconFile,
+  IconFolder,
+  IconHistory,
+  IconLayoutSidebarRight,
   IconListDetails,
   IconLock,
   IconMenu2,
@@ -143,6 +148,7 @@ export function FilesApp({ app }: { app: PithyxApp }) {
   const { t, i18n } = useTranslation('files');
   const client = useQueryClient();
   const [place, setPlace] = useState<Place>(() => restorePlace(app.context.session));
+  const [detailsOpen, setDetailsOpen] = useState(false);
   const [history, setHistory] = useState<{ back: Place[]; forward: Place[] }>({
     back: [],
     forward: [],
@@ -805,6 +811,9 @@ export function FilesApp({ app }: { app: PithyxApp }) {
   // The recycle bin of the place on view, else of the user's home: one entry in the navigation (D394).
   const binShare =
     [...ownHomes, ...sharedFolders].find((candidate) => candidate.id === shareId) ?? ownHomes[0];
+  const detailName = view === 'folder' && !atHomes ? single(selection) : null;
+  const detailEntry =
+    detailName === null ? undefined : folder.entries.find((entry) => entry.name === detailName);
   const hasSelection = view === 'folder' && selectedNames().length > 0;
   const cut =
     clipboard?.mode === 'cut' &&
@@ -822,21 +831,31 @@ export function FilesApp({ app }: { app: PithyxApp }) {
         className={styles.commands}
         end={
           view === 'folder' ? (
-            <Button
-              size="sm"
-              variant="quiet"
-              aria-label={layout === 'grid' ? t('layout.list') : t('layout.grid')}
-              onPress={() => {
-                setLayout((current) => (current === 'grid' ? 'list' : 'grid'));
-              }}
-            >
-              {layout === 'grid' ? (
-                <IconListDetails size={18} stroke={1.75} aria-hidden />
-              ) : (
-                <IconLayoutGrid size={18} stroke={1.75} aria-hidden />
-              )}
-              {layout === 'grid' ? t('command.list') : t('command.tiles')}
-            </Button>
+            <>
+              <Button
+                size="sm"
+                variant="quiet"
+                aria-label={layout === 'grid' ? t('layout.list') : t('layout.grid')}
+                onPress={() => {
+                  setLayout((current) => (current === 'grid' ? 'list' : 'grid'));
+                }}
+              >
+                {layout === 'grid' ? (
+                  <IconListDetails size={18} stroke={1.75} aria-hidden />
+                ) : (
+                  <IconLayoutGrid size={18} stroke={1.75} aria-hidden />
+                )}
+                {layout === 'grid' ? t('command.list') : t('command.tiles')}
+              </Button>
+              <ToggleButton
+                className={styles.detailsToggle}
+                isSelected={detailsOpen}
+                onChange={setDetailsOpen}
+              >
+                <IconLayoutSidebarRight size={18} stroke={1.75} aria-hidden />
+                {t('details')}
+              </ToggleButton>
+            </>
           ) : undefined
         }
       >
@@ -1242,6 +1261,14 @@ export function FilesApp({ app }: { app: PithyxApp }) {
             />
           )}
         </div>
+        {detailsOpen && view === 'folder' && (
+          <DetailsPane
+            entry={detailEntry}
+            thumbnail={detailEntry === undefined ? null : thumbnailOf(detailEntry)}
+            format={app.format}
+            onAction={act}
+          />
+        )}
       </div>
       <StatusBar
         transfers={transfers}
@@ -1564,5 +1591,76 @@ function StatusBar({
         </ul>
       )}
     </div>
+  );
+}
+
+/** The details pane of D394: a preview, the name, the facts and the actions of the selected item. */
+function DetailsPane({
+  entry,
+  thumbnail,
+  format,
+  onAction,
+}: {
+  entry: FileEntry | undefined;
+  thumbnail: string | null;
+  format: PithyxApp['format'];
+  onAction: (action: FilesAction) => void;
+}) {
+  const { t } = useTranslation('files');
+  return (
+    <aside className={styles.details} aria-label={t('details')}>
+      {entry === undefined ? (
+        <p className={styles.detailsEmpty}>{t('detailsEmpty')}</p>
+      ) : (
+        <>
+          <div className={styles.preview}>
+            {thumbnail !== null ? (
+              <img src={thumbnail} alt="" />
+            ) : entry.kind === 'folder' ? (
+              <IconFolder size={56} stroke={1.25} aria-hidden />
+            ) : (
+              <IconFile size={56} stroke={1.25} aria-hidden />
+            )}
+          </div>
+          <h3 className={styles.detailsName}>{entry.name}</h3>
+          <dl className={styles.facts}>
+            {entry.kind !== 'folder' && (
+              <>
+                <dt>{t('columns.size')}</dt>
+                <dd>{format.bytes(entry.size)}</dd>
+              </>
+            )}
+            {entry.modified !== '' && (
+              <>
+                <dt>{t('columns.modified')}</dt>
+                <dd>{format.dateTime(entry.modified)}</dd>
+              </>
+            )}
+          </dl>
+          {entry.kind === 'file' && (
+            <div className={styles.detailsActions}>
+              <Button
+                size="sm"
+                onPress={() => {
+                  onAction('download');
+                }}
+              >
+                <IconDownload size={16} stroke={1.75} aria-hidden />
+                {t('actions.download')}
+              </Button>
+              <Button
+                size="sm"
+                onPress={() => {
+                  onAction('versions');
+                }}
+              >
+                <IconHistory size={16} stroke={1.75} aria-hidden />
+                {t('actions.versions')}
+              </Button>
+            </div>
+          )}
+        </>
+      )}
+    </aside>
   );
 }
