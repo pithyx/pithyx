@@ -144,7 +144,6 @@ export function DataTable<T>({
     <Table
       aria-label={label}
       className={cx(styles.table, styles[density], className)}
-      style={{ '--columns': columns.length } as CSSProperties}
       selectionMode={selectionMode}
       selectionBehavior="replace"
       {...(selectedKeys === undefined ? {} : { selectedKeys })}
@@ -166,7 +165,14 @@ export function DataTable<T>({
               ? {}
               : virtualized
                 ? { width: column.width }
-                : { style: { width: column.width } })}
+                : {
+                    style: {
+                      '--width':
+                        typeof column.width === 'number'
+                          ? `${String(column.width)}px`
+                          : column.width,
+                    } as CSSProperties,
+                  })}
           >
             {({ allowsSorting, sortDirection }) => (
               <span className={styles.heading}>
