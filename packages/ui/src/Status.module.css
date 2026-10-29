@@ -1,0 +1,303 @@
+.badge {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 1px 7px;
+  border-radius: var(--radius-tag);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+.badge[data-tone='success'] {
+  background: var(--color-success-surface);
+  color: var(--color-success);
+}
+
+.badge[data-tone='warning'] {
+  background: var(--color-warning-surface);
+  color: var(--color-warning);
+}
+
+.badge[data-tone='danger'] {
+  background: var(--color-danger-surface);
+  color: var(--color-danger);
+}
+
+.badge[data-tone='info'] {
+  background: var(--color-info-surface);
+  color: var(--color-info);
+}
+
+.badge[data-tone='neutral'] {
+  background: var(--color-neutral-state-surface);
+  color: var(--color-neutral-state);
+}
+
+.meter {
+  display: grid;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.meterTexts {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+  font-variant-numeric: tabular-nums;
+}
+
+.meterTrack {
+  display: block;
+  height: 5px;
+  overflow: hidden;
+  border-radius: 2px;
+  background: var(--color-surface-pressed);
+}
+
+.meterFill {
+  display: block;
+  height: 100%;
+  background: var(--color-accent);
+}
+
+.meterFill[data-tone='warning'] {
+  background: var(--color-warning);
+}
+
+.meterFill[data-tone='danger'] {
+  background: var(--color-danger);
+}
+
+.card {
+  container: pithyx-card / inline-size;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  background: var(--color-surface-1);
+  overflow: hidden;
+}
+
+.cardHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3) var(--space-4);
+  padding: var(--space-3) var(--space-4);
+}
+
+.cardIcon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  color: var(--color-accent);
+}
+
+.cardIcon > svg {
+  width: 24px;
+  height: 24px;
+}
+
+.cardMain {
+  display: grid;
+  flex: 1;
+  gap: var(--space-0);
+  min-width: 0;
+}
+
+.cardTitle {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
+}
+
+.cardFacts {
+  margin: 0;
+  overflow: hidden;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cardMeter {
+  flex: none;
+  width: 230px;
+}
+
+.cardToggle {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: var(--radius-control);
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+}
+
+.cardToggle[data-hovered] {
+  background: var(--color-surface-hover);
+  color: var(--color-text);
+}
+
+.cardToggle[data-focus-visible] {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.cardChevron {
+  transition: transform var(--duration-fast) var(--ease-standard);
+}
+
+.card[data-expanded] .cardChevron {
+  transform: rotate(180deg);
+}
+
+.cardPanel {
+  border-top: 1px solid var(--color-border);
+  background: var(--color-surface-2);
+}
+
+.cardPanel[aria-hidden='true'] {
+  display: none;
+}
+
+.cardActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4) var(--space-3);
+}
+
+@container pithyx-card (width < 520px) {
+  .cardHeader {
+    flex-wrap: wrap;
+  }
+
+  .cardMeter {
+    order: 3;
+    width: 100%;
+  }
+}
+
+.attention {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.attentionTitle {
+  margin: 0;
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
+}
+
+.attentionList {
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  background: var(--color-surface-1);
+  list-style: none;
+}
+
+.attentionRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+  padding: var(--space-2) var(--space-4);
+}
+
+.attentionRow + .attentionRow {
+  border-top: 1px solid var(--color-border);
+}
+
+.attentionIcon {
+  display: grid;
+  flex: none;
+  place-items: center;
+}
+
+.attentionIcon[data-tone='danger'] {
+  color: var(--color-danger);
+}
+
+.attentionIcon[data-tone='warning'] {
+  color: var(--color-warning);
+}
+
+.attentionIcon[data-tone='info'] {
+  color: var(--color-info);
+}
+
+.attentionText {
+  display: grid;
+  flex: 1 1 240px;
+  min-width: 0;
+  font-size: var(--font-size-md);
+}
+
+.attentionDescription {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+}
+
+.attentionAction {
+  margin-left: auto;
+}
+
+.tilesContainer {
+  container: pithyx-tiles / inline-size;
+}
+
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-3);
+  margin: 0;
+}
+
+@container pithyx-tiles (width < 640px) {
+  .tiles {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.tile {
+  display: grid;
+  align-content: start;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  background: var(--color-surface-1);
+}
+
+.tileLabel,
+.tileDetail {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+}
+
+.tileValue {
+  margin: var(--space-0) 0 0;
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold);
+  font-variant-numeric: tabular-nums;
+}
+
+@media (pointer: coarse) {
+  .cardToggle {
+    width: var(--touch-target);
+    height: var(--touch-target);
+  }
+}
