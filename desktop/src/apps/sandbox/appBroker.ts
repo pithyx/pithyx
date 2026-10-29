@@ -244,7 +244,7 @@ export function appBrokerFor(target: {
           shareOf,
         ),
       ),
-    'files.list': async ({ location, path, cursor, limit, sort, order }) =>
+    'files.list': async ({ location, path, cursor, limit, sort, order, query }) =>
       daemon(async () =>
         pageOf(
           await client.call((headers) =>
@@ -258,6 +258,7 @@ export function appBrokerFor(target: {
                   ...(limit === undefined ? {} : { limit }),
                   ...(sort === undefined ? {} : { sort }),
                   ...(order === undefined ? {} : { order }),
+                  ...(query === undefined ? {} : { query }),
                 },
               },
             }),

@@ -294,6 +294,38 @@ test('selecting everything in a large folder sends no list of names', async ({ p
   await expect(filesWindow(page).getByText('1 item', { exact: true })).toBeVisible();
 });
 
+test('a search keeps the matching names of the folder and deletes only what it shows', async ({
+  page,
+}) => {
+  const files: Record<string, string> = { 'notes.txt': '' };
+  for (let i = 0; i < 250; i++) {
+    files[`Holiday ${String(i)}.jpg`] = '';
+  }
+  prepare('e2e-search', files);
+  await openFolder(page, 'e2e-search');
+  await expect(filesWindow(page).getByText('251 items')).toBeVisible();
+
+  const search = filesWindow(page).getByRole('searchbox', { name: 'Search in e2e-search' });
+  await search.fill('holiday 24');
+  await expect(filesWindow(page).getByText('11 matches')).toBeVisible();
+  await expect(row(page, 'Holiday 24.jpg')).toBeVisible();
+  await expect(row(page, 'notes.txt')).toHaveCount(0);
+
+  await row(page, 'Holiday 24.jpg').click();
+  await page.keyboard.press('Control+a');
+  await expect(filesWindow(page).getByText('11 selected')).toBeVisible();
+  const request = page.waitForRequest('**/api/files/operations');
+  await page.keyboard.press('Delete');
+  const body = (await request).postDataJSON() as { items?: unknown[]; allIn?: unknown };
+  expect(body.allIn).toBeUndefined();
+  expect(body.items).toHaveLength(11);
+  await expect(filesWindow(page).getByText('Nothing in this folder has')).toBeVisible();
+
+  await search.fill('');
+  await expect(filesWindow(page).getByText('240 items')).toBeVisible();
+  expect(existsSync(join(shared, 'e2e-search', 'notes.txt'))).toBe(true);
+});
+
 test('works with the keyboard alone', async ({ page }) => {
   prepare('e2e-keys/inner', { 'deep.txt': 'd' });
   await openFolder(page, 'e2e-keys');

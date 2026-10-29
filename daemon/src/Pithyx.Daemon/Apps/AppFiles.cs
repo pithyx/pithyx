@@ -88,10 +88,10 @@ public sealed class AppFiles(
             share.Kind))];
     }
 
-    public async Task<AppFolderPage> ListAsync(InstalledApp app, ClaimsPrincipal user, AppFileLocation location, string? path, FileSort sort, SortOrder order, int? limit, string? cursor, CancellationToken cancellationToken)
+    public async Task<AppFolderPage> ListAsync(InstalledApp app, ClaimsPrincipal user, AppFileLocation location, string? path, FileSort sort, SortOrder order, int? limit, string? cursor, string? query, CancellationToken cancellationToken)
     {
         var target = Resolve(app, null, location, null, write: false, content: false);
-        var page = await files.ListAsync(user, target.ShareId, path, sort, order, limit, cursor, cancellationToken, target.Within);
+        var page = await files.ListAsync(user, target.ShareId, path, sort, order, limit, cursor, cancellationToken, target.Within, query);
         return new AppFolderPage(page.Path, page.FolderId, page.Total, page.Entries, page.NextCursor, page.Topic);
     }
 

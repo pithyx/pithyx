@@ -15,7 +15,16 @@ import { Fragment, useEffect, useEffectEvent, useRef, useState, type DragEvent }
 import { ToggleButton } from 'react-aria-components';
 import { useTranslation } from 'react-i18next';
 import { useStore } from 'zustand';
-import { Button, Checkbox, cx, Dialog, IconButton, Toolbar, ToolbarSeparator } from '@pithyx/ui';
+import {
+  Button,
+  Checkbox,
+  cx,
+  Dialog,
+  IconButton,
+  SearchField,
+  Toolbar,
+  ToolbarSeparator,
+} from '@pithyx/ui';
 import {
   IconArrowLeft,
   IconArrowRight,
@@ -80,6 +89,7 @@ import {
   isSelected,
   selectAll,
   selectedCount,
+  selectNames,
   selectOnly,
   single,
   toItems,
@@ -91,7 +101,14 @@ import { RECENT_PLACE, useRecentFiles, type RecentFile } from './recent';
 import { RecentView } from './RecentView';
 import { VersionsDialog } from './VersionsDialog';
 import { createThumbnails, thumbnailKey } from './thumbnails';
-import { changeFolder, folderKey, keepOnly, prefetchFolder, useFolder } from './useFolder';
+import {
+  changeFolder,
+  folderKey,
+  keepOnly,
+  matchesQuery,
+  prefetchFolder,
+  useFolder,
+} from './useFolder';
 
 /** Where a window is: a folder of a share, or the share's recycle bin. Saved with the layout. */
 interface Place {
@@ -229,22 +246,39 @@ export function FilesApp({ app }: { app: PithyxApp }) {
     setSelectionState({ at: here, selection: next });
     setAnnouncement(null);
   };
+  // A search keeps the names of this folder that contain it; it belongs to the folder, like the selection.
+  const [searchState, setSearchState] = useState({ at: here, text: '' });
+  const search = searchState.at === here ? searchState.text : '';
+  const searching = search.trim() !== '';
+  const setSearch = (text: string) => {
+    setSearchState({ at: here, text });
+    setSelectionState({ at: here, selection: emptySelection });
+  };
+  const homeList = homeEntries.filter((entry) => matchesQuery(entry.name, search));
   const [renamingState, setRenamingState] = useState<{ at: string; name: string } | null>(null);
   const renaming = renamingState?.at === here ? renamingState.name : null;
   const setRenaming = (name: string | null) => {
     setRenamingState(name === null ? null : { at: here, name });
   };
 
-  const folder = useFolder(app, view === 'folder' ? shareId : null, path, sort.key, sort.order, {
-    onRemoved: (names) => {
-      setSelectionState((state) =>
-        state.at === here ? { at: here, selection: forget(state.selection, names) } : state,
-      );
+  const folder = useFolder(
+    app,
+    view === 'folder' ? shareId : null,
+    path,
+    sort.key,
+    sort.order,
+    search,
+    {
+      onRemoved: (names) => {
+        setSelectionState((state) =>
+          state.at === here ? { at: here, selection: forget(state.selection, names) } : state,
+        );
+      },
+      onGone: () => {
+        go({ share: shareId, path: parentOf(path), view: 'folder' }, false);
+      },
     },
-    onGone: () => {
-      go({ share: shareId, path: parentOf(path), view: 'folder' }, false);
-    },
-  });
+  );
   const location = { share: shareId ?? '' };
   const title = atHomes
     ? t('shares.homes')
@@ -667,7 +701,7 @@ export function FilesApp({ app }: { app: PithyxApp }) {
     const name = single(selection);
     return name === null
       ? undefined
-      : (atHomes ? homeEntries : folder.entries).find((entry) => entry.name === name);
+      : (atHomes ? homeList : folder.entries).find((entry) => entry.name === name);
   }
 
   function act(action: FilesAction) {
@@ -745,7 +779,12 @@ export function FilesApp({ app }: { app: PithyxApp }) {
         upload.current?.click();
         break;
       case 'selectAll':
-        setSelection(selectAll());
+        // A search shows a part of the folder, so only what it shows is selected, never the whole folder.
+        setSelection(
+          searching
+            ? selectNames((atHomes ? homeList : folder.entries).map((entry) => entry.name))
+            : selectAll(),
+        );
         break;
     }
   }
@@ -835,7 +874,7 @@ export function FilesApp({ app }: { app: PithyxApp }) {
     });
   }
 
-  const count = selectedCount(selection, atHomes ? homeEntries.length : folder.total);
+  const count = selectedCount(selection, atHomes ? homeList.length : folder.total);
   const menuEntry = menu?.entry ?? null;
   // The apps' file actions for the selected entries (D375); only for a selection of loaded entries named one by one.
   const selectedItems = toItems(selection);
@@ -1104,6 +1143,15 @@ export function FilesApp({ app }: { app: PithyxApp }) {
         >
           <IconRefresh size={18} stroke={1.75} />
         </IconButton>
+        {(atHomes || (view === 'folder' && !atRecent && share !== undefined)) && (
+          <SearchField
+            className={styles.search}
+            label={t('search', { folder: title })}
+            placeholder={t('search', { folder: title })}
+            value={search}
+            onChange={setSearch}
+          />
+        )}
       </div>
       {view === 'folder' && !writable && share !== undefined && (
         <p className={styles.infoBar}>
@@ -1219,8 +1267,10 @@ export function FilesApp({ app }: { app: PithyxApp }) {
             <p className={styles.empty}>{t('noShares')}</p>
           ) : atHomes ? (
             <FolderView
-              entries={homeEntries}
-              total={homeEntries.length}
+              entries={homeList}
+              total={homeList.length}
+              filtered={searching}
+              emptyText={searching ? t('searchEmpty', { query: search.trim() }) : undefined}
               loading={false}
               hasMore={false}
               loadMore={() => undefined}
@@ -1278,6 +1328,8 @@ export function FilesApp({ app }: { app: PithyxApp }) {
             <FolderView
               entries={folder.entries}
               total={folder.total}
+              filtered={searching}
+              emptyText={searching ? t('searchEmpty', { query: search.trim() }) : undefined}
               loading={folder.loading}
               hasMore={folder.hasMore}
               loadMore={folder.loadMore}
@@ -1366,11 +1418,17 @@ export function FilesApp({ app }: { app: PithyxApp }) {
             : atHomes
               ? count > 0
                 ? t('selected', { count })
-                : t('items', { count: userHomes.length })
+                : searching
+                  ? t('searchResults', { count: homeList.length })
+                  : t('items', { count: userHomes.length })
               : view === 'trash'
                 ? ''
                 : (announcement ??
-                  (count > 0 ? t('selected', { count }) : t('items', { count: folder.total })))
+                  (count > 0
+                    ? t('selected', { count })
+                    : searching
+                      ? t('searchResults', { count: folder.total })
+                      : t('items', { count: folder.total })))
         }
         onCancel={(job) => {
           void app.jobs.cancel(job).catch(report);

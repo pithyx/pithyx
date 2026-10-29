@@ -19,6 +19,7 @@ import styles from './FilesApp.module.css';
 import {
   isSelected,
   selectAll,
+  selectNames,
   selectOnly,
   selectRange,
   toItems,
@@ -68,6 +69,10 @@ export interface FolderViewProps {
   onVisible: (entries: FileEntry[]) => void;
   /** Entries that are neither dragged nor dropped on: the homes of every user, which are shares of their own. */
   fixed?: boolean;
+  /** The entries are a part of the folder (a search): select all takes the loaded ones, not the whole folder. */
+  filtered?: boolean;
+  /** What an empty list says instead of the empty folder's text. */
+  emptyText?: string | undefined;
   /** The mouse rested on a folder, so it can be read ahead of a double click. */
   onRest?: (entry: FileEntry) => void;
 }
@@ -269,7 +274,11 @@ export function FolderView(props: FolderViewProps) {
       if (control) {
         switch (event.key.toLowerCase()) {
           case 'a':
-            onSelect(selectAll());
+            onSelect(
+              props.filtered === true
+                ? selectNames(props.entries.map((candidate) => candidate.name))
+                : selectAll(),
+            );
             return true;
           case 'c':
             props.onKey('copy');
@@ -596,7 +605,9 @@ export function FolderView(props: FolderViewProps) {
           })}
         </div>
       </div>
-      {!props.loading && count === 0 && <p className={styles.empty}>{t('emptyFolder')}</p>}
+      {!props.loading && count === 0 && (
+        <p className={styles.empty}>{props.emptyText ?? t('emptyFolder')}</p>
+      )}
     </div>
   );
 }

@@ -5,6 +5,8 @@
   "path": "Path",
   "search": "Search in {folder}",
   "searchPlaceholder": "Search",
+  "searchResults": "{count, plural, one {# match} other {# matches}}",
+  "searchEmpty": "Nothing in this folder has “{query}” in its name.",
   "places": {
     "title": "Places",
     "home": "Home",
