@@ -51,8 +51,7 @@ export const coreApps: readonly AppEntry[] = [
     granted: true,
     window: {
       instances: 'multi',
-      // Wide enough for the command bar of D394 in one row.
-      defaultSize: { width: 1120, height: 680 },
+      defaultSize: { width: 920, height: 580 },
       minSize: { width: 320, height: 280 },
     },
     Component: lazy(() =>
