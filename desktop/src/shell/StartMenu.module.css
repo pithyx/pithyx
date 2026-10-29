@@ -5,7 +5,7 @@
   display: grid;
   grid-template-rows: auto minmax(0, 1fr) auto;
   width: min(620px, calc(100% - 2 * var(--space-2)));
-  height: min(600px, calc(100% - var(--taskbar-size) - 2 * var(--space-2)));
+  height: min(600px, calc(100% - var(--taskbar-height) - 2 * var(--space-2)));
   overflow: hidden;
   border: 1px solid var(--color-window-border);
   border-radius: var(--radius-lg);
@@ -16,26 +16,26 @@
 }
 
 .menu[data-position='bottom'] {
-  bottom: calc(var(--taskbar-size) + env(safe-area-inset-bottom) + var(--space-2));
+  bottom: calc(var(--taskbar-height) + env(safe-area-inset-bottom) + var(--space-2));
 }
 
 .menu[data-position='top'] {
-  top: calc(var(--taskbar-size) + env(safe-area-inset-top) + var(--space-2));
+  top: calc(var(--taskbar-height) + env(safe-area-inset-top) + var(--space-2));
 }
 
 .menu[data-position='left'],
 .menu[data-position='right'] {
   top: var(--space-2);
-  width: min(620px, calc(100% - var(--taskbar-size) - 3 * var(--space-2)));
+  width: min(620px, calc(100% - var(--taskbar-height) - 3 * var(--space-2)));
   height: min(600px, calc(100% - 2 * var(--space-2)));
 }
 
 .menu[data-position='left'] {
-  left: calc(var(--taskbar-size) + 8px + var(--space-2));
+  left: calc(var(--taskbar-height) + 8px + var(--space-2));
 }
 
 .menu[data-position='right'] {
-  right: calc(var(--taskbar-size) + 8px + var(--space-2));
+  right: calc(var(--taskbar-height) + 8px + var(--space-2));
   left: auto;
 }
 
@@ -272,7 +272,7 @@
   .menu {
     left: 0;
     width: 100%;
-    height: calc(100% - var(--taskbar-size) - env(safe-area-inset-bottom));
+    height: calc(100% - var(--taskbar-height) - env(safe-area-inset-bottom));
     border-width: 0;
     border-radius: 0;
     box-shadow: none;
