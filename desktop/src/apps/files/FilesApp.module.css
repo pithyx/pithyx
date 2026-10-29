@@ -94,7 +94,7 @@
   position: relative;
   display: grid;
   flex: 1;
-  grid-template-columns: 180px minmax(0, 1fr);
+  grid-template-columns: 210px minmax(0, 1fr);
   min-height: 0;
 }
 
@@ -108,28 +108,14 @@
   overflow: auto;
 }
 
-.sideTitle {
-  margin: 12px 0 4px;
-  padding: 0 var(--pithyx-space);
-  color: var(--pithyx-color-text-muted);
-  font-size: 0.75em;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-
-.sideTitle:first-child {
-  margin-top: 4px;
-}
-
 .sideItem {
   display: flex;
   align-items: center;
-  gap: var(--pithyx-space);
-  min-height: 30px;
-  padding: 0 var(--pithyx-space);
+  gap: var(--space-2);
+  min-height: var(--row-height);
+  padding: 0 var(--space-2);
   border: 0;
-  border-radius: var(--pithyx-radius);
+  border-radius: var(--radius-tag);
   background: transparent;
   color: var(--pithyx-color-text);
   font: inherit;
@@ -696,4 +682,35 @@
 .openWithAlways {
   padding-top: var(--space-3);
   border-top: 1px solid var(--color-border);
+}
+
+/* The navigation column of D394: compact rows, muted icons, separators instead of headings. */
+.sideRule {
+  width: calc(100% - 2 * var(--space-2));
+  margin: var(--space-1) var(--space-2);
+  border: 0;
+  border-top: 1px solid var(--color-border);
+}
+
+.sideIcon {
+  flex: none;
+  color: var(--color-text-muted);
+}
+
+.sideItem[aria-current='page'] .sideIcon {
+  color: var(--color-accent);
+}
+
+.sideName {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-align: start;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sideLock {
+  flex: none;
+  color: var(--color-text-muted);
 }

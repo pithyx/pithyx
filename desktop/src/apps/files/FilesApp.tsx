@@ -802,6 +802,9 @@ export function FilesApp({ app }: { app: PithyxApp }) {
       names: chosen.map((entry) => entry.name),
     }).catch(report);
   }
+  // The recycle bin of the place on view, else of the user's home: one entry in the navigation (D394).
+  const binShare =
+    [...ownHomes, ...sharedFolders].find((candidate) => candidate.id === shareId) ?? ownHomes[0];
   const hasSelection = view === 'folder' && selectedNames().length > 0;
   const cut =
     clipboard?.mode === 'cut' &&
@@ -1034,9 +1037,9 @@ export function FilesApp({ app }: { app: PithyxApp }) {
           onDragLeave={onZoneDragLeave}
           onDrop={onZoneDrop}
         >
-          <h3 className={styles.sideTitle}>{t('shares.title')}</h3>
           {[ownHomes, sharedFolders].map((section, index) => (
             <Fragment key={index}>
+              {index > 0 && section.length > 0 && <hr className={styles.sideRule} />}
               {section.map((candidate) => {
                 const Icon = candidate.kind === undefined ? IconServer2 : IconHome;
                 return (
@@ -1056,16 +1059,27 @@ export function FilesApp({ app }: { app: PithyxApp }) {
                       go({ share: candidate.id, path: '', view: 'folder' });
                     }}
                   >
-                    <Icon size={16} stroke={1.75} aria-hidden />
-                    {candidate.name}
-                    {candidate.unavailable !== undefined && (
+                    <Icon className={styles.sideIcon} size={16} stroke={1.75} aria-hidden />
+                    <span className={styles.sideName}>{candidate.name}</span>
+                    {candidate.unavailable !== undefined ? (
                       <span className={styles.sideNote}>{t('shares.unavailable')}</span>
+                    ) : (
+                      candidate.access !== 'readWrite' && (
+                        <IconLock
+                          className={styles.sideLock}
+                          size={14}
+                          stroke={1.75}
+                          role="img"
+                          aria-label={t('readOnly')}
+                        />
+                      )
                     )}
                   </button>
                 );
               })}
             </Fragment>
           ))}
+          <hr className={styles.sideRule} />
           {userHomes.length > 0 && (
             <button
               type="button"
@@ -1075,26 +1089,24 @@ export function FilesApp({ app }: { app: PithyxApp }) {
                 go({ share: HOMES, path: '', view: 'folder' });
               }}
             >
-              <IconUsers size={16} stroke={1.75} aria-hidden />
-              {t('shares.homes')}
+              <IconUsers className={styles.sideIcon} size={16} stroke={1.75} aria-hidden />
+              <span className={styles.sideName}>{t('shares.homes')}</span>
             </button>
           )}
-          {shareList.length > 0 && <h3 className={styles.sideTitle}>{t('trash')}</h3>}
-          {[...ownHomes, ...sharedFolders].map((candidate) => (
+          {binShare !== undefined && (
             <button
-              key={candidate.id}
               type="button"
               className={styles.sideItem}
-              aria-current={candidate.id === shareId && view === 'trash' ? 'page' : undefined}
-              aria-label={t('bin.title', { share: candidate.name })}
+              aria-current={view === 'trash' ? 'page' : undefined}
+              aria-label={t('bin.title', { share: binShare.name })}
               onClick={() => {
-                go({ share: candidate.id, path: '', view: 'trash' });
+                go({ share: binShare.id, path: '', view: 'trash' });
               }}
             >
-              <IconTrash size={16} stroke={1.75} aria-hidden />
-              {candidate.name}
+              <IconTrash className={styles.sideIcon} size={16} stroke={1.75} aria-hidden />
+              <span className={styles.sideName}>{t('trash')}</span>
             </button>
-          ))}
+          )}
         </nav>
         <div className={styles.main}>
           {shares.isSuccess && shareList.length === 0 ? (
