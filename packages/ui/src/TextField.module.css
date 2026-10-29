@@ -99,11 +99,11 @@
   align-items: center;
   min-height: var(--control-height);
   border: 1px solid var(--color-border-strong);
-  border-radius: var(--radius-full);
+  border-radius: var(--radius-control);
   background: var(--color-surface-1);
 }
 
-/* The rounded frame shows focus with its border; the input's own square outline would stick out of it. */
+/* The frame shows focus with its border; the input's own outline would stick out of it. */
 .search:has(input[data-focused]) {
   border-color: var(--color-focus);
 }

@@ -14,6 +14,7 @@ import {
   IconTerminal2,
   IconUsers,
 } from '../ui/icons';
+import type { components } from '@pithyx/api-client';
 import { coreAppIds } from '../apps/ids';
 import { useAppName } from '../apps/names';
 import type { Language } from '../i18n';
@@ -77,6 +78,29 @@ export const startApps: AppId[] = [
   'logs',
   'terminal',
 ];
+
+/** Sample state for the menu's tiles; only the fields the tiles read are filled in. */
+export const startPools = [
+  { name: 'tank', state: 'ONLINE', capacityPercent: 36, freeBytes: 2_300_000_000_000 },
+  { name: 'fast', state: 'ONLINE', capacityPercent: 85, freeBytes: 70_000_000_000 },
+] as unknown as components['schemas']['Pool'][];
+
+export const startSample = {
+  cpu: { percent: 4, cores: [] },
+  memory: { totalBytes: 8_000_000_000, availableBytes: 5_100_000_000 },
+  network: [],
+} as unknown as components['schemas']['ResourceSample'];
+
+export const startUpdates = {
+  installedVersion: '1.2.0',
+  available: null,
+} as unknown as components['schemas']['UpdateStatus'];
+
+export const startShares = [
+  { id: 1, name: 'alex', kind: 'home', access: 'readWrite', unavailable: null },
+  { id: 2, name: 'family', kind: 'share', access: 'readWrite', unavailable: null },
+  { id: 3, name: 'media', kind: 'share', access: 'read', unavailable: null },
+] as unknown as components['schemas']['ShareInfo'][];
 
 export const recent: StartEntry[] = [
   { id: 'r1', name: 'Tax return 2025.pdf', detail: '/home/alex/Documents', icon: IconFileTypePdf },

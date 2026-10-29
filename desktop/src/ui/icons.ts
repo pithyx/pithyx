@@ -107,3 +107,4 @@ export { default as IconArrowsUpDown } from '@tabler/icons-react/dist/esm/icons/
 export { default as IconShield } from '@tabler/icons-react/dist/esm/icons/IconShield.mjs';
 export { default as IconPlugConnected } from '@tabler/icons-react/dist/esm/icons/IconPlugConnected.mjs';
 export { default as IconCircleCheck } from '@tabler/icons-react/dist/esm/icons/IconCircleCheck.mjs';
+export { default as IconCpu } from '@tabler/icons-react/dist/esm/icons/IconCpu.mjs';

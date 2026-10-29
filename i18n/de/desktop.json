@@ -76,7 +76,12 @@
     },
     "appMenu": "Menü für {name}",
     "addToDesktop": "Zum Desktop hinzufügen",
-    "shortcutAdded": "{name} zum Desktop hinzugefügt"
+    "shortcutAdded": "{name} zum Desktop hinzugefügt",
+    "poolState": "{state, select, ONLINE {intakt} DEGRADED {beeinträchtigt} other {braucht Aufmerksamkeit}}",
+    "poolStatus": "Pool {name}, {state}. Speicher öffnen",
+    "cpuStatus": "Prozessor zu {value} ausgelastet. Ressourcenmonitor öffnen",
+    "networkStatus": "Netzwerk {value}. Ressourcenmonitor öffnen",
+    "rate": "{size}/s"
   },
   "start": {
     "label": "Pithyx-Menü",
@@ -99,7 +104,28 @@
     "appDetail": "App",
     "userMenu": "Kontomenü von {name}",
     "appMenu": "Menü für {name}",
-    "open": "Öffnen"
+    "open": "Öffnen",
+    "rail": "Konto und Sitzung",
+    "home": "Persönlicher Ordner",
+    "status": "Status",
+    "folders": "Deine Ordner",
+    "openStorage": "Speicher öffnen",
+    "openFiles": "Dateien öffnen",
+    "system": "System",
+    "you": "Du",
+    "onlyYou": "Nur du",
+    "access": {
+      "readWrite": "Lesen und schreiben",
+      "read": "Nur lesen",
+      "none": "Kein Zugriff"
+    },
+    "systemFacts": "CPU {cpu}, RAM {used} von {total}",
+    "updates": "Updates",
+    "poolFacts": "{free} frei",
+    "updatesCurrent": "Pithyx {version} ist aktuell",
+    "updatesAvailable": "Pithyx {version} ist verfügbar",
+    "systemTile": "System",
+    "poolState": "{state, select, ONLINE {Intakt} DEGRADED {Beeinträchtigt} other {Braucht Aufmerksamkeit}}"
   },
   "window": {
     "minimize": "Minimieren",

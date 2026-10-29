@@ -23,7 +23,7 @@ You need the right **Sign in to the desktop**. If your account is deactivated or
 
 After five wrong attempts for the same user name from the same address within five minutes, sign-in pauses for a short time and tells you how many seconds to wait.
 
-To sign out, open the Pithyx menu and click the **Sign out** button at the bottom, next to the power button.
+To sign out, open the Pithyx menu and click the **Sign out** button in the narrow bar at its left edge, above the power button.
 
 Forgot your password? Click **Forgot password?** on the sign-in page. Pithyx cannot reset a password by email: ask an administrator to set a new one. Administrators can use the recovery key. See [Recovery and reinstall](/docs/install/recovery/).
 
@@ -58,13 +58,14 @@ If an app does not answer for five seconds, a dialog says that the app is not re
 
 ![The Pithyx menu in the dark theme with the account menu of Anna Weber open: Personal settings and Appearance](../../../../assets/screenshots/desktop-account-menu.webp)
 
-_The account menu opens when you click your name at the bottom of the Pithyx menu._
+_The account menu opens when you click your initials at the top of the Pithyx menu's left bar._
 
 By default the taskbar is at the bottom of the screen. From the left it has:
 
 - the Pithyx menu button,
-- one button per running app,
+- one button per open window with its icon and title; the active one is underlined in the accent color, the others with a thin line,
 - the app switcher, with the number of open apps,
+- for administrators, the box's state: the pool that needs the most attention, the processor load and the network traffic; each opens Storage or the Resource Monitor (on screens of 1024 pixels and wider),
 - the transfers button, while files are being uploaded or downloaded,
 - the running tasks button,
 - the notifications bell, with a badge for unread notifications,
@@ -74,15 +75,21 @@ When more apps run than fit, their buttons get narrower and then scroll: turn th
 
 Click a running app to bring it to the front. Click the active app again to minimize it. Right-click a running app (or press **Shift+F10** on it) for **Minimize** or **Restore**, **Add to desktop** and **Close**.
 
-To move the taskbar, open **Personal settings** (in the Pithyx menu, click your name), choose **Taskbar position** and pick **Bottom**, **Top**, **Left** or **Right**. On phones the taskbar always stays at the bottom and the row is missing.
+To move the taskbar, open **Personal settings** (in the Pithyx menu's left bar), choose **Taskbar position** and pick **Bottom**, **Top**, **Left** or **Right**. On phones the taskbar always stays at the bottom and the row is missing.
 
-**The Pithyx menu** opens with the button at the left of the taskbar, or by pressing and releasing the Windows or Command key. It lists your apps and has a search field. The search field finds apps by name only; settings and files are not found there, and the list of recent files stays empty. Your account menu (click your name) has **Personal settings** and **Appearance**. Personal settings ([Your account](/docs/user/account/#personal-settings)) also has:
+**The Pithyx menu** opens above the taskbar, attached to the button at its left, or by pressing and releasing the Windows or Command key. It has three parts:
+
+- a narrow bar at the left: your initials (the account menu), your home folder, and at the bottom **Personal settings**, **Sign out** and, with the right, **Power options**,
+- the app list with a search field, grouped into **System** (only for administrators: the apps that come with Pithyx), **Apps** and **You**,
+- tiles: administrators see the state of each pool, the system (processor and memory) and the updates, each opening its app; everybody sees **Your folders**, the home folder and the shared folders with the access they have, each opening in Files.
+
+The search field finds apps by name only; settings and files are not found there. Your account menu (click your initials) has **Personal settings** and **Appearance**. Personal settings ([Your account](/docs/user/account/#personal-settings)) also has:
 
 - **Default apps**: the file types you chose to always open one way in Files, each with **Forget** ([Files](/docs/user/files/))
 - **Open at sign-in**: tick up to 10 apps that open each time you sign in, on every device, in the order you ticked them. A reload of the page only brings back your windows, and an app that is already open is not opened twice. An app may be marked **Suggested by the app**; it is never ticked for you.
 - **Notification channels**: send your notifications by email or to a push service such as ntfy or Gotify ([Account](/docs/user/account/#notifications-by-email-or-push))
 
-At the bottom of the Pithyx menu, next to your name, are the **Sign out** button and, for administrators and users with the right **Restart and shut down**, the **Power options** button with **Restart** and **Shut down**. Both sign every user out and stop file transfers.
+**Power options** (for administrators and users with the right **Restart and shut down**) has **Restart** and **Shut down**. Both sign every user out and stop file transfers.
 
 **Notifications.** The bell opens a panel with **Running tasks** and **Recent** notifications. Use **Dismiss**, **Mute** or **Clear all**. Press **Escape** to close the panel.
 

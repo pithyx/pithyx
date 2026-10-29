@@ -10,11 +10,11 @@
 }
 
 .switcher[data-position='bottom'] {
-  bottom: calc(var(--taskbar-size) + env(safe-area-inset-bottom));
+  bottom: calc(var(--taskbar-height) + env(safe-area-inset-bottom));
 }
 
 .switcher[data-position='top'] {
-  top: calc(var(--taskbar-size) + env(safe-area-inset-top));
+  top: calc(var(--taskbar-height) + env(safe-area-inset-top));
   padding-top: 0;
 }
 

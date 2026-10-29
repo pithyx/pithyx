@@ -163,6 +163,8 @@ test('a frame, Ctrl and Shift select several icons, which move and go together',
     await page.mouse.click(target.x, target.y, { button: 'right' });
     await page.getByRole('menuitem', { name: 'New shortcut' }).click();
     await page.getByRole('menuitem', { name: 'Storage' }).click();
+    // cellOf throws while the new shortcut has no box yet, and a poll stops at the first throw.
+    await expect(disks).toBeVisible();
     await expect.poll(() => cellOf(page, disks)).toEqual({ column: 4, row: 1 });
     await disks.dblclick();
     await expect(appWindow(page, 'Storage')).toBeVisible();

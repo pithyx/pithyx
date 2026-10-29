@@ -32,7 +32,7 @@ Anpassungen in der Datei: Auf Geräten mit `(pointer: coarse)` wachsen Steuerele
 
 **Für Apps von Drittanbietern.** Apps in der Sandbox lesen diese Namen nicht. Das SDK setzt einen eigenen, stabilen Satz von `--pithyx-*`-Eigenschaften auf das Wurzelelement der App (zum Beispiel `--pithyx-color-background`, `--pithyx-color-accent`, `--pithyx-font-ui`, `--pithyx-space`). Siehe [@pithyx/sdk](/de/docs/sdk/sdk/). Die internen `--color-*`-Namen können sich ändern.
 
-Die Tokens des Design-Durchgangs (D394) sind die Radien nach Rolle, die Gruppe Dichte und die Farben für Shell, Auswahl und Zustand; die Muster von [`@pithyx/ui`](/de/docs/sdk/ui/) nutzen sie. `--taskbar-height` gilt für die Taskleiste über die ganze Breite aus dem Design-Durchgang; die heutige Taskleiste nutzt noch `--taskbar-size`.
+Die Tokens des Design-Durchgangs (D394) sind die Radien nach Rolle, die Gruppe Dichte und die Farben für Shell, Auswahl und Zustand; die Muster von [`@pithyx/ui`](/de/docs/sdk/ui/) nutzen sie. Die Taskleiste und alles, was an ihr anliegt, nutzen `--taskbar-height`; `--taskbar-size` bleibt für Apps definiert, die es lesen, der Desktop nutzt es nicht mehr.
 
 Ein Test (`packages/ui/src/contrast.test.ts`) parst `tokens.css`, löst jedes Theme und jeden Akzent auf und verlangt einen Kontrast von mindestens 4,5 für Text und 3 für Grafiken (WCAG 2.2 AA).
 

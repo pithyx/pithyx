@@ -23,7 +23,7 @@ Du brauchst das Recht **Am Desktop anmelden**. Ist dein Konto deaktiviert oder f
 
 Nach fünf falschen Versuchen für denselben Benutzernamen von derselben Adresse innerhalb von fünf Minuten pausiert die Anmeldung für kurze Zeit und sagt dir, wie viele Sekunden du warten musst.
 
-Zum Abmelden öffnest du das Pithyx-Menü und klickst unten neben dem Ein/Aus-Knopf auf **Abmelden**.
+Zum Abmelden öffnest du das Pithyx-Menü und klickst in der schmalen Leiste an seinem linken Rand auf **Abmelden**, über dem Ein/Aus-Knopf.
 
 Passwort vergessen? Klicke auf der Anmeldeseite auf **Passwort vergessen?**. Pithyx kann ein Passwort nicht per E-Mail zurücksetzen: Bitte einen Administrator, ein neues zu setzen. Administratoren können den Wiederherstellungsschlüssel nutzen. Siehe [Wiederherstellen und neu installieren](/de/docs/install/recovery/).
 
@@ -58,13 +58,14 @@ Antwortet eine App fünf Sekunden lang nicht, sagt ein Dialog, dass die App nich
 
 ![Das Pithyx-Menü im dunklen Design mit geöffnetem Kontomenü von Anna Weber: Persönliche Einstellungen und Darstellung](../../../../../assets/screenshots/desktop-account-menu.de.webp)
 
-_Das Kontomenü öffnet sich, wenn du unten im Pithyx-Menü auf deinen Namen klickst._
+_Das Kontomenü öffnet sich, wenn du oben in der linken Leiste des Pithyx-Menüs auf deine Initialen klickst._
 
 Standardmäßig liegt die Taskleiste am unteren Bildschirmrand. Von links nach rechts hat sie:
 
 - die Schaltfläche des Pithyx-Menüs,
-- eine Schaltfläche pro laufender App,
+- je offenem Fenster eine Schaltfläche mit Icon und Titel; die aktive ist in der Akzentfarbe unterstrichen, die anderen mit einer dünnen Linie,
 - den App-Umschalter mit der Anzahl der offenen Apps,
+- für Administratoren der Zustand der Box: der Pool, der am meisten Aufmerksamkeit braucht, die Prozessorlast und der Netzwerkverkehr; jedes öffnet Speicher oder den Ressourcenmonitor (auf Bildschirmen ab 1024 Pixeln Breite),
 - die Schaltfläche für Übertragungen, solange Dateien hoch- oder heruntergeladen werden,
 - die Schaltfläche für laufende Aufgaben,
 - die Benachrichtigungsglocke mit einem Zähler für ungelesene Benachrichtigungen,
@@ -74,15 +75,21 @@ Laufen mehr Apps, als Platz haben, werden ihre Schaltflächen schmaler und lasse
 
 Klicke auf eine laufende App, um sie nach vorn zu holen. Klicke noch einmal auf die aktive App, um sie zu minimieren. Klicke mit der rechten Maustaste auf eine laufende App (oder drücke darauf **Umschalt+F10**) für **Minimieren** oder **Wiederherstellen**, **Zum Desktop hinzufügen** und **Schließen**.
 
-Um die Taskleiste zu verschieben, öffne **Persönliche Einstellungen** (im Pithyx-Menü auf deinen Namen klicken), wähle **Position der Taskleiste** und dann **Unten**, **Oben**, **Links** oder **Rechts**. Auf Handys bleibt die Taskleiste immer unten und die Zeile fehlt.
+Um die Taskleiste zu verschieben, öffne **Persönliche Einstellungen** (in der linken Leiste des Pithyx-Menüs), wähle **Position der Taskleiste** und dann **Unten**, **Oben**, **Links** oder **Rechts**. Auf Handys bleibt die Taskleiste immer unten und die Zeile fehlt.
 
-**Das Pithyx-Menü** öffnest du mit der Schaltfläche links in der Taskleiste oder indem du die Windows- oder Befehlstaste (Command) drückst und loslässt. Es listet deine Apps auf und hat ein Suchfeld. Die Suche findet Apps nur nach ihrem Namen; Einstellungen und Dateien findet sie dort nicht, und die Liste der zuletzt benutzten Dateien bleibt leer. Dein Kontomenü (klicke auf deinen Namen) enthält **Persönliche Einstellungen** und **Darstellung**. In Persönliche Einstellungen ([Dein Konto](/de/docs/user/account/#persönliche-einstellungen)) findest du außerdem:
+**Das Pithyx-Menü** öffnet sich über der Taskleiste, angesetzt an die Schaltfläche links in ihr, oder wenn du die Windows- oder Befehlstaste (Command) drückst und loslässt. Es hat drei Teile:
+
+- eine schmale Leiste links: deine Initialen (das Kontomenü), dein persönlicher Ordner und unten **Persönliche Einstellungen**, **Abmelden** und, mit dem Recht, **Ein/Aus**,
+- die App-Liste mit einem Suchfeld, gruppiert in **System** (nur für Administratoren: die Apps, die mit Pithyx kommen), **Apps** und **Du**,
+- Kacheln: Administratoren sehen den Zustand jedes Pools, das System (Prozessor und Arbeitsspeicher) und die Updates, jede öffnet ihre App; alle sehen **Deine Ordner**, den persönlichen Ordner und die freigegebenen Ordner mit dem Zugriff, den sie haben, jeder öffnet sich in Dateien.
+
+Die Suche findet Apps nur nach ihrem Namen; Einstellungen und Dateien findet sie dort nicht. Dein Kontomenü (klicke auf deine Initialen) enthält **Persönliche Einstellungen** und **Darstellung**. In Persönliche Einstellungen ([Dein Konto](/de/docs/user/account/#persönliche-einstellungen)) findest du außerdem:
 
 - **Standard-Apps**: die Dateitypen, die sich in Dateien immer auf eine Art öffnen sollen, jeweils mit **Vergessen** ([Dateien](/de/docs/user/files/))
 - **Beim Anmelden öffnen**: hake bis zu 10 Apps an, die sich bei jeder Anmeldung öffnen, auf jedem Gerät, in der Reihenfolge, in der du sie angehakt hast. Ein Neuladen der Seite bringt nur deine Fenster zurück, und eine App, die schon offen ist, öffnet sich nicht doppelt. Eine App kann als **Von der App empfohlen** markiert sein; angehakt wird sie nie für dich.
 - **Benachrichtigungskanäle**: deine Benachrichtigungen per E-Mail oder an einen Push-Dienst wie ntfy oder Gotify senden ([Konto](/de/docs/user/account/#benachrichtigungen-per-e-mail-oder-push))
 
-Unten im Pithyx-Menü, neben deinem Namen, stehen der Knopf **Abmelden** und, für Administratoren und Benutzer mit dem Recht **Neu starten und herunterfahren**, der Knopf **Ein/Aus** mit **Neu starten** und **Herunterfahren**. Beides meldet alle Benutzer ab und beendet Dateiübertragungen.
+**Ein/Aus** (für Administratoren und Benutzer mit dem Recht **Neu starten und herunterfahren**) hat **Neu starten** und **Herunterfahren**. Beides meldet alle Benutzer ab und beendet Dateiübertragungen.
 
 **Benachrichtigungen.** Die Glocke öffnet ein Fenster mit **Laufende Aufgaben** und **Neueste** Benachrichtigungen. Nutze **Verwerfen**, **Stummschalten** oder **Alle löschen**. Drücke **Esc**, um das Fenster zu schließen.
 

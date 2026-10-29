@@ -98,11 +98,11 @@
 }
 
 .stack[data-position='bottom'] {
-  bottom: calc(var(--taskbar-size) + env(safe-area-inset-bottom) + var(--space-3));
+  bottom: calc(var(--taskbar-height) + env(safe-area-inset-bottom) + var(--space-3));
 }
 
 .stack[data-position='top'] {
-  top: calc(var(--taskbar-size) + env(safe-area-inset-top) + var(--space-3));
+  top: calc(var(--taskbar-height) + env(safe-area-inset-top) + var(--space-3));
 }
 
 /* Next to a vertical taskbar the status area is at its bottom end, so toasts and the panel sit bottom right. */
@@ -111,7 +111,7 @@
 }
 
 .stack[data-position='right'] {
-  right: calc(var(--taskbar-size) + 8px + var(--space-3));
+  right: calc(var(--taskbar-height) + 8px + var(--space-3));
 }
 
 .panel {
@@ -121,7 +121,7 @@
   display: grid;
   grid-template-rows: auto minmax(0, 1fr) auto;
   width: min(400px, calc(100% - 2 * var(--space-2)));
-  max-height: calc(100% - var(--taskbar-size) - 2 * var(--space-2));
+  max-height: calc(100% - var(--taskbar-height) - 2 * var(--space-2));
   overflow: hidden;
   border: 1px solid var(--color-window-border);
   border-radius: var(--radius-lg);
@@ -131,11 +131,11 @@
 }
 
 .panel[data-position='bottom'] {
-  bottom: calc(var(--taskbar-size) + env(safe-area-inset-bottom) + var(--space-2));
+  bottom: calc(var(--taskbar-height) + env(safe-area-inset-bottom) + var(--space-2));
 }
 
 .panel[data-position='top'] {
-  top: calc(var(--taskbar-size) + env(safe-area-inset-top) + var(--space-2));
+  top: calc(var(--taskbar-height) + env(safe-area-inset-top) + var(--space-2));
 }
 
 .panel:is([data-position='left'], [data-position='right']) {
@@ -144,7 +144,7 @@
 }
 
 .panel[data-position='right'] {
-  right: calc(var(--taskbar-size) + 8px + var(--space-2));
+  right: calc(var(--taskbar-height) + 8px + var(--space-2));
 }
 
 .panelHeader {

@@ -76,7 +76,12 @@
     },
     "appMenu": "Menu for {name}",
     "addToDesktop": "Add to desktop",
-    "shortcutAdded": "{name} added to the desktop"
+    "shortcutAdded": "{name} added to the desktop",
+    "poolState": "{state, select, ONLINE {healthy} DEGRADED {degraded} other {needs attention}}",
+    "poolStatus": "Pool {name}, {state}. Open Storage",
+    "cpuStatus": "Processor {value} busy. Open Resource Monitor",
+    "networkStatus": "Network {value}. Open Resource Monitor",
+    "rate": "{size}/s"
   },
   "start": {
     "label": "Pithyx menu",
@@ -99,7 +104,28 @@
     "appDetail": "App",
     "userMenu": "Account menu for {name}",
     "appMenu": "Menu for {name}",
-    "open": "Open"
+    "open": "Open",
+    "rail": "Account and session",
+    "home": "Home folder",
+    "status": "Status",
+    "folders": "Your folders",
+    "openStorage": "Open Storage",
+    "openFiles": "Open Files",
+    "system": "System",
+    "you": "You",
+    "onlyYou": "Only you",
+    "access": {
+      "readWrite": "Read and write",
+      "read": "Read only",
+      "none": "No access"
+    },
+    "systemFacts": "CPU {cpu}, RAM {used} of {total}",
+    "updates": "Updates",
+    "poolFacts": "{free} free",
+    "updatesCurrent": "Pithyx {version} is current",
+    "updatesAvailable": "Pithyx {version} is available",
+    "systemTile": "System",
+    "poolState": "{state, select, ONLINE {Healthy} DEGRADED {Degraded} other {Needs attention}}"
   },
   "window": {
     "minimize": "Minimize",

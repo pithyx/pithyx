@@ -93,7 +93,8 @@ test('the start menu searches and opens apps', async ({ page }) => {
   await expect(appWindow(page, 'Storage')).toBeVisible();
 
   await start.click();
-  await page.getByRole('main', { name: 'Desktop' }).click({ position: { x: 700, y: 400 } });
+  // Right of the menu, which is attached to the taskbar at the left and 760 px wide.
+  await page.getByRole('main', { name: 'Desktop' }).click({ position: { x: 1000, y: 300 } });
   await expect(menu).toBeHidden();
 });
 

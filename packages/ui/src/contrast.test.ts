@@ -180,6 +180,7 @@ const pairs: [string, string, number][] = [
   ['--color-note-text', '--color-note', TEXT],
   ['--color-note-text', '--color-note-bar', TEXT],
   ['--color-highlight-contrast', '--color-highlight', TEXT],
+  ['--color-desktop-label', '--color-desktop', TEXT],
 ];
 
 describe.each(accents)('accent %s', (accent) => {
