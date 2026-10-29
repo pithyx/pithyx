@@ -81,6 +81,12 @@
 
   --color-focus: var(--color-accent);
   --color-selection: var(--color-accent-subtle);
+  /* The selected table row and the active navigation item (D394): stronger than --color-selection, with an outline. */
+  --color-selection-strong: light-dark(
+    color-mix(in srgb, var(--color-accent) 16%, var(--color-surface-1)),
+    color-mix(in srgb, var(--color-accent) 22%, var(--color-surface-1))
+  );
+  --color-selection-outline: color-mix(in srgb, var(--color-accent) 45%, transparent);
 
   --color-success: light-dark(var(--green-light), var(--green-dark));
   --color-success-surface: light-dark(#e3f4e9, #0f2d1c);
@@ -89,6 +95,10 @@
   --color-danger: light-dark(var(--red-light), var(--red-dark));
   --color-danger-surface: light-dark(#fcebeb, #3a1416);
   --color-danger-contrast: light-dark(#ffffff, #2a0708);
+  --color-info: var(--color-accent);
+  --color-info-surface: var(--color-accent-subtle);
+  --color-neutral-state: var(--color-text-muted);
+  --color-neutral-state-surface: var(--color-surface-3);
 
   /* Amber highlights the brand (logo, badges). Never text on light backgrounds. */
   --color-highlight: var(--amber-500);
@@ -110,6 +120,10 @@
   --color-note: light-dark(var(--amber-100), #3a2c10);
   --color-note-text: light-dark(#3a2a0a, #f6e6c4);
   --color-note-bar: light-dark(var(--amber-200), #4a3814);
+  /* The opaque shell of D394: the full-width taskbar and the Pithyx menu attached to it. */
+  --color-shell-bar: light-dark(var(--neutral-50), var(--neutral-950));
+  --color-shell-menu: light-dark(var(--neutral-25), var(--neutral-900));
+  --shadow-desktop-label: 0 1px 3px rgb(0 0 0 / 75%);
 
   /* Typography. */
   --font-sans: 'IBM Plex Sans', system-ui, sans-serif;
@@ -148,6 +162,11 @@
   --radius-md: 10px;
   --radius-lg: 14px;
   --radius-full: 999px;
+  /* Radii by role (D394): 4 to 6 px for controls, cards and windows, 3 px for small tags inside rows. */
+  --radius-tag: 3px;
+  --radius-control: var(--radius-xs);
+  --radius-card: 5px;
+  --radius-window: var(--radius-sm);
 
   /* Elevation. The shadow color is darker and denser in the dark theme. */
   --shadow-color: light-dark(rgb(6 42 51 / 14%), rgb(0 0 0 / 45%));
@@ -186,6 +205,17 @@
   --desktop-cell-width: 96px;
   --desktop-cell-height: 112px;
   --desktop-grid-padding: 12px;
+  /* Density of the app frame (D394). Rows and toolbar controls grow to the touch target on coarse pointers. */
+  --row-height: 28px;
+  --row-height-md: 36px;
+  --row-height-lg: 42px;
+  --toolbar-control-height: 32px;
+  --nav-width: 260px;
+  --details-width: 280px;
+  --form-label-width: 200px;
+  --form-control-width: 360px;
+  /* The full-width taskbar of D394; --taskbar-size is the current one until the shell is rebuilt (#323). */
+  --taskbar-height: 44px;
 }
 
 @media (pointer: coarse) {
@@ -193,6 +223,11 @@
     --control-height: var(--touch-target);
     --titlebar-height: var(--touch-target);
     --taskbar-size: 60px;
+    --taskbar-height: 52px;
+    --row-height: var(--touch-target);
+    --row-height-md: var(--touch-target);
+    --row-height-lg: 48px;
+    --toolbar-control-height: var(--touch-target);
   }
 }
 
