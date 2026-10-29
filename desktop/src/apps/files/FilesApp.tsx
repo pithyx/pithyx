@@ -12,21 +12,32 @@ import {
   type PithyxApp,
 } from '@pithyx/sdk';
 import { Fragment, useEffect, useEffectEvent, useRef, useState, type DragEvent } from 'react';
+import { ToggleButton } from 'react-aria-components';
 import { useTranslation } from 'react-i18next';
 import { useStore } from 'zustand';
-import { Button, Checkbox, cx, Dialog, IconButton } from '@pithyx/ui';
+import { Button, Checkbox, cx, Dialog, IconButton, Toolbar, ToolbarSeparator } from '@pithyx/ui';
 import {
   IconArrowLeft,
   IconArrowRight,
   IconArrowUp,
   IconChevronRight,
+  IconClipboard,
+  IconCopy,
   IconDownload,
   IconEye,
   IconFolderPlus,
   IconHome,
   IconLayoutGrid,
+  IconFile,
+  IconFolder,
+  IconHistory,
+  IconLayoutSidebarRight,
   IconListDetails,
+  IconLock,
   IconMenu2,
+  IconPencil,
+  IconRefresh,
+  IconScissors,
   IconServer2,
   IconTrash,
   IconUpload,
@@ -137,6 +148,7 @@ export function FilesApp({ app }: { app: PithyxApp }) {
   const { t, i18n } = useTranslation('files');
   const client = useQueryClient();
   const [place, setPlace] = useState<Place>(() => restorePlace(app.context.session));
+  const [detailsOpen, setDetailsOpen] = useState(false);
   const [history, setHistory] = useState<{ back: Place[]; forward: Place[] }>({
     back: [],
     forward: [],
@@ -796,6 +808,13 @@ export function FilesApp({ app }: { app: PithyxApp }) {
       names: chosen.map((entry) => entry.name),
     }).catch(report);
   }
+  // The recycle bin of the place on view, else of the user's home: one entry in the navigation (D394).
+  const binShare =
+    [...ownHomes, ...sharedFolders].find((candidate) => candidate.id === shareId) ?? ownHomes[0];
+  const detailName = view === 'folder' && !atHomes ? single(selection) : null;
+  const detailEntry =
+    detailName === null ? undefined : folder.entries.find((entry) => entry.name === detailName);
+  const hasSelection = view === 'folder' && selectedNames().length > 0;
   const cut =
     clipboard?.mode === 'cut' &&
     clipboard.share === shareId &&
@@ -806,6 +825,129 @@ export function FilesApp({ app }: { app: PithyxApp }) {
 
   return (
     <div className={styles.files}>
+      <Toolbar
+        aria-label={t('commands')}
+        variant="bar"
+        className={styles.commands}
+        end={
+          view === 'folder' ? (
+            <>
+              <Button
+                size="sm"
+                variant="quiet"
+                aria-label={layout === 'grid' ? t('layout.list') : t('layout.grid')}
+                onPress={() => {
+                  setLayout((current) => (current === 'grid' ? 'list' : 'grid'));
+                }}
+              >
+                {layout === 'grid' ? (
+                  <IconListDetails size={18} stroke={1.75} aria-hidden />
+                ) : (
+                  <IconLayoutGrid size={18} stroke={1.75} aria-hidden />
+                )}
+                {layout === 'grid' ? t('command.list') : t('command.tiles')}
+              </Button>
+              <ToggleButton
+                className={styles.detailsToggle}
+                isSelected={detailsOpen}
+                onChange={setDetailsOpen}
+              >
+                <IconLayoutSidebarRight size={18} stroke={1.75} aria-hidden />
+                {t('details')}
+              </ToggleButton>
+            </>
+          ) : undefined
+        }
+      >
+        <Button
+          size="sm"
+          variant="primary"
+          isDisabled={view !== 'folder' || !writable}
+          onPress={() => {
+            upload.current?.click();
+          }}
+        >
+          <IconUpload size={18} stroke={1.75} aria-hidden />
+          {t('actions.upload')}
+        </Button>
+        <Button
+          size="sm"
+          variant="quiet"
+          isDisabled={view !== 'folder' || !writable}
+          onPress={() => void createEntry('folder')}
+        >
+          <IconFolderPlus size={18} stroke={1.75} aria-hidden />
+          {t('actions.newFolder')}
+        </Button>
+        <ToolbarSeparator />
+        <Button
+          size="sm"
+          variant="quiet"
+          isDisabled={view !== 'folder' || !hasSelection}
+          onPress={() => {
+            act('copy');
+          }}
+        >
+          <IconCopy size={18} stroke={1.75} aria-hidden />
+          {t('actions.copy')}
+        </Button>
+        <Button
+          size="sm"
+          variant="quiet"
+          isDisabled={view !== 'folder' || !hasSelection || !writable}
+          onPress={() => {
+            act('cut');
+          }}
+        >
+          <IconScissors size={18} stroke={1.75} aria-hidden />
+          {t('actions.cut')}
+        </Button>
+        <Button
+          size="sm"
+          variant="quiet"
+          isDisabled={view !== 'folder' || !writable || clipboard === null}
+          onPress={() => {
+            act('paste');
+          }}
+        >
+          <IconClipboard size={18} stroke={1.75} aria-hidden />
+          {t('actions.paste')}
+        </Button>
+        <Button
+          size="sm"
+          variant="quiet"
+          isDisabled={view !== 'folder' || selectedEntry() === undefined || !writable}
+          onPress={() => {
+            act('rename');
+          }}
+        >
+          <IconPencil size={18} stroke={1.75} aria-hidden />
+          {t('actions.rename')}
+        </Button>
+        <Button
+          size="sm"
+          variant="quiet"
+          isDisabled={view !== 'folder' || !hasSelection || !writable}
+          onPress={() => {
+            act('delete');
+          }}
+        >
+          <IconTrash size={18} stroke={1.75} aria-hidden />
+          {t('command.delete')}
+        </Button>
+        <ToolbarSeparator />
+        <Button
+          size="sm"
+          variant="quiet"
+          isDisabled={view !== 'folder' || selectedEntry()?.kind !== 'file'}
+          onPress={() => {
+            act('download');
+          }}
+        >
+          <IconDownload size={18} stroke={1.75} aria-hidden />
+          {t('actions.download')}
+        </Button>
+      </Toolbar>
       <div className={styles.toolbar}>
         <IconButton
           label={t('sidebar')}
@@ -896,45 +1038,16 @@ export function FilesApp({ app }: { app: PithyxApp }) {
             ))
           )}
         </nav>
-        {view === 'folder' && writable && (
-          <>
-            <IconButton
-              label={t('actions.newFolder')}
-              size="sm"
-              onPress={() => void createEntry('folder')}
-            >
-              <IconFolderPlus size={18} stroke={1.75} />
-            </IconButton>
-            <IconButton
-              label={t('actions.upload')}
-              size="sm"
-              onPress={() => {
-                upload.current?.click();
-              }}
-            >
-              <IconUpload size={18} stroke={1.75} />
-            </IconButton>
-          </>
-        )}
-        {!writable && share !== undefined && (
-          <span className={styles.readOnly}>{t('readOnly')}</span>
-        )}
-        {view === 'folder' && (
-          <IconButton
-            label={layout === 'grid' ? t('layout.list') : t('layout.grid')}
-            size="sm"
-            onPress={() => {
-              setLayout((current) => (current === 'grid' ? 'list' : 'grid'));
-            }}
-          >
-            {layout === 'grid' ? (
-              <IconListDetails size={18} stroke={1.75} />
-            ) : (
-              <IconLayoutGrid size={18} stroke={1.75} />
-            )}
-          </IconButton>
-        )}
+        <IconButton label={t('refresh')} size="sm" isDisabled={view !== 'folder'} onPress={refresh}>
+          <IconRefresh size={18} stroke={1.75} />
+        </IconButton>
       </div>
+      {view === 'folder' && !writable && share !== undefined && (
+        <p className={styles.infoBar}>
+          <IconLock size={16} stroke={1.75} aria-hidden />
+          {t('readOnlyInfo', { name: share.name })}
+        </p>
+      )}
       <div className={styles.split} data-sidebar-open={sidebarOpen ? '' : undefined}>
         <nav
           className={styles.sidebar}
@@ -943,9 +1056,9 @@ export function FilesApp({ app }: { app: PithyxApp }) {
           onDragLeave={onZoneDragLeave}
           onDrop={onZoneDrop}
         >
-          <h3 className={styles.sideTitle}>{t('shares.title')}</h3>
           {[ownHomes, sharedFolders].map((section, index) => (
             <Fragment key={index}>
+              {index > 0 && section.length > 0 && <hr className={styles.sideRule} />}
               {section.map((candidate) => {
                 const Icon = candidate.kind === undefined ? IconServer2 : IconHome;
                 return (
@@ -965,16 +1078,27 @@ export function FilesApp({ app }: { app: PithyxApp }) {
                       go({ share: candidate.id, path: '', view: 'folder' });
                     }}
                   >
-                    <Icon size={16} stroke={1.75} aria-hidden />
-                    {candidate.name}
-                    {candidate.unavailable !== undefined && (
+                    <Icon className={styles.sideIcon} size={16} stroke={1.75} aria-hidden />
+                    <span className={styles.sideName}>{candidate.name}</span>
+                    {candidate.unavailable !== undefined ? (
                       <span className={styles.sideNote}>{t('shares.unavailable')}</span>
+                    ) : (
+                      candidate.access !== 'readWrite' && (
+                        <IconLock
+                          className={styles.sideLock}
+                          size={14}
+                          stroke={1.75}
+                          role="img"
+                          aria-label={t('readOnly')}
+                        />
+                      )
                     )}
                   </button>
                 );
               })}
             </Fragment>
           ))}
+          <hr className={styles.sideRule} />
           {userHomes.length > 0 && (
             <button
               type="button"
@@ -984,26 +1108,24 @@ export function FilesApp({ app }: { app: PithyxApp }) {
                 go({ share: HOMES, path: '', view: 'folder' });
               }}
             >
-              <IconUsers size={16} stroke={1.75} aria-hidden />
-              {t('shares.homes')}
+              <IconUsers className={styles.sideIcon} size={16} stroke={1.75} aria-hidden />
+              <span className={styles.sideName}>{t('shares.homes')}</span>
             </button>
           )}
-          {shareList.length > 0 && <h3 className={styles.sideTitle}>{t('trash')}</h3>}
-          {[...ownHomes, ...sharedFolders].map((candidate) => (
+          {binShare !== undefined && (
             <button
-              key={candidate.id}
               type="button"
               className={styles.sideItem}
-              aria-current={candidate.id === shareId && view === 'trash' ? 'page' : undefined}
-              aria-label={t('bin.title', { share: candidate.name })}
+              aria-current={view === 'trash' ? 'page' : undefined}
+              aria-label={t('bin.title', { share: binShare.name })}
               onClick={() => {
-                go({ share: candidate.id, path: '', view: 'trash' });
+                go({ share: binShare.id, path: '', view: 'trash' });
               }}
             >
-              <IconTrash size={16} stroke={1.75} aria-hidden />
-              {candidate.name}
+              <IconTrash className={styles.sideIcon} size={16} stroke={1.75} aria-hidden />
+              <span className={styles.sideName}>{t('trash')}</span>
             </button>
-          ))}
+          )}
         </nav>
         <div className={styles.main}>
           {shares.isSuccess && shareList.length === 0 ? (
@@ -1139,9 +1261,18 @@ export function FilesApp({ app }: { app: PithyxApp }) {
             />
           )}
         </div>
+        {detailsOpen && view === 'folder' && (
+          <DetailsPane
+            entry={detailEntry}
+            thumbnail={detailEntry === undefined ? null : thumbnailOf(detailEntry)}
+            format={app.format}
+            onAction={act}
+          />
+        )}
       </div>
       <StatusBar
         transfers={transfers}
+        readOnly={view === 'folder' && !writable && share !== undefined}
         text={
           atHomes
             ? count > 0
@@ -1387,10 +1518,12 @@ export function FilesApp({ app }: { app: PithyxApp }) {
 /** Items and selection, and the uploads and jobs of this window with their progress. */
 function StatusBar({
   transfers,
+  readOnly,
   text,
   onCancel,
 }: {
   transfers: Transfers;
+  readOnly: boolean;
   text: string;
   onCancel: (job: number) => void;
 }) {
@@ -1421,6 +1554,7 @@ function StatusBar({
       <span className={styles.statusText} role="status">
         {text}
       </span>
+      {readOnly && <span className={styles.statusEnd}>{t('readOnly')}</span>}
       {rows.length > 0 && (
         <ul className={styles.transfers} aria-label={t('job.title')}>
           {rows.map((row) => (
@@ -1457,5 +1591,76 @@ function StatusBar({
         </ul>
       )}
     </div>
+  );
+}
+
+/** The details pane of D394: a preview, the name, the facts and the actions of the selected item. */
+function DetailsPane({
+  entry,
+  thumbnail,
+  format,
+  onAction,
+}: {
+  entry: FileEntry | undefined;
+  thumbnail: string | null;
+  format: PithyxApp['format'];
+  onAction: (action: FilesAction) => void;
+}) {
+  const { t } = useTranslation('files');
+  return (
+    <aside className={styles.details} aria-label={t('details')}>
+      {entry === undefined ? (
+        <p className={styles.detailsEmpty}>{t('detailsEmpty')}</p>
+      ) : (
+        <>
+          <div className={styles.preview}>
+            {thumbnail !== null ? (
+              <img src={thumbnail} alt="" />
+            ) : entry.kind === 'folder' ? (
+              <IconFolder size={56} stroke={1.25} aria-hidden />
+            ) : (
+              <IconFile size={56} stroke={1.25} aria-hidden />
+            )}
+          </div>
+          <h3 className={styles.detailsName}>{entry.name}</h3>
+          <dl className={styles.facts}>
+            {entry.kind !== 'folder' && (
+              <>
+                <dt>{t('columns.size')}</dt>
+                <dd>{format.bytes(entry.size)}</dd>
+              </>
+            )}
+            {entry.modified !== '' && (
+              <>
+                <dt>{t('columns.modified')}</dt>
+                <dd>{format.dateTime(entry.modified)}</dd>
+              </>
+            )}
+          </dl>
+          {entry.kind === 'file' && (
+            <div className={styles.detailsActions}>
+              <Button
+                size="sm"
+                onPress={() => {
+                  onAction('download');
+                }}
+              >
+                <IconDownload size={16} stroke={1.75} aria-hidden />
+                {t('actions.download')}
+              </Button>
+              <Button
+                size="sm"
+                onPress={() => {
+                  onAction('versions');
+                }}
+              >
+                <IconHistory size={16} stroke={1.75} aria-hidden />
+                {t('actions.versions')}
+              </Button>
+            </div>
+          )}
+        </>
+      )}
+    </aside>
   );
 }

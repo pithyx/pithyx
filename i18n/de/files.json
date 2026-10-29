@@ -152,5 +152,14 @@
     "always": ".{extension}-Dateien immer so öffnen",
     "choices": "Möglichkeiten, die Datei zu öffnen",
     "current": "Standard"
-  }
+  },
+  "commands": "Befehle",
+  "refresh": "Aktualisieren",
+  "readOnlyInfo": "In {name} kannst du Dateien öffnen, kopieren und herunterladen, aber nicht ändern.",
+  "command": {
+    "delete": "Löschen",
+    "list": "Liste",
+    "tiles": "Kacheln"
+  },
+  "detailsEmpty": "Wähle ein Element aus, um seine Details zu sehen."
 }

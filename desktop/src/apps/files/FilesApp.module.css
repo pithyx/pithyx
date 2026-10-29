@@ -1,22 +1,29 @@
 /* The Files app uses only the public --pithyx-* tokens, like any app built on the SDK. */
 .files {
   container: files / inline-size;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  grid-template-rows: auto minmax(0, 1fr) auto;
+  display: flex;
+  flex-direction: column;
   height: 100%;
   background: var(--pithyx-color-background);
   color: var(--pithyx-color-text);
   font-size: var(--pithyx-font-size);
 }
 
+/* The command bar of D394: the primary action first, the actions in groups, the view at the end. */
+.commands {
+  flex: none;
+  border-top: 0;
+}
+
+/* The address bar: back, forward, up, the path in a field and refresh. */
 .toolbar {
   display: flex;
+  flex: none;
   align-items: center;
-  gap: 4px;
+  gap: 2px;
   min-width: 0;
-  padding: var(--pithyx-space);
-  border-bottom: 1px solid var(--pithyx-color-border);
+  padding: var(--space-1) var(--space-2);
+  border-bottom: 1px solid var(--color-border);
 }
 
 .breadcrumb {
@@ -25,11 +32,34 @@
   align-items: center;
   gap: 2px;
   min-width: 0;
-  padding: 0 var(--pithyx-space);
+  min-height: 30px;
+  margin: 0 var(--space-1);
+  padding: 0 var(--space-2);
   overflow: hidden;
-  font-family: var(--pithyx-font-mono);
-  font-size: 0.875em;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+  background: var(--color-surface-1);
+  font-size: var(--font-size-sm);
   white-space: nowrap;
+}
+
+/* A place the user may only read says so once, here, and in the status bar. */
+.infoBar {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-info-surface);
+  color: var(--color-text);
+  font-size: var(--font-size-sm);
+}
+
+.infoBar > svg {
+  flex: none;
+  color: var(--color-info);
 }
 
 .crumb {
@@ -63,7 +93,8 @@
 .split {
   position: relative;
   display: grid;
-  grid-template-columns: 180px minmax(0, 1fr);
+  flex: 1;
+  grid-template-columns: 210px minmax(0, 1fr) auto;
   min-height: 0;
 }
 
@@ -77,28 +108,14 @@
   overflow: auto;
 }
 
-.sideTitle {
-  margin: 12px 0 4px;
-  padding: 0 var(--pithyx-space);
-  color: var(--pithyx-color-text-muted);
-  font-size: 0.75em;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-
-.sideTitle:first-child {
-  margin-top: 4px;
-}
-
 .sideItem {
   display: flex;
   align-items: center;
-  gap: var(--pithyx-space);
-  min-height: 30px;
-  padding: 0 var(--pithyx-space);
+  gap: var(--space-2);
+  min-height: var(--row-height);
+  padding: 0 var(--space-2);
   border: 0;
-  border-radius: var(--pithyx-radius);
+  border-radius: var(--radius-tag);
   background: transparent;
   color: var(--pithyx-color-text);
   font: inherit;
@@ -124,7 +141,7 @@
 }
 
 .sideItem[aria-current='page'] {
-  background: var(--pithyx-color-selected);
+  background: var(--color-selection-strong);
   color: var(--pithyx-color-accent);
   font-weight: 500;
 }
@@ -148,14 +165,14 @@
 }
 
 .grid {
-  --row-height: 36px;
+  --row-height: 28px;
   min-width: 100%;
-  font-size: 0.875em;
+  font-size: var(--font-size-sm);
 }
 
 @media (pointer: coarse) {
   .grid {
-    --row-height: 52px;
+    --row-height: 44px;
   }
 }
 
@@ -170,8 +187,13 @@
   position: sticky;
   top: 0;
   z-index: 1;
-  border-bottom: 1px solid var(--pithyx-color-border);
-  background: var(--pithyx-color-surface);
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-surface-2);
+}
+
+/* Column separators in the header row, as in every table of D394. */
+.header > * + * {
+  border-left: 1px solid var(--color-border);
 }
 
 .sortButton {
@@ -179,12 +201,14 @@
   align-items: center;
   gap: 4px;
   width: 100%;
-  padding: var(--pithyx-space) 12px;
+  min-height: 30px;
+  padding: 0 12px;
   border: 0;
   background: transparent;
   color: var(--pithyx-color-text-muted);
   font: inherit;
-  font-weight: 500;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-regular);
   text-align: left;
   cursor: pointer;
 }
@@ -214,7 +238,8 @@
 
 .row[aria-selected='true'],
 .tile[aria-selected='true'] {
-  background: var(--pithyx-color-selected);
+  background: var(--color-selection-strong);
+  box-shadow: inset 0 0 0 1px var(--color-selection-outline);
 }
 
 .row[data-active]:focus-visible,
@@ -414,13 +439,8 @@
   font: inherit;
 }
 
-.readOnly {
-  flex: none;
-  padding: 2px 8px;
-  border-radius: var(--pithyx-radius);
-  background: var(--pithyx-color-surface);
-  color: var(--pithyx-color-text-muted);
-  font-size: 0.75em;
+.statusEnd {
+  margin-left: auto;
 }
 
 .bin {
@@ -662,4 +682,133 @@
 .openWithAlways {
   padding-top: var(--space-3);
   border-top: 1px solid var(--color-border);
+}
+
+/* The navigation column of D394: compact rows, muted icons, separators instead of headings. */
+.sideRule {
+  width: calc(100% - 2 * var(--space-2));
+  margin: var(--space-1) var(--space-2);
+  border: 0;
+  border-top: 1px solid var(--color-border);
+}
+
+.sideIcon {
+  flex: none;
+  color: var(--color-text-muted);
+}
+
+.sideItem[aria-current='page'] .sideIcon {
+  color: var(--color-accent);
+}
+
+.sideName {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-align: start;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sideLock {
+  flex: none;
+  color: var(--color-text-muted);
+}
+
+/* The details pane of D394 on the right, switched from the command bar. */
+.detailsToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 28px;
+  padding: 0 var(--space-3);
+  border: 0;
+  border-radius: var(--radius-control);
+  background: transparent;
+  color: var(--color-text);
+  font: inherit;
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+}
+
+.detailsToggle[data-hovered] {
+  background: var(--color-surface-hover);
+}
+
+.detailsToggle[data-selected] {
+  background: var(--color-selection-strong);
+}
+
+.detailsToggle[data-focus-visible] {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.details {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  width: var(--details-width);
+  min-height: 0;
+  padding: var(--space-4);
+  overflow: auto;
+  border-left: 1px solid var(--color-border);
+  background: var(--color-surface-2);
+  font-size: var(--font-size-sm);
+}
+
+.detailsEmpty {
+  margin: 0;
+  color: var(--color-text-muted);
+}
+
+.preview {
+  display: grid;
+  place-items: center;
+  height: 140px;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+  background: var(--color-surface-1);
+  color: var(--color-text-muted);
+}
+
+.preview > img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.detailsName {
+  margin: 0;
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
+  overflow-wrap: anywhere;
+}
+
+.facts {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--space-1) var(--space-4);
+  margin: 0;
+}
+
+.facts dt {
+  color: var(--color-text-muted);
+}
+
+.facts dd {
+  margin: 0;
+}
+
+.detailsActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+@container files (width < 760px) {
+  .details {
+    display: none;
+  }
 }
