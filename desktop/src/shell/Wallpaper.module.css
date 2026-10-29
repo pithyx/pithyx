@@ -6,58 +6,66 @@
   display: block;
 }
 
-.base {
-  fill: light-dark(#d5e6ea, #03171c);
+/* The petrol gradient and the amber glow of the mockups of direction F (D394). */
+.baseTop {
+  stop-color: light-dark(#5f9aa8, #123b45);
+}
+
+.baseBottom {
+  stop-color: light-dark(#1d5664, #05161a);
 }
 
 .glowInner {
-  stop-color: light-dark(#f4fafb, #0e4a5a);
+  stop-color: var(--amber-500);
+  stop-opacity: 0.22;
 }
 
 .glowOuter {
-  stop-color: light-dark(#c3d9df, #03171c);
+  stop-color: var(--amber-500);
+  stop-opacity: 0;
 }
 
 .inside {
-  fill: light-dark(var(--petrol-700), #062c35);
+  fill: var(--petrol-900);
 }
 
 .left {
-  fill: light-dark(var(--petrol-500), #0a3b47);
+  fill: var(--petrol-700);
 }
 
 .right {
-  fill: light-dark(var(--petrol-400), #0f4b5a);
+  fill: var(--petrol-500);
 }
 
 .lid {
-  fill: light-dark(var(--amber-400), #5c4521);
+  fill: var(--amber-500);
 }
 
 .lidLeft {
-  fill: light-dark(var(--amber-600), #3f2f16);
+  fill: var(--amber-650);
 }
 
 .lidRight {
-  fill: light-dark(var(--amber-500), #4d3a1b);
+  fill: var(--amber-600);
 }
 
-/* The light theme draws the boxes one step lighter than the logo and without a fade: on the light background a fade would wash them out. */
+/* The box is the logo: nearly opaque on the light wallpaper, half on the dark one, with a soft shadow. */
 .cube {
-  opacity: var(--depth);
+  opacity: 0.9;
+  filter: drop-shadow(0 24px 40px rgb(0 0 0 / 30%));
 }
 
-:global(:root[data-theme='light']) .cube {
-  opacity: 1;
+:global(:root[data-theme='dark']) .cube {
+  opacity: 0.5;
 }
 
-@media (prefers-color-scheme: light) {
-  :global(:root:not([data-theme='dark'])) .cube {
-    opacity: 1;
+@media (prefers-color-scheme: dark) {
+  :global(:root:not([data-theme='light'])) .cube {
+    opacity: 0.5;
   }
 }
 
-/* The plain wallpaper keeps the colors and the glow without the boxes. */
+/* The plain wallpaper keeps the colors and the glow without the box. */
 .wallpaper[data-plain] g {
   display: none;
 }
