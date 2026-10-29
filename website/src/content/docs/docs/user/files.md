@@ -15,7 +15,9 @@ Files is the app for working with the shared folders you may use: open folders, 
 
 _Files in list view. Right-click an entry for its context menu._
 
-Open **Files** from the Pithyx menu. The sidebar lists your home folder **home** first and your shared folders under it, under **Shares**; Files opens in your home. Your home is private: only you and the administrators can open it. Administrators also see **homes**, which lists every other user's home as a folder, in the same list or tiles as any folder; a double click opens one. The homes themselves cannot be renamed, moved or deleted there, and their menu only offers **Open**. Click an entry to open it. A folder that cannot be reached right now (for example because its pool is offline) shows **Not available**. If the list is empty, you have no shared folders yet and an administrator has to create them. A shared folder marked **Read only** lets you look and download, but not change anything.
+Open **Files** from the Pithyx menu. The navigation column at the left lists your home folder **home** first and your shared folders under it; Files opens in your home. Your home is private: only you and the administrators can open it. Administrators also see **homes**, which lists every other user's home as a folder, in the same list or tiles as any folder; a double click opens one. The homes themselves cannot be renamed, moved or deleted there, and their menu only offers **Open**. Click an entry to open it. A folder that cannot be reached right now (for example because its pool is offline) shows **Not available**. If the list is empty, you have no shared folders yet and an administrator has to create them. A shared folder you may only read has a lock in the navigation column. Inside it, a bar under the path says that you can open, copy and download files but not change them, the actions that would change something are greyed out, and the status bar at the bottom says **Read only**.
+
+Above the list are two bars. The command bar has **Upload**, **New folder**, **Copy**, **Cut**, **Paste**, **Rename**, **Delete** and **Download**, each for the selected items, and at its end **List** or **Tiles** to switch the view. The address bar under it has back, forward, up, the path of the open folder (click a part to go there) and **Refresh**.
 
 To move around:
 
@@ -41,7 +43,7 @@ Restore points live on the same disks as the files. They do not replace a backup
 ## Uploading
 
 1. Open the folder you want the files in.
-2. Click **Upload** and pick files, or drag files from your computer into the window. Drop them on a folder, a part of the path above the list or a share in the sidebar to put them there.
+2. Click **Upload** and pick files, or drag files from your computer into the window. Drop them on a folder, a part of the path above the list or a share in the navigation column to put them there.
 3. Watch the progress in the transfers button on the taskbar. It shows the speed and the time left, and has a button to cancel a transfer.
 
 Things to know:
@@ -60,7 +62,7 @@ Things to know:
 _The dialog when names already exist in the target folder._
 
 - **Copy and paste:** select items, press **Ctrl+C** (or **Cmd+C**), open the target folder and press **Ctrl+V**. **Ctrl+X** cuts instead of copies.
-- **Drag and drop:** dragging items onto another folder, a part of the path above the list or a share in the sidebar moves them there (a share you may only read takes nothing). Hold **Ctrl** or **Alt** while dropping to copy.
+- **Drag and drop:** dragging items onto another folder, a part of the path above the list or a share in the navigation column moves them there (a share you may only read takes nothing). Hold **Ctrl** or **Alt** while dropping to copy.
 - **Rename:** press **F2** or choose **Rename**. A name must not be empty, must not contain `/` and may be at most 255 bytes long.
 - **New folder:** choose **New folder**, then type its name.
 - **New file:** right-click an empty spot and choose **New file**, then type its name with the extension, for example `conf.toml`. The file starts empty; double-click it to open it with its default app.
@@ -84,7 +86,7 @@ _Each shared folder has its own recycle bin with the date an entry is deleted fo
 
 **Move to recycle bin** (the **Del** key) does not delete a file. It moves it into the recycle bin of its shared folder, or of your home. Deleting files over SMB, WebDAV or FTP does the same.
 
-To see a bin, click **Recycle bin** in the sidebar and choose the shared folder. Each entry shows where it came from and when it was deleted. With **Restore** you get it back in its original folder; missing parent folders are created. **Delete for good** removes single items. **Empty recycle bin** removes everything in the bin of that folder. Both ask first, and you need write access.
+To see a bin, open the shared folder or your home and click **Recycle bin** at the bottom of the navigation column; it shows the bin of the place you are in. Each entry shows where it came from and when it was deleted. With **Restore** you get it back in its original folder; missing parent folders are created. **Delete for good** removes single items. **Empty recycle bin** removes everything in the bin of that folder. Both ask first, and you need write access.
 
 Files stay in the bin for 30 days by default, then the box deletes them. The bin shows the period in use as a note at the top. Only an administrator can change this period.
 
