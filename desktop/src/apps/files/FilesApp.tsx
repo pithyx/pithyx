@@ -11,7 +11,16 @@ import {
   type SortOrder,
   type PithyxApp,
 } from '@pithyx/sdk';
-import { Fragment, useEffect, useEffectEvent, useRef, useState, type DragEvent } from 'react';
+import {
+  Fragment,
+  useEffect,
+  useEffectEvent,
+  useRef,
+  useState,
+  type CSSProperties,
+  type DragEvent,
+  type ReactNode,
+} from 'react';
 import { ToggleButton } from 'react-aria-components';
 import { useTranslation } from 'react-i18next';
 import { useStore } from 'zustand';
@@ -108,6 +117,7 @@ import {
   matchesQuery,
   prefetchFolder,
   useFolder,
+  useSubfolders,
 } from './useFolder';
 
 /** Where a window is: a folder of a share, or the share's recycle bin. Saved with the layout. */
@@ -255,6 +265,9 @@ export function FilesApp({ app }: { app: PithyxApp }) {
     setSelectionState({ at: here, selection: emptySelection });
   };
   const homeList = homeEntries.filter((entry) => matchesQuery(entry.name, search));
+  // Folders of the tree the user opened or closed, by share and path. Any other folder is open while the folder on
+  // view is inside it, so the tree always shows where the user is.
+  const [toggled, setToggled] = useState<ReadonlyMap<string, boolean>>(new Map());
   const [renamingState, setRenamingState] = useState<{ at: string; name: string } | null>(null);
   const renaming = renamingState?.at === here ? renamingState.name : null;
   const setRenaming = (name: string | null) => {
@@ -1189,38 +1202,48 @@ export function FilesApp({ app }: { app: PithyxApp }) {
               {section.map((candidate) => {
                 const Icon = candidate.kind === undefined ? IconServer2 : IconHome;
                 return (
-                  <button
-                    key={candidate.id}
-                    type="button"
-                    className={styles.sideItem}
-                    aria-current={
-                      candidate.id === shareId && view === 'folder' ? 'page' : undefined
-                    }
-                    {...dropAttributes(
-                      candidate.id,
-                      '',
-                      candidate.access === 'readWrite' && candidate.unavailable === undefined,
-                    )}
-                    onClick={() => {
-                      go({ share: candidate.id, path: '', view: 'folder' });
-                    }}
-                  >
-                    <Icon className={styles.sideIcon} size={16} stroke={1.75} aria-hidden />
-                    <span className={styles.sideName}>{candidate.name}</span>
-                    {candidate.unavailable !== undefined ? (
-                      <span className={styles.sideNote}>{t('shares.unavailable')}</span>
-                    ) : (
-                      candidate.access !== 'readWrite' && (
-                        <IconLock
-                          className={styles.sideLock}
-                          size={14}
-                          stroke={1.75}
-                          role="img"
-                          aria-label={t('readOnly')}
-                        />
-                      )
-                    )}
-                  </button>
+                  <ul key={candidate.id} className={styles.tree}>
+                    <FolderTreeNode
+                      app={app}
+                      share={candidate.id}
+                      path=""
+                      depth={0}
+                      label={candidate.name}
+                      icon={
+                        <Icon className={styles.sideIcon} size={16} stroke={1.75} aria-hidden />
+                      }
+                      marker={
+                        candidate.unavailable !== undefined ? (
+                          <span className={styles.sideNote}>{t('shares.unavailable')}</span>
+                        ) : (
+                          candidate.access !== 'readWrite' && (
+                            <IconLock
+                              className={styles.sideLock}
+                              size={14}
+                              stroke={1.75}
+                              role="img"
+                              aria-label={t('readOnly')}
+                            />
+                          )
+                        )
+                      }
+                      available={candidate.unavailable === undefined}
+                      writable={
+                        candidate.access === 'readWrite' && candidate.unavailable === undefined
+                      }
+                      here={candidate.id === shareId && view === 'folder' ? path : null}
+                      toggled={toggled}
+                      onToggle={(folder, open) => {
+                        setToggled((current) =>
+                          new Map(current).set(treeKey(candidate.id, folder), open),
+                        );
+                      }}
+                      onGo={(folder) => {
+                        go({ share: candidate.id, path: folder, view: 'folder' });
+                      }}
+                      dropAttributes={dropAttributes}
+                    />
+                  </ul>
                 );
               })}
             </Fragment>
@@ -1809,5 +1832,130 @@ function DetailsPane({
         </>
       )}
     </aside>
+  );
+}
+
+function treeKey(share: string, folder: string): string {
+  return `${share}\n${folder}`;
+}
+
+/** Whether a folder is the folder or one of its parents; the share root holds every folder. */
+function holds(folder: string, path: string): boolean {
+  return folder === '' || path === folder || path.startsWith(`${folder}/`);
+}
+
+/**
+ * A folder of the tree in the navigation column (D394): a toggle that shows its subfolders, the folder as a place to
+ * go to and drop on, and its subfolders once open. A folder without subfolders loses the toggle once that is known.
+ */
+function FolderTreeNode({
+  app,
+  share,
+  path,
+  depth,
+  label,
+  icon,
+  marker = null,
+  available = true,
+  writable,
+  here,
+  toggled,
+  onToggle,
+  onGo,
+  dropAttributes,
+}: {
+  app: PithyxApp;
+  share: string;
+  path: string;
+  depth: number;
+  label: string;
+  icon: ReactNode;
+  marker?: ReactNode;
+  available?: boolean;
+  writable: boolean;
+  /** The folder on view when it is in this share, else null. */
+  here: string | null;
+  toggled: ReadonlyMap<string, boolean>;
+  onToggle: (folder: string, open: boolean) => void;
+  onGo: (folder: string) => void;
+  dropAttributes: (share: string, folder: string, writable: boolean) => Record<string, unknown>;
+}) {
+  const { t } = useTranslation('files');
+  const inside = here !== null && holds(path, here);
+  const open = available && (toggled.get(treeKey(share, path)) ?? inside);
+  const { folders, loaded, more } = useSubfolders(app, share, path, open);
+  // The folder on view, or the closest folder above it while the folder on view is hidden inside it.
+  const current = here !== null && (here === path || (inside && !open));
+  const leaf = open && loaded && folders.length === 0 && !more;
+  return (
+    <li>
+      <div className={styles.treeRow} style={{ '--depth': depth } as CSSProperties}>
+        {available && !leaf ? (
+          <button
+            type="button"
+            className={styles.twisty}
+            aria-expanded={open}
+            aria-label={t(open ? 'tree.collapse' : 'tree.expand', { name: label })}
+            onClick={() => {
+              onToggle(path, !open);
+            }}
+          >
+            <IconChevronRight size={14} stroke={2} aria-hidden />
+          </button>
+        ) : (
+          <span className={styles.twistySpace} />
+        )}
+        <button
+          type="button"
+          className={styles.sideItem}
+          aria-current={current ? 'page' : undefined}
+          {...dropAttributes(share, path, writable)}
+          onClick={() => {
+            onGo(path);
+          }}
+        >
+          {icon}
+          <span className={styles.sideName}>{label}</span>
+          {marker}
+        </button>
+      </div>
+      {open && folders.length + (more ? 1 : 0) > 0 && (
+        <ul className={styles.tree}>
+          {folders.map((folder) => (
+            <FolderTreeNode
+              key={folder.name}
+              app={app}
+              share={share}
+              path={joinPath(path, folder.name)}
+              depth={depth + 1}
+              label={folder.name}
+              icon={<IconFolder className={styles.sideIcon} size={16} stroke={1.75} aria-hidden />}
+              writable={writable}
+              here={here}
+              toggled={toggled}
+              onToggle={onToggle}
+              onGo={onGo}
+              dropAttributes={dropAttributes}
+            />
+          ))}
+          {more && (
+            <li>
+              <div className={styles.treeRow} style={{ '--depth': depth + 1 } as CSSProperties}>
+                <span className={styles.twistySpace} />
+                <button
+                  type="button"
+                  className={cx(styles.sideItem, styles.treeMore)}
+                  onClick={() => {
+                    onGo(path);
+                  }}
+                >
+                  <span className={styles.sideName}>{t('tree.more', { name: label })}</span>
+                </button>
+              </div>
+            </li>
+          )}
+        </ul>
+      )}
+    </li>
   );
 }

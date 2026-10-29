@@ -216,3 +216,29 @@ export function useFolder(
     },
   };
 }
+
+/**
+ * The subfolders of a folder for the tree in the navigation column, from the first pages of its name order: the same
+ * cache as the folder itself, so a folder seen in the list shows its subfolders at once, and the other way round.
+ */
+export function useSubfolders(app: PithyxApp, share: string, path: string, enabled: boolean) {
+  const query = useInfiniteQuery<
+    FolderPage,
+    Error,
+    FolderPages,
+    ReturnType<typeof pagesKey>,
+    string | null
+  >({
+    queryKey: pagesKey(share, path, 'name', 'asc', ''),
+    queryFn: ({ pageParam }) => listPage(app, share, path, 'name', 'asc', '', pageParam),
+    initialPageParam: null as string | null,
+    getNextPageParam: (page) => page.nextCursor,
+    staleTime: PREFETCH_FRESH,
+    enabled,
+  });
+  return {
+    folders: loadedEntries(query.data).filter((entry) => entry.kind === 'folder'),
+    loaded: query.data !== undefined,
+    more: query.hasNextPage,
+  };
+}

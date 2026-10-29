@@ -732,6 +732,79 @@
   color: var(--color-text-muted);
 }
 
+/* The folder tree: each level indented, a toggle before every folder that may have subfolders. */
+.tree {
+  display: grid;
+  gap: 1px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.treeRow {
+  display: flex;
+  align-items: center;
+  padding-inline-start: calc(var(--depth, 0) * var(--space-3));
+}
+
+.treeRow > .sideItem {
+  flex: 1;
+  min-width: 0;
+}
+
+.twisty,
+.twistySpace {
+  flex: none;
+  width: 20px;
+}
+
+.twisty {
+  display: inline-grid;
+  place-items: center;
+  height: var(--row-height);
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-tag);
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+}
+
+.twisty:hover {
+  background: var(--pithyx-color-hover);
+  color: var(--color-text);
+}
+
+.twisty:focus-visible {
+  outline: 2px solid var(--pithyx-color-focus);
+  outline-offset: -2px;
+}
+
+.twisty > svg {
+  transition: transform var(--duration-fast) var(--ease-standard);
+}
+
+.twisty[aria-expanded='true'] > svg {
+  transform: rotate(90deg);
+}
+
+.treeMore {
+  color: var(--color-text-muted);
+}
+
+@media (pointer: coarse) {
+  .twisty,
+  .twistySpace {
+    width: 36px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .twisty > svg {
+    transition: none;
+  }
+}
+
 /* The details pane of D394 on the right, switched from the command bar. */
 .detailsToggle {
   display: inline-flex;

@@ -170,5 +170,10 @@
     "location": "Location",
     "opened": "Opened",
     "show": "Show in {location}"
+  },
+  "tree": {
+    "expand": "Show the folders in {name}",
+    "collapse": "Hide the folders in {name}",
+    "more": "More in {name}"
   }
 }

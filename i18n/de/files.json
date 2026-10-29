@@ -170,5 +170,10 @@
     "location": "Ort",
     "opened": "Geöffnet",
     "show": "In {location} zeigen"
+  },
+  "tree": {
+    "expand": "Ordner in {name} zeigen",
+    "collapse": "Ordner in {name} ausblenden",
+    "more": "Mehr in {name}"
   }
 }

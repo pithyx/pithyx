@@ -326,6 +326,41 @@ test('a search keeps the matching names of the folder and deletes only what it s
   expect(existsSync(join(shared, 'e2e-search', 'notes.txt'))).toBe(true);
 });
 
+test('the folder tree in the navigation opens subfolders and follows the folder on view', async ({
+  page,
+}) => {
+  prepare('e2e-tree');
+  prepare(join('e2e-tree', 'inner', 'deep'));
+  await signInAsAdmin(page);
+  await openFilesInShared(page);
+  const side = filesWindow(page).getByRole('navigation', { name: 'Shares and recycle bin' });
+  const path = filesWindow(page).getByRole('navigation', { name: 'Path' });
+
+  await side.getByRole('button', { name: 'Show the folders in e2e-tree' }).click();
+  await side.getByRole('button', { name: 'inner', exact: true }).click();
+  await expect(path.getByRole('button', { name: 'inner', exact: true })).toHaveAttribute(
+    'aria-current',
+    'page',
+  );
+  await expect(side.getByRole('button', { name: 'inner', exact: true })).toHaveAttribute(
+    'aria-current',
+    'page',
+  );
+
+  await enter(page, 'deep');
+  const deep = side.getByRole('button', { name: 'deep', exact: true });
+  await expect(deep).toHaveAttribute('aria-current', 'page');
+  // A folder without subfolders has no toggle once that is known.
+  await expect(side.getByRole('button', { name: 'Show the folders in deep' })).toHaveCount(0);
+
+  await side.getByRole('button', { name: 'Hide the folders in e2e-tree' }).click();
+  await expect(deep).toHaveCount(0);
+  await expect(side.getByRole('button', { name: 'e2e-tree', exact: true })).toHaveAttribute(
+    'aria-current',
+    'page',
+  );
+});
+
 test('works with the keyboard alone', async ({ page }) => {
   prepare('e2e-keys/inner', { 'deep.txt': 'd' });
   await openFolder(page, 'e2e-keys');
