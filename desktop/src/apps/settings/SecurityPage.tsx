@@ -1,5 +1,5 @@
 import type { PithyxApp } from '@pithyx/sdk';
-import { Badge, Button } from '@pithyx/ui';
+import { Button, FormRow, FormSection, StatusBadge } from '@pithyx/ui';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { ErrorNotice } from '../../errors/ErrorNotice';
@@ -26,50 +26,45 @@ export function SecurityPage({ app }: { app: PithyxApp }) {
   });
   return (
     <div className={styles.content}>
-      <header className={styles.pageHeader}>
-        <div>
-          <p className={styles.muted}>{t('security.intro')}</p>
-        </div>
-      </header>
-      <section className={styles.group} aria-labelledby="security-root">
-        <h3 id="security-root" className={styles.sectionTitle}>
-          {t('security.root.title')}
-        </h3>
-        <p className={styles.muted}>{t('security.root.intro')}</p>
+      <p className={styles.muted}>{t('security.intro')}</p>
+      <FormSection title={t('security.root.title')}>
+        <p className={styles.sectionIntro}>{t('security.root.intro')}</p>
         {apps.isError && <ErrorNotice error={describeProblem(apps.error)} />}
-        {apps.data?.length === 0 && <p className={styles.muted}>{t('security.root.none')}</p>}
+        {apps.data?.length === 0 && (
+          <p className={styles.sectionIntro}>{t('security.root.none')}</p>
+        )}
         {apps.data?.map((entry) => {
           const names = entry.manifest as { name?: Record<string, string> };
           const rights = entry.elevated.filter(
             (right) => right.tier === 'critical' && right.granted,
           );
           return (
-            <div key={entry.id} className={styles.card}>
-              <div className={styles.pageHeader}>
-                <div>
-                  <strong>{manifestText(names.name ?? { en: entry.id }, i18n.language)}</strong>{' '}
-                  <Badge tone="danger">{t('security.root.badge')}</Badge>
-                  <span className={styles.detail}>
-                    {t('security.root.rights', {
-                      rights: rights.map((right) => right.right).join(', '),
-                    })}
-                  </span>
-                </div>
-                <Button
-                  variant="danger"
-                  isDisabled={revoke.isPending || entry.busy}
-                  onPress={() => {
-                    revoke.mutate(entry.id);
-                  }}
-                >
-                  {t('security.root.revoke')}
-                </Button>
-              </div>
-            </div>
+            <FormRow
+              key={entry.id}
+              label={
+                <>
+                  {manifestText(names.name ?? { en: entry.id }, i18n.language)}{' '}
+                  <StatusBadge tone="danger">{t('security.root.badge')}</StatusBadge>
+                </>
+              }
+              hint={t('security.root.rights', {
+                rights: rights.map((right) => right.right).join(', '),
+              })}
+            >
+              <Button
+                variant="danger"
+                isDisabled={revoke.isPending || entry.busy}
+                onPress={() => {
+                  revoke.mutate(entry.id);
+                }}
+              >
+                {t('security.root.revoke')}
+              </Button>
+            </FormRow>
           );
         })}
         {revoke.isError && <ErrorNotice error={describeProblem(revoke.error)} />}
-      </section>
+      </FormSection>
     </div>
   );
 }

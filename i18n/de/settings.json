@@ -210,7 +210,8 @@
     "memory": "Arbeitsspeicher",
     "uptime": "Läuft seit",
     "unknown": "Nicht gemeldet",
-    "uptimeValue": "{days, plural, =0 {} one {# Tag, } other {# Tagen, }}{hours, plural, one {# Stunde} other {# Stunden}}, {minutes, plural, one {# Minute} other {# Minuten}}"
+    "uptimeValue": "{days, plural, =0 {} one {# Tag, } other {# Tagen, }}{hours, plural, one {# Stunde} other {# Stunden}}, {minutes, plural, one {# Minute} other {# Minuten}}",
+    "section": "Diese Box"
   },
   "fileServices": {
     "intro": "Mit Dateidiensten öffnen andere Computer deine freigegebenen Ordner über das Netzwerk. Benutzer melden sich mit ihrem Pithyx-Benutzernamen und Passwort an.",

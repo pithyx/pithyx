@@ -1,5 +1,6 @@
 import type { PithyxApp } from '@pithyx/sdk';
 import { useQuery } from '@tanstack/react-query';
+import { FormRow, FormSection } from '@pithyx/ui';
 import { useTranslation } from 'react-i18next';
 import { formatBytes } from '../../desktop/format';
 import { ErrorNotice } from '../../errors/ErrorNotice';
@@ -37,21 +38,15 @@ export function InfoCenterPage({ app }: { app: PithyxApp }) {
         ];
   return (
     <div className={styles.content}>
-      <header className={styles.pageHeader}>
-        <div>
-          <p className={styles.muted}>{t('info.intro')}</p>
-        </div>
-      </header>
       {overview.isError && <ErrorNotice error={describeProblem(overview.error)} />}
       {data !== undefined && (
-        <dl className={styles.facts}>
+        <FormSection title={t('info.section')} note={t('info.intro')}>
           {rows.map(([label, value]) => (
-            <div key={label} className={styles.fact}>
-              <dt>{label}</dt>
-              <dd>{value}</dd>
-            </div>
+            <FormRow key={label} label={label}>
+              {value}
+            </FormRow>
           ))}
-        </dl>
+        </FormSection>
       )}
     </div>
   );

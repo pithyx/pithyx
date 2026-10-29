@@ -210,7 +210,8 @@
     "memory": "Memory",
     "uptime": "Running for",
     "unknown": "Not reported",
-    "uptimeValue": "{days, plural, =0 {} one {# day, } other {# days, }}{hours, plural, one {# hour} other {# hours}}, {minutes, plural, one {# minute} other {# minutes}}"
+    "uptimeValue": "{days, plural, =0 {} one {# day, } other {# days, }}{hours, plural, one {# hour} other {# hours}}, {minutes, plural, one {# minute} other {# minutes}}",
+    "section": "This box"
   },
   "fileServices": {
     "intro": "File services let other computers open your shared folders over the network. Users sign in with their Pithyx user name and password.",
