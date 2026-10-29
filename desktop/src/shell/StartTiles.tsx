@@ -7,6 +7,8 @@ import { useTranslation } from 'react-i18next';
 import { StatusBadge } from '@pithyx/ui';
 import { api } from '../api/client';
 import { formatBytes } from '../desktop/format';
+import { useRecentFiles, type RecentFile } from '../apps/files/recent';
+import { baseName, fileIcon } from '../items/fileTargets';
 import { realtime, useRealtime } from '../realtime/connection';
 import styles from './StartMenu.module.css';
 
@@ -181,21 +183,82 @@ export function FolderTiles({
   );
 }
 
+/** The files the user opened last, each opening as a double click in Files would, and a way to all of them. */
+export function RecentTiles({
+  files,
+  locale,
+  onFile,
+  onAll,
+}: {
+  files: readonly RecentFile[];
+  locale: string;
+  onFile: (file: RecentFile) => void;
+  onAll: () => void;
+}) {
+  const { t } = useTranslation();
+  const date = new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'short' });
+  return (
+    <section className={styles.tileSection} aria-labelledby="start-recent">
+      <div className={styles.tileHeader}>
+        <h3 id="start-recent" className={styles.sectionTitle}>
+          {t('start.recent')}
+        </h3>
+        <AriaButton className={styles.link} onPress={onAll}>
+          {t('start.openFiles')}
+        </AriaButton>
+      </div>
+      {files.length === 0 ? (
+        <p className={styles.recentEmpty}>{t('start.recentEmpty')}</p>
+      ) : (
+        <ul className={styles.folderList}>
+          {files.slice(0, RECENT_SHOWN).map((file) => {
+            const Icon = fileIcon(file.path);
+            return (
+              <li key={`${String(file.share)}:${file.path}`}>
+                <AriaButton
+                  className={styles.folder}
+                  onPress={() => {
+                    onFile(file);
+                  }}
+                >
+                  <Icon className={styles.tileIcon} size={18} stroke={1.75} aria-hidden />
+                  <span className={styles.folderName}>{baseName(file.path)}</span>
+                  <time className={styles.folderAccess} dateTime={file.openedAt}>
+                    {date.format(new Date(file.openedAt))}
+                  </time>
+                </AriaButton>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </section>
+  );
+}
+
+/** How many recent files the menu lists; Files lists all of them. */
+const RECENT_SHOWN = 5;
+
 /**
- * The tile area of the Pithyx menu (D394): status tiles for administrators, then the user's folders with their
- * access. "For you" tiles and recent files wait for their decision (#329) and an API.
+ * The tile area of the Pithyx menu (D394): status tiles for administrators, the recent files (hidden while the box
+ * keeps no list, #333), then the user's folders with their access. "For you" tiles wait for their decision (#329).
  */
 export function StartTiles({
   isAdmin,
   locale,
   onOpen,
   onFolder,
+  onFile,
+  onRecent,
 }: {
   isAdmin: boolean;
   locale: string;
   onOpen: (app: 'storage' | 'monitor' | 'settings') => void;
   onFolder: (share: number) => void;
+  onFile: (file: RecentFile) => void;
+  onRecent: () => void;
 }) {
+  const recent = useRecentFiles();
   const shares = useQuery({
     queryKey: ['start', 'shares'],
     queryFn: async () => unwrap(await api.GET('/api/shares')),
@@ -203,6 +266,9 @@ export function StartTiles({
   return (
     <>
       {isAdmin && <LiveStatusTiles locale={locale} onOpen={onOpen} />}
+      {recent !== undefined && (
+        <RecentTiles files={recent} locale={locale} onFile={onFile} onAll={onRecent} />
+      )}
       <FolderTiles shares={shares.data ?? []} onFolder={onFolder} />
     </>
   );

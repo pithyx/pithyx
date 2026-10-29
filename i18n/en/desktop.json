@@ -125,7 +125,8 @@
     "updatesCurrent": "Pithyx {version} is current",
     "updatesAvailable": "Pithyx {version} is available",
     "systemTile": "System",
-    "poolState": "{state, select, ONLINE {Healthy} DEGRADED {Degraded} other {Needs attention}}"
+    "poolState": "{state, select, ONLINE {Healthy} DEGRADED {Degraded} other {Needs attention}}",
+    "recentEmpty": "Files you open appear here."
   },
   "window": {
     "minimize": "Minimize",

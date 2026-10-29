@@ -5,6 +5,8 @@ import { api } from '../../api/client';
 import { realtime } from '../../realtime/connection';
 import { openApp } from '../../wm/store';
 import { appsFor } from '../files/defaultAction';
+import { joinPath } from '../files/paths';
+import { noteRecentFile } from '../files/recent';
 import { coreAppIds } from '../ids';
 import { installedApp } from '../installed';
 
@@ -161,7 +163,11 @@ export function filesHost(emit: (event: string, data?: unknown) => void): {
       },
       'internal.files.openViewer': {
         validate: isTarget,
-        handle: (params) => openApp(coreAppIds.viewer, undefined, { session: params }),
+        handle: (params) => {
+          const target = params as ViewerTarget;
+          noteRecentFile(Number(target.share), joinPath(target.folder, target.name));
+          return openApp(coreAppIds.viewer, undefined, { session: params });
+        },
       },
       'internal.files.runAction': {
         validate: isActionTarget,
@@ -204,11 +210,13 @@ export function filesHost(emit: (event: string, data?: unknown) => void): {
           ) {
             return false;
           }
+          const path = joinPath(target.folder, target.name);
+          noteRecentFile(Number(target.share), path);
           return openApp(target.app, {
             args: null,
             pendingFile: {
               share: target.share,
-              path: target.folder === '' ? target.name : `${target.folder}/${target.name}`,
+              path,
               size: target.size,
               modified: target.modified,
               writable: target.writable,

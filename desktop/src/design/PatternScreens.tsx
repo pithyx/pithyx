@@ -53,14 +53,16 @@ import {
   type DataTableColumn,
   type NavGroup,
 } from '@pithyx/ui';
+import { createFormatters, type ShareInfo } from '@pithyx/sdk';
 import { LogoMark } from '../ui/Logo';
+import { RecentView } from '../apps/files/RecentView';
 import { DesktopShell } from '../shell/DesktopShell';
 import { Taskbar } from '../shell/Taskbar';
 import { Window } from '../shell/Window';
 import type { SceneContext } from './DesktopScreens';
 import styles from './PatternScreens.module.css';
 import { sampleTexts as t } from './patternSample';
-import { now, useApps } from './sampleData';
+import { now, startRecent, startShares, useApps } from './sampleData';
 
 type PageId = keyof typeof t.pages;
 
@@ -592,6 +594,56 @@ export function PatternAppScene({ context, page }: { context: SceneContext; page
           geometry={{ x: 0, y: 0, width: 100, height: 100 }}
         >
           <SampleSettings initial={page} />
+        </Window>
+      </DesktopShell>
+    </UiProvider>
+  );
+}
+
+/** Files at its Recent place (#333), with the sample files of the menu. */
+export function RecentFilesScene({ context }: { context: SceneContext }) {
+  const apps = useApps();
+  const info = apps.files;
+  const format = createFormatters(() => ({ locale: context.locale, timeZone: 'UTC' }));
+  const shares: ShareInfo[] = startShares.map((share) => ({
+    id: String(share.id),
+    name: share.name,
+    access: share.access === 'readWrite' ? 'readWrite' : 'read',
+  }));
+  return (
+    <UiProvider locale={context.locale}>
+      <DesktopShell
+        taskbarPosition={context.taskbar}
+        taskbar={
+          <Taskbar
+            position={context.taskbar}
+            apps={[{ ...info, state: 'focused' }]}
+            startOpen={false}
+            jobs={0}
+            unread={0}
+            notificationsOpen={false}
+            switcherOpen={false}
+            now={now}
+            locale={context.locale}
+          />
+        }
+      >
+        <Window
+          app={info}
+          title={info.name}
+          focused
+          maximized
+          compactActive
+          layer={1}
+          geometry={{ x: 0, y: 0, width: 100, height: 100 }}
+        >
+          <RecentView
+            files={startRecent}
+            shares={shares}
+            format={format}
+            onOpen={ignore}
+            onShow={ignore}
+          />
         </Window>
       </DesktopShell>
     </UiProvider>

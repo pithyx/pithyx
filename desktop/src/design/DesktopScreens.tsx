@@ -16,7 +16,7 @@ import { JobList } from '../shell/JobList';
 import { NotificationPanel } from '../shell/NotificationPanel';
 import { ToastStack } from '../shell/Notifications';
 import { StartMenu, type StartResults } from '../shell/StartMenu';
-import { FolderTiles, StatusTiles } from '../shell/StartTiles';
+import { FolderTiles, RecentTiles, StatusTiles } from '../shell/StartTiles';
 import { StickyNote } from '../shell/StickyNote';
 import { Taskbar } from '../shell/Taskbar';
 import type { RunningApp, TaskbarPosition } from '../shell/types';
@@ -43,6 +43,7 @@ import {
   now,
   startApps,
   startPools,
+  startRecent,
   startSample,
   startShares,
   startUpdates,
@@ -306,6 +307,12 @@ export function StartMenuScene({
                 updates={startUpdates}
                 locale={context.locale}
                 onOpen={ignore}
+              />
+              <RecentTiles
+                files={startRecent}
+                locale={context.locale}
+                onFile={ignore}
+                onAll={ignore}
               />
               <FolderTiles shares={startShares} onFolder={ignore} />
             </>

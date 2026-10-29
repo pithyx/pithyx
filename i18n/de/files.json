@@ -161,5 +161,12 @@
     "list": "Liste",
     "tiles": "Kacheln"
   },
-  "detailsEmpty": "Wähle ein Element aus, um seine Details zu sehen."
+  "detailsEmpty": "Wähle ein Element aus, um seine Details zu sehen.",
+  "recent": {
+    "title": "Zuletzt verwendet",
+    "empty": "Dateien, die du öffnest, erscheinen hier.",
+    "location": "Ort",
+    "opened": "Geöffnet",
+    "show": "In {location} zeigen"
+  }
 }

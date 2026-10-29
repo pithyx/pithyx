@@ -8,6 +8,7 @@ import {
   type OpenWith,
 } from '../apps/files/defaultAction';
 import { useFileDefaults } from '../apps/files/fileDefaults';
+import { noteRecentFile, RECENT_PLACE } from '../apps/files/recent';
 import { coreAppIds } from '../apps/ids';
 import { useInstalledApps } from '../apps/installed';
 import { viewKindOf } from '../apps/viewer/kinds';
@@ -79,6 +80,13 @@ export function showInFiles(share: number, folder: string, select?: string): voi
   });
 }
 
+/** Opens Files at the list of the user's recent files. */
+export function showRecentInFiles(): void {
+  openApp(coreAppIds.files, undefined, {
+    session: { share: RECENT_PLACE, path: '', view: 'folder' },
+  });
+}
+
 /** Opens Files in the folder of a shortcut's target, with the target selected. */
 export function showTargetInFiles(share: number, path: string): void {
   showInFiles(share, parentOf(path), baseName(path));
@@ -109,7 +117,7 @@ function asAction(choice: OpenWith): DefaultAction {
 }
 
 /**
- * Opens the target of a shortcut as a double click in Files would: a folder in Files, a file in its default app, the
+ * Opens the target of a shortcut or a recent file as a double click in Files would: a folder in Files, a file in its default app, the
  * viewer or as a download. `how` is a choice of "Open with".
  */
 export async function openTarget(share: number, path: string, how?: OpenWith): Promise<void> {
@@ -124,6 +132,9 @@ export async function openTarget(share: number, path: string, how?: OpenWith): P
           )
         : asAction(how);
     const folder = parentOf(path);
+    if (action.kind === 'view' || action.kind === 'app') {
+      noteRecentFile(share, path);
+    }
     switch (action.kind) {
       case 'openFolder':
         showInFiles(share, path);

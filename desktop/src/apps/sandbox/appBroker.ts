@@ -7,6 +7,7 @@ import { download } from '../../shell/transfers';
 import { useDesktop } from '../../wm/store';
 import type { PendingFile } from '../host/rules';
 import { offerFileDialog, rememberNotification, type ChosenFile } from '../host/store';
+import { noteRecentFile } from '../files/recent';
 import { toPithyxError } from '../sdk/daemonError';
 import {
   folderWatcher,
@@ -326,6 +327,7 @@ export function appBrokerFor(target: {
       });
       const refs: FileRef[] = [];
       for (const file of chosen ?? []) {
+        noteRecentFile(file.share, file.path);
         const write = target.permissions().includes('files.write') && file.access === 'readWrite';
         refs.push(await daemon(async () => handOut(file, write)));
       }
@@ -357,6 +359,7 @@ export function appBrokerFor(target: {
           data,
           () => undefined,
         );
+        noteRecentFile(chosen.share, chosen.path);
         return fileRef(location, chosen.path, entry);
       });
     },

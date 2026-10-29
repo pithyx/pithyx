@@ -12,7 +12,7 @@ import {
 } from './DesktopScreens';
 import { labels } from './labels';
 import { LogoScreen } from './LogoScreen';
-import { PatternAppScene, PatternsScreen } from './PatternScreens';
+import { PatternAppScene, PatternsScreen, RecentFilesScene } from './PatternScreens';
 import styles from './screens.module.css';
 import { storageScreens } from './storageScreens';
 import { TokensScreen } from './TokensScreen';
@@ -257,6 +257,14 @@ export const screens: ScreenDefinition[] = [
     description:
       'Summary tiles, toolbar, pool cards with state badge, facts, meter (orange when nearly full) and the expanded details with the disks and actions. Compare with f-storage.',
     render: (context) => <PatternAppScene context={context} page="pools" />,
+  },
+  {
+    id: 'files-recent',
+    group: 'patterns',
+    title: 'Files: recent files',
+    description:
+      'The Recent place of Files (#333): name with the file type icon, the location as a link to the folder, when it was opened and the size. Compare with f-files.',
+    render: (context) => <RecentFilesScene context={context} />,
   },
   ...storageScreens,
 ];

@@ -22,6 +22,7 @@ import {
   IconArrowUp,
   IconChevronRight,
   IconClipboard,
+  IconClock,
   IconCopy,
   IconDownload,
   IconEye,
@@ -86,6 +87,8 @@ import {
 } from './selection';
 import { createTransfers, type Transfers } from './transfers';
 import { TrashView, trashKey } from './TrashView';
+import { RECENT_PLACE, useRecentFiles, type RecentFile } from './recent';
+import { RecentView } from './RecentView';
 import { VersionsDialog } from './VersionsDialog';
 import { createThumbnails, thumbnailKey } from './thumbnails';
 import { changeFolder, folderKey, keepOnly, prefetchFolder, useFolder } from './useFolder';
@@ -198,13 +201,16 @@ export function FilesApp({ app }: { app: PithyxApp }) {
   const sharedFolders = shareList.filter((candidate) => candidate.kind === undefined);
   const userHomes = shareList.filter((candidate) => candidate.kind === 'userHome');
   const atHomes = place.share === HOMES && userHomes.length > 0;
+  const recent = useRecentFiles();
+  const atRecent = place.share === RECENT_PLACE && recent !== undefined;
   // Each home is a share of its own (its trash, versions and pool), so the homes are listed as folders that open it.
   const homeEntries: FileEntry[] = userHomes
     .map((home): FileEntry => ({ name: home.name, kind: 'folder', size: 0, modified: '' }))
     .sort((a, b) => compareEntries(a, b, sort.key, sort.order));
-  const share: ShareInfo | undefined = atHomes
-    ? undefined
-    : (shareList.find((candidate) => candidate.id === place.share) ?? shareList[0]);
+  const share: ShareInfo | undefined =
+    atHomes || atRecent
+      ? undefined
+      : (shareList.find((candidate) => candidate.id === place.share) ?? shareList[0]);
   const shareId = share?.id ?? null;
   const inUserHome = share?.kind === 'userHome';
   const path = share?.id === place.share ? place.path : '';
@@ -242,11 +248,13 @@ export function FilesApp({ app }: { app: PithyxApp }) {
   const location = { share: shareId ?? '' };
   const title = atHomes
     ? t('shares.homes')
-    : view === 'trash'
-      ? t('trash')
-      : path === ''
-        ? (share?.name ?? '')
-        : nameOf(path);
+    : atRecent
+      ? t('recent.title')
+      : view === 'trash'
+        ? t('trash')
+        : path === ''
+          ? (share?.name ?? '')
+          : nameOf(path);
 
   // The window title and the saved place follow the folder on screen (the window manager and the layout live
   // outside React).
@@ -256,10 +264,12 @@ export function FilesApp({ app }: { app: PithyxApp }) {
     }
   }, [app, t, title]);
   useEffect(() => {
-    if (shareId !== null) {
+    if (atRecent) {
+      void app.session.save({ share: RECENT_PLACE, path: '', view: 'folder', layout });
+    } else if (shareId !== null) {
       void app.session.save({ share: shareId, path, view, layout });
     }
-  }, [app, shareId, path, view, layout]);
+  }, [app, atRecent, shareId, path, view, layout]);
   // Thumbnails rendered by the daemon arrive as events: syncing with the SDK.
   useEffect(() => onThumbnails(app, thumbnails.receive), [app, thumbnails]);
   const thumbnailSize = layout === 'grid' ? 'large' : 'small';
@@ -547,26 +557,69 @@ export function FilesApp({ app }: { app: PithyxApp }) {
     }
   }
 
-  async function openIn(entry: FileEntry, how: OpenWith) {
-    if (how === 'viewer' && shareId !== null) {
+  /** Opens a file of the folder on screen, or of another folder with `at` (a recent file). */
+  async function openIn(
+    entry: FileEntry,
+    how: OpenWith,
+    at = { share: shareId, folder: path, writable },
+  ) {
+    if (how === 'viewer' && at.share !== null) {
       await filesCall(app, 'internal.files.openViewer', {
-        share: shareId,
-        folder: path,
+        share: at.share,
+        folder: at.folder,
         name: entry.name,
       }).catch(report);
-    } else if (how.startsWith('app:') && shareId !== null) {
+    } else if (how.startsWith('app:') && at.share !== null) {
       await filesCall(app, 'internal.files.openWithApp', {
-        share: shareId,
-        folder: path,
+        share: at.share,
+        folder: at.folder,
         name: entry.name,
         app: how.slice('app:'.length),
         size: entry.size,
         modified: entry.modified,
-        writable,
+        writable: at.writable,
       }).catch(report);
-    } else {
-      await app.files.download(location, joinPath(path, entry.name)).catch(report);
+    } else if (at.share !== null) {
+      await app.files.download({ share: at.share }, joinPath(at.folder, entry.name)).catch(report);
     }
+  }
+
+  async function openRecent(file: RecentFile) {
+    const entry: FileEntry = {
+      name: nameOf(file.path),
+      kind: 'file',
+      size: file.size,
+      modified: file.modified,
+    };
+    const at = {
+      share: String(file.share),
+      folder: parentOf(file.path),
+      writable: shareList.some(
+        (candidate) => candidate.id === String(file.share) && candidate.access === 'readWrite',
+      ),
+    };
+    const action = defaultAction(entry, installed ?? [], useFileDefaults.getState().choices);
+    if (action.kind === 'view') {
+      await openIn(entry, 'viewer', at);
+    } else if (action.kind === 'app') {
+      await openIn(entry, `app:${action.id}`, at);
+    } else if (action.kind === 'download') {
+      await openIn(entry, 'download', at);
+    }
+  }
+
+  /** Shows a recent file in its folder, selected. */
+  function showRecent(file: RecentFile) {
+    const target = {
+      share: String(file.share),
+      path: parentOf(file.path),
+      view: 'folder' as const,
+    };
+    go(target);
+    setSelectionState({
+      at: `${target.share}:${target.path}:folder`,
+      selection: selectOnly(nameOf(file.path)),
+    });
   }
 
   async function open(entry: FileEntry) {
@@ -830,7 +883,7 @@ export function FilesApp({ app }: { app: PithyxApp }) {
         variant="bar"
         className={styles.commands}
         end={
-          view === 'folder' ? (
+          view === 'folder' && !atRecent ? (
             <>
               <Button
                 size="sm"
@@ -985,6 +1038,11 @@ export function FilesApp({ app }: { app: PithyxApp }) {
           onDragLeave={onZoneDragLeave}
           onDrop={onZoneDrop}
         >
+          {atRecent && (
+            <span className={styles.crumb} aria-current="page">
+              {t('recent.title')}
+            </span>
+          )}
           {(atHomes || inUserHome) && (
             <button
               type="button"
@@ -1038,7 +1096,12 @@ export function FilesApp({ app }: { app: PithyxApp }) {
             ))
           )}
         </nav>
-        <IconButton label={t('refresh')} size="sm" isDisabled={view !== 'folder'} onPress={refresh}>
+        <IconButton
+          label={t('refresh')}
+          size="sm"
+          isDisabled={view !== 'folder' || atRecent}
+          onPress={refresh}
+        >
           <IconRefresh size={18} stroke={1.75} />
         </IconButton>
       </div>
@@ -1056,6 +1119,22 @@ export function FilesApp({ app }: { app: PithyxApp }) {
           onDragLeave={onZoneDragLeave}
           onDrop={onZoneDrop}
         >
+          {recent !== undefined && (
+            <>
+              <button
+                type="button"
+                className={styles.sideItem}
+                aria-current={atRecent ? 'page' : undefined}
+                onClick={() => {
+                  go({ share: RECENT_PLACE, path: '', view: 'folder' });
+                }}
+              >
+                <IconClock className={styles.sideIcon} size={16} stroke={1.75} aria-hidden />
+                <span className={styles.sideName}>{t('recent.title')}</span>
+              </button>
+              <hr className={styles.sideRule} />
+            </>
+          )}
           {[ownHomes, sharedFolders].map((section, index) => (
             <Fragment key={index}>
               {index > 0 && section.length > 0 && <hr className={styles.sideRule} />}
@@ -1128,7 +1207,15 @@ export function FilesApp({ app }: { app: PithyxApp }) {
           )}
         </nav>
         <div className={styles.main}>
-          {shares.isSuccess && shareList.length === 0 ? (
+          {atRecent ? (
+            <RecentView
+              files={recent}
+              shares={shareList}
+              format={app.format}
+              onOpen={(file) => void openRecent(file)}
+              onShow={showRecent}
+            />
+          ) : shares.isSuccess && shareList.length === 0 ? (
             <p className={styles.empty}>{t('noShares')}</p>
           ) : atHomes ? (
             <FolderView
@@ -1261,7 +1348,7 @@ export function FilesApp({ app }: { app: PithyxApp }) {
             />
           )}
         </div>
-        {detailsOpen && view === 'folder' && (
+        {detailsOpen && view === 'folder' && !atRecent && (
           <DetailsPane
             entry={detailEntry}
             thumbnail={detailEntry === undefined ? null : thumbnailOf(detailEntry)}
@@ -1274,14 +1361,16 @@ export function FilesApp({ app }: { app: PithyxApp }) {
         transfers={transfers}
         readOnly={view === 'folder' && !writable && share !== undefined}
         text={
-          atHomes
-            ? count > 0
-              ? t('selected', { count })
-              : t('items', { count: userHomes.length })
-            : view === 'trash'
-              ? ''
-              : (announcement ??
-                (count > 0 ? t('selected', { count }) : t('items', { count: folder.total })))
+          atRecent
+            ? t('items', { count: recent.length })
+            : atHomes
+              ? count > 0
+                ? t('selected', { count })
+                : t('items', { count: userHomes.length })
+              : view === 'trash'
+                ? ''
+                : (announcement ??
+                  (count > 0 ? t('selected', { count }) : t('items', { count: folder.total })))
         }
         onCancel={(job) => {
           void app.jobs.cancel(job).catch(report);
