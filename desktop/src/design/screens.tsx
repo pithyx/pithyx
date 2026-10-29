@@ -12,6 +12,7 @@ import {
 } from './DesktopScreens';
 import { labels } from './labels';
 import { LogoScreen } from './LogoScreen';
+import { PatternAppScene, PatternsScreen } from './PatternScreens';
 import styles from './screens.module.css';
 import { storageScreens } from './storageScreens';
 import { TokensScreen } from './TokensScreen';
@@ -216,6 +217,46 @@ export const screens: ScreenDefinition[] = [
     description:
       'Translated error text; the request id goes to the console only. Becomes a bottom sheet on phones.',
     render: (context) => <ErrorDialogScene context={context} />,
+  },
+  {
+    id: 'patterns',
+    group: 'patterns',
+    title: 'Patterns',
+    description:
+      'Every pattern of @pithyx/ui from the design pass (D394) on its own: state badges, summary tiles, navigation, attention list, table with details pane, cards with meters, form sections with the action bar. Check every accent.',
+    render: (context) => <PatternsScreen context={context} />,
+  },
+  {
+    id: 'pattern-overview',
+    group: 'patterns',
+    title: 'Sample: settings overview',
+    description:
+      'AppFrame with the grouped navigation; box facts, Needs attention with one action per row, all settings. Compare with f-overview.',
+    render: (context) => <PatternAppScene context={context} page="overview" />,
+  },
+  {
+    id: 'pattern-network',
+    group: 'patterns',
+    title: 'Sample: network form',
+    description:
+      'Tabs, interface cards, form sections with label column, radio buttons, a select and the action bar fixed at the bottom. Compare with f-network.',
+    render: (context) => <PatternAppScene context={context} page="network" />,
+  },
+  {
+    id: 'pattern-users',
+    group: 'patterns',
+    title: 'Sample: users with details pane',
+    description:
+      'Tabs with counts, toolbar with the primary action first, a sortable table with two-line rows and the details pane of the selected user. Compare with f-users.',
+    render: (context) => <PatternAppScene context={context} page="users" />,
+  },
+  {
+    id: 'pattern-pools',
+    group: 'patterns',
+    title: 'Sample: pools as cards',
+    description:
+      'Summary tiles, toolbar, pool cards with state badge, facts, meter (orange when nearly full) and the expanded details with the disks and actions. Compare with f-storage.',
+    render: (context) => <PatternAppScene context={context} page="pools" />,
   },
   ...storageScreens,
 ];

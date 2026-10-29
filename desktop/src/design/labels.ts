@@ -21,6 +21,7 @@ export const labels = {
     desktop: 'Desktop',
     overlays: 'Menus and dialogs',
     storage: 'Storage and shared folders',
+    patterns: 'Patterns of the design pass',
   },
   tokens: {
     colors: 'Semantic colors',

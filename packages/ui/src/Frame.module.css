@@ -149,7 +149,13 @@
 }
 
 .navSearch {
+  align-self: stretch;
   margin: 0 var(--space-1) var(--space-2);
+}
+
+.navSearch input {
+  width: 100%;
+  min-width: 0;
 }
 
 .navEmpty {
