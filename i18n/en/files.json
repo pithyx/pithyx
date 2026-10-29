@@ -152,5 +152,13 @@
     "always": "Always open .{extension} files this way",
     "choices": "Ways to open the file",
     "current": "Default"
+  },
+  "commands": "Commands",
+  "refresh": "Refresh",
+  "readOnlyInfo": "You can open, copy and download files in {name}, but not change them.",
+  "command": {
+    "delete": "Delete",
+    "list": "List",
+    "tiles": "Tiles"
   }
 }

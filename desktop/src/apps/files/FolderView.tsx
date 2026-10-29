@@ -75,8 +75,9 @@ export interface FolderViewProps {
 /** How long the mouse rests on a folder before it is read ahead: passing over a folder reads nothing. */
 const REST_DELAY = 150;
 
-const ROW_HEIGHT = 36;
-const COARSE_ROW_HEIGHT = 52;
+// Rows of D394: 28 px with a fine pointer, 44 px on touch (the --row-height token).
+const ROW_HEIGHT = 28;
+const COARSE_ROW_HEIGHT = 44;
 const PAGE_ROWS = 10;
 const TILE_WIDTH = 136;
 const TILE_HEIGHT = 156;
