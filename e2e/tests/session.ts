@@ -89,10 +89,12 @@ const PERSONAL_SETTING_PAGES: Record<string, string> = {
 /** Picks one choice of a setting in Personal settings, such as the taskbar position. */
 export async function choosePersonalSetting(page: Page, setting: string, choice: string) {
   const window = await openPersonalSettings(page, PERSONAL_SETTING_PAGES[setting]);
-  await window
+  // The drawn circle or swatch lies over the hidden input, so the click goes to the choice's label, as a user's does.
+  const radio = window
     .getByRole('radiogroup', { name: setting, exact: true })
-    .getByRole('radio', { name: choice, exact: true })
-    .check();
+    .getByRole('radio', { name: choice, exact: true });
+  await radio.locator('xpath=ancestor::label[1]').click();
+  await expect(radio).toBeChecked();
 }
 
 /** Opens an app from the start menu; apps without a desktop shortcut open this way. */

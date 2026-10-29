@@ -88,7 +88,7 @@ test('a shared folder is edited and deleted with its files kept', async ({ page 
   await edit.getByRole('button', { name: 'Close' }).click();
   await expect(row).toContainText('Plans and notes');
 
-  await row.click();
+  // The folder is still selected; a second click would clear the selection.
   await settings.getByRole('button', { name: 'Delete…', exact: true }).click();
   const remove = page.getByRole('dialog', { name: 'Delete Team files' });
   await expect(remove.getByRole('radio', { name: /^Delete the data for good/ })).toBeDisabled();
