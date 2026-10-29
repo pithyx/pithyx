@@ -10,7 +10,6 @@ import {
   IconInfoCircle,
   IconNetwork,
   IconRestore,
-  IconRoute,
   IconServer2,
   IconShieldLock,
   IconUsers,
@@ -28,7 +27,6 @@ import { InfoCenterPage } from './InfoCenterPage';
 import { NetworkPage } from './NetworkPage';
 import { NotificationsPage } from './NotificationsPage';
 import { RegionalPage } from './RegionalPage';
-import { ReverseProxyPage } from './ReverseProxyPage';
 import { SecurityPage } from './SecurityPage';
 import { SharesPage } from './SharesPage';
 import { UpdatesPage } from './UpdatesPage';
@@ -38,7 +36,6 @@ export type SettingsPageId =
   | 'info'
   | 'network'
   | 'certificates'
-  | 'reverseProxy'
   | 'regional'
   | 'updates'
   | 'ups'
@@ -63,7 +60,6 @@ export interface SettingsPageInfo {
 export const SETTINGS_PAGES: readonly SettingsPageInfo[] = [
   { id: 'info', group: 'system', icon: IconInfoCircle, Component: InfoCenterPage },
   { id: 'network', group: 'system', icon: IconNetwork, Component: NetworkPage },
-  { id: 'reverseProxy', group: 'system', icon: IconRoute, Component: ReverseProxyPage },
   { id: 'security', group: 'system', icon: IconShieldLock, Component: SecurityPage },
   { id: 'certificates', group: 'system', icon: IconCertificate, Component: CertificatesPage },
   { id: 'updates', group: 'system', icon: IconCloudDownload, Component: UpdatesPage },

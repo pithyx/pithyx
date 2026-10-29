@@ -393,7 +393,13 @@
       "connectionWarning": "Dieser Browser erreicht die Box über {name}, und das ändert sich. Die Seite antwortet vielleicht nicht mehr; öffne die neue Adresse oder warte 60 Sekunden, bis die alten Einstellungen zurück sind.",
       "addresses": "Die Box antwortet dann auch unter:",
       "confirm": "Anwenden"
-    }
+    },
+    "tabs": {
+      "interfaces": "Schnittstellen",
+      "names": "Hostname und Nameserver",
+      "proxy": "Reverse Proxy"
+    },
+    "applyNote": "Änderungen gelten zusammen. Ist die Box danach nicht erreichbar, kehrt sie nach 60 Sekunden zu den alten Einstellungen zurück."
   },
   "certificates": {
     "intro": "Die Box spricht HTTPS auf Port 7484; die Ports 80 und 443 schicken jeden dorthin, außer ein Host des Reverse Proxys hat den Namen. Sie ist ihre eigene Zertifizierungsstelle: Installiere ihr Root-Zertifikat einmal auf einem Gerät, dann vertraut das Gerät der Box und jedem Zertifikat, das sie ausstellt.",

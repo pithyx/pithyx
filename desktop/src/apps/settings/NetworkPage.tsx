@@ -1,5 +1,5 @@
 import type { PithyxApp } from '@pithyx/sdk';
-import { Badge, Button } from '@pithyx/ui';
+import { ActionBar, Badge, Button, Tab, TabList, TabPanel, Tabs } from '@pithyx/ui';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -21,7 +21,9 @@ import {
   type PendingNetworkChange,
 } from '../sdk/network';
 import { describeProblem } from '../storage/shared';
+import { PageFooter } from './footer';
 import { ApplyDialog, GlobalDialog, InterfaceDialog, type Editing } from './NetworkDialogs';
+import { ReverseProxyPage } from './ReverseProxyPage';
 import styles from './Settings.module.css';
 
 const KIND_ORDER = { ethernet: 0, bond: 1, vlan: 2 } as const;
@@ -80,67 +82,79 @@ export function NetworkPage({ app }: { app: PithyxApp }) {
       {pending !== null && <PendingBanner app={app} pending={pending} />}
       {state !== undefined && config !== undefined && (
         <>
-          {dirty && (
-            <section className={styles.notice} aria-label={t('network.draft.label')}>
-              <p>{t('network.draft.text')}</p>
+          <Tabs>
+            <TabList aria-label={t('pages.network.title')}>
+              <Tab id="interfaces">{t('network.tabs.interfaces')}</Tab>
+              <Tab id="names">{t('network.tabs.names')}</Tab>
+              <Tab id="proxy">{t('network.tabs.proxy')}</Tab>
+            </TabList>
+            <TabPanel id="interfaces" className={styles.tabPanel}>
               <div className={styles.buttons}>
                 <Button
-                  variant="primary"
-                  isDisabled={pending !== null || checking.isPending}
+                  isDisabled={!state.links.some((link) => link.changeable)}
                   onPress={() => {
-                    checking.mutate(config);
+                    setEditing({ kind: 'newBond' });
                   }}
                 >
-                  {t('network.draft.apply')}
+                  {t('network.addBond')}
                 </Button>
                 <Button
+                  isDisabled={!state.links.some((link) => link.changeable)}
                   onPress={() => {
-                    setDraft(null);
-                    checking.reset();
+                    setEditing({ kind: 'newVlan' });
                   }}
                 >
-                  {t('network.draft.discard')}
+                  {t('network.addVlan')}
                 </Button>
               </div>
-              {pending !== null && <p className={styles.muted}>{t('network.draft.waiting')}</p>}
-              {checking.isError && <ErrorNotice error={describeProblem(checking.error)} />}
-            </section>
-          )}
-          <GlobalCard
-            state={state}
-            config={config}
-            onEdit={() => {
-              setEditing({ kind: 'global' });
-            }}
-          />
-          <div className={styles.buttons}>
-            <Button
-              isDisabled={!state.links.some((link) => link.changeable)}
-              onPress={() => {
-                setEditing({ kind: 'newBond' });
+              <InterfaceList
+                state={state}
+                config={config}
+                onEdit={(name) => {
+                  setEditing({ kind: 'interface', name });
+                }}
+                onRemove={(name) => {
+                  edit(withoutInterface(config, name));
+                }}
+              />
+            </TabPanel>
+            <TabPanel id="names" className={styles.tabPanel}>
+              <GlobalCard
+                state={state}
+                config={config}
+                onEdit={() => {
+                  setEditing({ kind: 'global' });
+                }}
+              />
+            </TabPanel>
+            <TabPanel id="proxy" className={styles.tabPanel}>
+              <ReverseProxyPage app={app} />
+            </TabPanel>
+          </Tabs>
+          <PageFooter>
+            <ActionBar
+              isDirty={dirty}
+              isPending={checking.isPending}
+              message={
+                pending !== null
+                  ? t('network.draft.waiting')
+                  : dirty
+                    ? t('network.draft.text')
+                    : t('network.applyNote')
+              }
+              applyLabel={t('network.draft.apply')}
+              onApply={() => {
+                if (pending === null) {
+                  checking.mutate(config);
+                }
               }}
-            >
-              {t('network.addBond')}
-            </Button>
-            <Button
-              isDisabled={!state.links.some((link) => link.changeable)}
-              onPress={() => {
-                setEditing({ kind: 'newVlan' });
+              onDiscard={() => {
+                setDraft(null);
+                checking.reset();
               }}
-            >
-              {t('network.addVlan')}
-            </Button>
-          </div>
-          <InterfaceList
-            state={state}
-            config={config}
-            onEdit={(name) => {
-              setEditing({ kind: 'interface', name });
-            }}
-            onRemove={(name) => {
-              edit(withoutInterface(config, name));
-            }}
-          />
+            />
+          </PageFooter>
+          {checking.isError && <ErrorNotice error={describeProblem(checking.error)} />}
         </>
       )}
       {editing !== null &&

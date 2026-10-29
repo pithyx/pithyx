@@ -393,7 +393,13 @@
       "connectionWarning": "This browser reaches the box through {name}, which changes. The page may stop answering; open the new address or wait 60 seconds for the old settings to come back.",
       "addresses": "The box will also answer at:",
       "confirm": "Apply"
-    }
+    },
+    "tabs": {
+      "interfaces": "Interfaces",
+      "names": "Host name and name servers",
+      "proxy": "Reverse proxy"
+    },
+    "applyNote": "Changes apply together. If the box cannot be reached afterwards, it goes back to the old settings after 60 seconds."
   },
   "certificates": {
     "intro": "The box speaks HTTPS on port 7484; ports 80 and 443 send every visitor there, unless a host of the reverse proxy has the name. It is its own certificate authority: install its root once on a device, and the device trusts the box and every certificate the box issues.",

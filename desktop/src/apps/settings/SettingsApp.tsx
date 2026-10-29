@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { IconHome } from '../../ui/icons';
 import type { SdkAppProps } from '../sdk/CoreSdkApp';
 import { onInternal, SHARES_CHANGED, STORAGE_CHANGED } from '../sdk/internal';
+import { FooterSlot } from './footer';
 import { OverviewPage } from './OverviewPage';
 import { SETTINGS_PAGES, type SettingsPageId } from './pages';
 import styles from './Settings.module.css';
@@ -14,7 +15,9 @@ type Place = SettingsPageId | 'overview';
 
 /** The page named by launch arguments such as `{ page: 'users' }`, if any. */
 function pageOf(args: unknown): SettingsPageId | null {
-  const page = (args as { page?: unknown } | null)?.page;
+  const asked = (args as { page?: unknown } | null)?.page;
+  // The reverse proxy is a tab of Network since the design pass (#325).
+  const page = asked === 'reverseProxy' ? 'network' : asked;
   return SETTINGS_PAGES.find((entry) => entry.id === page)?.id ?? null;
 }
 
@@ -33,6 +36,7 @@ export function SettingsApp({ app }: SdkAppProps) {
     pageOf(app.context.launch.args) === null ? 'navigation' : 'page',
   );
   const page = SETTINGS_PAGES.find((entry) => entry.id === current);
+  const [footer, setFooter] = useState<HTMLDivElement | null>(null);
 
   // The desktop forwards changes of the shares and the pools (used space); this syncs every cached answer with them.
   useEffect(() => {
@@ -73,7 +77,13 @@ export function SettingsApp({ app }: SdkAppProps) {
       id,
       label: t(`pages.${id}.title`),
       icon: <Icon size={18} stroke={1.75} aria-hidden />,
-      keywords: [t(`pages.${id}.description`), t(`pages.${id}.keywords`)],
+      keywords: [
+        t(`pages.${id}.description`),
+        t(`pages.${id}.keywords`),
+        ...(id === 'network'
+          ? [t('pages.reverseProxy.title'), t('pages.reverseProxy.keywords')]
+          : []),
+      ],
     };
   };
   const groups: NavGroup[] = [
@@ -111,12 +121,15 @@ export function SettingsApp({ app }: SdkAppProps) {
         />
       }
       title={page === undefined ? t('overview.page') : t(`pages.${page.id}.title`)}
+      footer={<div ref={setFooter} />}
     >
-      {page === undefined ? (
-        <OverviewPage app={app} pages={SETTINGS_PAGES} onOpen={open} />
-      ) : (
-        <page.Component app={app} />
-      )}
+      <FooterSlot value={footer}>
+        {page === undefined ? (
+          <OverviewPage app={app} pages={SETTINGS_PAGES} onOpen={open} />
+        ) : (
+          <page.Component app={app} />
+        )}
+      </FooterSlot>
     </AppFrame>
   );
 }

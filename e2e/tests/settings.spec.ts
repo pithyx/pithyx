@@ -84,7 +84,14 @@ test('the Info Center, Network, File services and Users pages open from the navi
   expect(await violations(page)).toEqual([]);
 
   await openSettingsPage(settings, 'Network');
+  await expect(settings.getByRole('tab', { name: 'Interfaces' })).toHaveAttribute(
+    'aria-selected',
+    'true',
+  );
+  await settings.getByRole('tab', { name: 'Host name and name servers' }).click();
   await expect(settings.getByRole('heading', { name: 'Host name and name servers' })).toBeVisible();
+  await settings.getByRole('tab', { name: 'Reverse proxy' }).click();
+  await expect(settings.getByRole('tabpanel', { name: 'Reverse proxy' })).toBeVisible();
   await expect(settings.getByRole('heading', { name: 'Network', level: 1 })).toBeVisible();
   expect(await violations(page)).toEqual([]);
 
