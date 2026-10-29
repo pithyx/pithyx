@@ -47,8 +47,8 @@ test('Settings has no storage page and no link to Storage', async ({ page }) => 
   await signInAsAdmin(page);
   await openFromStart(page, 'Settings');
   const settings = appWindow(page, 'Settings');
-  await expect(settings.getByRole('heading', { name: 'Settings', level: 2 })).toBeVisible();
-  await expect(settings.getByRole('button', { name: /Storage/ })).toHaveCount(0);
+  await expect(settings.getByRole('heading', { name: 'Overview', level: 2 })).toBeVisible();
+  await expect(settings.getByRole('button', { name: /^Storage|Pools/ })).toHaveCount(0);
 });
 
 test('the pool wizard compares layouts, encrypts with a stored key and lists the exact commands', async ({

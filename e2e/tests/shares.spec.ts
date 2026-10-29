@@ -3,7 +3,7 @@ import { existsSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import type { Page } from '@playwright/test';
 import { expect, test } from './fixtures';
-import { appWindow, openFromStart, signInAsAdmin } from './session';
+import { appWindow, openFromStart, openSettingsPage, signInAsAdmin } from './session';
 
 // Simulation: the seeded folder share "Shared" and pools without the Pithyx layout, so no shared folder can be created
 // as a dataset (daemon/tests/fixtures/commands/default). Other specs use "Shared"; this one only reads it.
@@ -13,7 +13,7 @@ async function openSharedFolders(page: Page) {
   await signInAsAdmin(page);
   await openFromStart(page, 'Settings');
   const settings = appWindow(page, 'Settings');
-  await settings.getByRole('button', { name: /^Shared folders/ }).click();
+  await openSettingsPage(settings, 'Shared folders');
   await expect(settings.getByRole('heading', { name: 'Shared folders', level: 2 })).toBeVisible();
   return settings;
 }

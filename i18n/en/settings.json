@@ -91,7 +91,34 @@
     "search": "Search settings",
     "noMatch": "No settings match your search.",
     "all": "All settings",
-    "navigation": "Settings navigation"
+    "navigation": "Settings navigation",
+    "allSettings": "All settings",
+    "box": {
+      "label": "This box",
+      "version": "Pithyx {version}",
+      "runningFor": "Running for",
+      "updates": "Updates",
+      "upToDate": "Up to date",
+      "updateReady": "Pithyx {version} is ready"
+    },
+    "attention": {
+      "openStorage": "Open Storage",
+      "update": {
+        "title": "Pithyx {version} is ready to install",
+        "description": "Install it under Updates; the box restarts once.",
+        "action": "Open Updates"
+      },
+      "apps": {
+        "title": "{count, plural, one {An update for # app is ready} other {Updates for # apps are ready}}",
+        "action": "Open Store"
+      },
+      "trust": {
+        "title": "This device does not trust the box yet",
+        "description": "Trust it once to turn on passkeys and stop the warnings of the browser.",
+        "action": "Trust this device"
+      }
+    },
+    "page": "Overview"
   },
   "categories": {
     "system": "System",
@@ -1060,5 +1087,9 @@
       "rights": "Rights: {rights}",
       "revoke": "Revoke root access"
     }
+  },
+  "groups": {
+    "system": "System",
+    "access": "Access"
   }
 }

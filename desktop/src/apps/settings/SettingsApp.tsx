@@ -1,108 +1,38 @@
-import type { PithyxApp } from '@pithyx/sdk';
 import { useQueryClient } from '@tanstack/react-query';
-import { useEffect, useState, type ComponentType } from 'react';
+import { AppFrame, NavList, type NavGroup } from '@pithyx/ui';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  IconArrowLeft,
-  IconBatteryCharging,
-  IconBell,
-  IconCertificate,
-  IconCloudDownload,
-  IconFolders,
-  IconHome,
-  IconInfoCircle,
-  IconNetwork,
-  IconRestore,
-  IconRoute,
-  IconServer2,
-  IconShieldLock,
-  IconUsers,
-  IconUsersGroup,
-  IconWorld,
-  type TablerIcon,
-} from '../../ui/icons';
-import { SearchField } from '@pithyx/ui';
+import { IconHome } from '../../ui/icons';
 import type { SdkAppProps } from '../sdk/CoreSdkApp';
 import { onInternal, SHARES_CHANGED, STORAGE_CHANGED } from '../sdk/internal';
-import { GroupsPage } from '../users/GroupsPage';
-import { UsersPage } from '../users/UsersPage';
-import { BackupPage } from './BackupPage';
-import { CertificatesPage } from './CertificatesPage';
-import { FileServicesPage } from './FileServicesPage';
-import { HomesPage } from './HomesPage';
-import { InfoCenterPage } from './InfoCenterPage';
-import { NetworkPage } from './NetworkPage';
-import { NotificationsPage } from './NotificationsPage';
-import { RegionalPage } from './RegionalPage';
-import { ReverseProxyPage } from './ReverseProxyPage';
-import { SecurityPage } from './SecurityPage';
+import { OverviewPage } from './OverviewPage';
+import { SETTINGS_PAGES, type SettingsPageId } from './pages';
 import styles from './Settings.module.css';
 import { sharesKey } from './shares';
-import { SharesPage } from './SharesPage';
-import { UpdatesPage } from './UpdatesPage';
-import { UpsPage } from './UpsPage';
 
-type PageId =
-  | 'info'
-  | 'network'
-  | 'certificates'
-  | 'reverseProxy'
-  | 'regional'
-  | 'updates'
-  | 'ups'
-  | 'notifications'
-  | 'backup'
-  | 'security'
-  | 'shares'
-  | 'homes'
-  | 'fileServices'
-  | 'users'
-  | 'groups';
-
-interface SettingsPage {
-  id: PageId;
-  category: 'system' | 'sharing' | 'accounts';
-  icon: TablerIcon;
-  Component: ComponentType<{ app: PithyxApp }>;
-}
-
-// In the order of the overview. Only finished or clearly marked pages; personal settings are in the user menu.
-const PAGES: readonly SettingsPage[] = [
-  { id: 'info', category: 'system', icon: IconInfoCircle, Component: InfoCenterPage },
-  { id: 'network', category: 'system', icon: IconNetwork, Component: NetworkPage },
-  { id: 'certificates', category: 'system', icon: IconCertificate, Component: CertificatesPage },
-  { id: 'reverseProxy', category: 'system', icon: IconRoute, Component: ReverseProxyPage },
-  { id: 'regional', category: 'system', icon: IconWorld, Component: RegionalPage },
-  { id: 'updates', category: 'system', icon: IconCloudDownload, Component: UpdatesPage },
-  { id: 'ups', category: 'system', icon: IconBatteryCharging, Component: UpsPage },
-  { id: 'notifications', category: 'system', icon: IconBell, Component: NotificationsPage },
-  { id: 'backup', category: 'system', icon: IconRestore, Component: BackupPage },
-  { id: 'security', category: 'system', icon: IconShieldLock, Component: SecurityPage },
-  { id: 'shares', category: 'sharing', icon: IconFolders, Component: SharesPage },
-  { id: 'homes', category: 'sharing', icon: IconHome, Component: HomesPage },
-  { id: 'fileServices', category: 'sharing', icon: IconServer2, Component: FileServicesPage },
-  { id: 'users', category: 'accounts', icon: IconUsers, Component: UsersPage },
-  { id: 'groups', category: 'accounts', icon: IconUsersGroup, Component: GroupsPage },
-];
-const CATEGORIES = ['system', 'sharing', 'accounts'] as const;
+type Place = SettingsPageId | 'overview';
 
 /** The page named by launch arguments such as `{ page: 'users' }`, if any. */
-function pageOf(args: unknown): PageId | null {
+function pageOf(args: unknown): SettingsPageId | null {
   const page = (args as { page?: unknown } | null)?.page;
-  return PAGES.find((entry) => entry.id === page)?.id ?? null;
+  return SETTINGS_PAGES.find((entry) => entry.id === page)?.id ?? null;
 }
 
 /**
- * Settings: system settings only, as an overview of categories with tiles and a search. A tile opens its page; "All
- * settings" goes back. Personal settings (theme, accent color, language, taskbar, wallpaper) live in the user menu,
- * and storage has its own app.
+ * Settings (D394): one frame with the grouped navigation on the left (Overview; System; Access) and the page on the
+ * right. The overview shows the box, what needs attention and every area as a tile. Personal settings and Storage are
+ * apps of their own.
  */
 export function SettingsApp({ app }: SdkAppProps) {
   const { t } = useTranslation('settings');
   const queryClient = useQueryClient();
-  const [current, setCurrent] = useState<PageId | null>(() => pageOf(app.context.launch.args));
-  const [query, setQuery] = useState('');
-  const page = PAGES.find((entry) => entry.id === current);
+  const [current, setCurrent] = useState<Place>(
+    () => pageOf(app.context.launch.args) ?? 'overview',
+  );
+  const [view, setView] = useState<'navigation' | 'page'>(() =>
+    pageOf(app.context.launch.args) === null ? 'navigation' : 'page',
+  );
+  const page = SETTINGS_PAGES.find((entry) => entry.id === current);
 
   // The desktop forwards changes of the shares and the pools (used space); this syncs every cached answer with them.
   useEffect(() => {
@@ -126,113 +56,67 @@ export function SettingsApp({ app }: SdkAppProps) {
         const next = pageOf(launch.args);
         if (next !== null) {
           setCurrent(next);
+          setView('page');
         }
       }),
     [app],
   );
 
-  if (page !== undefined) {
-    const { Component } = page;
-    return (
-      <div className={styles.app}>
-        <nav className={styles.crumbs} aria-label={t('overview.navigation')}>
-          <button
-            type="button"
-            className={styles.back}
-            onClick={() => {
-              setCurrent(null);
-            }}
-          >
-            <IconArrowLeft size={16} stroke={1.75} aria-hidden />
-            {t('overview.all')}
-          </button>
-        </nav>
-        {/* Focusable, so keyboard users can scroll a page without controls. */}
-        <main className={styles.page} tabIndex={0}>
-          <Component app={app} />
-        </main>
-      </div>
-    );
-  }
-
-  const needle = query.trim().toLocaleLowerCase();
-  const matches = PAGES.filter(
-    (entry) =>
-      needle === '' ||
-      [
-        t(`pages.${entry.id}.title`),
-        t(`pages.${entry.id}.description`),
-        t(`pages.${entry.id}.keywords`),
-      ]
-        .join(' ')
-        .toLocaleLowerCase()
-        .includes(needle),
-  );
+  const open = (next: Place) => {
+    setCurrent(next);
+    setView('page');
+  };
+  const item = (id: SettingsPageId) => {
+    const entry = SETTINGS_PAGES.find((candidate) => candidate.id === id);
+    const Icon = entry?.icon ?? IconHome;
+    return {
+      id,
+      label: t(`pages.${id}.title`),
+      icon: <Icon size={18} stroke={1.75} aria-hidden />,
+      keywords: [t(`pages.${id}.description`), t(`pages.${id}.keywords`)],
+    };
+  };
+  const groups: NavGroup[] = [
+    {
+      id: 'start',
+      items: [
+        {
+          id: 'overview',
+          label: t('overview.page'),
+          icon: <IconHome size={18} stroke={1.75} aria-hidden />,
+        },
+      ],
+    },
+    ...(['system', 'access'] as const).map((group) => ({
+      id: group,
+      label: t(`groups.${group}`),
+      items: SETTINGS_PAGES.filter((entry) => entry.group === group).map((entry) => item(entry.id)),
+    })),
+  ];
 
   return (
-    <div className={styles.app}>
-      <main className={styles.overview}>
-        <header className={styles.overviewHeader}>
-          <h2 className={styles.pageTitle}>{t('overview.title')}</h2>
-          <SearchField
-            label={t('overview.search')}
-            placeholder={t('overview.search')}
-            className={styles.search}
-            value={query}
-            onChange={setQuery}
-            onSubmit={() => {
-              const first = matches[0];
-              if (first !== undefined) {
-                setCurrent(first.id);
-              }
-            }}
-          />
-        </header>
-        {matches.length === 0 && <p className={styles.muted}>{t('overview.noMatch')}</p>}
-        {CATEGORIES.map((category) => {
-          const tiles = matches.filter((entry) => entry.category === category);
-          if (tiles.length === 0) {
-            return null;
-          }
-          return (
-            <section
-              key={category}
-              className={styles.category}
-              aria-labelledby={`settings-${category}`}
-            >
-              <h3 id={`settings-${category}`} className={styles.categoryTitle}>
-                {t(`categories.${category}`)}
-              </h3>
-              <ul className={styles.tiles}>
-                {tiles.map((entry) => {
-                  const Icon = entry.icon;
-                  return (
-                    <li key={entry.id}>
-                      <button
-                        type="button"
-                        className={styles.tile}
-                        onClick={() => {
-                          setCurrent(entry.id);
-                        }}
-                      >
-                        <span className={styles.tileIcon} aria-hidden>
-                          <Icon size={24} stroke={1.75} />
-                        </span>
-                        <span className={styles.tileText}>
-                          <span className={styles.tileTitle}>{t(`pages.${entry.id}.title`)}</span>
-                          <span className={styles.tileDescription}>
-                            {t(`pages.${entry.id}.description`)}
-                          </span>
-                        </span>
-                      </button>
-                    </li>
-                  );
-                })}
-              </ul>
-            </section>
-          );
-        })}
-      </main>
-    </div>
+    <AppFrame
+      className={styles.frame}
+      view={view}
+      onViewChange={setView}
+      navigation={
+        <NavList
+          aria-label={t('overview.navigation')}
+          searchPlaceholder={t('overview.search')}
+          groups={groups}
+          selectedId={current}
+          onSelect={(id) => {
+            open(id as Place);
+          }}
+        />
+      }
+      {...(page === undefined ? { title: t('overview.page') } : {})}
+    >
+      {page === undefined ? (
+        <OverviewPage app={app} pages={SETTINGS_PAGES} onOpen={open} />
+      ) : (
+        <page.Component app={app} />
+      )}
+    </AppFrame>
   );
 }

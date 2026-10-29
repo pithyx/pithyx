@@ -16,7 +16,7 @@ Apps öffnen sich in Fenstern auf dem Desktop, wie Dateien oder Einstellungen. E
 Die Apps, die zu Pithyx gehören, sind **Dateien**, **Betrachter**, **Speicher**, **Einstellungen**, **Ressourcenmonitor**, **Protokoll-Center**, **Über Pithyx** und **Store**. Du siehst nur die Apps, die du nutzen darfst:
 
 - **Dateien** und **Betrachter** stehen neuen Benutzern standardmäßig zur Verfügung.
-- **Speicher**, **Einstellungen**, **Ressourcenmonitor**, **Protokoll-Center** und **Store** sind für Administratoren.
+- **Speicher**, **Einstellungen**, **Ressourcenmonitor**, **Protokoll-Center** und **Store** sind für Administratoren. Einstellungen öffnet sich mit der **Übersicht**: die Box mit Version, Hardware, Laufzeit und Updates, dann **Braucht Aufmerksamkeit** mit einer Zeile je Problem, das die Box kennt (eine Warnung eines Pools, ein Update von Pithyx oder einer App, ein Gerät, das der Box noch nicht vertraut), und dem Knopf, der zur Lösung führt, dann **Alle Einstellungen** als Kacheln. Die Navigationsspalte links listet jede Seite unter **System** und **Zugriff** und hat eine Suche, die eine Seite auch über ihren Inhalt findet, etwa `ntp`.
 - **Über Pithyx** steht allen offen.
 - Apps, die ein Administrator installiert hat, erscheinen bei den Benutzern, die der Administrator gewählt hat. Frag einen Administrator, wenn dir eine App fehlt.
 

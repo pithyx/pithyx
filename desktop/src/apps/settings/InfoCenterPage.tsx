@@ -1,13 +1,13 @@
 import type { PithyxApp } from '@pithyx/sdk';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import type { TFunction } from 'i18next';
 import { formatBytes } from '../../desktop/format';
 import { ErrorNotice } from '../../errors/ErrorNotice';
 import { useFormatLocale } from '../../i18n';
 import { systemCall } from '../sdk/system';
 import { describeProblem } from '../storage/shared';
 import styles from './Settings.module.css';
+import { uptime } from './uptime';
 
 /** Info Center: what runs on this box. Pithyx version and commit, system, machine, processor, memory, uptime. */
 export function InfoCenterPage({ app }: { app: PithyxApp }) {
@@ -56,11 +56,4 @@ export function InfoCenterPage({ app }: { app: PithyxApp }) {
       )}
     </div>
   );
-}
-
-function uptime(t: TFunction<'settings'>, seconds: number): string {
-  const days = Math.floor(seconds / 86_400);
-  const hours = Math.floor((seconds % 86_400) / 3600);
-  const minutes = Math.floor((seconds % 3600) / 60);
-  return t('info.uptimeValue', { days, hours, minutes });
 }

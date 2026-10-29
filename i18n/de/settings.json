@@ -91,7 +91,34 @@
     "search": "Einstellungen durchsuchen",
     "noMatch": "Keine Einstellung passt zu deiner Suche.",
     "all": "Alle Einstellungen",
-    "navigation": "Navigation der Einstellungen"
+    "navigation": "Navigation der Einstellungen",
+    "allSettings": "Alle Einstellungen",
+    "box": {
+      "label": "Diese Box",
+      "version": "Pithyx {version}",
+      "runningFor": "Läuft seit",
+      "updates": "Updates",
+      "upToDate": "Aktuell",
+      "updateReady": "Pithyx {version} ist bereit"
+    },
+    "attention": {
+      "openStorage": "Speicher öffnen",
+      "update": {
+        "title": "Pithyx {version} ist bereit zur Installation",
+        "description": "Installiere es unter Updates; die Box startet einmal neu.",
+        "action": "Updates öffnen"
+      },
+      "apps": {
+        "title": "{count, plural, one {Ein Update für # App ist bereit} other {Updates für # Apps sind bereit}}",
+        "action": "Store öffnen"
+      },
+      "trust": {
+        "title": "Dieses Gerät vertraut der Box noch nicht",
+        "description": "Vertraue ihr einmal, um Passkeys einzuschalten und die Warnungen des Browsers loszuwerden.",
+        "action": "Diesem Gerät vertrauen"
+      }
+    },
+    "page": "Übersicht"
   },
   "categories": {
     "system": "System",
@@ -1060,5 +1087,9 @@
       "rights": "Rechte: {rights}",
       "revoke": "Root-Zugriff entziehen"
     }
+  },
+  "groups": {
+    "system": "System",
+    "access": "Zugriff"
   }
 }

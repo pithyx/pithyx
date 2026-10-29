@@ -1,4 +1,4 @@
-import { expect, type Page } from '@playwright/test';
+import { expect, type Locator, type Page } from '@playwright/test';
 
 /** The administrator every spec signs in as. auth.spec.ts ends with this password after its reset. */
 export const admin = {
@@ -91,6 +91,16 @@ export async function openFilesInShared(page: Page) {
     .getByRole('button', { name: 'Shared', exact: true })
     .click();
   await expect(files.getByRole('navigation', { name: 'Path' })).toContainText('Shared');
+}
+
+/** The navigation column of Settings (D394). */
+export function settingsNavigation(settings: Locator): Locator {
+  return settings.getByRole('navigation', { name: 'Settings navigation' });
+}
+
+/** Opens a page of Settings from its navigation column. */
+export async function openSettingsPage(settings: Locator, name: string) {
+  await settingsNavigation(settings).getByRole('button', { name, exact: true }).click();
 }
 
 export function appWindow(page: Page, name: string) {

@@ -6,6 +6,8 @@ import {
   choosePersonalSetting,
   openAccountMenu,
   openFromStart,
+  openSettingsPage,
+  settingsNavigation,
   signInAsAdmin,
 } from './session';
 
@@ -27,16 +29,19 @@ async function openSettings(page: Page) {
   await signInAsAdmin(page);
   await openFromStart(page, 'Settings');
   const settings = appWindow(page, 'Settings');
-  await expect(settings.getByRole('heading', { name: 'Settings', level: 2 })).toBeVisible();
+  await expect(settings.getByRole('heading', { name: 'Overview', level: 2 })).toBeVisible();
   return settings;
 }
 
-test('Settings opens as an overview of categories with a search', async ({ page }) => {
+test('Settings opens with the overview and a grouped navigation with a search', async ({
+  page,
+}) => {
   const settings = await openSettings(page);
-  for (const category of ['System', 'Files and sharing', 'Users']) {
-    await expect(settings.getByRole('heading', { name: category, level: 3 })).toBeVisible();
+  const navigation = settingsNavigation(settings);
+  for (const group of ['System', 'Access']) {
+    await expect(navigation.getByRole('heading', { name: group })).toBeVisible();
   }
-  for (const tile of [
+  for (const item of [
     'Info Center',
     'Network',
     'Regional settings',
@@ -46,46 +51,44 @@ test('Settings opens as an overview of categories with a search', async ({ page 
     'File services',
     'Users',
   ]) {
-    await expect(settings.getByRole('button', { name: new RegExp(`^${tile}`) })).toBeVisible();
+    await expect(navigation.getByRole('button', { name: item, exact: true })).toBeVisible();
   }
-  // Personal settings live in the account menu.
+  await expect(settings.getByRole('heading', { name: 'All settings', level: 2 })).toBeVisible();
+  // Personal settings are an app of their own.
   await expect(settings.getByRole('button', { name: /Personalization|Appearance/ })).toHaveCount(0);
   expect(await violations(page)).toEqual([]);
 
-  const search = settings.getByRole('searchbox', { name: 'Search settings' });
+  const search = navigation.getByRole('searchbox', { name: 'Search settings' });
   await search.fill('ntp');
-  await expect(settings.getByRole('button', { name: /^Regional settings/ })).toBeVisible();
-  await expect(settings.getByRole('button', { name: /^Network/ })).toHaveCount(0);
-  await search.press('Enter');
+  await expect(
+    navigation.getByRole('button', { name: 'Regional settings', exact: true }),
+  ).toBeVisible();
+  await expect(navigation.getByRole('button', { name: 'Network', exact: true })).toHaveCount(0);
+  await navigation.getByRole('button', { name: 'Regional settings', exact: true }).click();
   await expect(
     settings.getByRole('heading', { name: 'Regional settings', level: 2 }),
   ).toBeVisible();
-  await settings.getByRole('button', { name: 'All settings' }).click();
-  // The window title is a level 2 heading named Settings too, so the overview shows by its categories.
-  await expect(settings.getByRole('heading', { name: 'System', level: 3 })).toBeVisible();
-
-  await settings.getByRole('searchbox', { name: 'Search settings' }).fill('no such setting');
-  await expect(settings).toContainText('No settings match your search.');
+  await search.fill('');
+  await openSettingsPage(settings, 'Overview');
+  await expect(settings.getByRole('heading', { name: 'All settings', level: 2 })).toBeVisible();
 });
 
-test('the Info Center, Network, File services and Users pages open from their tiles', async ({
+test('the Info Center, Network, File services and Users pages open from the navigation', async ({
   page,
 }) => {
   const settings = await openSettings(page);
-  await settings.getByRole('button', { name: /^Info Center/ }).click();
+  await openSettingsPage(settings, 'Info Center');
   await expect(settings.getByRole('heading', { name: 'Info Center', level: 2 })).toBeVisible();
   await expect(settings.getByText('Pithyx version')).toBeVisible();
   await expect(settings.getByText('Logical processors')).toBeVisible();
   expect(await violations(page)).toEqual([]);
-  await settings.getByRole('button', { name: 'All settings' }).click();
 
-  await settings.getByRole('button', { name: /^Network/ }).click();
+  await openSettingsPage(settings, 'Network');
   await expect(settings.getByRole('heading', { name: 'Host name and name servers' })).toBeVisible();
   await expect(settings.getByRole('heading', { name: 'Network', level: 2 })).toBeVisible();
   expect(await violations(page)).toEqual([]);
-  await settings.getByRole('button', { name: 'All settings' }).click();
 
-  await settings.getByRole('button', { name: /^File services/ }).click();
+  await openSettingsPage(settings, 'File services');
   await expect(settings.getByRole('heading', { name: 'File services', level: 2 })).toBeVisible();
   await expect(
     settings.getByRole('switch', { name: 'Offer shared folders over SMB' }),
@@ -98,9 +101,8 @@ test('the Info Center, Network, File services and Users pages open from their ti
   await settings.getByRole('button', { name: 'Save' }).click();
   await expect(settings.getByLabel('Workgroup')).toHaveValue('HOME-LAB');
   expect(await violations(page)).toEqual([]);
-  await settings.getByRole('button', { name: 'All settings' }).click();
 
-  await settings.getByRole('button', { name: /^Users/ }).click();
+  await openSettingsPage(settings, 'Users');
   await expect(settings.getByRole('heading', { name: 'Users', level: 2 })).toBeVisible();
   await expect(settings.getByRole('button', { name: 'Create user' })).toBeVisible();
   await expect(settings.getByRole('table', { name: 'Groups' })).toHaveCount(0);
@@ -109,7 +111,7 @@ test('the Info Center, Network, File services and Users pages open from their ti
 
 test('the time zone and time servers are checked and saved', async ({ page }) => {
   const settings = await openSettings(page);
-  await settings.getByRole('button', { name: /^Regional settings/ }).click();
+  await openSettingsPage(settings, 'Regional settings');
   await settings.getByLabel('Time zone').selectOption('Europe/Vienna');
   await settings.getByLabel('Time servers').fill('0.pool.ntp.org 1.pool.ntp.org');
   await settings.getByRole('button', { name: 'Save time settings' }).click();
@@ -124,7 +126,7 @@ test('the time zone and time servers are checked and saved', async ({ page }) =>
 test('the system region sets the formats everyone sees', async ({ page }) => {
   const settings = await openSettings(page);
   try {
-    await settings.getByRole('button', { name: /^Regional settings/ }).click();
+    await openSettingsPage(settings, 'Regional settings');
     const formats = settings.getByLabel('Formats', { exact: true });
     await formats.selectOption('DE');
     await expect(settings).toContainText('1.234.567,89');
@@ -185,7 +187,7 @@ test('groups and their rights reach their members, and the editors are accessibl
   });
   expect(user.ok()).toBe(true);
   const userId = ((await user.json()) as { id: number }).id;
-  await settings.getByRole('button', { name: /^Groups/ }).click();
+  await openSettingsPage(settings, 'Groups');
   await expect(settings.getByRole('heading', { name: 'Groups', level: 2 })).toBeVisible();
 
   // A group with the new user, created on the page.
@@ -209,8 +211,7 @@ test('groups and their rights reach their members, and the editors are accessibl
   await groupRights.getByRole('button', { name: 'Save rights' }).click();
   await expect(groupRights).toHaveCount(0);
 
-  await settings.getByRole('button', { name: 'All settings' }).click();
-  await settings.getByRole('button', { name: /^Users/ }).click();
+  await openSettingsPage(settings, 'Users');
   const users = settings.getByRole('table', { name: 'Users' });
   await users
     .getByRole('row', { name: /^e2e-rights/ })
@@ -239,7 +240,7 @@ test('a configuration backup downloads encrypted and is checked before a restore
   page,
 }, testInfo) => {
   const settings = await openSettings(page);
-  await settings.getByRole('button', { name: /^Backup and restore/ }).click();
+  await openSettingsPage(settings, 'Backup and restore');
   await expect(
     settings.getByRole('heading', { name: 'Backup and restore', level: 2 }),
   ).toBeVisible();
@@ -277,7 +278,7 @@ test('a configuration backup downloads encrypted and is checked before a restore
   }
   // Focusing a checkbox once scrolled the whole window out of sight.
   await restore.getByRole('checkbox', { name: 'Storage settings' }).focus();
-  await expect(settings.getByRole('button', { name: 'All settings' })).toBeInViewport();
+  await expect(settingsNavigation(settings)).toBeInViewport();
   await restore.getByRole('button', { name: 'Restore…' }).click();
   const confirm = page.getByRole('dialog', { name: 'Restore the configuration?' });
   await expect(confirm.getByText('Storage settings')).toBeVisible();

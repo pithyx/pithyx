@@ -16,7 +16,7 @@ Open the Pithyx menu and click an app, or type part of its name into the search 
 The apps that come with Pithyx are **Files**, **Viewer**, **Storage**, **Settings**, **Resource Monitor**, **Log Center**, **About Pithyx** and **Store**. You only see the apps you may use:
 
 - **Files** and **Viewer** are available to new users by default.
-- **Storage**, **Settings**, **Resource Monitor**, **Log Center** and **Store** are for administrators.
+- **Storage**, **Settings**, **Resource Monitor**, **Log Center** and **Store** are for administrators. Settings opens on **Overview**: the box with its version, hardware, how long it runs and its updates, then **Needs attention** with one row per problem the box knows about (a pool alert, a Pithyx or app update, a device that does not trust the box yet) and the button that leads to the fix, then **All settings** as tiles. The navigation column on the left lists every page under **System** and **Access** and has a search that also finds a page by what it holds, such as `ntp`.
 - **About Pithyx** is open to everybody.
 - Apps an administrator installed show up for the users the administrator chose. Ask an administrator if you miss an app.
 
