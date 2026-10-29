@@ -1,11 +1,15 @@
 import { Button, Dialog, TextField } from '@pithyx/ui';
-import { useState } from 'react';
+import { lazy, Suspense, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { copyText } from '../../platform/browser';
 import { useDesktop } from '../../wm/store';
 import { useAppName } from '../names';
-import { FileDialog } from './FileDialog';
 import { answerForceClose, closeManualCopy, useHost } from './store';
+
+// The file dialog brings the table and navigation of @pithyx/ui, which the desktop itself does not need at sign-in.
+const FileDialog = lazy(() =>
+  import('./FileDialog').then(({ FileDialog }) => ({ default: FileDialog })),
+);
 
 /** D62: an app did not answer `beforeClose` in time; the user decides whether to close its window anyway. */
 function UnresponsiveDialog({ windowId }: { windowId: string }) {
@@ -108,7 +112,11 @@ export function HostDialogs() {
     return <UnresponsiveDialog key={unresponsive} windowId={unresponsive} />;
   }
   if (fileDialog !== null) {
-    return <FileDialog request={fileDialog} />;
+    return (
+      <Suspense fallback={null}>
+        <FileDialog request={fileDialog} />
+      </Suspense>
+    );
   }
   return copy === null ? null : <CopyDialog text={copy} />;
 }

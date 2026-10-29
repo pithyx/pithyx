@@ -1144,7 +1144,7 @@ export type paths = {
             path?: never;
             cookie?: never;
         };
-        /** @description One page of a folder. Paths are relative to the share with / as separator; "." and ".." are refused. sort is name (natural order, ignoring case), size or modified, order asc or desc; pass nextCursor as cursor for the next page. Subscribe to topic for live changes of the folder. */
+        /** @description One page of a folder. Paths are relative to the share with / as separator; "." and ".." are refused. sort is name (natural order, ignoring case), size or modified, order asc or desc; pass nextCursor as cursor for the next page. query keeps only the entries whose name contains it, ignoring case, in this folder only; total then counts the matches. Subscribe to topic for live changes of the folder. */
         get: operations["ListFolder"];
         put?: never;
         post?: never;
@@ -8863,6 +8863,7 @@ export interface operations {
                 limit?: number;
                 order?: string;
                 path?: string;
+                query?: string;
                 share?: string;
                 sort?: string;
                 storage?: string;
@@ -11203,6 +11204,7 @@ export interface operations {
                 limit?: number;
                 order?: string;
                 path?: string;
+                query?: string;
                 sort?: string;
             };
             header?: never;

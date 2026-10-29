@@ -260,6 +260,7 @@ public static class AppApiEndpoints
         [FromQuery] string? order,
         [FromQuery] int? limit,
         [FromQuery] string? cursor,
+        [FromQuery] string? query,
         AppFiles files,
         AppRegistry registry,
         HttpContext context,
@@ -273,6 +274,7 @@ public static class AppApiEndpoints
             Parse(order, SortOrder.Asc),
             limit,
             cursor,
+            query,
             cancellationToken));
 
     private static T Parse<T>(string? value, T fallback) where T : struct, Enum =>

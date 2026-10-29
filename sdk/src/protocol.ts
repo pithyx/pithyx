@@ -465,6 +465,7 @@ export interface Methods {
       limit?: number;
       sort?: SortKey;
       order?: SortOrder;
+      query?: string;
     };
     result: FolderPage;
   };

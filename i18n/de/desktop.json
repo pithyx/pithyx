@@ -320,7 +320,16 @@
       "more": "Mehr laden",
       "name": "Dateiname",
       "readOnly": "Diese Freigabe kannst du nur lesen. Wähle eine andere, um hier zu speichern.",
-      "exists": "Eine Datei mit diesem Namen gibt es schon. Speichern ersetzt sie."
+      "exists": "Eine Datei mit diesem Namen gibt es schon. Speichern ersetzt sie.",
+      "places": "Orte",
+      "up": "Eine Ebene nach oben",
+      "readOnlyPlace": "Nur lesen",
+      "types": "Zeigt nur Dateien der Typen {types}.",
+      "columns": {
+        "name": "Name",
+        "modified": "Geändert",
+        "size": "Größe"
+      }
     },
     "loading": {
       "label": "{name} wird geladen",

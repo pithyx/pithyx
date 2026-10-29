@@ -72,6 +72,11 @@ export function selectAll(): Selection {
   return { kind: 'all', except: new Set() };
 }
 
+/** Exactly these entries, for a select all over a part of the folder such as a search. */
+export function selectNames(names: readonly string[]): Selection {
+  return { kind: 'some', names: new Set(names), anchor: null };
+}
+
 /** Names that were removed from the folder leave the selection. */
 export function forget(selection: Selection, removed: readonly string[]): Selection {
   if (removed.length === 0) {

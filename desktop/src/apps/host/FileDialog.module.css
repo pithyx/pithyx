@@ -1,94 +1,166 @@
 /* The dialog is drawn in a portal of the desktop, where only the desktop's tokens apply, not the SDK's --pithyx-*. */
 .dialog {
   display: grid;
+  grid-template-columns: minmax(160px, 200px) minmax(0, 1fr);
+  gap: var(--space-3);
+  height: min(60vh, 30em);
+  min-height: 0;
+}
+
+.places {
+  min-height: 0;
+  overflow-y: auto;
+  border-right: 1px solid var(--color-border);
+}
+
+.main {
+  display: flex;
+  flex-direction: column;
   gap: var(--space-2);
-  min-width: min(32em, 80vw);
+  min-width: 0;
+  min-height: 0;
+}
+
+/* The address bar of Files: up, then the path in a field. */
+.address {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--space-1);
 }
 
 .crumbs {
   display: flex;
-  flex-wrap: wrap;
+  flex: 1;
+  align-items: center;
   gap: 2px;
-  font-size: 0.875em;
+  min-width: 0;
+  min-height: 30px;
+  padding: 0 var(--space-2);
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+  background: var(--color-surface-1);
+  font-size: var(--font-size-sm);
+  white-space: nowrap;
 }
 
 .crumb {
-  padding: 2px 6px;
-  border: 0;
-  border-radius: var(--radius-sm);
-  background: transparent;
-  color: var(--color-text-muted);
-  font: inherit;
-  cursor: pointer;
-}
-
-.crumb:hover {
-  background: var(--color-surface-hover);
-}
-
-.crumb:focus-visible {
-  outline: 2px solid var(--color-focus);
-  outline-offset: 1px;
-}
-
-/* Inside the list, so the outline never widens the list into a horizontal scroll. */
-.row:focus-visible {
-  outline: 2px solid var(--color-focus);
-  outline-offset: -2px;
-}
-
-.list {
-  display: grid;
-  max-height: min(50vh, 24em);
-  margin: 0;
-  padding: 0;
-  overflow-x: hidden;
-  overflow-y: auto;
-  list-style: none;
-}
-
-.item {
-  display: flex;
+  display: inline-flex;
+  flex: none;
   align-items: center;
-  gap: var(--space-2);
-}
-
-.row {
-  display: flex;
-  flex: 1;
-  align-items: center;
-  gap: var(--space-2);
-  min-width: 0;
-  min-height: 36px;
-  padding: 4px 6px;
+  gap: 2px;
+  min-height: 24px;
+  padding: 0 var(--space-1);
   border: 0;
   border-radius: var(--radius-sm);
   background: transparent;
   color: var(--color-text);
   font: inherit;
-  text-align: start;
+}
+
+button.crumb {
+  color: var(--color-text-muted);
   cursor: pointer;
 }
 
-.row:hover:not(:disabled) {
+button.crumb:hover {
   background: var(--color-surface-hover);
+  color: var(--color-text);
 }
 
-.row:disabled {
+.crumb:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: -2px;
+}
+
+.separator {
   color: var(--color-text-muted);
-  cursor: default;
+}
+
+.infoBar {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+  background: var(--color-info-surface);
+  font-size: var(--font-size-sm);
+}
+
+.infoBar > svg {
+  flex: none;
+  color: var(--color-info);
+}
+
+/* The table fills the rest of the dialog's height and scrolls inside. */
+.tableBox {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.tableBox > * {
+  flex: 1;
+}
+
+.entry {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.folderIcon {
+  flex: none;
+  color: var(--color-accent);
+}
+
+.fileIcon {
+  flex: none;
+  color: var(--color-text-muted);
 }
 
 .name {
-  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-@media (pointer: coarse) {
-  .row,
-  .crumb {
-    min-height: 44px;
+.message {
+  margin: 0;
+  padding: var(--space-4) 0;
+  color: var(--color-text-muted);
+}
+
+.footer {
+  display: grid;
+  flex: none;
+  gap: var(--space-1);
+}
+
+.hint {
+  flex: none;
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+
+/* On a narrow screen the places are a short list above the folder. */
+@media (max-width: 600px) {
+  .dialog {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
+    height: min(70vh, 34em);
+  }
+
+  .places {
+    max-height: 8.5em;
+    border-right: 0;
+    border-bottom: 1px solid var(--color-border);
   }
 }

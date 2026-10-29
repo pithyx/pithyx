@@ -5,6 +5,8 @@
   "path": "Pfad",
   "search": "In {folder} suchen",
   "searchPlaceholder": "Suchen",
+  "searchResults": "{count, plural, one {# Treffer} other {# Treffer}}",
+  "searchEmpty": "Nichts in diesem Ordner hat „{query}“ im Namen.",
   "places": {
     "title": "Orte",
     "home": "Persönlicher Ordner",
@@ -168,5 +170,10 @@
     "location": "Ort",
     "opened": "Geöffnet",
     "show": "In {location} zeigen"
+  },
+  "tree": {
+    "expand": "Ordner in {name} zeigen",
+    "collapse": "Ordner in {name} ausblenden",
+    "more": "Mehr in {name}"
   }
 }
