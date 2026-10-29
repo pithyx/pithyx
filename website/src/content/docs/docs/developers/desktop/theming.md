@@ -32,7 +32,7 @@ Adaptations in the file: on `(pointer: coarse)` devices controls, title bars, ta
 
 **For third-party apps.** Apps in the sandbox do not read these names. The SDK sets a separate, stable set of `--pithyx-*` properties on the app's root element (for example `--pithyx-color-background`, `--pithyx-color-accent`, `--pithyx-font-ui`, `--pithyx-space`). See [@pithyx/sdk](/docs/sdk/sdk/). The internal `--color-*` names may change.
 
-The tokens of the design pass (D394) are the radii by role, the density group and the shell, selection and state colors; the patterns of [`@pithyx/ui`](/docs/sdk/ui/) use them. `--taskbar-height` is for the full-width taskbar of the design pass; the current taskbar still uses `--taskbar-size`.
+The tokens of the design pass (D394) are the radii by role, the density group and the shell, selection and state colors; the patterns of [`@pithyx/ui`](/docs/sdk/ui/) use them. The taskbar and everything placed against it use `--taskbar-height`; `--taskbar-size` stays defined for apps that read it but the desktop no longer uses it.
 
 A test (`packages/ui/src/contrast.test.ts`) parses `tokens.css`, resolves every theme and accent and requires a contrast of at least 4.5 for text and 3 for graphics (WCAG 2.2 AA).
 

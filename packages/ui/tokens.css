@@ -216,7 +216,7 @@
   --details-width: 280px;
   --form-label-width: 200px;
   --form-control-width: 360px;
-  /* The full-width taskbar of D394; --taskbar-size is the current one until the shell is rebuilt (#323). */
+  /* The full-width taskbar of D394; --taskbar-size is no longer used by the desktop and kept for apps. */
   --taskbar-height: 44px;
 }
 

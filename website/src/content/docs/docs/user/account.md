@@ -15,7 +15,7 @@ Your account is your user name and password on the box. The same password signs 
 
 _Personal settings; Apps and Notifications follow further down._
 
-Everything you set for yourself is in **Personal settings**: open the Pithyx menu, click your name and choose **Personal settings**. It is an app like the others, so it is also in the Pithyx menu. The window has four groups:
+Everything you set for yourself is in **Personal settings**: open the Pithyx menu and click **Personal settings** in its left bar, or click your initials there and choose **Personal settings**. It is an app like the others, so it is also in the Pithyx menu. The window has four groups:
 
 - **Account and security**: **Two-factor authentication** (with **On** or **Off**), **Passkeys** and, while this device does not trust the box, **Trust this device**.
 - **Desktop**: **Language**, **Appearance**, **Accent color**, **Wallpaper**, **Taskbar position** (not on phones) and **Get desktop from**. Each row says whether the choice belongs to this device or to every device.

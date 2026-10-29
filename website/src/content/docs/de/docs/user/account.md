@@ -15,7 +15,7 @@ Dein Konto sind dein Benutzername und dein Passwort auf der Box. Dasselbe Passwo
 
 _Persönliche Einstellungen; Apps und Benachrichtigungen folgen weiter unten._
 
-Alles, was du für dich selbst einstellst, steht in **Persönliche Einstellungen**: Öffne das Pithyx-Menü, klicke auf deinen Namen und wähle **Persönliche Einstellungen**. Es ist eine App wie die anderen und steht deshalb auch im Pithyx-Menü. Das Fenster hat vier Gruppen:
+Alles, was du für dich selbst einstellst, steht in **Persönliche Einstellungen**: Öffne das Pithyx-Menü und klicke in seiner linken Leiste auf **Persönliche Einstellungen**, oder klicke dort auf deine Initialen und wähle **Persönliche Einstellungen**. Es ist eine App wie die anderen und steht deshalb auch im Pithyx-Menü. Das Fenster hat vier Gruppen:
 
 - **Konto und Sicherheit**: **Zwei-Faktor-Authentifizierung** (mit **An** oder **Aus**), **Passkeys** und, solange dieses Gerät der Box nicht vertraut, **Diesem Gerät vertrauen**.
 - **Desktop**: **Sprache**, **Darstellung**, **Akzentfarbe**, **Hintergrundbild**, **Position der Taskleiste** (nicht auf Handys) und **Desktop holen von**. Jede Zeile sagt, ob die Wahl zu diesem Gerät oder zu allen Geräten gehört.
