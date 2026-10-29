@@ -1,16 +1,25 @@
-import { useId } from 'react';
+import { useId, type CSSProperties } from 'react';
 import styles from './Wallpaper.module.css';
 
 interface Cube {
   x: number;
   y: number;
   scale: number;
+  depth: number;
 }
 
-// One box drawn like the logo in the menu button (D394, the mockups of direction F): the geometry of ui/Logo.tsx in
-// its 100x100 units, with the lid in its closed position, 13 units lower (as in ui/Logo.module.css), so only a narrow
-// gap shows. The position is in the 1600x1000 viewBox, right of the middle above the amber glow.
-const CUBES: Cube[] = [{ x: 1178, y: 400, scale: 4.4 }];
+// Boxes drawn like the logo in the menu button: the geometry of ui/Logo.tsx in its 100x100 units, with the lid in its
+// closed position, 13 units lower (as in ui/Logo.module.css), so only a narrow gap shows. Positions are in the 1600x1000
+// viewBox: one large box right of the middle above the amber glow, smaller ones behind it, away from the icon column
+// at the left (D398); depth fades them into the background.
+const CUBES: Cube[] = [
+  { x: 1180, y: 420, scale: 6, depth: 1 },
+  { x: 420, y: 780, scale: 3.4, depth: 0.6 },
+  { x: 1470, y: 890, scale: 2.2, depth: 0.45 },
+  { x: 660, y: 200, scale: 1.6, depth: 0.35 },
+  { x: 360, y: 380, scale: 2.4, depth: 0.4 },
+  { x: 900, y: 860, scale: 1.3, depth: 0.3 },
+];
 
 const LID_DROP = 13;
 
@@ -89,7 +98,7 @@ function points(coordinates: Shape, cube: Cube, drop: number): string {
     .join(' ');
 }
 
-/** The wallpaper in the brand palette, with the Pithyx box or plain. Follows the theme. */
+/** The wallpaper in the brand palette, with the Pithyx boxes or plain. Follows the theme. */
 export function Wallpaper({ plain = false }: { plain?: boolean }) {
   const glow = `wallpaper-glow-${useId()}`;
   return (
@@ -113,7 +122,11 @@ export function Wallpaper({ plain = false }: { plain?: boolean }) {
       <rect width="1600" height="1000" fill={`url(#${glow}-base)`} />
       <rect width="1600" height="1000" fill={`url(#${glow})`} />
       {CUBES.map((cube) => (
-        <g key={`${String(cube.x)}-${String(cube.y)}`} className={styles.cube}>
+        <g
+          key={`${String(cube.x)}-${String(cube.y)}`}
+          className={styles.cube}
+          style={{ '--depth': cube.depth } as CSSProperties}
+        >
           {SHAPES.map((shape) => (
             <polygon
               key={shape.className}
