@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useEffect } from 'react';
 import { Button as AriaButton } from 'react-aria-components';
 import { useTranslation } from 'react-i18next';
-import { Meter, StatusBadge } from '@pithyx/ui';
+import { StatusBadge } from '@pithyx/ui';
 import { api } from '../api/client';
 import { formatBytes } from '../desktop/format';
 import { realtime, useRealtime } from '../realtime/connection';
@@ -22,6 +22,18 @@ function poolTone(pool: Pool): 'success' | 'warning' | 'danger' {
     return pool.state === 'DEGRADED' ? 'warning' : 'danger';
   }
   return pool.capacityPercent >= 80 ? 'warning' : 'success';
+}
+
+/**
+ * A quantity drawn as a bar inside a tile. The tile is a button, whose content screen readers read as plain text, so
+ * the bar is decorative and the tile's text carries the facts.
+ */
+function TileBar({ value, tone }: { value: number; tone: 'success' | 'warning' | 'danger' }) {
+  return (
+    <span className={styles.tileBar} aria-hidden>
+      <span data-tone={tone} style={{ width: `${String(Math.min(100, Math.max(0, value)))}%` }} />
+    </span>
+  );
 }
 
 /** The status tiles of an administrator: every pool, the system and the updates. */
@@ -77,12 +89,7 @@ export function StatusTiles({
               </span>
               <b>{pool.name}</b>
               <small>{t('start.poolFacts', { free: formatBytes(pool.freeBytes, locale) })}</small>
-              <Meter
-                aria-label={pool.name}
-                value={pool.capacityPercent}
-                tone={tone === 'success' ? 'accent' : tone}
-                className={styles.tileMeter}
-              />
+              <TileBar value={pool.capacityPercent} tone={tone} />
             </AriaButton>
           );
         })}
@@ -102,11 +109,7 @@ export function StatusTiles({
                 total: formatBytes(sample.memory.totalBytes, locale),
               })}
             </small>
-            <Meter
-              aria-label={t('start.systemTile')}
-              value={sample.cpu.percent}
-              className={styles.tileMeter}
-            />
+            <TileBar value={sample.cpu.percent} tone="success" />
           </AriaButton>
         )}
         {updates !== undefined && (

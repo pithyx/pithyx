@@ -202,9 +202,28 @@
   color: var(--color-accent);
 }
 
-.tileMeter {
+.tileBar {
+  display: block;
   align-self: stretch;
+  height: 5px;
   margin-top: auto;
+  overflow: hidden;
+  border-radius: 2px;
+  background: var(--color-surface-pressed);
+}
+
+.tileBar > span {
+  display: block;
+  height: 100%;
+  background: var(--color-accent);
+}
+
+.tileBar > span[data-tone='warning'] {
+  background: var(--color-warning);
+}
+
+.tileBar > span[data-tone='danger'] {
+  background: var(--color-danger);
 }
 
 .folderList {
