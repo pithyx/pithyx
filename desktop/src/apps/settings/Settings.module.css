@@ -269,6 +269,11 @@
   font-weight: var(--font-weight-semibold);
 }
 
+.stack {
+  display: grid;
+  min-width: 0;
+}
+
 .shareName {
   font-weight: var(--font-weight-semibold);
 }

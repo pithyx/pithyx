@@ -5,7 +5,14 @@ import { useTranslation } from 'react-i18next';
 import { formatBytes } from '../../desktop/format';
 import { ErrorNotice } from '../../errors/ErrorNotice';
 import { useFormatLocale } from '../../i18n';
-import { Button, Switch } from '@pithyx/ui';
+import {
+  Button,
+  DataTable,
+  Switch,
+  Toolbar,
+  ToolbarSeparator,
+  type DataTableColumn,
+} from '@pithyx/ui';
 import { IconHelpCircle, IconPencil, IconPlus, IconTrash } from '../../ui/icons';
 import { internalCall, type ShareDetails } from '../sdk/internal';
 import { breakable, describeProblem } from '../storage/shared';
@@ -32,39 +39,64 @@ export function SharesPage({ app }: { app: PithyxApp }) {
   const { t } = useTranslation('settings');
   const shares = useShares(app);
   const [open, setOpen] = useState<Open>(null);
+  const [selectedId, setSelectedId] = useState<number | null>(null);
   const close = () => {
     setOpen(null);
   };
   // The edit dialog follows the live list, so it shows the saved values and closes when the share is gone.
   const editing =
     open?.kind === 'edit' ? shares.data?.find((share) => share.id === open.shareId) : undefined;
+  const selected = shares.data?.find((share) => share.id === selectedId);
 
   return (
     <div className={styles.content}>
-      <header className={styles.pageHeader}>
-        <div>
-          <p className={styles.muted}>{t('shares.intro')}</p>
-        </div>
-        <div className={styles.buttons}>
+      <p className={styles.muted}>{t('shares.intro')}</p>
+      <Toolbar
+        aria-label={t('shares.toolbar')}
+        end={
           <Button
             onPress={() => {
               setOpen({ kind: 'restorePoints' });
             }}
           >
-            <IconHelpCircle size={16} aria-hidden />
+            <IconHelpCircle size={18} stroke={1.75} aria-hidden />
             {t('restorePoints.explain')}
           </Button>
-          <Button
-            variant="primary"
-            onPress={() => {
-              setOpen({ kind: 'create' });
-            }}
-          >
-            <IconPlus size={16} aria-hidden />
-            {t('shares.create')}
-          </Button>
-        </div>
-      </header>
+        }
+      >
+        <Button
+          variant="primary"
+          onPress={() => {
+            setOpen({ kind: 'create' });
+          }}
+        >
+          <IconPlus size={18} stroke={1.75} aria-hidden />
+          {t('shares.create')}
+        </Button>
+        <ToolbarSeparator />
+        <Button
+          isDisabled={selected === undefined}
+          onPress={() => {
+            if (selected !== undefined) {
+              setOpen({ kind: 'edit', shareId: selected.id });
+            }
+          }}
+        >
+          <IconPencil size={18} stroke={1.75} aria-hidden />
+          {t('shares.edit')}
+        </Button>
+        <Button
+          isDisabled={selected === undefined}
+          onPress={() => {
+            if (selected !== undefined) {
+              setOpen({ kind: 'delete', share: selected });
+            }
+          }}
+        >
+          <IconTrash size={18} stroke={1.75} aria-hidden />
+          {t('shares.delete')}
+        </Button>
+      </Toolbar>
 
       {shares.isPending && (
         <p className={styles.loading} role="status">
@@ -72,16 +104,14 @@ export function SharesPage({ app }: { app: PithyxApp }) {
         </p>
       )}
       {shares.isError && <ErrorNotice error={describeProblem(shares.error)} />}
-      {shares.data?.length === 0 && <p className={styles.muted}>{t('shares.empty')}</p>}
-      {shares.data !== undefined && shares.data.length > 0 && (
+      {shares.data !== undefined && (
         <ShareTable
           app={app}
           shares={shares.data}
+          selected={selected}
+          onSelect={setSelectedId}
           onEdit={(share) => {
             setOpen({ kind: 'edit', shareId: share.id });
-          }}
-          onDelete={(share) => {
-            setOpen({ kind: 'delete', share });
           }}
         />
       )}
@@ -130,110 +160,126 @@ function RestorePointSwitch({ app, share }: { app: PithyxApp; share: ShareDetail
   );
 }
 
+/**
+ * The shared folders as a table (D394): name and path, pool, space, description, rights and the restore point switch;
+ * a click selects a folder for the toolbar, a double click edits it.
+ */
 function ShareTable({
   app,
   shares,
+  selected,
+  onSelect,
   onEdit,
-  onDelete,
 }: {
   app: PithyxApp;
   shares: ShareDetails[];
+  selected: ShareDetails | undefined;
+  onSelect: (shareId: number | null) => void;
   onEdit: (share: ShareDetails) => void;
-  onDelete: (share: ShareDetails) => void;
 }) {
   const { t } = useTranslation('settings');
   const locale = useFormatLocale();
   const bytes = (value: number) => formatBytes(value, locale);
+  const columns: DataTableColumn<ShareDetails>[] = [
+    {
+      id: 'name',
+      label: t('shares.columns.name'),
+      cell: (share) => (
+        <span className={styles.stack}>
+          <span className={styles.shareName}>{share.name}</span>{' '}
+          <span className={styles.path}>{breakable(share.dataset ?? share.path)}</span>
+        </span>
+      ),
+      sortValue: (share) => share.name,
+      isRowHeader: true,
+    },
+    {
+      id: 'pool',
+      label: t('shares.columns.pool'),
+      width: 110,
+      cell: (share) => share.pool ?? t('shares.folder'),
+      sortValue: (share) => share.pool ?? '',
+    },
+    {
+      id: 'used',
+      label: t('shares.columns.used'),
+      muted: true,
+      cell: (share) =>
+        share.dataset === null
+          ? null
+          : share.usedBytes === null
+            ? t('shares.missing')
+            : share.quotaBytes !== null
+              ? t('shares.usedQuota', {
+                  used: bytes(share.usedBytes),
+                  quota: bytes(share.quotaBytes),
+                })
+              : t('shares.used', {
+                  used: bytes(share.usedBytes),
+                  free: bytes(share.availableBytes ?? 0),
+                }),
+      sortValue: (share) => share.usedBytes ?? 0,
+    },
+    {
+      id: 'description',
+      label: t('shares.columns.description'),
+      cell: (share) =>
+        share.description === '' ? (
+          <span className={styles.muted}>{t('shares.noDescription')}</span>
+        ) : (
+          share.description
+        ),
+    },
+    {
+      id: 'rights',
+      label: t('shares.columns.rights'),
+      cell: (share) => (
+        <span className={styles.stack}>
+          {t('shares.rights', { count: share.readUsers + share.readWriteUsers })}
+          {share.readUsers + share.readWriteUsers > 0 && (
+            <span className={styles.detail}>
+              {t('shares.rightsDetail', {
+                read: share.readUsers,
+                readWrite: share.readWriteUsers,
+              })}
+            </span>
+          )}
+        </span>
+      ),
+    },
+    {
+      id: 'restorePoints',
+      label: t('shares.columns.restorePoints'),
+      width: 200,
+      cell: (share) =>
+        share.restorePoints === null ? (
+          <span className={styles.muted}>{t('restorePoints.folder')}</span>
+        ) : (
+          <RestorePointSwitch app={app} share={share} />
+        ),
+    },
+  ];
   return (
-    <table className={styles.table}>
-      <caption className="visually-hidden">{t('shares.caption')}</caption>
-      <thead>
-        <tr>
-          <th scope="col">{t('shares.columns.name')}</th>
-          <th scope="col">{t('shares.columns.pool')}</th>
-          <th scope="col">{t('shares.columns.used')}</th>
-          <th scope="col">{t('shares.columns.description')}</th>
-          <th scope="col">{t('shares.columns.rights')}</th>
-          <th scope="col">{t('shares.columns.restorePoints')}</th>
-          <th scope="col">
-            <span className="visually-hidden">{t('shares.columns.actions')}</span>
-          </th>
-        </tr>
-      </thead>
-      <tbody>
-        {shares.map((share) => (
-          <tr key={share.id}>
-            <th scope="row" className={styles.shareName}>
-              {share.name}
-              <span className={styles.path}>{breakable(share.dataset ?? share.path)}</span>
-            </th>
-            <td data-label={t('shares.columns.pool')}>{share.pool ?? t('shares.folder')}</td>
-            <td data-label={t('shares.columns.used')}>
-              {share.dataset === null
-                ? null
-                : share.usedBytes === null
-                  ? t('shares.missing')
-                  : share.quotaBytes !== null
-                    ? t('shares.usedQuota', {
-                        used: bytes(share.usedBytes),
-                        quota: bytes(share.quotaBytes),
-                      })
-                    : t('shares.used', {
-                        used: bytes(share.usedBytes),
-                        free: bytes(share.availableBytes ?? 0),
-                      })}
-            </td>
-            <td data-label={t('shares.columns.description')}>
-              {share.description === '' ? (
-                <span className={styles.muted}>{t('shares.noDescription')}</span>
-              ) : (
-                share.description
-              )}
-            </td>
-            <td data-label={t('shares.columns.rights')}>
-              {t('shares.rights', { count: share.readUsers + share.readWriteUsers })}
-              {share.readUsers + share.readWriteUsers > 0 && (
-                <span className={styles.detail}>
-                  {t('shares.rightsDetail', {
-                    read: share.readUsers,
-                    readWrite: share.readWriteUsers,
-                  })}
-                </span>
-              )}
-            </td>
-            <td data-label={t('shares.columns.restorePoints')}>
-              {share.restorePoints === null ? (
-                <span className={styles.muted}>{t('restorePoints.folder')}</span>
-              ) : (
-                <RestorePointSwitch app={app} share={share} />
-              )}
-            </td>
-            <td className={styles.rowActions}>
-              <Button
-                size="sm"
-                aria-label={t('shares.editLabel', { name: share.name })}
-                onPress={() => {
-                  onEdit(share);
-                }}
-              >
-                <IconPencil size={16} aria-hidden />
-                {t('shares.edit')}
-              </Button>
-              <Button
-                size="sm"
-                variant="quiet"
-                aria-label={t('shares.deleteLabel', { name: share.name })}
-                onPress={() => {
-                  onDelete(share);
-                }}
-              >
-                <IconTrash size={16} aria-hidden />
-                {t('shares.delete')}
-              </Button>
-            </td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
+    <DataTable
+      aria-label={t('shares.caption')}
+      columns={columns}
+      items={shares}
+      getKey={(share) => share.id}
+      density="comfortable"
+      selectionMode="single"
+      selectedKeys={selected === undefined ? new Set() : new Set([selected.id])}
+      onSelectionChange={(keys) => {
+        const [first] = keys === 'all' ? [] : [...keys];
+        onSelect(first === undefined ? null : Number(first));
+      }}
+      onRowAction={(key) => {
+        const share = shares.find((entry) => entry.id === Number(key));
+        if (share !== undefined) {
+          onEdit(share);
+        }
+      }}
+      defaultSort={{ column: 'name', direction: 'ascending' }}
+      emptyState={t('shares.empty')}
+    />
   );
 }

@@ -20,7 +20,7 @@ async function openSharedFolders(page: Page) {
 
 function shareRow(settings: ReturnType<typeof appWindow>, name: string) {
   return settings
-    .getByRole('table', { name: 'Shared folders with their pool, space, description and rights' })
+    .getByRole('grid', { name: 'Shared folders with their pool, space, description and rights' })
     .getByRole('row', { name: new RegExp(`^${name} `) });
 }
 
@@ -78,7 +78,8 @@ test('a shared folder is edited and deleted with its files kept', async ({ page 
   const row = shareRow(settings, 'Team files');
   await expect(row).toBeVisible();
 
-  await row.getByRole('button', { name: 'Edit Team files' }).click();
+  await row.click();
+  await settings.getByRole('button', { name: 'Edit', exact: true }).click();
   const edit = page.getByRole('dialog', { name: 'Edit Team files' });
   await edit.getByLabel('Description', { exact: true }).fill('Plans and notes');
   await edit.getByRole('button', { name: 'Save' }).click();
@@ -87,7 +88,8 @@ test('a shared folder is edited and deleted with its files kept', async ({ page 
   await edit.getByRole('button', { name: 'Close' }).click();
   await expect(row).toContainText('Plans and notes');
 
-  await row.getByRole('button', { name: 'Delete Team files' }).click();
+  await row.click();
+  await settings.getByRole('button', { name: 'Delete…', exact: true }).click();
   const remove = page.getByRole('dialog', { name: 'Delete Team files' });
   await expect(remove.getByRole('radio', { name: /^Delete the data for good/ })).toBeDisabled();
   await remove.getByRole('radio', { name: /^Keep the data/ }).check();
@@ -120,7 +122,8 @@ test('Shared folders and the delete dialog have no accessibility violations', as
   const settings = await openSharedFolders(page);
   await expect(shareRow(settings, 'Shared')).toBeVisible();
   expect(await violations(page)).toEqual([]);
-  await shareRow(settings, 'Shared').getByRole('button', { name: 'Delete Shared' }).click();
+  await shareRow(settings, 'Shared').click();
+  await settings.getByRole('button', { name: 'Delete…', exact: true }).click();
   const remove = page.getByRole('dialog', { name: 'Delete Shared' });
   await expect(remove.getByRole('radio', { name: /^Keep the data/ })).toBeVisible();
   expect(await violations(page)).toEqual([]);

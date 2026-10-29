@@ -84,7 +84,8 @@
       "nothingRuns": "Es läuft kein Befehl. {location} und seine Dateien bleiben.",
       "gone": "Das wird endgültig gelöscht:",
       "run": "Freigegebenen Ordner löschen"
-    }
+    },
+    "toolbar": "Aktionen für freigegebene Ordner"
   },
   "overview": {
     "title": "Einstellungen",

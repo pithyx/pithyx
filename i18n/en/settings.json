@@ -84,7 +84,8 @@
       "nothingRuns": "No command runs. {location} and its files stay.",
       "gone": "These are deleted for good:",
       "run": "Delete shared folder"
-    }
+    },
+    "toolbar": "Shared folder actions"
   },
   "overview": {
     "title": "Settings",
