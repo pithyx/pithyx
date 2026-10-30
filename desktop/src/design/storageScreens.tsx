@@ -316,6 +316,36 @@ export const storageScreens: ScreenDefinition[] = [
     render: settings('network'),
   },
   {
+    id: 'settings-users',
+    group: 'storage',
+    title: 'Settings: users and groups',
+    description:
+      'Users as a table with groups, file services, state and two-factor sign-in, a toolbar with the primary action first and the selected user on the right.',
+    render: settings('users', [{ press: 'Carla Müller-Schmidt' }]),
+  },
+  {
+    id: 'settings-groups',
+    group: 'storage',
+    title: 'Settings: groups',
+    description: 'The groups tab with members and the builtin administrators group.',
+    render: settings('users', [{ press: 'users:groups.title' }]),
+  },
+  {
+    id: 'settings-file-services',
+    group: 'storage',
+    title: 'Settings: file services',
+    description:
+      'SMB, SFTP, WebDAV, FTP, SSH and the firewall as sections with their state as a badge in the title row.',
+    render: settings('fileServices'),
+  },
+  {
+    id: 'settings-ups',
+    group: 'storage',
+    title: 'Settings: UPS',
+    description: 'The state a UPS on USB reports, the kind of UPS as radios and the limits.',
+    render: settings('ups'),
+  },
+  {
     id: 'settings-regional',
     group: 'storage',
     title: 'Settings: regional settings',
