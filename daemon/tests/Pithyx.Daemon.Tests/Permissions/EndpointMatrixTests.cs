@@ -189,6 +189,7 @@ public sealed partial class EndpointMatrixTests : IDisposable
         ["SetStorageSchedule"] = Need.Admin,
         ["GetLogs"] = Need.Admin,
         ["GetLogSources"] = Need.Admin,
+        ["GetLogCounts"] = Need.Admin,
         ["ExportLogs"] = Need.Admin,
         ["GetLogSettings"] = Need.Admin,
         ["SetLogSettings"] = Need.Admin,
