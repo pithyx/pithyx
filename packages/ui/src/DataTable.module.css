@@ -210,6 +210,11 @@
     border-top: 1px solid var(--color-border);
     border-left: 0;
   }
+
+  /* Columns marked hideWhenNarrow. */
+  .wide {
+    display: none;
+  }
 }
 
 @media (pointer: coarse) {

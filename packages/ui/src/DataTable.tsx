@@ -35,6 +35,11 @@ export interface DataTableColumn<T> {
   width?: number | `${number}%`;
   /** Whether the column names the row for screen readers; the first column when no column says so. */
   isRowHeader?: boolean;
+  /**
+   * Whether the column is left out while the table is narrower than 600 px, for a secondary column whose value the
+   * details pane also shows. A narrow table never scrolls sideways, so it needs the room for the others.
+   */
+  hideWhenNarrow?: boolean;
 }
 
 /** The props of {@link DataTable}. */
@@ -160,7 +165,11 @@ export function DataTable<T>({
             id={column.id}
             isRowHeader={column === rowHeader}
             allowsSorting={column.sortValue !== undefined}
-            className={cx(styles.column, column.align === 'end' && styles.end)}
+            className={cx(
+              styles.column,
+              column.align === 'end' && styles.end,
+              column.hideWhenNarrow === true && styles.wide,
+            )}
             {...(column.width === undefined
               ? {}
               : virtualized
@@ -206,6 +215,7 @@ export function DataTable<T>({
                   styles.cell,
                   column.align === 'end' && styles.end,
                   column.muted === true && styles.muted,
+                  column.hideWhenNarrow === true && styles.wide,
                 )}
               >
                 {column.cell(item)}

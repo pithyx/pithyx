@@ -133,14 +133,15 @@ public sealed class ChannelApiTests : IAsyncLifetime
         await _notifications.CreateForAppAsync(_adminId, appId, new AppNotifyRequest("You were mentioned", Category: "mentions"), categories, Token);
         await _notifications.CreateForAppAsync(_adminId, appId, new AppNotifyRequest("New message", Category: "messages"), categories, Token);
 
-        // The install's own notification may reach the channel too; the muted one never does.
+        // The install's own notification may reach the channel too, before or after the others (deliveries run apart);
+        // the muted one never does, so everything that arrives in a while after the unmuted one is checked.
         var bodies = new List<string>();
         while (!bodies.Any(body => body.Contains("New message", StringComparison.Ordinal)))
         {
             bodies.Add((await _hook.NextAsync()).Body);
         }
         await Task.Delay(300, Token);
-        Assert.True(_hook.IsEmpty);
+        bodies.AddRange(_hook.Drain().Select(request => request.Body));
         Assert.DoesNotContain(bodies, body => body.Contains("mentioned", StringComparison.Ordinal));
     }
 
@@ -224,6 +225,17 @@ public sealed class ChannelApiTests : IAsyncLifetime
         public HttpStatusCode Status { get; set; } = HttpStatusCode.OK;
 
         public bool IsEmpty => _requests.IsEmpty;
+
+        /// <summary>Takes every request that arrived and was not read yet.</summary>
+        public List<HookRequest> Drain()
+        {
+            var drained = new List<HookRequest>();
+            while (_requests.TryDequeue(out var request))
+            {
+                drained.Add(request);
+            }
+            return drained;
+        }
 
         public async Task<HookRequest> NextAsync()
         {

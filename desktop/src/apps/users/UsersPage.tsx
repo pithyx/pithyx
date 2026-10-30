@@ -111,6 +111,7 @@ export function UsersPanel({ app }: { app: PithyxApp }) {
     {
       id: 'services',
       label: t('fileServices.title'),
+      hideWhenNarrow: true,
       muted: true,
       // The protocols' own names, short enough for a column; the details pane explains them.
       cell: (user) =>
