@@ -37,7 +37,7 @@ Nicht enthalten: Dateien auf Pools, App-Daten, Logs, Docker-Daten, Sitzungen, Jo
 
 ## Wiederherstellen
 
-![Einstellungen, Backup und Wiederherstellung, nach Backup prüfen: wann und wo das Backup entstand, sein Inhalt und die Teile zum Wiederherstellen, mit dem Knopf Wiederherstellen](../../../../../assets/screenshots/backup-checked.de.webp)
+![Einstellungen, Backup und Wiederherstellung, nach Backup prüfen: wann und wo das Backup entstand, sein Inhalt und die Teile zum Wiederherstellen](../../../../../assets/screenshots/backup-checked.de.webp)
 
 _Backup prüfen zeigt, was die Datei enthält; geändert wird erst, wenn du Wiederherstellen wählst._
 
