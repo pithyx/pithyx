@@ -5,6 +5,7 @@ import type { FileEntry, FolderPage, ShareInfo, TrashPage } from '@pithyx/sdk';
 import type { LogCount, LogEntry, LogStatus } from '../apps/sdk/logs';
 import type { ProcessList, ResourceSample, ResourceSnapshot } from '../apps/sdk/monitor';
 import type { AdminAppList, AppDetails, StoreAppSummary, StoreState } from '../apps/sdk/store';
+import { local } from './sampleLanguage';
 import type { ExtraAnswers } from './storageSample';
 
 /** The Files side of the sample app: shares, folders by `<share>:<path>` and recycle bins by share. */
@@ -27,6 +28,15 @@ const folder = (name: string, modified: string): FileEntry => ({
   modified,
 });
 
+/** The open folder of the Files screens, the picture selected in it and the first entry of its share's bin. */
+export const sampleFolder = local({ en: '2026-summer', de: '2026-sommer' });
+export const samplePicture = local({ en: 'Lighthouse.jpg', de: 'Leuchtturm.jpg' });
+export const sampleTrashed = local({
+  en: 'Blurry sunset.jpg',
+  de: 'Unscharfer Sonnenuntergang.jpg',
+});
+const duplicate = local({ en: 'Duplicate harbour.jpg', de: 'Hafen doppelt.jpg' });
+
 export const filesSample: FilesSample = {
   shares: [
     { id: 'home', name: 'home', access: 'readWrite', kind: 'home' },
@@ -37,23 +47,35 @@ export const filesSample: FilesSample = {
   folders: {
     '2:': [
       folder('2025-winter', '2026-02-11T18:20:00Z'),
-      folder('2026-spring', '2026-05-30T09:41:00Z'),
-      folder('2026-summer', '2026-09-02T16:05:00Z'),
+      folder(local({ en: '2026-spring', de: '2026-frühling' }), '2026-05-30T09:41:00Z'),
+      folder(sampleFolder, '2026-09-02T16:05:00Z'),
       folder('Scans', '2026-03-14T11:12:00Z'),
     ],
-    '2:2026-summer': [
-      folder('Drone', '2026-08-21T10:02:00Z'),
-      file('Beach at dawn.jpg', 5_412_330, '2026-08-14T05:48:00Z'),
-      file('Boat trip.jpg', 4_981_204, '2026-08-15T13:22:00Z'),
-      file('Campfire.jpg', 3_720_118, '2026-08-16T21:07:00Z'),
-      file('Harbour.heic', 2_840_551, '2026-08-17T10:31:00Z'),
-      file('Lighthouse.jpg', 6_102_877, '2026-08-17T19:55:00Z'),
-      file('Market.jpg', 4_215_003, '2026-08-18T09:14:00Z'),
-      file('Old town.jpg', 5_007_640, '2026-08-18T15:40:00Z'),
-      file('Picnic.jpg', 3_391_772, '2026-08-19T12:26:00Z'),
-      file('Sunset over the bay.jpg', 7_034_219, '2026-08-19T20:12:00Z'),
-      file('Surf lesson.mp4', 412_998_310, '2026-08-20T11:03:00Z'),
-      file('Travel plan.pdf', 284_310, '2026-07-30T08:17:00Z'),
+    [`2:${sampleFolder}`]: [
+      folder(local({ en: 'Drone', de: 'Drohne' }), '2026-08-21T10:02:00Z'),
+      file(
+        local({ en: 'Beach at dawn.jpg', de: 'Strand am Morgen.jpg' }),
+        5_412_330,
+        '2026-08-14T05:48:00Z',
+      ),
+      file(local({ en: 'Boat trip.jpg', de: 'Bootsfahrt.jpg' }), 4_981_204, '2026-08-15T13:22:00Z'),
+      file(local({ en: 'Campfire.jpg', de: 'Lagerfeuer.jpg' }), 3_720_118, '2026-08-16T21:07:00Z'),
+      file(local({ en: 'Harbour.heic', de: 'Hafen.heic' }), 2_840_551, '2026-08-17T10:31:00Z'),
+      file(samplePicture, 6_102_877, '2026-08-17T19:55:00Z'),
+      file(local({ en: 'Market.jpg', de: 'Markt.jpg' }), 4_215_003, '2026-08-18T09:14:00Z'),
+      file(local({ en: 'Old town.jpg', de: 'Altstadt.jpg' }), 5_007_640, '2026-08-18T15:40:00Z'),
+      file(local({ en: 'Picnic.jpg', de: 'Picknick.jpg' }), 3_391_772, '2026-08-19T12:26:00Z'),
+      file(
+        local({ en: 'Sunset over the bay.jpg', de: 'Sonnenuntergang am Meer.jpg' }),
+        7_034_219,
+        '2026-08-19T20:12:00Z',
+      ),
+      file(
+        local({ en: 'Surf lesson.mp4', de: 'Surfkurs.mp4' }),
+        412_998_310,
+        '2026-08-20T11:03:00Z',
+      ),
+      file(local({ en: 'Travel plan.pdf', de: 'Reiseplan.pdf' }), 284_310, '2026-07-30T08:17:00Z'),
     ],
   },
   trash: {
@@ -61,8 +83,8 @@ export const filesSample: FilesSample = {
       items: [
         {
           id: 41,
-          name: 'Blurry sunset.jpg',
-          originalPath: '2026-summer/Blurry sunset.jpg',
+          name: sampleTrashed,
+          originalPath: `${sampleFolder}/${sampleTrashed}`,
           kind: 'file',
           size: 6_812_004,
           deletedAt: '2026-09-24T19:02:00Z',
@@ -71,8 +93,8 @@ export const filesSample: FilesSample = {
         },
         {
           id: 40,
-          name: 'Duplicate harbour.jpg',
-          originalPath: '2026-summer/Duplicate harbour.jpg',
+          name: duplicate,
+          originalPath: `${sampleFolder}/${duplicate}`,
           kind: 'file',
           size: 2_840_551,
           deletedAt: '2026-09-21T08:44:00Z',
@@ -368,8 +390,8 @@ const icon = (tile: string, glyph: string, path: string) =>
 
 const storeApp = (
   id: string,
-  name: string,
-  description: string,
+  name: Record<string, string>,
+  description: Record<string, string>,
   author: string,
   categories: string[],
   version: string,
@@ -378,8 +400,8 @@ const storeApp = (
   extra: Partial<StoreAppSummary> = {},
 ): StoreAppSummary => ({
   id,
-  name: { en: name },
-  description: { en: description },
+  name,
+  description,
   author,
   catalog: 'org.pithyx.official',
   kind: 'official',
@@ -400,8 +422,11 @@ const storeApp = (
 export const sampleStoreApps: StoreAppSummary[] = [
   storeApp(
     'org.example.photos',
-    'Photo Library',
-    'Browse, tag and share the photos on your shared folders, with albums and faces found on the box.',
+    { en: 'Photo Library', de: 'Fotobibliothek' },
+    {
+      en: 'Browse, tag and share the photos on your shared folders, with albums and faces found on the box.',
+      de: 'Fotos in deinen freigegebenen Ordnern ansehen, verschlagworten und teilen, mit Alben und Gesichtern, die die Box findet.',
+    },
     'Example Photo Team',
     ['photos'],
     '3.2.0',
@@ -410,8 +435,11 @@ export const sampleStoreApps: StoreAppSummary[] = [
   ),
   storeApp(
     'org.example.notes',
-    'Notes',
-    'Plain text notes with folders and search, kept in your home folder.',
+    { en: 'Notes', de: 'Notizen' },
+    {
+      en: 'Plain text notes with folders and search, kept in your home folder.',
+      de: 'Notizen als reiner Text mit Ordnern und Suche, in deinem Home-Ordner.',
+    },
     'Example Labs',
     ['productivity'],
     '2.4.1',
@@ -421,8 +449,11 @@ export const sampleStoreApps: StoreAppSummary[] = [
   ),
   storeApp(
     'org.example.media',
-    'Media Server',
-    'Streams films and music from your shared folders to the devices of your home.',
+    { en: 'Media Server', de: 'Medienserver' },
+    {
+      en: 'Streams films and music from your shared folders to the devices of your home.',
+      de: 'Spielt Filme und Musik aus deinen freigegebenen Ordnern auf den Geräten zu Hause ab.',
+    },
     'Example Media Group',
     ['media'],
     '1.8.0',
@@ -432,8 +463,11 @@ export const sampleStoreApps: StoreAppSummary[] = [
   ),
   storeApp(
     'org.example.backup',
-    'Offsite Backup',
-    'Copies chosen shared folders, encrypted, to a second box or a disk of your own.',
+    { en: 'Offsite Backup', de: 'Externe Sicherung' },
+    {
+      en: 'Copies chosen shared folders, encrypted, to a second box or a disk of your own.',
+      de: 'Kopiert ausgewählte freigegebene Ordner verschlüsselt auf eine zweite Box oder eine eigene Platte.',
+    },
     'Example Backup Project',
     ['backup'],
     '0.9.4',
@@ -442,8 +476,11 @@ export const sampleStoreApps: StoreAppSummary[] = [
   ),
   storeApp(
     'org.example.recipes',
-    'Recipe Box',
-    'Collect recipes, plan the week and print a shopping list.',
+    { en: 'Recipe Box', de: 'Rezeptkiste' },
+    {
+      en: 'Collect recipes, plan the week and print a shopping list.',
+      de: 'Rezepte sammeln, die Woche planen und eine Einkaufsliste drucken.',
+    },
     'Example Kitchen',
     ['productivity'],
     '1.2.0',
@@ -452,8 +489,11 @@ export const sampleStoreApps: StoreAppSummary[] = [
   ),
   storeApp(
     'org.example.monitor',
-    'Uptime Watch',
-    'Checks your websites and devices and tells you when one stops answering.',
+    { en: 'Uptime Watch', de: 'Online-Wächter' },
+    {
+      en: 'Checks your websites and devices and tells you when one stops answering.',
+      de: 'Prüft deine Websites und Geräte und meldet, wenn eines nicht mehr antwortet.',
+    },
     'Example Ops',
     ['tools'],
     '2.0.3',
@@ -465,7 +505,7 @@ export const sampleStoreApps: StoreAppSummary[] = [
 const installed = (
   id: string,
   version: string,
-  name: string,
+  name: Record<string, string>,
   previousVersion: string | null = null,
 ): AppDetails =>
   ({
@@ -487,14 +527,14 @@ const installed = (
     elevated: [],
     permissions: [],
     storage: [],
-    manifest: { id, version, name: { en: name }, manifestVersion: 2 },
+    manifest: { id, version, name, manifestVersion: 2 },
   }) as unknown as AppDetails;
 
 export const sampleInstalledApps: AdminAppList = {
   pool: 'tank',
   apps: [
-    installed('org.example.notes', '2.4.1', 'Notes', '2.3.0'),
-    installed('org.example.media', '1.7.2', 'Media Server'),
+    installed('org.example.notes', '2.4.1', { en: 'Notes', de: 'Notizen' }, '2.3.0'),
+    installed('org.example.media', '1.7.2', { en: 'Media Server', de: 'Medienserver' }),
   ],
 };
 
@@ -517,7 +557,10 @@ export const sampleStoreState: StoreState = {
       critical: false,
       elevated: false,
       addedPermissions: [],
-      releaseNotes: { en: 'Faster library scans and subtitles in more languages.' },
+      releaseNotes: {
+        en: 'Faster library scans and subtitles in more languages.',
+        de: 'Schnelleres Durchsuchen der Bibliothek und Untertitel in mehr Sprachen.',
+      },
     },
   ],
   catalogs: [
@@ -526,7 +569,7 @@ export const sampleStoreState: StoreState = {
       id: 'org.pithyx.official',
       kind: 'official',
       url: 'https://github.com/pithyx/apps-official.git',
-      name: { en: 'Pithyx apps' },
+      name: { en: 'Pithyx apps', de: 'Pithyx-Apps' },
       description: null,
       homepage: null,
       enabled: true,

@@ -13,7 +13,10 @@ import {
   homesAnswers,
   logsAnswers,
   monitorEvents,
+  sampleFolder,
   sampleLogEntries,
+  samplePicture,
+  sampleTrashed,
   storeAnswers,
 } from './appSamples';
 import { CoreAppScene, type ScriptStep } from './CoreAppScene';
@@ -97,7 +100,7 @@ export const appScreens: ScreenDefinition[] = [
     title: 'Files: a folder',
     description:
       'Files in a folder of holiday photos: the folder tree with the shares and the recycle bin, the toolbar with the primary action first, the sortable list and the details pane of the selected photo. Compare with f-files.',
-    render: files({ share: '2', path: '2026-summer', select: 'Lighthouse.jpg' }, [
+    render: files({ share: '2', path: sampleFolder, select: samplePicture }, [
       { press: 'files:details' },
     ]),
   },
@@ -107,7 +110,7 @@ export const appScreens: ScreenDefinition[] = [
     title: 'Files: recycle bin',
     description:
       'The recycle bin of a shared folder with two deleted photos, where they were, who deleted them and when they go for good.',
-    render: files({ share: '2', path: '', view: 'trash' }, [{ press: 'Blurry sunset.jpg' }]),
+    render: files({ share: '2', path: '', view: 'trash' }, [{ press: sampleTrashed }]),
   },
   {
     id: 'logs-center',

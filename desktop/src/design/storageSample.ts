@@ -19,6 +19,9 @@ import type { UpsStatus } from '../apps/sdk/ups';
 import type { GroupSummary, UserSummary } from '../apps/sdk/users';
 import type { FileServiceSettings } from '../apps/sdk/system';
 import { folderPage, type FilesSample } from './appSamples';
+import { local } from './sampleLanguage';
+
+const guest = local({ en: 'Guest', de: 'Gast' });
 
 const TB = 1_000_000_000_000;
 const GB = 1_000_000_000;
@@ -725,7 +728,10 @@ export const sampleShares = [
   {
     id: 1,
     name: 'Family',
-    description: 'Photos, documents and the scans of the paperwork',
+    description: local({
+      en: 'Photos, documents and the scans of the paperwork',
+      de: 'Fotos, Dokumente und die eingescannten Unterlagen',
+    }),
     path: '/tank/family',
     pool: 'tank',
     dataset: 'tank/pithyx/shares/family',
@@ -739,7 +745,10 @@ export const sampleShares = [
   {
     id: 2,
     name: 'Media',
-    description: 'Films and music for the living room',
+    description: local({
+      en: 'Films and music for the living room',
+      de: 'Filme und Musik fürs Wohnzimmer',
+    }),
     path: '/tank/media',
     pool: 'tank',
     dataset: 'tank/pithyx/shares/media',
@@ -1036,7 +1045,7 @@ export const sampleUsers: UserSummary[] = [
   {
     id: 4,
     username: 'guest',
-    displayName: 'Guest',
+    displayName: guest,
     isAdmin: false,
     uid: 20003,
     totpEnabled: false,
@@ -1054,7 +1063,7 @@ export const sampleGroups: GroupSummary[] = [
   {
     id: 1,
     name: 'administrators',
-    description: 'Everyone who runs the box',
+    description: local({ en: 'Everyone who runs the box', de: 'Alle, die die Box betreuen' }),
     builtin: true,
     memberIds: [1],
     createdAt: '2026-09-01T08:00:00Z',
@@ -1062,7 +1071,10 @@ export const sampleGroups: GroupSummary[] = [
   {
     id: 2,
     name: 'family',
-    description: 'Photos and documents of the family',
+    description: local({
+      en: 'Photos and documents of the family',
+      de: 'Fotos und Dokumente der Familie',
+    }),
     builtin: false,
     memberIds: [2],
     createdAt: '2026-09-02T08:00:00Z',
@@ -1151,7 +1163,7 @@ export const sampleShareGrants: ShareGrants = {
     {
       userId: 4,
       username: 'guest',
-      displayName: 'Guest',
+      displayName: guest,
       administrator: false,
       disabled: true,
       access: 'none',
