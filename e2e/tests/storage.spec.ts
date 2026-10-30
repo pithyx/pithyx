@@ -1,27 +1,42 @@
 import AxeBuilder from '@axe-core/playwright';
 import type { Page } from '@playwright/test';
 import { expect, test } from './fixtures';
-import { appWindow, openFromStart, signInAsAdmin } from './session';
+import { appWindow, openFromStart, settingsNavigation, signInAsAdmin } from './session';
 
 // The simulated system: the dev VM's disks with a mirror (sde, sdf) and a single-disk pool (sdg), an old ZFS label on
 // sdb, and the system on sda (daemon/tests/fixtures/commands/default).
 
+// Storage is a group of Settings (D402).
 async function openStorage(page: Page) {
   await signInAsAdmin(page);
-  await openFromStart(page, 'Storage');
-  const storage = appWindow(page, 'Storage');
-  await expect(storage.getByRole('heading', { name: 'Pools', level: 2 })).toBeVisible();
+  await openFromStart(page, 'Settings');
+  const storage = appWindow(page, 'Settings');
+  await openStoragePage(storage, 'Pools');
   return storage;
 }
 
+/** Opens a page of the Storage group; in the compact size class from the navigation the back button leads to. */
+async function openStoragePage(storage: ReturnType<typeof appWindow>, name: string) {
+  const navigation = settingsNavigation(storage);
+  const back = storage.getByRole('button', { name: 'Back', exact: true });
+  // Wait for the frame to show either; a page in the compact size class hides the navigation.
+  await expect
+    .poll(async () => (await navigation.isVisible()) || (await back.isVisible()))
+    .toBe(true);
+  if (!(await navigation.isVisible())) {
+    await back.click();
+  }
+  await navigation.getByRole('button', { name, exact: true }).click();
+  await expect(storage.getByRole('heading', { name, level: 1 })).toBeVisible();
+}
+
 async function openDisks(storage: ReturnType<typeof appWindow>) {
-  await storage.getByRole('button', { name: 'Disks', exact: true }).click();
-  await expect(storage.getByRole('heading', { name: 'Disks', level: 2 })).toBeVisible();
+  await openStoragePage(storage, 'Disks');
 }
 
 function diskRow(storage: ReturnType<typeof appWindow>, name: string) {
   return storage
-    .getByRole('table', { name: 'Disks and whether a new pool may use them' })
+    .getByRole('grid', { name: 'Disks and whether a new pool may use them' })
     .getByRole('row', { name: new RegExp(`^${name} `) });
 }
 
@@ -43,12 +58,21 @@ test('Storage shows the pools and whether each disk may be used', async ({ page 
   await expect(diskRow(storage, 'sdg')).toContainText('No SMART data in a virtual machine');
 });
 
-test('Settings has no storage page and no link to Storage', async ({ page }) => {
+test('Storage is a group of Settings and no app of its own', async ({ page }) => {
   await signInAsAdmin(page);
+  await page.getByRole('button', { name: 'Pithyx menu' }).click();
+  await expect(
+    page
+      .getByRole('dialog', { name: 'Pithyx menu' })
+      .getByRole('row', { name: 'Storage', exact: true }),
+  ).toHaveCount(0);
+  await page.keyboard.press('Escape');
   await openFromStart(page, 'Settings');
   const settings = appWindow(page, 'Settings');
-  await expect(settings.getByRole('heading', { name: 'Settings', level: 2 })).toBeVisible();
-  await expect(settings.getByRole('button', { name: /Storage/ })).toHaveCount(0);
+  const navigation = settingsNavigation(settings);
+  for (const name of ['Pools', 'Disks', 'Health and maintenance', 'Advanced storage']) {
+    await expect(navigation.getByRole('button', { name, exact: true })).toBeVisible();
+  }
 });
 
 test('the pool wizard compares layouts, encrypts with a stored key and lists the exact commands', async ({
@@ -173,8 +197,7 @@ test('destroying a pool needs its name typed and lists its datasets', async ({ p
 });
 
 async function openAdvanced(storage: ReturnType<typeof appWindow>) {
-  await storage.getByRole('button', { name: 'Advanced', exact: true }).click();
-  await expect(storage.getByRole('heading', { name: 'Advanced', level: 2 })).toBeVisible();
+  await openStoragePage(storage, 'Advanced storage');
 }
 
 async function openDatasets(storage: ReturnType<typeof appWindow>) {
@@ -250,7 +273,7 @@ test('deleting a dataset needs its full name typed', async ({ page }) => {
   await expect(dialog.getByRole('button', { name: 'Delete', exact: true })).toHaveCount(0);
 });
 
-test('Advanced explains export and import, hides volumes, and Storage has no snapshot section', async ({
+test('Advanced explains export and import, hides volumes, and Storage has no snapshot page', async ({
   page,
 }) => {
   const storage = await openStorage(page);
@@ -341,12 +364,11 @@ async function violations(page: Page) {
 
 test('Storage and the preview have no accessibility violations', async ({ page }) => {
   const storage = await openStorage(page);
-  for (const section of ['Disks', 'Health and maintenance', 'Advanced']) {
-    await storage.getByRole('button', { name: section, exact: true }).click();
-    await expect(storage.getByRole('heading', { name: section, level: 2 })).toBeVisible();
+  for (const section of ['Disks', 'Health and maintenance', 'Advanced storage']) {
+    await openStoragePage(storage, section);
     expect(await violations(page)).toEqual([]);
   }
-  await storage.getByRole('button', { name: 'Pools', exact: true }).click();
+  await openStoragePage(storage, 'Pools');
   await storage.getByRole('button', { name: 'Create pool…' }).click();
   const dialog = page.getByRole('dialog', { name: 'Create a pool' });
   await dialog.getByRole('checkbox', { name: /^sdc / }).check();

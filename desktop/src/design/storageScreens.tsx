@@ -1,22 +1,32 @@
 import { SettingsApp } from '../apps/settings/SettingsApp';
-import { StorageApp } from '../apps/storage/StorageApp';
 import { CoreAppScene, type ScriptStep } from './CoreAppScene';
 import type { ScreenDefinition } from './screens';
 import type { ExtraAnswers } from './storageSample';
 import { samplePoolsExpanding, samplePoolsWithPreview } from './storageSample';
 
+// Storage is a group of Settings (D402); the datasets open from its advanced page.
+const storagePages = {
+  pools: 'pools',
+  disks: 'disks',
+  maintenance: 'maintenance',
+  advanced: 'storageAdvanced',
+  datasets: 'storageAdvanced',
+} as const;
+
 function storage(
-  section: string,
+  section: keyof typeof storagePages,
   script: ScriptStep[] = [],
   answers: ExtraAnswers = {},
 ): ScreenDefinition['render'] {
+  const opening: ScriptStep[] =
+    section === 'datasets' ? [{ press: 'storage:advanced.datasets.button' }] : [];
   return (context) => (
     <CoreAppScene
       context={context}
-      app="storage"
-      Component={StorageApp}
-      launch={{ section }}
-      script={script}
+      app="settings"
+      Component={SettingsApp}
+      launch={{ page: storagePages[section] }}
+      script={[...opening, ...script]}
       answers={answers}
     />
   );
@@ -304,6 +314,36 @@ export const storageScreens: ScreenDefinition[] = [
     description:
       'Every interface with its addresses, DHCP or static, gateway and name servers; read only until the confirmation timer.',
     render: settings('network'),
+  },
+  {
+    id: 'settings-users',
+    group: 'storage',
+    title: 'Settings: users and groups',
+    description:
+      'Users as a table with groups, file services, state and two-factor sign-in, a toolbar with the primary action first and the selected user on the right.',
+    render: settings('users', [{ press: 'Carla Müller-Schmidt' }]),
+  },
+  {
+    id: 'settings-groups',
+    group: 'storage',
+    title: 'Settings: groups',
+    description: 'The groups tab with members and the builtin administrators group.',
+    render: settings('users', [{ press: 'users:groups.title' }]),
+  },
+  {
+    id: 'settings-file-services',
+    group: 'storage',
+    title: 'Settings: file services',
+    description:
+      'SMB, SFTP, WebDAV, FTP, SSH and the firewall as sections with their state as a badge in the title row.',
+    render: settings('fileServices'),
+  },
+  {
+    id: 'settings-ups',
+    group: 'storage',
+    title: 'Settings: UPS',
+    description: 'The state a UPS on USB reports, the kind of UPS as radios and the limits.',
+    render: settings('ups'),
   },
   {
     id: 'settings-regional',

@@ -71,9 +71,9 @@ describe('the app of a notification', () => {
     );
     expect(
       sourceApp({ app: null, code: 'jobs.job.succeeded', params: { kind: 'storage.pool.create' } }),
-    ).toBe('org.pithyx.storage');
+    ).toBe('org.pithyx.settings');
     expect(sourceApp({ app: null, code: 'storage.alert.resolved', params: {} })).toBe(
-      'org.pithyx.storage',
+      'org.pithyx.settings',
     );
     expect(
       sourceApp({ app: null, code: 'jobs.job.succeeded', params: { kind: 'test.work' } }),

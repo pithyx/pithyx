@@ -37,9 +37,9 @@ Wenn du den Schlüssel und das Passwort verlierst, muss das System neu installie
 
 _Schritt 3 des Pool-Assistenten: Verschlüsselung lässt sich nur beim Anlegen des Pools wählen._
 
-Alle deine Daten liegen auf ZFS-Pools, und die Box startet ohne einen. Lege den ersten Pool in der Speicher-App an, die nur Administratoren öffnen können:
+Alle deine Daten liegen auf ZFS-Pools, und die Box startet ohne einen. Lege den ersten Pool in den Einstellungen an, die nur Administratoren öffnen können:
 
-1. Öffne das Pithyx-Menü und starte **Speicher**.
+1. Öffne das Pithyx-Menü, starte **Einstellungen** und wähle unter **Speicher** die Seite **Pools**.
 2. Klicke auf **Pool anlegen…**.
 3. Wähle die Platten, einen Aufbau, ob verschlüsselt werden soll, und einen Namen. Die Schritte heißen **Platten**, **Aufbau**, **Verschlüsselung**, **Name und Prüfung**, und **Schlüssel** für einen verschlüsselten Pool.
 4. Klicke auf **Pool anlegen**.
@@ -58,7 +58,7 @@ Benutzer bekommen einen Home-Ordner auf dem ersten Pool mit dem Pithyx-Layout, s
 
 Pithyx kennt keine Einladungslinks. Ein Administrator legt jedes Konto an:
 
-1. Öffne Einstellungen > **Benutzer**.
+1. Öffne Einstellungen > **Benutzer und Gruppen**.
 2. Klicke auf **Benutzer anlegen** und gib einen Benutzernamen, einen optionalen Anzeigenamen und ein Passwort ein. Jeder Benutzer ist außerdem in der Gruppe `users`.
 3. Gib der Person das Passwort persönlich oder über einen anderen sicheren Kanal weiter.
 4. Stelle die Rechte im Dialog **Rechte** ein.

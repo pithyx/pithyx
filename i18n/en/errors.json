@@ -227,7 +227,7 @@
       "path_taken": "Something else is already mounted at {path}. Choose another name.",
       "pool_not_prepared": "The pool {pool} has no place for shared folders (pithyx/shares), so none can be created on it.",
       "read_only": "You can only read in this share.",
-      "unavailable": "{name} cannot be opened right now: {reason, select, pool_missing {its pool is not connected. It comes back on its own once its disks are back} pool_unavailable {its pool stopped because disks are missing. It comes back on its own once its disks are back} locked {its pool is locked. An administrator unlocks it in Storage with the pool's key} other {its folder is not mounted}}."
+      "unavailable": "{name} cannot be opened right now: {reason, select, pool_missing {its pool is not connected. It comes back on its own once its disks are back} pool_unavailable {its pool stopped because disks are missing. It comes back on its own once its disks are back} locked {its pool is locked. An administrator unlocks it in Settings > Storage with the pool's key} other {its folder is not mounted}}."
     },
     "thumbnail": {
       "not_found": "There is no preview of this file yet.",
@@ -559,7 +559,7 @@
     },
     "command": {
       "failed": "The storage command {command} failed (exit code {exitCode}). Nothing after it was run; the log has the details.",
-      "timed_out": "{command} did not finish within {minutes, plural, one {# minute} other {# minutes}}. A disk of the pool probably stopped answering and ZFS is waiting for it. Check the disks in Storage. If other pools stop responding too, restart the box."
+      "timed_out": "{command} did not finish within {minutes, plural, one {# minute} other {# minutes}}. A disk of the pool probably stopped answering and ZFS is waiting for it. Check the disks in Settings > Storage. If other pools stop responding too, restart the box."
     },
     "dataset": {
       "compression_invalid": "Pithyx does not set the compression {compression}. Choose off, lz4, zle, zstd (levels 1 to 19) or gzip (levels 1 to 9).",
@@ -651,7 +651,7 @@
       "preview_required": "Import pool {name} read-only first and check its datasets, then import it for use."
     },
     "zfs": {
-      "unavailable": "ZFS did not answer in time or reported an error, so Pithyx cannot show what this would change. Try again in a moment. If it keeps happening, a pool may be waiting for disks that are gone: see Storage."
+      "unavailable": "ZFS did not answer in time or reported an error, so Pithyx cannot show what this would change. Try again in a moment. If it keeps happening, a pool may be waiting for disks that are gone: see Settings > Storage."
     }
   },
   "store": {

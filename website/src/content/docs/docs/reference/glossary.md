@@ -28,7 +28,7 @@ The words Pithyx uses in its interface and documentation, in alphabetical order.
 
 **Configuration backup.** A password-encrypted file with the box's database, Samba password database, certificates and SSH host keys, which can be restored on a fresh install.
 
-**Core app.** An app that ships with the system, such as Files, Storage, Settings, Resource Monitor, Log Center, Viewer, About Pithyx and Store. Its id starts with `org.pithyx.`.
+**Core app.** An app that ships with the system, such as Files, Settings, Resource Monitor, Log Center, Viewer, About Pithyx and Store. Its id starts with `org.pithyx.`.
 
 **Daemon.** `pithyxd`, the only privileged process on the box. It serves the desktop and the API.
 

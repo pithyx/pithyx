@@ -31,8 +31,8 @@ The installer already creates the owner account, so there is no separate setup p
 
 ## Next steps
 
-1. Open **Storage** and create a pool on your data disks.
+1. Open Settings > **Pools** and create a pool on your data disks.
 2. Open Settings > **Shared folders** and create shared folders on the pool.
-3. Create users in Settings > **Users** and give them access to the shared folders. See [Users and groups](/docs/admin/users-and-groups/).
+3. Create users in Settings > **Users and groups** and give them access to the shared folders. See [Users and groups](/docs/admin/users-and-groups/).
 4. Switch on the file services you need in Settings > **File services** ([File services](/docs/admin/file-services/)) and connect from your devices ([Access files from other devices](/docs/user/file-access/)).
 5. Make a configuration backup in Settings > **Backup and restore**. See [Backup and restore](/docs/admin/backup/).

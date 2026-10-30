@@ -7,7 +7,7 @@ import { NewPasswordField } from '../../auth/password/NewPasswordField';
 import { useNewPasswordCheck } from '../../auth/password/PasswordStrengthMeter';
 import { ErrorNotice } from '../../errors/ErrorNotice';
 import { useFormatLocale } from '../../i18n';
-import { Button, Checkbox, Dialog } from '@pithyx/ui';
+import { Button, Checkbox, cx, Dialog, FormSection } from '@pithyx/ui';
 import { backupCall, type BackupCategory, type BackupSummary } from '../sdk/backup';
 import { describeProblem } from '../storage/shared';
 import styles from './Settings.module.css';
@@ -31,12 +31,7 @@ export function BackupPage({ app }: { app: PithyxApp }) {
   const { t } = useTranslation('settings');
   return (
     <div className={styles.content}>
-      <header className={styles.pageHeader}>
-        <div>
-          <h2 className={styles.pageTitle}>{t('pages.backup.title')}</h2>
-          <p className={styles.muted}>{t('backup.intro')}</p>
-        </div>
-      </header>
+      <p className={styles.sectionIntro}>{t('backup.intro')}</p>
       <CreateForm app={app} />
       <RestoreForm app={app} />
     </div>
@@ -66,48 +61,47 @@ function CreateForm({ app }: { app: PithyxApp }) {
   }
 
   return (
-    <form className={styles.form} aria-labelledby="backup-create" onSubmit={submit}>
-      <h3 id="backup-create" className={styles.sectionTitle}>
-        {t('backup.create.title')}
-      </h3>
-      <p className={styles.muted}>{t('backup.create.intro')}</p>
-      <NewPasswordField
-        label={t('backup.create.password')}
-        name="backup-password"
-        error={error}
-        onChange={(event) => {
-          setPassword(event.target.value);
-          setError(undefined);
-          create.reset();
-        }}
-        required
-      />
-      <NativePasswordField
-        label={t('backup.create.repeat')}
-        name="backup-password-repeat"
-        autoComplete="new-password"
-        error={repeatError}
-        onChange={(event) => {
-          setRepeat(event.target.value);
-          setRepeatError(undefined);
-        }}
-        required
-      />
-      <div className={styles.notice}>
-        <p>{t('backup.create.keepPassword')}</p>
-      </div>
-      <div className={styles.buttons}>
-        <Button type="submit" variant="primary" isDisabled={create.isPending}>
-          {create.isPending ? t('backup.create.running') : t('backup.create.submit')}
-        </Button>
-      </div>
-      {create.isSuccess && (
-        <p role="status" className={styles.muted}>
-          {t('backup.create.done', { fileName: create.data.fileName })}
-        </p>
-      )}
-      {create.isError && <ErrorNotice error={describeProblem(create.error)} />}
-    </form>
+    <FormSection title={t('backup.create.title')}>
+      <form className={cx(styles.form, styles.narrow)} onSubmit={submit}>
+        <p className={styles.sectionIntro}>{t('backup.create.intro')}</p>
+        <NewPasswordField
+          label={t('backup.create.password')}
+          name="backup-password"
+          error={error}
+          onChange={(event) => {
+            setPassword(event.target.value);
+            setError(undefined);
+            create.reset();
+          }}
+          required
+        />
+        <NativePasswordField
+          label={t('backup.create.repeat')}
+          name="backup-password-repeat"
+          autoComplete="new-password"
+          error={repeatError}
+          onChange={(event) => {
+            setRepeat(event.target.value);
+            setRepeatError(undefined);
+          }}
+          required
+        />
+        <div className={styles.notice}>
+          <p>{t('backup.create.keepPassword')}</p>
+        </div>
+        <div className={styles.buttons}>
+          <Button type="submit" variant="primary" isDisabled={create.isPending}>
+            {create.isPending ? t('backup.create.running') : t('backup.create.submit')}
+          </Button>
+        </div>
+        {create.isSuccess && (
+          <p role="status" className={styles.muted}>
+            {t('backup.create.done', { fileName: create.data.fileName })}
+          </p>
+        )}
+        {create.isError && <ErrorNotice error={describeProblem(create.error)} />}
+      </form>
+    </FormSection>
   );
 }
 
@@ -123,13 +117,10 @@ function RestoreForm({ app }: { app: PithyxApp }) {
   });
 
   return (
-    <section className={styles.form} aria-labelledby="backup-restore">
-      <h3 id="backup-restore" className={styles.sectionTitle}>
-        {t('backup.restore.title')}
-      </h3>
-      <p className={styles.muted}>{t('backup.restore.intro')}</p>
+    <FormSection title={t('backup.restore.title')}>
+      <p className={styles.sectionIntro}>{t('backup.restore.intro')}</p>
       <form
-        className={styles.form}
+        className={cx(styles.form, styles.narrow)}
         onSubmit={(event) => {
           event.preventDefault();
           if (file !== null) {
@@ -188,7 +179,7 @@ function RestoreForm({ app }: { app: PithyxApp }) {
       {inspect.data !== undefined && (
         <RestoreChoice key={inspect.data.restoreId} app={app} summary={inspect.data} />
       )}
-    </section>
+    </FormSection>
   );
 }
 

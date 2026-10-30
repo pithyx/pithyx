@@ -65,7 +65,7 @@ Standardmäßig liegt die Taskleiste am unteren Bildschirmrand. Von links nach r
 - die Schaltfläche des Pithyx-Menüs,
 - je offenem Fenster eine Schaltfläche mit Icon und Titel; die aktive ist in der Akzentfarbe unterstrichen, die anderen mit einer dünnen Linie,
 - den App-Umschalter mit der Anzahl der offenen Apps,
-- für Administratoren der Zustand der Box: der Pool, der am meisten Aufmerksamkeit braucht, die Prozessorlast und der Netzwerkverkehr; jedes öffnet Speicher oder den Ressourcenmonitor (auf Bildschirmen ab 1024 Pixeln Breite),
+- für Administratoren der Zustand der Box: der Pool, der am meisten Aufmerksamkeit braucht, die Prozessorlast und der Netzwerkverkehr; jedes öffnet Einstellungen > Pools oder den Ressourcenmonitor (auf Bildschirmen ab 1024 Pixeln Breite),
 - die Schaltfläche für Übertragungen, solange Dateien hoch- oder heruntergeladen werden,
 - die Schaltfläche für laufende Aufgaben,
 - die Benachrichtigungsglocke mit einem Zähler für ungelesene Benachrichtigungen,
@@ -75,7 +75,7 @@ Laufen mehr Apps, als Platz haben, werden ihre Schaltflächen schmaler und lasse
 
 Klicke auf eine laufende App, um sie nach vorn zu holen. Klicke noch einmal auf die aktive App, um sie zu minimieren. Klicke mit der rechten Maustaste auf eine laufende App (oder drücke darauf **Umschalt+F10**) für **Minimieren** oder **Wiederherstellen**, **Zum Desktop hinzufügen** und **Schließen**.
 
-Um die Taskleiste zu verschieben, öffne **Persönliche Einstellungen** (in der linken Leiste des Pithyx-Menüs), wähle **Position der Taskleiste** und dann **Unten**, **Oben**, **Links** oder **Rechts**. Auf Handys bleibt die Taskleiste immer unten und die Zeile fehlt.
+Um die Taskleiste zu verschieben, öffne **Persönliche Einstellungen** (in der linken Leiste des Pithyx-Menüs), gehe zu **Darstellung**, wähle bei **Position der Taskleiste** **Unten**, **Oben**, **Links** oder **Rechts**. Auf Handys bleibt die Taskleiste immer unten und die Zeile fehlt.
 
 **Das Pithyx-Menü** öffnet sich über der Taskleiste, angesetzt an die Schaltfläche links in ihr, oder wenn du die Windows- oder Befehlstaste (Command) drückst und loslässt. Es hat drei Teile:
 

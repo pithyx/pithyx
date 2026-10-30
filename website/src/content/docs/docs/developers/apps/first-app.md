@@ -78,7 +78,7 @@ Only an administrator can install a package.
 1. Open the Store and the **Installed** tab, and choose **Install from file**.
 2. Choose the `.pithyxapp` file. The dialog **Install an app** shows the version and whether this is an install, update, reinstall or downgrade, the author, the file count and size, and the warning "This package comes from a file and is not verified."
 3. Review the permissions the app asks for, the folders it wants, whether it has a backend, whether it runs as root, and who may use it.
-4. On the first app install of the box, choose the pool for app data; every app keeps its files there. Without a pool the dialog says to create one in Storage first.
+4. On the first app install of the box, choose the pool for app data; every app keeps its files there. Without a pool the dialog says to create one in Settings > Pools first.
 5. Confirm. Installing runs as a job.
 
 After the install, an administrator maps the app's storage requests to shared folders and can revoke permissions. An update that asks for a new permission waits for the administrator's confirmation and the old version keeps running. An update takes a snapshot of the app's data; a rollback returns to the previous version with its data. See [Apps and the Store](/docs/admin/apps-and-store/).

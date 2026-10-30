@@ -67,10 +67,10 @@ function setValue(element: HTMLInputElement | HTMLSelectElement, value: string) 
 function attempt(step: ScriptStep): boolean {
   if ('press' in step) {
     const wanted = text(step.press, step.params);
-    // A button or radio by its text, else a native radio button or checkbox by its label.
+    // A button, radio, tab or table row by its text, else a native radio button or checkbox by its label.
     const button =
       scopes(step.inside)
-        .map((root) => byText(root, 'button, [role="radio"]', wanted))
+        .map((root) => byText(root, 'button, [role="radio"], [role="tab"], [role="row"]', wanted))
         .find((found) => found !== undefined) ?? control(wanted);
     if (
       button === undefined ||

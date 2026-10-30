@@ -14,6 +14,9 @@ import type {
   Vdev,
 } from '../apps/sdk/internal';
 import type { UpdateStatus } from '../apps/sdk/updates';
+import type { UpsStatus } from '../apps/sdk/ups';
+import type { GroupSummary, UserSummary } from '../apps/sdk/users';
+import type { FileServiceSettings } from '../apps/sdk/system';
 
 const TB = 1_000_000_000_000;
 const GB = 1_000_000_000;
@@ -982,6 +985,139 @@ export const sampleJob: Job = {
 /** Answers for internal methods the gallery does not know yet. */
 export type ExtraAnswers = Record<string, (params: unknown) => unknown>;
 
+export const sampleUsers: UserSummary[] = [
+  {
+    id: 1,
+    username: 'ada',
+    displayName: 'Ada Admin',
+    isAdmin: true,
+    uid: 20000,
+    totpEnabled: true,
+    createdAt: '2026-09-01T08:00:00Z',
+    home: 'tank/pithyx/homes/ada',
+    disabled: false,
+    rights: ['right:admin', 'right:desktopLogin', 'right:sshLogin', 'right:power'],
+    protocols: ['protocol:smb', 'protocol:sftp', 'protocol:webdav', 'protocol:ftp'],
+    fileServicePassword: true,
+    groupIds: [1],
+  },
+  {
+    id: 2,
+    username: 'ben',
+    displayName: 'Ben Berger',
+    isAdmin: false,
+    uid: 20001,
+    totpEnabled: false,
+    createdAt: '2026-09-03T08:00:00Z',
+    home: 'tank/pithyx/homes/ben',
+    disabled: false,
+    rights: ['right:desktopLogin'],
+    protocols: ['protocol:smb', 'protocol:sftp'],
+    fileServicePassword: true,
+    groupIds: [2, 3],
+  },
+  {
+    id: 3,
+    username: 'carla.mueller-schmidt',
+    displayName: 'Carla Müller-Schmidt',
+    isAdmin: false,
+    uid: 20002,
+    totpEnabled: true,
+    createdAt: '2026-09-05T08:00:00Z',
+    home: 'tank/pithyx/homes/carla.mueller-schmidt',
+    disabled: false,
+    rights: ['right:desktopLogin'],
+    protocols: ['protocol:smb'],
+    fileServicePassword: false,
+    groupIds: [3],
+  },
+  {
+    id: 4,
+    username: 'guest',
+    displayName: 'Guest',
+    isAdmin: false,
+    uid: 20003,
+    totpEnabled: false,
+    createdAt: '2026-09-07T08:00:00Z',
+    home: null,
+    disabled: true,
+    rights: [],
+    protocols: [],
+    fileServicePassword: false,
+    groupIds: [],
+  },
+];
+
+export const sampleGroups: GroupSummary[] = [
+  {
+    id: 1,
+    name: 'administrators',
+    description: 'Everyone who runs the box',
+    builtin: true,
+    memberIds: [1],
+    createdAt: '2026-09-01T08:00:00Z',
+  },
+  {
+    id: 2,
+    name: 'family',
+    description: 'Photos and documents of the family',
+    builtin: false,
+    memberIds: [2],
+    createdAt: '2026-09-02T08:00:00Z',
+  },
+  {
+    id: 3,
+    name: 'media',
+    description: '',
+    builtin: false,
+    memberIds: [2, 3],
+    createdAt: '2026-09-02T09:00:00Z',
+  },
+];
+
+export const sampleFileServices: FileServiceSettings = {
+  smbEnabled: true,
+  workgroup: 'WORKGROUP',
+  sftpEnabled: true,
+  smb: 'running',
+  sftp: 'running',
+  sshEnabled: false,
+  webDavEnabled: false,
+  ftpEnabled: true,
+  ftpPlainAllowed: false,
+  ftp: 'running',
+  ftpPort: 21,
+  ftpFingerprint: 'SHA256:4F:2A:9C:11:7B:E0:52:D8:6A:93:0C:FE:21:44:8B:3D',
+  privateNetworksOnly: true,
+  firewallActive: true,
+};
+
+export const sampleUps: UpsStatus = {
+  settings: {
+    mode: 'usb',
+    host: '',
+    port: 3493,
+    name: 'ups',
+    username: '',
+    hasPassword: false,
+    batteryLow: 20,
+    runtimeLow: 5,
+  },
+  state: {
+    connection: 'connected',
+    power: 'online',
+    lowBattery: false,
+    charge: 100,
+    runtime: 1860,
+    load: 18,
+    model: 'UPS 900VA',
+    problem: null,
+    onBatterySince: null,
+    shutdownReason: null,
+  },
+  usbAvailable: true,
+};
+
 /** Answers the internal calls of the Storage and Settings apps from the sample, never from a daemon. */
 function answer(method: string, params: unknown, extra: ExtraAnswers): unknown {
   const custom = extra[method];
@@ -1025,6 +1161,14 @@ function answer(method: string, params: unknown, extra: ExtraAnswers): unknown {
       return sampleUpdates;
     case 'internal.admin.system.time':
       return sampleTime;
+    case 'internal.admin.users.list':
+      return sampleUsers;
+    case 'internal.admin.groups.list':
+      return sampleGroups;
+    case 'internal.admin.system.fileServices':
+      return sampleFileServices;
+    case 'internal.admin.ups.get':
+      return sampleUps;
     case 'internal.admin.system.region':
       return { language: 'en', region: null };
     case 'internal.admin.storage.snapshots.schedules':

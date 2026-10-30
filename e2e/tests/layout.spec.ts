@@ -15,10 +15,10 @@ async function layoutSaved(page: Page, containing = ''): Promise<string> {
 }
 
 test('the layout survives a reload', async ({ page }) => {
-  // Opening Storage may save a layout of its own first, depending on how fast its chunk loads.
+  // Opening Settings may save a layout of its own first, depending on how fast its chunk loads.
   const saved = layoutSaved(page, '"zone":"left"');
   await signInAsAdmin(page);
-  await openFromDesktop(page, 'Storage');
+  await openFromDesktop(page, 'Settings');
   await page.getByRole('button', { name: 'Pithyx menu' }).click();
   await page
     .getByRole('dialog', { name: 'Pithyx menu' })
@@ -32,7 +32,7 @@ test('the layout survives a reload', async ({ page }) => {
 
   await page.reload();
   await expect(about).toBeVisible();
-  await expect(appWindow(page, 'Storage')).toBeVisible();
+  await expect(appWindow(page, 'Settings')).toBeVisible();
   const workspace = await page.getByRole('main', { name: 'Desktop' }).boundingBox();
   await expect
     .poll(async () => (await about.boundingBox())?.width)
@@ -49,7 +49,7 @@ test('another device gets this desktop', async ({ browser }) => {
   const first = await laptop.newPage();
   const saved = layoutSaved(first);
   await signInAsAdmin(first);
-  await openFromDesktop(first, 'Storage');
+  await openFromDesktop(first, 'Settings');
   await first.getByRole('button', { name: 'Pithyx menu' }).click();
   await first
     .getByRole('dialog', { name: 'Pithyx menu' })
@@ -60,14 +60,14 @@ test('another device gets this desktop', async ({ browser }) => {
   const phone = await browser.newContext();
   const second = await phone.newPage();
   await signInAsAdmin(second);
-  await expect(appWindow(second, 'Storage')).toHaveCount(0);
-  const settings = await openPersonalSettings(second);
+  await expect(appWindow(second, 'Settings')).toHaveCount(0);
+  const settings = await openPersonalSettings(second, 'Appearance');
   await settings.getByRole('button', { name: 'Get desktop from', exact: true }).click();
   await second
     .getByRole('menuitem', { name: /^Chrome on / })
     .first()
     .click();
-  await expect(appWindow(second, 'Storage')).toBeVisible();
+  await expect(appWindow(second, 'Settings')).toBeVisible();
   await expect(appWindow(second, 'About Pithyx')).toBeVisible();
   await expect(second.getByText('Desktop loaded')).toBeVisible();
 
@@ -85,7 +85,7 @@ test('two tabs of one browser do not overwrite each other unnoticed', async ({ b
 
   // Both tabs start from the same saved version; the first one saves a newer one.
   const firstSaved = layoutSaved(first);
-  await openFromDesktop(first, 'Storage');
+  await openFromDesktop(first, 'Settings');
   await firstSaved;
 
   // The second tab still names the old version, gets 412 and saves its own layout on top, since it is in use.
@@ -102,14 +102,14 @@ test('two tabs of one browser do not overwrite each other unnoticed', async ({ b
 
   await first.reload();
   await expect(appWindow(first, 'About Pithyx')).toBeVisible();
-  await expect(appWindow(first, 'Storage')).toHaveCount(0);
+  await expect(appWindow(first, 'Settings')).toHaveCount(0);
   await context.close();
 });
 
 test('apps chosen in Personal settings open after signing in, once', async ({ page }) => {
   await signInAsAdmin(page);
   try {
-    const settings = await openPersonalSettings(page);
+    const settings = await openPersonalSettings(page, 'Apps');
     await settings.getByRole('button', { name: 'Open at sign-in', exact: true }).click();
     const dialog = page.getByRole('dialog', { name: 'Open at sign-in' });
     const saved = page.waitForResponse(

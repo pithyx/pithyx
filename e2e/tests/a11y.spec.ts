@@ -58,15 +58,15 @@ test('the desktop with windows, menus and the start menu has no accessibility vi
   page,
 }) => {
   await signInAsAdmin(page);
-  await openFromDesktop(page, 'Storage');
-  await appWindow(page, 'Storage').getByRole('button', { name: 'Disks', exact: true }).click();
+  await openFromDesktop(page, 'Settings');
+  await appWindow(page, 'Settings').getByRole('button', { name: 'Disks', exact: true }).click();
   await page.getByRole('button', { name: 'Pithyx menu' }).click();
   await page
     .getByRole('dialog', { name: 'Pithyx menu' })
     .getByRole('row', { name: 'About Pithyx' })
     .click();
   await expect(appWindow(page, 'About Pithyx')).toBeVisible();
-  await expect(appWindow(page, 'Storage').getByRole('row').nth(3)).toBeVisible();
+  await expect(appWindow(page, 'Settings').getByRole('row').nth(3)).toBeVisible();
   expect(await violations(page)).toEqual([]);
 
   await page.getByRole('button', { name: 'Pithyx menu' }).click();
@@ -86,8 +86,15 @@ test('the desktop with windows, menus and the start menu has no accessibility vi
   expect(await violations(page)).toEqual([]);
   await page.keyboard.press('Escape');
 
+  // Personal settings would cover parts of the other windows, whose buttons axe then counts as too small.
+  await appWindow(page, 'Settings').getByRole('button', { name: 'Close' }).click();
+  await appWindow(page, 'About Pithyx').getByRole('button', { name: 'Close' }).click();
   const settings = await openPersonalSettings(page);
-  await expect(settings.getByRole('heading', { name: 'Account and security' })).toBeVisible();
+  await expect(settings.getByRole('heading', { name: 'Account', level: 1 })).toBeVisible();
+  expect(await violations(page)).toEqual([]);
+  await openPersonalSettings(page, 'Appearance');
+  expect(await violations(page)).toEqual([]);
+  await openPersonalSettings(page, 'What I can use');
   expect(await violations(page)).toEqual([]);
 });
 
@@ -122,7 +129,7 @@ test.describe('phone', () => {
 
   test('the app switcher has no accessibility violations', async ({ page }) => {
     await signInAsAdmin(page);
-    await page.getByRole('option', { name: 'Storage, shortcut' }).tap();
+    await page.getByRole('option', { name: 'Settings, shortcut' }).tap();
     await page
       .getByRole('navigation', { name: 'Taskbar' })
       .getByRole('button', { name: /Switch apps/ })

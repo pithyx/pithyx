@@ -28,7 +28,7 @@ Die Wörter, die Pithyx in seiner Oberfläche und Dokumentation verwendet, in de
 
 **Konfigurationsbackup (Configuration backup).** Eine mit Passwort verschlüsselte Datei mit der Datenbank der Box, der Samba-Passwortdatenbank, Zertifikaten und SSH-Host-Schlüsseln, die bei einer frischen Installation wiederhergestellt werden kann.
 
-**Core-App (Core app).** Eine App, die mit dem System ausgeliefert wird, wie Dateien, Speicher, Einstellungen, Ressourcenmonitor, Protokoll-Center, Betrachter, Info und Store. Ihre ID beginnt mit `org.pithyx.`.
+**Core-App (Core app).** Eine App, die mit dem System ausgeliefert wird, wie Dateien, Einstellungen, Ressourcenmonitor, Protokoll-Center, Betrachter, Info und Store. Ihre ID beginnt mit `org.pithyx.`.
 
 **Daemon.** `pithyxd`, der einzige privilegierte Prozess auf der Box. Er liefert den Desktop und die API aus.
 

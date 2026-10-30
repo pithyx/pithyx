@@ -41,7 +41,6 @@ export function SnapshotsSection({ app }: { app: PithyxApp }) {
     <div className={styles.storage}>
       <header className={styles.pageHeader}>
         <div>
-          <h2 className={styles.pageTitle}>{t('nav.snapshots')}</h2>
           <p className={styles.muted}>{t('snapshots.intro')}</p>
         </div>
       </header>

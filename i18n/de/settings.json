@@ -32,12 +32,12 @@
       "name": "Name",
       "nameHint": "Buchstaben, Ziffern, Leerzeichen, Punkte, Bindestriche und Unterstriche.",
       "pool": "Pool",
-      "noPools": "Noch kein Pool ist für freigegebene Ordner bereit. Lege zuerst in Speicher einen Pool an.",
+      "noPools": "Noch kein Pool ist für freigegebene Ordner bereit. Lege zuerst unter Speicher einen Pool an.",
       "description": "Beschreibung (optional)",
       "preview": "Befehle anzeigen",
       "dataset": "Der freigegebene Ordner wird zum Dataset {dataset}.",
       "run": "Freigegebenen Ordner anlegen",
-      "openStorage": "Pool in Speicher anlegen…"
+      "openStorage": "Zu den Pools…"
     },
     "editDialog": {
       "title": "{name} bearbeiten",
@@ -74,7 +74,7 @@
       "title": "{name} löschen",
       "choice": "Was passiert mit den Daten?",
       "keep": "Daten behalten",
-      "keepDataset": "Der freigegebene Ordner verschwindet. Das Dataset {dataset} und seine Dateien bleiben und sind weiter in Speicher zu sehen.",
+      "keepDataset": "Der freigegebene Ordner verschwindet. Das Dataset {dataset} und seine Dateien bleiben und sind weiter unter Speicher zu sehen.",
       "keepFolder": "Der freigegebene Ordner verschwindet. Die Dateien bleiben im Ordner {path}.",
       "destroy": "Daten endgültig löschen",
       "destroyHint": "Das Dataset, alle seine Dateien und jeder Snapshot werden gelöscht. Das lässt sich nicht rückgängig machen.",
@@ -84,14 +84,42 @@
       "nothingRuns": "Es läuft kein Befehl. {location} und seine Dateien bleiben.",
       "gone": "Das wird endgültig gelöscht:",
       "run": "Freigegebenen Ordner löschen"
-    }
+    },
+    "toolbar": "Aktionen für freigegebene Ordner"
   },
   "overview": {
     "title": "Einstellungen",
     "search": "Einstellungen durchsuchen",
     "noMatch": "Keine Einstellung passt zu deiner Suche.",
     "all": "Alle Einstellungen",
-    "navigation": "Navigation der Einstellungen"
+    "navigation": "Navigation der Einstellungen",
+    "allSettings": "Alle Einstellungen",
+    "box": {
+      "label": "Diese Box",
+      "version": "Pithyx {version}",
+      "runningFor": "Läuft seit",
+      "updates": "Updates",
+      "upToDate": "Aktuell",
+      "updateReady": "Pithyx {version} ist bereit"
+    },
+    "attention": {
+      "openStorage": "Speicher öffnen",
+      "update": {
+        "title": "Pithyx {version} ist bereit zur Installation",
+        "description": "Installiere es unter Updates; die Box startet einmal neu.",
+        "action": "Updates öffnen"
+      },
+      "apps": {
+        "title": "{count, plural, one {Ein Update für # App ist bereit} other {Updates für # Apps sind bereit}}",
+        "action": "Store öffnen"
+      },
+      "trust": {
+        "title": "Dieses Gerät vertraut der Box noch nicht",
+        "description": "Vertraue ihr einmal, um Passkeys einzuschalten und die Warnungen des Browsers loszuwerden.",
+        "action": "Diesem Gerät vertrauen"
+      }
+    },
+    "page": "Übersicht"
   },
   "categories": {
     "system": "System",
@@ -140,9 +168,9 @@
       "keywords": "smb samba sftp ssh netzlaufwerk protokoll firewall"
     },
     "users": {
-      "title": "Benutzer",
-      "description": "Konten, Passwörter und Administratoren",
-      "keywords": "benutzer konto passwort administrator anmeldung personen"
+      "title": "Benutzer und Gruppen",
+      "description": "Konten, Passwörter, Gruppen und ihre Rechte",
+      "keywords": "benutzer konto passwort administrator anmeldung personen gruppe team mitglieder rechte berechtigungen"
     },
     "updates": {
       "title": "Updates",
@@ -164,15 +192,30 @@
       "description": "Apps mit Root-Zugriff auf die Box und ihn entziehen",
       "keywords": "sicherheit root zugriff sonderrechte apps docker container socket entziehen vertrauen"
     },
-    "groups": {
-      "title": "Gruppen",
-      "description": "Gruppen, ihre Mitglieder und Rechte",
-      "keywords": "gruppe team mitglieder rechte berechtigungen"
-    },
     "notifications": {
       "title": "Benachrichtigungen",
       "description": "Der E-Mail-Server und die Kanäle der Box für ihre Warnungen",
       "keywords": "benachrichtigungen e-mail email smtp server webhook ntfy gotify push warnungen kanäle"
+    },
+    "pools": {
+      "title": "Pools",
+      "description": "Pools auf deinen Platten, ihr Platz und Zustand, und sie anlegen, erweitern, sperren und reparieren",
+      "keywords": "speicher pool zfs spiegel raid raidz platte festplatte platz kapazität verschlüsselung schlüssel sperren entsperren tresor usb stick reparieren ersetzen erweitern scrub"
+    },
+    "disks": {
+      "title": "Platten",
+      "description": "Jede Platte mit ihrem Zustand und ob ein neuer Pool sie nutzen darf",
+      "keywords": "speicher platte festplatte hdd ssd nvme smart zustand temperatur seriennummer"
+    },
+    "maintenance": {
+      "title": "Zustand und Wartung",
+      "description": "Gefundene Probleme, Scrub-Zeitpläne und Selbsttests der Platten",
+      "keywords": "speicher zustand warnungen scrub zeitplan smart selbsttest wartung"
+    },
+    "storageAdvanced": {
+      "title": "Speicher für Fortgeschrittene",
+      "description": "Datasets und Volumes, einen Pool exportieren und importieren",
+      "keywords": "speicher erweitert dataset volume kontingent komprimierung exportieren importieren umziehen pool"
     }
   },
   "info": {
@@ -187,7 +230,8 @@
     "memory": "Arbeitsspeicher",
     "uptime": "Läuft seit",
     "unknown": "Nicht gemeldet",
-    "uptimeValue": "{days, plural, =0 {} one {# Tag, } other {# Tagen, }}{hours, plural, one {# Stunde} other {# Stunden}}, {minutes, plural, one {# Minute} other {# Minuten}}"
+    "uptimeValue": "{days, plural, =0 {} one {# Tag, } other {# Tagen, }}{hours, plural, one {# Stunde} other {# Stunden}}, {minutes, plural, one {# Minute} other {# Minuten}}",
+    "section": "Diese Box"
   },
   "fileServices": {
     "intro": "Mit Dateidiensten öffnen andere Computer deine freigegebenen Ordner über das Netzwerk. Benutzer melden sich mit ihrem Pithyx-Benutzernamen und Passwort an.",
@@ -366,7 +410,13 @@
       "connectionWarning": "Dieser Browser erreicht die Box über {name}, und das ändert sich. Die Seite antwortet vielleicht nicht mehr; öffne die neue Adresse oder warte 60 Sekunden, bis die alten Einstellungen zurück sind.",
       "addresses": "Die Box antwortet dann auch unter:",
       "confirm": "Anwenden"
-    }
+    },
+    "tabs": {
+      "interfaces": "Schnittstellen",
+      "names": "Hostname und Nameserver",
+      "proxy": "Reverse Proxy"
+    },
+    "applyNote": "Änderungen gelten zusammen. Ist die Box danach nicht erreichbar, kehrt sie nach 60 Sekunden zu den alten Einstellungen zurück."
   },
   "certificates": {
     "intro": "Die Box spricht HTTPS auf Port 7484; die Ports 80 und 443 schicken jeden dorthin, außer ein Host des Reverse Proxys hat den Namen. Sie ist ihre eigene Zertifizierungsstelle: Installiere ihr Root-Zertifikat einmal auf einem Gerät, dann vertraut das Gerät der Box und jedem Zertifikat, das sie ausstellt.",
@@ -652,15 +702,13 @@
     }
   },
   "regional": {
-    "intro": "Sprache, Formate und Uhrzeit der Box. Deine eigene Sprache wählst du weiterhin im Benutzermenü.",
+    "intro": "Sprache, Formate und Uhrzeit der Box. Deine eigene Sprache wählst du weiterhin in den Persönlichen Einstellungen.",
     "languageTitle": "Sprache und Formate",
     "language": "Systemsprache",
     "languageHint": "Die Anmeldeseite nutzt sie, und alle, deren Browser eine Sprache verlangt, die Pithyx nicht hat.",
     "formats": "Formate",
     "formatsLanguage": "Wie die Sprache",
     "formatsHint": "Wie Datum, Uhrzeit und Zahlen für alle aussehen, zum Beispiel 31.12.2026 oder 12/31/2026.",
-    "preview": "Beispiel: {preview}",
-    "saveLanguage": "Sprache und Formate speichern",
     "timeTitle": "Datum und Uhrzeit",
     "now": "Uhrzeit der Box",
     "sync": "Uhr",
@@ -669,8 +717,9 @@
     "zone": "Zeitzone",
     "servers": "Zeitserver",
     "serversHint": "Hostnamen oder Adressen, durch Leerzeichen getrennt. Leer lassen für die Standardserver.",
-    "saveTime": "Zeiteinstellungen speichern",
-    "saved": "Gespeichert."
+    "saved": "Gespeichert.",
+    "example": "Beispiel",
+    "applyNote": "Gilt für die Anmeldeseite und für alle, die keine eigene Sprache und keine eigenen Formate gewählt haben."
   },
   "restorePoints": {
     "explain": "Was sind Wiederherstellungspunkte?",
@@ -959,7 +1008,8 @@
       "explain": "Der Home-Ordner wird mit allen Dateien, seinem Papierkorb und seinen Snapshots gelöscht. Das lässt sich nicht rückgängig machen. Gehört er einem Benutzer, dessen Pool fehlt, bekommt der Benutzer einen neuen, leeren Home-Ordner.",
       "confirm": "Gib {folder} zur Bestätigung ein",
       "submit": "Home-Ordner löschen"
-    }
+    },
+    "toolbar": "Aktionen für Home-Ordner"
   },
   "ups": {
     "intro": "Mit einer USV fährt die Box bei einem Stromausfall sauber herunter, bevor der Akku leer ist: Apps und Dateidienste stoppen und die Pools werden ausgehängt. Pithyx liest die USV über NUT (Network UPS Tools).",
@@ -1024,7 +1074,8 @@
     "batteryLowHint": "5 bis 90; standardmäßig 20.",
     "runtimeLow": "Laufzeit-Grenze (Minuten)",
     "runtimeLowHint": "1 bis 60; standardmäßig 5.",
-    "save": "Speichern"
+    "limitsTitle": "Grenzen",
+    "applyNote": "Übernehmen speichert die Einstellungen und verbindet sich neu mit der USV."
   },
   "notifications": {
     "smtp": {
@@ -1043,12 +1094,13 @@
       "password": "Passwort",
       "passwordSet": "Ein Passwort ist gespeichert. Gib nur ein neues ein, um es zu ersetzen.",
       "from": "Absenderadresse",
-      "save": "Speichern"
+      "applyNote": "Ein Test über einen Kanal zeigt, ob der Server funktioniert."
     },
     "system": {
       "title": "Kanäle der Box",
       "explain": "Diese Kanäle bekommen die eigenen Warnungen des Systems (Speicher, Updates, die USV, falsche Anmeldungen und mehr) einmal für alle Administratoren. Jeder Benutzer, auch Administratoren, kann im Benutzermenü eigene Kanäle hinzufügen."
-    }
+    },
+    "tabs": "Benachrichtigungen der Box"
   },
   "security": {
     "intro": "Was auf der Box mehr kann, als eine App sollte.",
@@ -1060,5 +1112,12 @@
       "rights": "Rechte: {rights}",
       "revoke": "Root-Zugriff entziehen"
     }
+  },
+  "groups": {
+    "system": "System",
+    "storage": "Speicher",
+    "network": "Netzwerk",
+    "services": "Dienste",
+    "access": "Zugriff"
   }
 }

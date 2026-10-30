@@ -1452,7 +1452,7 @@
         "command": "zpool destroy",
         "minutes": 5
       },
-      "expected": "zpool destroy did not finish within 5 minutes. A disk of the pool probably stopped answering and ZFS is waiting for it. Check the disks in Storage. If other pools stop responding too, restart the box."
+      "expected": "zpool destroy did not finish within 5 minutes. A disk of the pool probably stopped answering and ZFS is waiting for it. Check the disks in Settings > Storage. If other pools stop responding too, restart the box."
     },
     "storage.dataset.compression_invalid": {
       "params": {
@@ -1772,7 +1772,7 @@
     },
     "storage.zfs.unavailable": {
       "params": {},
-      "expected": "ZFS did not answer in time or reported an error, so Pithyx cannot show what this would change. Try again in a moment. If it keeps happening, a pool may be waiting for disks that are gone: see Storage."
+      "expected": "ZFS did not answer in time or reported an error, so Pithyx cannot show what this would change. Try again in a moment. If it keeps happening, a pool may be waiting for disks that are gone: see Settings > Storage."
     },
     "store.app.not_found": {
       "params": {

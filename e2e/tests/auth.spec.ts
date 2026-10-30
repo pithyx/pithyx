@@ -47,11 +47,11 @@ async function confirmStored(page: Page) {
 }
 
 function disks(page: Page) {
-  return page.getByRole('region', { name: 'Storage', exact: true });
+  return page.getByRole('region', { name: 'Settings', exact: true });
 }
 
 async function openDisks(page: Page) {
-  await openFromDesktop(page, 'Storage');
+  await openFromDesktop(page, 'Settings');
   await disks(page).getByRole('button', { name: 'Disks', exact: true }).click();
   await expect(disks(page).getByRole('row', { name: /sdg/ })).toBeVisible();
 }
@@ -123,7 +123,7 @@ test('setup, recovery key, TOTP sign-in and password reset with the recovery key
   });
 
   await test.step('turn on two-factor authentication', async () => {
-    const settings = await openPersonalSettings(page);
+    const settings = await openPersonalSettings(page, 'Sign-in and security');
     await settings.getByRole('button', { name: 'Two-factor authentication', exact: true }).click();
     const dialog = page.getByRole('dialog', { name: 'Two-factor authentication' });
     await dialog.getByRole('button', { name: 'Set up' }).click();
@@ -277,7 +277,7 @@ test('phones sign in and see the storage app full screen', async ({ browser }) =
   const page = await context.newPage();
   await page.goto('/');
   await signIn(page, newPassword);
-  await page.getByRole('option', { name: 'Storage, shortcut' }).tap();
+  await page.getByRole('option', { name: 'Settings, shortcut' }).tap();
   const region = disks(page);
   await region.getByRole('button', { name: 'Disks', exact: true }).tap();
   await expect(region.getByRole('row', { name: /sdg/ })).toBeVisible();

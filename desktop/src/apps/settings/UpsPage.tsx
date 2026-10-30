@@ -1,12 +1,22 @@
 import type { PithyxApp } from '@pithyx/sdk';
-import { Badge, Button, PasswordField, TextField } from '@pithyx/ui';
+import {
+  ActionBar,
+  FormRow,
+  FormSection,
+  PasswordField,
+  Radio,
+  RadioGroup,
+  StatusBadge,
+  TextField,
+} from '@pithyx/ui';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useId, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ErrorNotice } from '../../errors/ErrorNotice';
 import { useFormatLocale } from '../../i18n';
 import { onUps, upsCall, upsKey, type UpsMode, type UpsStatus } from '../sdk/ups';
 import { describeProblem } from '../storage/shared';
+import { PageFooter } from './footer';
 import styles from './Settings.module.css';
 
 /**
@@ -30,12 +40,7 @@ export function UpsPage({ app }: { app: PithyxApp }) {
   );
   return (
     <div className={styles.content}>
-      <header className={styles.pageHeader}>
-        <div>
-          <h2 className={styles.pageTitle}>{t('pages.ups.title')}</h2>
-          <p className={styles.muted}>{t('ups.intro')}</p>
-        </div>
-      </header>
+      <p className={styles.sectionIntro}>{t('ups.intro')}</p>
       {status.isError && <ErrorNotice error={describeProblem(status.error)} />}
       {status.data !== undefined && (
         <>
@@ -79,11 +84,19 @@ function UpsState({ status }: { status: UpsStatus }) {
   if (state.model != null) {
     rows.push([t('ups.model'), state.model]);
   }
+  const tone =
+    state.connection === 'connected'
+      ? state.power === 'onBattery'
+        ? 'warning'
+        : 'success'
+      : state.connection === 'unreachable'
+        ? 'danger'
+        : 'neutral';
   return (
-    <section className={styles.card} aria-labelledby="ups-state">
-      <h3 id="ups-state" className={styles.sectionTitle}>
-        {t('ups.stateTitle')} <Badge>{t(`ups.connection.${state.connection}`)}</Badge>
-      </h3>
+    <FormSection
+      title={t('ups.stateTitle')}
+      end={<StatusBadge tone={tone}>{t(`ups.connection.${state.connection}`)}</StatusBadge>}
+    >
       {state.shutdownReason != null && (
         <div className={styles.notice} role="alert">
           {t(`ups.shutdown.${known(REASONS, state.shutdownReason, 'forced')}`)}
@@ -94,17 +107,13 @@ function UpsState({ status }: { status: UpsStatus }) {
           {t(`ups.problem.${known(PROBLEMS, state.problem, 'protocol')}`)}
         </div>
       )}
-      {state.connection !== 'connecting' && (
-        <dl className={styles.facts}>
-          {rows.map(([label, value]) => (
-            <div key={label} className={styles.fact}>
-              <dt>{label}</dt>
-              <dd>{value}</dd>
-            </div>
-          ))}
-        </dl>
-      )}
-    </section>
+      {state.connection !== 'connecting' &&
+        rows.map(([label, value]) => (
+          <FormRow key={label} label={label}>
+            <span>{value}</span>
+          </FormRow>
+        ))}
+    </FormSection>
   );
 }
 
@@ -128,7 +137,6 @@ const parse = (text: string) => (/^\d+$/.test(text.trim()) ? Number(text.trim())
 function UpsForm({ app, saved }: { app: PithyxApp; saved: UpsStatus }) {
   const { t } = useTranslation('settings');
   const queryClient = useQueryClient();
-  const id = useId();
   const settings = saved.settings;
   const [mode, setMode] = useState<UpsMode>(settings.mode);
   const [host, setHost] = useState(settings.host);
@@ -158,108 +166,117 @@ function UpsForm({ app, saved }: { app: PithyxApp; saved: UpsStatus }) {
   });
   const numbersValid = [port, batteryLow, runtimeLow].every((text) => !Number.isNaN(parse(text)));
 
+  const changed =
+    mode !== settings.mode ||
+    host !== settings.host ||
+    port !== String(settings.port) ||
+    name !== settings.name ||
+    username !== settings.username ||
+    password !== '' ||
+    batteryLow !== String(settings.batteryLow) ||
+    runtimeLow !== String(settings.runtimeLow);
+  const discard = () => {
+    setMode(settings.mode);
+    setHost(settings.host);
+    setPort(String(settings.port));
+    setName(settings.name);
+    setUsername(settings.username);
+    setPassword('');
+    setBatteryLow(String(settings.batteryLow));
+    setRuntimeLow(String(settings.runtimeLow));
+    save.reset();
+  };
+
   return (
-    <form
-      className={styles.card}
-      aria-labelledby={`${id}-title`}
-      onSubmit={(event) => {
-        event.preventDefault();
-        save.mutate();
-      }}
-    >
-      <h3 id={`${id}-title`} className={styles.sectionTitle}>
-        {t('ups.settingsTitle')}
-      </h3>
-      {save.isError && <ErrorNotice error={describeProblem(save.error)} />}
-      <label className={styles.selectField}>
-        <span id={`${id}-mode`} className={styles.fieldLabel}>
-          {t('ups.mode')}
-        </span>
-        <select
-          aria-labelledby={`${id}-mode`}
-          className={styles.select}
-          value={mode}
-          onChange={(event) => {
-            setMode(event.target.value as UpsMode);
-          }}
-        >
-          <option value="off">{t('ups.modes.off')}</option>
-          <option value="usb" disabled={!saved.usbAvailable}>
-            {t('ups.modes.usb')}
-          </option>
-          <option value="network">{t('ups.modes.network')}</option>
-        </select>
-      </label>
-      <p className={styles.muted}>{t(`ups.modeHint.${mode}`)}</p>
-      {mode === 'network' && (
-        <div className={styles.group}>
-          <TextField
-            label={t('ups.host')}
-            description={t('ups.hostHint')}
-            value={host}
-            onChange={setHost}
-            autoComplete="off"
-            autoCapitalize="none"
-            isRequired
-          />
-          <TextField
-            label={t('ups.port')}
-            value={port}
-            onChange={setPort}
-            inputMode="numeric"
-            autoComplete="off"
-          />
-          <TextField
-            label={t('ups.name')}
-            description={t('ups.nameHint')}
-            value={name}
-            onChange={setName}
-            autoComplete="off"
-            autoCapitalize="none"
-          />
-          <TextField
-            label={t('ups.username')}
-            description={t('ups.usernameHint')}
-            value={username}
-            onChange={setUsername}
-            autoComplete="off"
-            autoCapitalize="none"
-          />
-          <PasswordField
-            label={t('ups.password')}
-            description={settings.hasPassword ? t('ups.passwordKept') : undefined}
-            value={password}
-            onChange={setPassword}
-            autoComplete="new-password"
-          />
-        </div>
-      )}
+    <>
+      <FormSection title={t('ups.settingsTitle')}>
+        <FormRow label={t('ups.mode')} hint={t(`ups.modeHint.${mode}`)}>
+          <RadioGroup
+            orientation="vertical"
+            value={mode}
+            onChange={(value) => {
+              const next = MODES.find((entry) => entry === value);
+              if (next !== undefined) {
+                setMode(next);
+              }
+            }}
+          >
+            {MODES.map((entry) => (
+              <Radio key={entry} value={entry} isDisabled={entry === 'usb' && !saved.usbAvailable}>
+                {t(`ups.modes.${entry}`)}
+              </Radio>
+            ))}
+          </RadioGroup>
+        </FormRow>
+        {mode === 'network' && (
+          <>
+            <FormRow label={t('ups.host')} hint={t('ups.hostHint')}>
+              <TextField
+                value={host}
+                onChange={setHost}
+                autoComplete="off"
+                autoCapitalize="none"
+                isRequired
+              />
+            </FormRow>
+            <FormRow label={t('ups.port')}>
+              <TextField value={port} onChange={setPort} inputMode="numeric" autoComplete="off" />
+            </FormRow>
+            <FormRow label={t('ups.name')} hint={t('ups.nameHint')}>
+              <TextField value={name} onChange={setName} autoComplete="off" autoCapitalize="none" />
+            </FormRow>
+            <FormRow label={t('ups.username')} hint={t('ups.usernameHint')}>
+              <TextField
+                value={username}
+                onChange={setUsername}
+                autoComplete="off"
+                autoCapitalize="none"
+              />
+            </FormRow>
+            <FormRow
+              label={t('ups.password')}
+              {...(settings.hasPassword ? { hint: t('ups.passwordKept') } : {})}
+            >
+              <PasswordField value={password} onChange={setPassword} autoComplete="new-password" />
+            </FormRow>
+          </>
+        )}
+      </FormSection>
       {mode !== 'off' && (
-        <div className={styles.group}>
-          <p className={styles.muted}>{t('ups.limits')}</p>
-          <TextField
-            label={t('ups.batteryLow')}
-            description={t('ups.batteryLowHint')}
-            value={batteryLow}
-            onChange={setBatteryLow}
-            inputMode="numeric"
-            autoComplete="off"
-          />
-          <TextField
-            label={t('ups.runtimeLow')}
-            description={t('ups.runtimeLowHint')}
-            value={runtimeLow}
-            onChange={setRuntimeLow}
-            inputMode="numeric"
-            autoComplete="off"
-          />
-        </div>
+        <FormSection title={t('ups.limitsTitle')}>
+          <p className={styles.sectionIntro}>{t('ups.limits')}</p>
+          <FormRow label={t('ups.batteryLow')} hint={t('ups.batteryLowHint')}>
+            <TextField
+              value={batteryLow}
+              onChange={setBatteryLow}
+              inputMode="numeric"
+              autoComplete="off"
+            />
+          </FormRow>
+          <FormRow label={t('ups.runtimeLow')} hint={t('ups.runtimeLowHint')}>
+            <TextField
+              value={runtimeLow}
+              onChange={setRuntimeLow}
+              inputMode="numeric"
+              autoComplete="off"
+            />
+          </FormRow>
+        </FormSection>
       )}
-      <div className={styles.buttons}>
-        <Button type="submit" variant="primary" isDisabled={!numbersValid || save.isPending}>
-          {t('ups.save')}
-        </Button>
-      </div>
-    </form>
+      {save.isError && <ErrorNotice error={describeProblem(save.error)} />}
+      <PageFooter>
+        <ActionBar
+          isDirty={changed && numbersValid}
+          isPending={save.isPending}
+          message={t('ups.applyNote')}
+          onApply={() => {
+            save.mutate();
+          }}
+          onDiscard={discard}
+        />
+      </PageFooter>
+    </>
   );
 }
+
+const MODES = ['off', 'usb', 'network'] as const satisfies readonly UpsMode[];

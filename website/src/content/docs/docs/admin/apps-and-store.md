@@ -23,7 +23,7 @@ Limits of an upload: the file at most 256 MB, unpacked at most 512 MB and 10 000
 
 ## The app pool
 
-At the first install you pick **Pool for app data**: "Every app keeps its data on this pool. It cannot change while an app is installed." Without a pool the Store says to create one in Storage first. The pool must be imported, online (or degraded), writable, unlocked and set up by Pithyx.
+At the first install you pick **Pool for app data**: "Every app keeps its data on this pool. It cannot change while an app is installed." Without a pool the Store says to create one in Settings > Storage first. The pool must be imported, online (or degraded), writable, unlocked and set up by Pithyx.
 
 Each app gets a dataset `<pool>/pithyx/apps/<id>`, mounted at `/<pool>/.pithyx/apps/<id>`. Docker's data root is `/<pool>/.pithyx/docker`. If the pool is missing or locked, apps on it show "Pool not available" and nobody can open them until it is back. App containers run with user ids from 40000 to 49999.
 

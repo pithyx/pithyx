@@ -6,6 +6,8 @@ import {
   choosePersonalSetting,
   openAccountMenu,
   openFromStart,
+  openSettingsPage,
+  settingsNavigation,
   signInAsAdmin,
 } from './session';
 
@@ -27,16 +29,19 @@ async function openSettings(page: Page) {
   await signInAsAdmin(page);
   await openFromStart(page, 'Settings');
   const settings = appWindow(page, 'Settings');
-  await expect(settings.getByRole('heading', { name: 'Settings', level: 2 })).toBeVisible();
+  await expect(settings.getByRole('heading', { name: 'Overview', level: 1 })).toBeVisible();
   return settings;
 }
 
-test('Settings opens as an overview of categories with a search', async ({ page }) => {
+test('Settings opens with the overview and a grouped navigation with a search', async ({
+  page,
+}) => {
   const settings = await openSettings(page);
-  for (const category of ['System', 'Files and sharing', 'Users']) {
-    await expect(settings.getByRole('heading', { name: category, level: 3 })).toBeVisible();
+  const navigation = settingsNavigation(settings);
+  for (const group of ['System', 'Access']) {
+    await expect(navigation.getByRole('heading', { name: group })).toBeVisible();
   }
-  for (const tile of [
+  for (const item of [
     'Info Center',
     'Network',
     'Regional settings',
@@ -44,49 +49,57 @@ test('Settings opens as an overview of categories with a search', async ({ page 
     'Shared folders',
     'Home folders',
     'File services',
-    'Users',
+    'Users and groups',
   ]) {
-    await expect(settings.getByRole('button', { name: new RegExp(`^${tile}`) })).toBeVisible();
+    await expect(navigation.getByRole('button', { name: item, exact: true })).toBeVisible();
   }
-  // Personal settings live in the account menu.
+  await expect(settings.getByRole('heading', { name: 'All settings', level: 2 })).toBeVisible();
+  // Personal settings are an app of their own.
   await expect(settings.getByRole('button', { name: /Personalization|Appearance/ })).toHaveCount(0);
   expect(await violations(page)).toEqual([]);
 
-  const search = settings.getByRole('searchbox', { name: 'Search settings' });
+  const search = navigation.getByRole('searchbox', { name: 'Search settings' });
   await search.fill('ntp');
-  await expect(settings.getByRole('button', { name: /^Regional settings/ })).toBeVisible();
-  await expect(settings.getByRole('button', { name: /^Network/ })).toHaveCount(0);
-  await search.press('Enter');
   await expect(
-    settings.getByRole('heading', { name: 'Regional settings', level: 2 }),
+    navigation.getByRole('button', { name: 'Regional settings', exact: true }),
   ).toBeVisible();
-  await settings.getByRole('button', { name: 'All settings' }).click();
-  // The window title is a level 2 heading named Settings too, so the overview shows by its categories.
-  await expect(settings.getByRole('heading', { name: 'System', level: 3 })).toBeVisible();
-
-  await settings.getByRole('searchbox', { name: 'Search settings' }).fill('no such setting');
-  await expect(settings).toContainText('No settings match your search.');
+  await expect(navigation.getByRole('button', { name: 'Network', exact: true })).toHaveCount(0);
+  await navigation.getByRole('button', { name: 'Regional settings', exact: true }).click();
+  await expect(
+    settings.getByRole('heading', { name: 'Regional settings', level: 1 }),
+  ).toBeVisible();
+  await search.fill('');
+  await openSettingsPage(settings, 'Overview');
+  await expect(settings.getByRole('heading', { name: 'All settings', level: 2 })).toBeVisible();
 });
 
-test('the Info Center, Network, File services and Users pages open from their tiles', async ({
+test('the Info Center, Network, File services and Users pages open from the navigation', async ({
   page,
 }) => {
   const settings = await openSettings(page);
-  await settings.getByRole('button', { name: /^Info Center/ }).click();
-  await expect(settings.getByRole('heading', { name: 'Info Center', level: 2 })).toBeVisible();
+  await openSettingsPage(settings, 'Info Center');
+  await expect(settings.getByRole('heading', { name: 'Info Center', level: 1 })).toBeVisible();
   await expect(settings.getByText('Pithyx version')).toBeVisible();
   await expect(settings.getByText('Logical processors')).toBeVisible();
   expect(await violations(page)).toEqual([]);
-  await settings.getByRole('button', { name: 'All settings' }).click();
 
-  await settings.getByRole('button', { name: /^Network/ }).click();
+  await openSettingsPage(settings, 'Network');
+  await expect(settings.getByRole('tab', { name: 'Interfaces' })).toHaveAttribute(
+    'aria-selected',
+    'true',
+  );
+  await settings.getByRole('tab', { name: 'Host name and name servers' }).click();
   await expect(settings.getByRole('heading', { name: 'Host name and name servers' })).toBeVisible();
-  await expect(settings.getByRole('heading', { name: 'Network', level: 2 })).toBeVisible();
+  await expect(settings.getByRole('heading', { name: 'Network', level: 1 })).toBeVisible();
   expect(await violations(page)).toEqual([]);
-  await settings.getByRole('button', { name: 'All settings' }).click();
 
-  await settings.getByRole('button', { name: /^File services/ }).click();
-  await expect(settings.getByRole('heading', { name: 'File services', level: 2 })).toBeVisible();
+  // The reverse proxy is a page of the group Services (D402).
+  await openSettingsPage(settings, 'Reverse proxy');
+  await expect(settings.getByRole('heading', { name: 'Reverse proxy', level: 1 })).toBeVisible();
+  expect(await violations(page)).toEqual([]);
+
+  await openSettingsPage(settings, 'File services');
+  await expect(settings.getByRole('heading', { name: 'File services', level: 1 })).toBeVisible();
   await expect(
     settings.getByRole('switch', { name: 'Offer shared folders over SMB' }),
   ).toBeChecked();
@@ -98,25 +111,33 @@ test('the Info Center, Network, File services and Users pages open from their ti
   await settings.getByRole('button', { name: 'Save' }).click();
   await expect(settings.getByLabel('Workgroup')).toHaveValue('HOME-LAB');
   expect(await violations(page)).toEqual([]);
-  await settings.getByRole('button', { name: 'All settings' }).click();
 
-  await settings.getByRole('button', { name: /^Users/ }).click();
-  await expect(settings.getByRole('heading', { name: 'Users', level: 2 })).toBeVisible();
+  await openSettingsPage(settings, 'Users and groups');
+  await expect(settings.getByRole('heading', { name: 'Users and groups', level: 1 })).toBeVisible();
   await expect(settings.getByRole('button', { name: 'Create user' })).toBeVisible();
-  await expect(settings.getByRole('table', { name: 'Groups' })).toHaveCount(0);
+  // The groups are a tab of their own (D394).
+  await expect(settings.getByRole('grid', { name: 'Groups' })).toHaveCount(0);
+  await settings
+    .getByRole('grid', { name: 'Users' })
+    .getByRole('row', { name: /^Ada Admin/ })
+    .click();
+  await expect(settings.getByRole('complementary', { name: 'Details' })).toContainText(
+    'Special rights',
+  );
   expect(await violations(page)).toEqual([]);
 });
 
 test('the time zone and time servers are checked and saved', async ({ page }) => {
   const settings = await openSettings(page);
-  await settings.getByRole('button', { name: /^Regional settings/ }).click();
-  await settings.getByLabel('Time zone').selectOption('Europe/Vienna');
+  await openSettingsPage(settings, 'Regional settings');
+  await settings.getByRole('button', { name: /Time zone/ }).click();
+  await page.getByRole('option', { name: 'Europe/Vienna', exact: true }).click();
   await settings.getByLabel('Time servers').fill('0.pool.ntp.org 1.pool.ntp.org');
-  await settings.getByRole('button', { name: 'Save time settings' }).click();
+  await settings.getByRole('button', { name: 'Apply', exact: true }).click();
   await expect(settings.getByRole('status').filter({ hasText: 'Saved.' })).toBeVisible();
 
   await settings.getByLabel('Time servers').fill('not-a-host!');
-  await settings.getByRole('button', { name: 'Save time settings' }).click();
+  await settings.getByRole('button', { name: 'Apply', exact: true }).click();
   await expect(settings).toContainText('is neither a host name nor an address');
   expect(await violations(page)).toEqual([]);
 });
@@ -124,11 +145,11 @@ test('the time zone and time servers are checked and saved', async ({ page }) =>
 test('the system region sets the formats everyone sees', async ({ page }) => {
   const settings = await openSettings(page);
   try {
-    await settings.getByRole('button', { name: /^Regional settings/ }).click();
-    const formats = settings.getByLabel('Formats', { exact: true });
-    await formats.selectOption('DE');
+    await openSettingsPage(settings, 'Regional settings');
+    await settings.getByRole('button', { name: /Formats/ }).click();
+    await page.getByRole('option', { name: 'Germany', exact: true }).click();
     await expect(settings).toContainText('1.234.567,89');
-    await settings.getByRole('button', { name: 'Save language and formats' }).click();
+    await settings.getByRole('button', { name: 'Apply', exact: true }).click();
     await expect(settings.getByRole('status').filter({ hasText: 'Saved.' })).toBeVisible();
 
     const setup = (await (await page.request.get('/api/setup')).json()) as { region: string };
@@ -150,7 +171,10 @@ test('accent color and wallpaper are in Personal settings, the theme also in the
     await expect(page.locator('html')).toHaveAttribute('data-accent', 'moss');
 
     await choosePersonalSetting(page, 'Wallpaper', 'Plain');
-    await expect(page.locator('svg[data-plain]')).toHaveCount(1);
+    // The desktop's wallpaper, not the preview of Plain in the open Personal settings.
+    await expect(
+      page.locator('xpath=//*[local-name()="svg" and @data-plain and not(ancestor::section)]'),
+    ).toHaveCount(1);
 
     await openAccountMenu(page);
     await page.getByRole('menuitem', { name: 'Appearance' }).click();
@@ -185,8 +209,8 @@ test('groups and their rights reach their members, and the editors are accessibl
   });
   expect(user.ok()).toBe(true);
   const userId = ((await user.json()) as { id: number }).id;
-  await settings.getByRole('button', { name: /^Groups/ }).click();
-  await expect(settings.getByRole('heading', { name: 'Groups', level: 2 })).toBeVisible();
+  await openSettingsPage(settings, 'Users and groups');
+  await settings.getByRole('tab', { name: /^Groups/ }).click();
 
   // A group with the new user, created on the page.
   await settings.getByRole('button', { name: 'Create group' }).click();
@@ -197,11 +221,12 @@ test('groups and their rights reach their members, and the editors are accessibl
   await expect(create.getByRole('checkbox', { name: 'e2e-rights' })).toBeChecked();
   await create.getByRole('button', { name: 'Create' }).click();
   await expect(create).toHaveCount(0);
-  const groups = settings.getByRole('table', { name: 'Groups' });
-  await expect(groups.getByRole('row', { name: /^e2e-media / })).toContainText('e2e-rights');
+  const groups = settings.getByRole('grid', { name: 'Groups' });
+  await expect(groups.getByRole('row', { name: /^e2e-media/ })).toContainText('e2e-rights');
 
   // FTP for the group, then the user's own rights show it as given by the group.
-  await groups.getByRole('button', { name: 'Rights of the group e2e-media' }).click();
+  await groups.getByRole('row', { name: /^e2e-media/ }).click();
+  await settings.getByRole('button', { name: 'Rights', exact: true }).click();
   const groupRights = page.getByRole('dialog', { name: 'Rights of the group e2e-media' });
   await groupRights.getByText('FTP', { exact: true }).click();
   await expect(groupRights.getByRole('checkbox', { name: 'FTP', exact: true })).toBeChecked();
@@ -209,13 +234,10 @@ test('groups and their rights reach their members, and the editors are accessibl
   await groupRights.getByRole('button', { name: 'Save rights' }).click();
   await expect(groupRights).toHaveCount(0);
 
-  await settings.getByRole('button', { name: 'All settings' }).click();
-  await settings.getByRole('button', { name: /^Users/ }).click();
-  const users = settings.getByRole('table', { name: 'Users' });
-  await users
-    .getByRole('row', { name: /^e2e-rights/ })
-    .getByRole('button', { name: 'Rights', exact: true })
-    .click();
+  await settings.getByRole('tab', { name: /^Users/ }).click();
+  const users = settings.getByRole('grid', { name: 'Users' });
+  await users.getByRole('row', { name: /^e2e-rights/ }).click();
+  await settings.getByRole('button', { name: 'Rights', exact: true }).click();
   const userRights = page.getByRole('dialog', { name: 'Rights of e2e-rights' });
   await expect(userRights.getByRole('checkbox', { name: 'FTP', exact: true })).toBeChecked();
   await expect(userRights.getByRole('checkbox', { name: 'FTP', exact: true })).toBeDisabled();
@@ -239,9 +261,9 @@ test('a configuration backup downloads encrypted and is checked before a restore
   page,
 }, testInfo) => {
   const settings = await openSettings(page);
-  await settings.getByRole('button', { name: /^Backup and restore/ }).click();
+  await openSettingsPage(settings, 'Backup and restore');
   await expect(
-    settings.getByRole('heading', { name: 'Backup and restore', level: 2 }),
+    settings.getByRole('heading', { name: 'Backup and restore', level: 1 }),
   ).toBeVisible();
   expect(await violations(page)).toEqual([]);
 
@@ -277,7 +299,7 @@ test('a configuration backup downloads encrypted and is checked before a restore
   }
   // Focusing a checkbox once scrolled the whole window out of sight.
   await restore.getByRole('checkbox', { name: 'Storage settings' }).focus();
-  await expect(settings.getByRole('button', { name: 'All settings' })).toBeInViewport();
+  await expect(settingsNavigation(settings)).toBeInViewport();
   await restore.getByRole('button', { name: 'Restore…' }).click();
   const confirm = page.getByRole('dialog', { name: 'Restore the configuration?' });
   await expect(confirm.getByText('Storage settings')).toBeVisible();

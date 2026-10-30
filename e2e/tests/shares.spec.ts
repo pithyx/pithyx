@@ -3,7 +3,7 @@ import { existsSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import type { Page } from '@playwright/test';
 import { expect, test } from './fixtures';
-import { appWindow, openFromStart, signInAsAdmin } from './session';
+import { appWindow, openFromStart, openSettingsPage, signInAsAdmin } from './session';
 
 // Simulation: the seeded folder share "Shared" and pools without the Pithyx layout, so no shared folder can be created
 // as a dataset (daemon/tests/fixtures/commands/default). Other specs use "Shared"; this one only reads it.
@@ -13,14 +13,14 @@ async function openSharedFolders(page: Page) {
   await signInAsAdmin(page);
   await openFromStart(page, 'Settings');
   const settings = appWindow(page, 'Settings');
-  await settings.getByRole('button', { name: /^Shared folders/ }).click();
-  await expect(settings.getByRole('heading', { name: 'Shared folders', level: 2 })).toBeVisible();
+  await openSettingsPage(settings, 'Shared folders');
+  await expect(settings.getByRole('heading', { name: 'Shared folders', level: 1 })).toBeVisible();
   return settings;
 }
 
 function shareRow(settings: ReturnType<typeof appWindow>, name: string) {
   return settings
-    .getByRole('table', { name: 'Shared folders with their pool, space, description and rights' })
+    .getByRole('grid', { name: 'Shared folders with their pool, space, description and rights' })
     .getByRole('row', { name: new RegExp(`^${name} `) });
 }
 
@@ -78,7 +78,8 @@ test('a shared folder is edited and deleted with its files kept', async ({ page 
   const row = shareRow(settings, 'Team files');
   await expect(row).toBeVisible();
 
-  await row.getByRole('button', { name: 'Edit Team files' }).click();
+  await row.click();
+  await settings.getByRole('button', { name: 'Edit', exact: true }).click();
   const edit = page.getByRole('dialog', { name: 'Edit Team files' });
   await edit.getByLabel('Description', { exact: true }).fill('Plans and notes');
   await edit.getByRole('button', { name: 'Save' }).click();
@@ -87,7 +88,8 @@ test('a shared folder is edited and deleted with its files kept', async ({ page 
   await edit.getByRole('button', { name: 'Close' }).click();
   await expect(row).toContainText('Plans and notes');
 
-  await row.getByRole('button', { name: 'Delete Team files' }).click();
+  // The folder is still selected; a second click would clear the selection.
+  await settings.getByRole('button', { name: 'Delete…', exact: true }).click();
   const remove = page.getByRole('dialog', { name: 'Delete Team files' });
   await expect(remove.getByRole('radio', { name: /^Delete the data for good/ })).toBeDisabled();
   await remove.getByRole('radio', { name: /^Keep the data/ }).check();
@@ -120,7 +122,8 @@ test('Shared folders and the delete dialog have no accessibility violations', as
   const settings = await openSharedFolders(page);
   await expect(shareRow(settings, 'Shared')).toBeVisible();
   expect(await violations(page)).toEqual([]);
-  await shareRow(settings, 'Shared').getByRole('button', { name: 'Delete Shared' }).click();
+  await shareRow(settings, 'Shared').click();
+  await settings.getByRole('button', { name: 'Delete…', exact: true }).click();
   const remove = page.getByRole('dialog', { name: 'Delete Shared' });
   await expect(remove.getByRole('radio', { name: /^Keep the data/ })).toBeVisible();
   expect(await violations(page)).toEqual([]);

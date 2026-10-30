@@ -15,7 +15,7 @@ Pithyx hat kein Zurücksetzen des Passworts per E-Mail. Ein Benutzer, der sein P
 
 _Passwort vergessen? öffnet dieses Formular. Nur Administratoren setzen hier ihr Passwort zurück, mit dem Wiederherstellungsschlüssel._
 
-**Ein normaler Benutzer** fragt einen Administrator. Der Administrator öffnet Einstellungen > **Benutzer** und nutzt für diesen Benutzer **Neues Passwort**. Der Benutzer wird überall abgemeldet und meldet sich mit dem neuen Passwort an. Auch die Dateidienste (SMB und SFTP) bekommen das neue Passwort.
+**Ein normaler Benutzer** fragt einen Administrator. Der Administrator öffnet Einstellungen > **Benutzer und Gruppen** und nutzt für diesen Benutzer **Neues Passwort**. Der Benutzer wird überall abgemeldet und meldet sich mit dem neuen Passwort an. Auch die Dateidienste (SMB und SFTP) bekommen das neue Passwort.
 
 **Ein Administrator** nutzt den Wiederherstellungsschlüssel:
 
@@ -27,7 +27,7 @@ _Passwort vergessen? öffnet dieses Formular. Nur Administratoren setzen hier ih
 
 Was das Zurücksetzen bewirkt: Es ändert das Passwort, schaltet die Zwei-Faktor-Anmeldung dieses Administrators aus, entfernt seine Passkeys und beendet seine Sitzungen. Es funktioniert für jedes Administratorkonto, auch für ein deaktiviertes. Bei jedem Fehler (Benutzername, Schlüssel oder ein Konto, das kein Administrator ist) erscheint dieselbe Meldung: „Benutzername oder Wiederherstellungsschlüssel ist falsch.“ Nach fünf fehlgeschlagenen Versuchen innerhalb von fünf Minuten pausieren weitere Versuche für kurze Zeit.
 
-**Ein anderer Administrator** kann dein Passwort auch unter Einstellungen > **Benutzer** setzen, wenn noch einer angemeldet ist.
+**Ein anderer Administrator** kann dein Passwort auch unter Einstellungen > **Benutzer und Gruppen** setzen, wenn noch einer angemeldet ist.
 
 Hast du den Wiederherstellungsschlüssel verloren und kann sich kein Administrator anmelden, setzt nichts das Passwort zurück. Installiere neu (siehe unten). Auf der Konsole gibt es kein Zurücksetzen des Passworts.
 
@@ -58,9 +58,9 @@ Der Installer selbst stellt kein Backup wieder her und importiert keine Pools. N
 
 ## Die Pools wieder importieren
 
-Ein frisches System kennt deine Pools nicht. Importiere sie in der Speicher-App:
+Ein frisches System kennt deine Pools nicht. Importiere sie unter Einstellungen > **Speicher für Fortgeschrittene**:
 
-1. Öffne **Speicher** und gehe zu den Pools.
+1. Öffne Einstellungen > **Speicher für Fortgeschrittene**.
 2. Klicke auf **Pool importieren…**.
 3. Klicke auf **Platten durchsuchen**. Die Suche liest die Labels jeder Platte und kann eine schlafende Platte aufwecken. Sie läuft nur, wenn du sie startest.
 4. Beginne mit **Schreibgeschützt importieren**: Nichts wird eingehängt und nichts ändert sich. Prüfe die Datasets auf der Karte des Pools.

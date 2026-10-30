@@ -66,22 +66,22 @@
       },
       "poolLocked": {
         "title": "Pool {pool} is locked",
-        "body": "{pool} waits for its key. Its shared folders, home folders and apps are unavailable until an administrator unlocks it in Storage.",
+        "body": "{pool} waits for its key. Its shared folders, home folders and apps are unavailable until an administrator unlocks it in Settings > Storage.",
         "action": "Open Storage"
       },
       "poolLockedVault": {
         "title": "Pool {pool} could not be unlocked",
-        "body": "The key in the key vault did not unlock {pool}. Its data is untouched, but its shared folders, home folders and apps are unavailable until an administrator unlocks it in Storage with the stored key.",
+        "body": "The key in the key vault did not unlock {pool}. Its data is untouched, but its shared folders, home folders and apps are unavailable until an administrator unlocks it in Settings > Storage with the stored key.",
         "action": "Open Storage"
       },
       "poolLockedUsb": {
         "title": "Pool {pool} waits for its USB stick",
-        "body": "Plug in the USB stick {stick} with the key of {pool}, or unlock it in Storage with the stored key. Until then its shared folders, home folders and apps are unavailable.",
+        "body": "Plug in the USB stick {stick} with the key of {pool}, or unlock it in Settings > Storage with the stored key. Until then its shared folders, home folders and apps are unavailable.",
         "action": "Open Storage"
       },
       "poolLockedUsbFailed": {
         "title": "Pool {pool} could not be unlocked from the USB stick",
-        "body": "The key file on the USB stick did not unlock {pool}: it holds an older key or is damaged. Its data is untouched. Unlock it in Storage with the stored key, then write the key to the stick again.",
+        "body": "The key file on the USB stick did not unlock {pool}: it holds an older key or is damaged. Its data is untouched. Unlock it in Settings > Storage with the stored key, then write the key to the stick again.",
         "action": "Open Storage"
       },
       "resolved": {

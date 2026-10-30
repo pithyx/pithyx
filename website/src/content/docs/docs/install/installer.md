@@ -62,7 +62,7 @@ Pick the disk for the system. Each disk is listed with its model, size and seria
 - To install on two disks as a mirror, switch on **Mirror on two disks** and choose a **Second disk**. The system is written to both disks and the box keeps running when one fails. The option only appears when two usable disks exist.
 - With one disk, the system is still built as a mirror with one member.
 
-Your data does not go on the system disk. You create pools on other disks later in Storage.
+Your data does not go on the system disk. You create pools on other disks later in Settings > Pools.
 
 ## Administrator account (step 4)
 

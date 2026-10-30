@@ -5,7 +5,15 @@ import { useTranslation } from 'react-i18next';
 import { formatBytes } from '../../desktop/format';
 import { ErrorNotice } from '../../errors/ErrorNotice';
 import { useFormatLocale } from '../../i18n';
-import { Button, TextField } from '@pithyx/ui';
+import {
+  Button,
+  cx,
+  DataTable,
+  FormSection,
+  TextField,
+  Toolbar,
+  type DataTableColumn,
+} from '@pithyx/ui';
 import { IconFolderShare, IconPencil, IconTrash } from '../../ui/icons';
 import { parseSize, sizeText, SIZE_UNITS, type SizeUnit } from '../storage/datasets';
 import { describeProblem } from '../storage/shared';
@@ -43,12 +51,7 @@ export function HomesPage({ app }: { app: PithyxApp }) {
   };
   return (
     <div className={styles.content}>
-      <header className={styles.pageHeader}>
-        <div>
-          <h2 className={styles.pageTitle}>{t('pages.homes.title')}</h2>
-          <p className={styles.muted}>{t('homes.intro')}</p>
-        </div>
-      </header>
+      <p className={styles.sectionIntro}>{t('homes.intro')}</p>
       {overview.isPending && (
         <p className={styles.loading} role="status">
           {t('homes.loading')}
@@ -95,23 +98,20 @@ function PoolCard({
     chosen ?? others.find((pool) => pool.unavailable == null)?.name ?? others[0]?.name ?? '';
   const usable = others.find((pool) => pool.name === target)?.unavailable == null;
   return (
-    <section className={styles.card} aria-labelledby="homes-pool">
-      <h3 id="homes-pool" className={styles.sectionTitle}>
-        {t('homes.pool.title')}
-      </h3>
+    <FormSection title={t('homes.pool.title')}>
       <p>
         {overview.pool == null
           ? t('homes.pool.none')
           : t('homes.pool.current', { pool: overview.pool })}
       </p>
-      <p className={styles.muted}>{t('homes.pool.explain')}</p>
+      <p className={styles.sectionIntro}>{t('homes.pool.explain')}</p>
       {overview.moving != null && (
         <p className={styles.notice} role="status">
           {t('homes.pool.moving')}
         </p>
       )}
       {overview.pool != null && others.length > 0 && overview.moving == null && (
-        <div className={styles.group}>
+        <div className={cx(styles.group, styles.narrow)}>
           <label className={styles.selectField}>
             <span className={styles.fieldLabel}>{t('homes.pool.target')}</span>
             <select
@@ -145,7 +145,7 @@ function PoolCard({
           </div>
         </div>
       )}
-    </section>
+    </FormSection>
   );
 }
 
@@ -208,12 +208,9 @@ function DefaultQuotaCard({ app, overview }: { app: PithyxApp; overview: HomeOve
     },
   });
   return (
-    <section className={styles.card} aria-labelledby="homes-quota">
-      <h3 id="homes-quota" className={styles.sectionTitle}>
-        {t('homes.quota.title')}
-      </h3>
+    <FormSection title={t('homes.quota.title')}>
       <form
-        className={styles.group}
+        className={cx(styles.group, styles.narrow)}
         onSubmit={(event) => {
           event.preventDefault();
           if (bytes !== undefined) {
@@ -242,7 +239,7 @@ function DefaultQuotaCard({ app, overview }: { app: PithyxApp; overview: HomeOve
         </div>
       </form>
       {save.isError && <ErrorNotice error={describeProblem(save.error)} />}
-    </section>
+    </FormSection>
   );
 }
 
@@ -257,103 +254,122 @@ function HomeTable({
 }) {
   const { t } = useTranslation('settings');
   const locale = useFormatLocale();
+  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const selected = homes.find((home) => home.shareId === selectedId);
   const bytes = (value: number) => formatBytes(value, locale);
-  if (homes.length === 0) {
-    return <p className={styles.muted}>{t('homes.empty')}</p>;
-  }
+  const columns: DataTableColumn<HomeInfo>[] = [
+    {
+      id: 'home',
+      label: t('homes.columns.home'),
+      isRowHeader: true,
+      sortValue: (home) => home.displayName ?? home.username ?? home.folder,
+      cell: (home) => (
+        <span className={styles.stack}>
+          <span className={styles.shareName}>
+            {home.displayName ?? home.username ?? home.folder}
+          </span>
+          <span className={styles.path}>
+            {home.userId == null ? t('homes.deletedUser', { folder: home.folder }) : home.folder}
+          </span>
+        </span>
+      ),
+    },
+    {
+      id: 'pool',
+      label: t('homes.columns.pool'),
+      sortValue: (home) => home.pool ?? '',
+      cell: (home) => (
+        <span className={styles.stack}>
+          <span>{home.pool}</span>
+          {home.unavailable != null && (
+            <span className={styles.detail}>{t('homes.unavailable')}</span>
+          )}
+        </span>
+      ),
+    },
+    {
+      id: 'used',
+      label: t('homes.columns.used'),
+      align: 'end',
+      sortValue: (home) => home.usedBytes ?? -1,
+      cell: (home) => (home.usedBytes == null ? t('homes.unknown') : bytes(home.usedBytes)),
+    },
+    {
+      id: 'quota',
+      label: t('homes.columns.quota'),
+      sortValue: (home) => home.quotaBytes ?? Number.MAX_SAFE_INTEGER,
+      cell: (home) => (
+        <span className={styles.stack}>
+          <span>{home.quotaBytes == null ? t('homes.quota.none') : bytes(home.quotaBytes)}</span>
+          {home.userId != null && (
+            <span className={styles.detail}>
+              {home.ownQuotaBytes == null
+                ? defaultQuota == null
+                  ? t('homes.quota.fromDefaultNone')
+                  : t('homes.quota.fromDefault')
+                : t('homes.quota.own')}
+            </span>
+          )}
+        </span>
+      ),
+    },
+  ];
+  const userId = selected?.userId ?? null;
   return (
-    <table className={styles.table}>
-      <caption className="visually-hidden">{t('homes.caption')}</caption>
-      <thead>
-        <tr>
-          <th scope="col">{t('homes.columns.home')}</th>
-          <th scope="col">{t('homes.columns.pool')}</th>
-          <th scope="col">{t('homes.columns.used')}</th>
-          <th scope="col">{t('homes.columns.quota')}</th>
-          <th scope="col">
-            <span className="visually-hidden">{t('homes.columns.actions')}</span>
-          </th>
-        </tr>
-      </thead>
-      <tbody>
-        {homes.map((home) => {
-          const userId = home.userId;
-          return (
-            <tr key={home.shareId}>
-              <th scope="row" className={styles.shareName}>
-                {home.displayName ?? home.username ?? home.folder}
-                <span className={styles.path}>
-                  {home.userId == null
-                    ? t('homes.deletedUser', { folder: home.folder })
-                    : home.folder}
-                </span>
-              </th>
-              <td data-label={t('homes.columns.pool')}>
-                {home.pool}
-                {home.unavailable != null && (
-                  <span className={styles.detail}>{t('homes.unavailable')}</span>
-                )}
-              </td>
-              <td data-label={t('homes.columns.used')}>
-                {home.usedBytes == null ? t('homes.unknown') : bytes(home.usedBytes)}
-              </td>
-              <td data-label={t('homes.columns.quota')}>
-                {home.quotaBytes == null ? t('homes.quota.none') : bytes(home.quotaBytes)}
-                {home.userId != null && (
-                  <span className={styles.detail}>
-                    {home.ownQuotaBytes == null
-                      ? defaultQuota == null
-                        ? t('homes.quota.fromDefaultNone')
-                        : t('homes.quota.fromDefault')
-                      : t('homes.quota.own')}
-                  </span>
-                )}
-              </td>
-              <td className={styles.rowActions}>
-                {userId != null && (
-                  <Button
-                    size="sm"
-                    aria-label={t('homes.quota.editLabel', { name: home.username ?? home.folder })}
-                    onPress={() => {
-                      onOpen({ kind: 'quota', home, userId });
-                    }}
-                  >
-                    <IconPencil size={16} aria-hidden />
-                    {t('homes.quota.edit')}
-                  </Button>
-                )}
-                {userId == null && (
-                  <Button
-                    size="sm"
-                    aria-label={t('homes.release.label', { folder: home.folder })}
-                    onPress={() => {
-                      onOpen({ kind: 'release', home });
-                    }}
-                  >
-                    <IconFolderShare size={16} aria-hidden />
-                    {t('homes.release.button')}
-                  </Button>
-                )}
-                {/* A user's home on a pool that is gone can be deleted, so the user gets a new one. */}
-                {(userId == null || home.unavailable === 'pool_missing') && (
-                  <Button
-                    size="sm"
-                    variant="quiet"
-                    aria-label={t('homes.delete.label', { folder: home.folder })}
-                    onPress={() => {
-                      onOpen({ kind: 'delete', home });
-                    }}
-                  >
-                    <IconTrash size={16} aria-hidden />
-                    {t('homes.delete.button')}
-                  </Button>
-                )}
-              </td>
-            </tr>
-          );
-        })}
-      </tbody>
-    </table>
+    <div className={styles.stack}>
+      <Toolbar aria-label={t('homes.toolbar')}>
+        <Button
+          isDisabled={selected === undefined || userId === null}
+          onPress={() => {
+            if (selected !== undefined && userId !== null) {
+              onOpen({ kind: 'quota', home: selected, userId });
+            }
+          }}
+        >
+          <IconPencil size={18} stroke={1.75} aria-hidden />
+          {t('homes.quota.edit')}
+        </Button>
+        <Button
+          isDisabled={selected === undefined || userId !== null}
+          onPress={() => {
+            if (selected !== undefined) {
+              onOpen({ kind: 'release', home: selected });
+            }
+          }}
+        >
+          <IconFolderShare size={18} stroke={1.75} aria-hidden />
+          {t('homes.release.button')}
+        </Button>
+        {/* A user's home on a pool that is gone can be deleted, so the user gets a new one. */}
+        <Button
+          isDisabled={
+            selected === undefined || (userId !== null && selected.unavailable !== 'pool_missing')
+          }
+          onPress={() => {
+            if (selected !== undefined) {
+              onOpen({ kind: 'delete', home: selected });
+            }
+          }}
+        >
+          <IconTrash size={18} stroke={1.75} aria-hidden />
+          {t('homes.delete.button')}
+        </Button>
+      </Toolbar>
+      <DataTable
+        aria-label={t('homes.caption')}
+        columns={columns}
+        items={homes}
+        getKey={(home) => home.shareId}
+        density="comfortable"
+        selectionMode="single"
+        selectedKeys={selected === undefined ? new Set() : new Set([selected.shareId])}
+        onSelectionChange={(keys) => {
+          const [key] = keys === 'all' ? [] : [...keys];
+          setSelectedId(key === undefined ? null : Number(key));
+        }}
+        emptyState={t('homes.empty')}
+      />
+    </div>
   );
 }
 

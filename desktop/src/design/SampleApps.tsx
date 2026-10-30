@@ -15,7 +15,6 @@ import {
   IconPhoto,
   IconServer2,
   IconUsers,
-  IconUsersGroup,
 } from '../ui/icons';
 import { useState } from 'react';
 import { ToggleButton, ToggleButtonGroup } from 'react-aria-components';
@@ -225,68 +224,42 @@ export function LogsContent() {
   );
 }
 
-// The overview of the Settings app (SettingsApp.tsx) with its own styles, as a static sample.
+// The tiles of the Settings overview (OverviewPage.tsx) with its own styles, as a static sample.
 const settingsTiles = [
-  { id: 'info', category: 'system', icon: IconInfoCircle },
-  { id: 'network', category: 'system', icon: IconNetwork },
-  { id: 'certificates', category: 'system', icon: IconCertificate },
-  { id: 'updates', category: 'system', icon: IconCloudDownload },
-  { id: 'shares', category: 'sharing', icon: IconFolders },
-  { id: 'fileServices', category: 'sharing', icon: IconServer2 },
-  { id: 'users', category: 'accounts', icon: IconUsers },
-  { id: 'groups', category: 'accounts', icon: IconUsersGroup },
+  { id: 'info', icon: IconInfoCircle },
+  { id: 'network', icon: IconNetwork },
+  { id: 'certificates', icon: IconCertificate },
+  { id: 'updates', icon: IconCloudDownload },
+  { id: 'shares', icon: IconFolders },
+  { id: 'fileServices', icon: IconServer2 },
+  { id: 'users', icon: IconUsers },
 ] as const;
-const settingsCategories = ['system', 'sharing', 'accounts'] as const;
 
 export function SettingsContent() {
   const { t } = useTranslation('settings');
   return (
-    <div className={settingsStyles.app}>
-      <main className={settingsStyles.overview}>
-        <header className={settingsStyles.overviewHeader}>
-          <h2 className={settingsStyles.pageTitle}>{t('overview.title')}</h2>
-          <SearchField
-            label={t('overview.search')}
-            placeholder={t('overview.search')}
-            className={settingsStyles.search}
-          />
-        </header>
-        {settingsCategories.map((category) => (
-          <section
-            key={category}
-            className={settingsStyles.category}
-            aria-labelledby={`sample-settings-${category}`}
-          >
-            <h3 id={`sample-settings-${category}`} className={settingsStyles.categoryTitle}>
-              {t(`categories.${category}`)}
-            </h3>
-            <ul className={settingsStyles.tiles}>
-              {settingsTiles
-                .filter((entry) => entry.category === category)
-                .map((entry) => {
-                  const Icon = entry.icon;
-                  return (
-                    <li key={entry.id}>
-                      <button type="button" className={settingsStyles.tile}>
-                        <span className={settingsStyles.tileIcon} aria-hidden>
-                          <Icon size={24} stroke={1.75} />
-                        </span>
-                        <span className={settingsStyles.tileText}>
-                          <span className={settingsStyles.tileTitle}>
-                            {t(`pages.${entry.id}.title`)}
-                          </span>
-                          <span className={settingsStyles.tileDescription}>
-                            {t(`pages.${entry.id}.description`)}
-                          </span>
-                        </span>
-                      </button>
-                    </li>
-                  );
-                })}
-            </ul>
-          </section>
-        ))}
-      </main>
+    <div className={settingsStyles.overviewPage}>
+      <h2 className={settingsStyles.overviewHeading}>{t('overview.allSettings')}</h2>
+      <ul className={settingsStyles.tiles}>
+        {settingsTiles.map((entry) => {
+          const Icon = entry.icon;
+          return (
+            <li key={entry.id}>
+              <button type="button" className={settingsStyles.tile}>
+                <span className={settingsStyles.tileIcon} aria-hidden>
+                  <Icon size={22} stroke={1.5} />
+                </span>
+                <span className={settingsStyles.tileText}>
+                  <span className={settingsStyles.tileTitle}>{t(`pages.${entry.id}.title`)}</span>
+                  <span className={settingsStyles.tileDescription}>
+                    {t(`pages.${entry.id}.description`)}
+                  </span>
+                </span>
+              </button>
+            </li>
+          );
+        })}
+      </ul>
     </div>
   );
 }

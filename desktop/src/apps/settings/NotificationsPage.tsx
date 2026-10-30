@@ -1,5 +1,17 @@
 import type { PithyxApp } from '@pithyx/sdk';
-import { Button, PasswordField, TextField } from '@pithyx/ui';
+import {
+  ActionBar,
+  FormRow,
+  FormSection,
+  PasswordField,
+  Radio,
+  RadioGroup,
+  Tab,
+  TabList,
+  TabPanel,
+  Tabs,
+  TextField,
+} from '@pithyx/ui';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -13,6 +25,7 @@ import {
   type SmtpStatus,
 } from '../sdk/notifications';
 import { describeProblem } from '../storage/shared';
+import { PageFooter } from './footer';
 import styles from './Settings.module.css';
 
 type Security = NonNullable<SmtpRequest['security']>;
@@ -38,34 +51,24 @@ export function NotificationsPage({ app }: { app: PithyxApp }) {
     remove: (id) => notificationsCall(app, 'internal.admin.notifications.deleteChannel', { id }),
     test: (id) => notificationsCall(app, 'internal.admin.notifications.testChannel', { id }),
   };
+  // The box's channels apply at once, the email server with the action bar: a tab each, never both on one view (D394).
   return (
-    <div className={styles.content}>
-      <header className={styles.pageHeader}>
-        <div>
-          <h2 className={styles.pageTitle}>{t('pages.notifications.title')}</h2>
-          <p className={styles.muted}>{t('pages.notifications.description')}</p>
-        </div>
-      </header>
-      <div className={styles.form}>
-        <section className={styles.card} aria-labelledby="notifications-smtp">
-          <h3 id="notifications-smtp" className={styles.sectionTitle}>
-            {t('notifications.smtp.title')}
-          </h3>
-          <p className={styles.muted}>{t('notifications.smtp.explain')}</p>
-          {smtp.isError && <ErrorNotice error={describeProblem(smtp.error)} />}
-          {smtp.data !== undefined && (
-            <SmtpForm key={smtp.dataUpdatedAt} app={app} saved={smtp.data} />
-          )}
-        </section>
-        <section className={styles.card} aria-labelledby="notifications-system">
-          <h3 id="notifications-system" className={styles.sectionTitle}>
-            {t('notifications.system.title')}
-          </h3>
-          <p className={styles.muted}>{t('notifications.system.explain')}</p>
-          <ChannelEditor client={client} />
-        </section>
-      </div>
-    </div>
+    <Tabs>
+      <TabList aria-label={t('notifications.tabs')}>
+        <Tab id="channels">{t('notifications.system.title')}</Tab>
+        <Tab id="smtp">{t('notifications.smtp.title')}</Tab>
+      </TabList>
+      <TabPanel id="channels" className={styles.tabPanel}>
+        <p className={styles.muted}>{t('notifications.system.explain')}</p>
+        <ChannelEditor client={client} />
+      </TabPanel>
+      <TabPanel id="smtp" className={styles.tabPanel}>
+        {smtp.isError && <ErrorNotice error={describeProblem(smtp.error)} />}
+        {smtp.data !== undefined && (
+          <SmtpForm key={smtp.dataUpdatedAt} app={app} saved={smtp.data} />
+        )}
+      </TabPanel>
+    </Tabs>
   );
 }
 
@@ -95,73 +98,86 @@ function SmtpForm({ app, saved }: { app: PithyxApp; saved: SmtpStatus }) {
       await queryClient.invalidateQueries({ queryKey: systemChannelsKey });
     },
   });
+  const changed =
+    host !== (saved.host ?? '') ||
+    port !== String(saved.port) ||
+    security !== saved.security ||
+    username !== (saved.username ?? '') ||
+    password !== '' ||
+    from !== (saved.from ?? '');
+  const discard = () => {
+    setHost(saved.host ?? '');
+    setPort(String(saved.port));
+    setSecurity(saved.security);
+    setUsername(saved.username ?? '');
+    setPassword('');
+    setFrom(saved.from ?? '');
+    save.reset();
+  };
   return (
-    <form
-      className={styles.group}
-      onSubmit={(event) => {
-        event.preventDefault();
-        save.mutate();
-      }}
-    >
-      <TextField
-        label={t('notifications.smtp.host')}
-        description={t('notifications.smtp.hostHint')}
-        value={host}
-        onChange={setHost}
-        autoComplete="off"
-        autoCapitalize="none"
-      />
-      <TextField
-        label={t('notifications.smtp.port')}
-        value={port}
-        onChange={setPort}
-        inputMode="numeric"
-        autoComplete="off"
-      />
-      <label className={styles.selectField}>
-        <span className={styles.fieldLabel}>{t('notifications.smtp.security')}</span>
-        <select
-          className={styles.select}
-          value={security}
-          onChange={(event) => {
-            setSecurity(event.target.value as Security);
-          }}
+    <>
+      <FormSection title={t('notifications.smtp.title')}>
+        <p className={styles.sectionIntro}>{t('notifications.smtp.explain')}</p>
+        <FormRow label={t('notifications.smtp.host')} hint={t('notifications.smtp.hostHint')}>
+          <TextField value={host} onChange={setHost} autoComplete="off" autoCapitalize="none" />
+        </FormRow>
+        <FormRow label={t('notifications.smtp.port')}>
+          <TextField value={port} onChange={setPort} inputMode="numeric" autoComplete="off" />
+        </FormRow>
+        <FormRow label={t('notifications.smtp.security')}>
+          <RadioGroup
+            orientation="vertical"
+            value={security}
+            onChange={(value) => {
+              const next = SECURITIES.find((entry) => entry === value);
+              if (next !== undefined) {
+                setSecurity(next);
+              }
+            }}
+          >
+            {SECURITIES.map((entry) => (
+              <Radio key={entry} value={entry}>
+                {t(`notifications.smtp.securities.${entry}`)}
+              </Radio>
+            ))}
+          </RadioGroup>
+        </FormRow>
+        <FormRow label={t('notifications.smtp.username')}>
+          <TextField
+            value={username}
+            onChange={setUsername}
+            autoComplete="off"
+            autoCapitalize="none"
+          />
+        </FormRow>
+        <FormRow
+          label={t('notifications.smtp.password')}
+          {...(saved.passwordSet ? { hint: t('notifications.smtp.passwordSet') } : {})}
         >
-          {SECURITIES.map((entry) => (
-            <option key={entry} value={entry}>
-              {t(`notifications.smtp.securities.${entry}`)}
-            </option>
-          ))}
-        </select>
-      </label>
-      <TextField
-        label={t('notifications.smtp.username')}
-        value={username}
-        onChange={setUsername}
-        autoComplete="off"
-        autoCapitalize="none"
-      />
-      <PasswordField
-        label={t('notifications.smtp.password')}
-        {...(saved.passwordSet ? { description: t('notifications.smtp.passwordSet') } : {})}
-        value={password}
-        onChange={setPassword}
-        autoComplete="new-password"
-      />
-      <TextField
-        label={t('notifications.smtp.from')}
-        value={from}
-        onChange={setFrom}
-        type="email"
-        autoComplete="off"
-        autoCapitalize="none"
-      />
-      <div className={styles.buttons}>
-        <Button type="submit" variant="primary" isDisabled={save.isPending}>
-          {t('notifications.smtp.save')}
-        </Button>
-      </div>
+          <PasswordField value={password} onChange={setPassword} autoComplete="new-password" />
+        </FormRow>
+        <FormRow label={t('notifications.smtp.from')}>
+          <TextField
+            value={from}
+            onChange={setFrom}
+            type="email"
+            autoComplete="off"
+            autoCapitalize="none"
+          />
+        </FormRow>
+      </FormSection>
       {save.isError && <ErrorNotice error={describeProblem(save.error)} />}
-    </form>
+      <PageFooter>
+        <ActionBar
+          isDirty={changed}
+          isPending={save.isPending}
+          message={t('notifications.smtp.applyNote')}
+          onApply={() => {
+            save.mutate();
+          }}
+          onDiscard={discard}
+        />
+      </PageFooter>
+    </>
   );
 }

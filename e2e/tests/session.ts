@@ -1,4 +1,4 @@
-import { expect, type Page } from '@playwright/test';
+import { expect, type Locator, type Page } from '@playwright/test';
 
 /** The administrator every spec signs in as. auth.spec.ts ends with this password after its reset. */
 export const admin = {
@@ -54,20 +54,46 @@ export async function openAccountMenu(page: Page, name = admin.displayName) {
   await expect(page.getByRole('menu', { name: `Account menu for ${name}` })).toBeVisible();
 }
 
-/** Opens Personal settings from the account menu (D392) and returns its window. */
-export async function openPersonalSettings(page: Page, name = admin.displayName) {
+/**
+ * Opens Personal settings from the account menu (D392) and returns its window; with a page name, also that page of its
+ * navigation (D394).
+ */
+export async function openPersonalSettings(
+  page: Page,
+  pageName?: string,
+  name = admin.displayName,
+) {
   await openAccountMenu(page, name);
   await page.getByRole('menuitem', { name: 'Personal settings' }).click();
   const window = appWindow(page, 'Personal settings');
   await expect(window).toBeVisible();
+  if (pageName !== undefined) {
+    await window
+      .getByRole('navigation', { name: 'Personal settings' })
+      .getByRole('button', { name: pageName, exact: true })
+      .click();
+    await expect(window.getByRole('heading', { name: pageName, level: 1 })).toBeVisible();
+  }
   return window;
 }
 
+/** The page of Personal settings each choice is on. */
+const PERSONAL_SETTING_PAGES: Record<string, string> = {
+  'Taskbar position': 'Appearance',
+  'Accent color': 'Appearance',
+  Wallpaper: 'Appearance',
+  Theme: 'Appearance',
+  Language: 'Language and region',
+};
+
 /** Picks one choice of a setting in Personal settings, such as the taskbar position. */
 export async function choosePersonalSetting(page: Page, setting: string, choice: string) {
-  const window = await openPersonalSettings(page);
-  await window.getByRole('button', { name: setting, exact: true }).click();
-  await page.getByRole('menuitemradio', { name: choice }).click();
+  const window = await openPersonalSettings(page, PERSONAL_SETTING_PAGES[setting]);
+  // The drawn circle or swatch lies over the hidden input, so the click goes to the choice's label, as a user's does.
+  const radio = window
+    .getByRole('radiogroup', { name: setting, exact: true })
+    .getByRole('radio', { name: choice, exact: true });
+  await radio.locator('xpath=ancestor::label[1]').click();
 }
 
 /** Opens an app from the start menu; apps without a desktop shortcut open this way. */
@@ -93,12 +119,22 @@ export async function openFilesInShared(page: Page) {
   await expect(files.getByRole('navigation', { name: 'Path' })).toContainText('Shared');
 }
 
+/** The navigation column of Settings (D394). */
+export function settingsNavigation(settings: Locator): Locator {
+  return settings.getByRole('navigation', { name: 'Settings navigation' });
+}
+
+/** Opens a page of Settings from its navigation column. */
+export async function openSettingsPage(settings: Locator, name: string) {
+  await settingsNavigation(settings).getByRole('button', { name, exact: true }).click();
+}
+
 export function appWindow(page: Page, name: string) {
   return page.getByRole('region', { name, exact: true });
 }
 
 /**
- * Puts the administrator's desktop items back to Storage and About; they are shared by every spec. The item specs measure
+ * Puts the administrator's desktop items back to Settings and About; they are shared by every spec. The item specs measure
  * this grid, so the Files shortcut new users also get is left out; specs open Files from the start menu.
  */
 export async function resetDesktopItems(page: Page) {
@@ -107,7 +143,7 @@ export async function resetDesktopItems(page: Page) {
   for (const item of items) {
     await page.request.delete(`/api/desktop/items/${String(item.id)}`, { headers });
   }
-  for (const [row, app] of ['org.pithyx.storage', 'org.pithyx.about'].entries()) {
+  for (const [row, app] of ['org.pithyx.settings', 'org.pithyx.about'].entries()) {
     await page.request.post('/api/desktop/items', {
       headers,
       data: { kind: 'shortcut', app, column: 0, row },

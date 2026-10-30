@@ -10,9 +10,10 @@ import { canRenameOrDelete, datasetRole, isHiddenDataset } from './datasets';
 import { breakable, describeProblem, usePools } from './shared';
 import styles from './Storage.module.css';
 import { useFormatLocale } from '../../i18n';
+import { IconArrowLeft } from '../../ui/icons';
 
 /** Datasets and volumes of every pool with their space, limits and compression, and the actions on them. */
-export function DatasetsSection({ app }: { app: PithyxApp }) {
+export function DatasetsSection({ app, onBack }: { app: PithyxApp; onBack: () => void }) {
   const { t } = useTranslation('storage');
   const pools = usePools(app);
   const [action, setAction] = useState<DatasetAction | null>(null);
@@ -21,6 +22,10 @@ export function DatasetsSection({ app }: { app: PithyxApp }) {
     <div className={styles.storage}>
       <header className={styles.pageHeader}>
         <div>
+          <Button size="sm" variant="quiet" onPress={onBack}>
+            <IconArrowLeft size={16} aria-hidden />
+            {t('nav.advanced')}
+          </Button>
           <h2 className={styles.pageTitle}>{t('nav.datasets')}</h2>
           <p className={styles.muted}>{t('datasets.intro')}</p>
         </div>

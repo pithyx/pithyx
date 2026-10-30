@@ -7,7 +7,7 @@ sidebar:
   order: 5
 ---
 
-Administratoren verwalten Konten unter Einstellungen > **Benutzer** und Einstellungen > **Gruppen**. Jeder Pithyx-Benutzer ist zugleich ein Linux-Konto mit eigener Benutzer-ID, sodass Dateien, die er anlegt, ihm gehören. Passwörter haben mindestens 8 Zeichen, und nur ein Administrator kann für einen anderen Benutzer ein neues Passwort setzen.
+Administratoren verwalten Konten unter Einstellungen > **Benutzer und Gruppen**, mit je einem Tab für **Benutzer** und **Gruppen**. Jeder Tab hat eine Werkzeugleiste: zuerst die Hauptaktion (**Benutzer anlegen**, **Gruppe anlegen**), dann die Aktionen für die ausgewählte Zeile (**Bearbeiten**, **Rechte** und bei Benutzern **Neues Passwort**, **Deaktivieren** oder **Aktivieren** und **Löschen**); ein Doppelklick auf eine Zeile bearbeitet sie. Die Benutzertabelle zeigt Name, Gruppen, zweiten Faktor, Dateidienste und Status, rechts die Details des ausgewählten Benutzers: Gruppen, Benutzer-ID, Home, Dateidienste und besondere Rechte, mit **Rechte bearbeiten**. **Benutzer suchen** filtert die Tabelle nach dem Namen. Jeder Pithyx-Benutzer ist zugleich ein Linux-Konto mit eigener Benutzer-ID, sodass Dateien, die er anlegt, ihm gehören. Passwörter haben mindestens 8 Zeichen, und nur ein Administrator kann für einen anderen Benutzer ein neues Passwort setzen.
 
 ## Einen Benutzer anlegen
 
@@ -20,11 +20,11 @@ Wähle **Benutzer anlegen** und fülle aus:
 
 Benutzer-IDs stammen aus dem Bereich 20000 bis 29999 und werden nie wieder vergeben. Gruppen-IDs stammen aus dem Bereich 30000 bis 39999. Die Shell ist `/usr/sbin/nologin`, es sei denn, der Benutzer hat das Recht zur SSH-Anmeldung und SSH-Anmeldungen sind eingeschaltet. Ein neuer Benutzer kann sich am Desktop anmelden, SMB nutzen und die Apps Dateien und Betrachter verwenden; das kannst du im Rechte-Dialog ändern.
 
-Das Passwort wird auch für die Linux- und Samba-Konten gesetzt. Ein Benutzer, der noch keines hat, ist markiert mit „Noch nicht bereit für SMB und SFTP: Der Benutzer meldet sich einmal im Web an, oder du setzt ein neues Passwort.“ Abzeichen in der Liste: Administrator, Zwei-Faktor, Deaktiviert.
+Das Passwort wird auch für die Linux- und Samba-Konten gesetzt. Ein Benutzer, der noch keines hat, ist markiert mit „Noch nicht bereit für SMB und SFTP: Der Benutzer meldet sich einmal im Web an, oder du setzt ein neues Passwort.“ Die Tabelle markiert Administratoren mit einem Abzeichen in der Spalte Gruppen und zeigt als Status **Aktiv** oder **Deaktiviert**.
 
 ## Gruppen
 
-Wähle **Gruppe anlegen** unter Einstellungen > **Gruppen**. Eine Gruppe hat einen Namen (dieselben Regeln wie bei Benutzernamen, und er darf nicht mit `pithyx-` beginnen), eine **Beschreibung (optional)** mit bis zu 200 Zeichen und Mitglieder. Rechte, die einer Gruppe gegeben werden, gelten für alle ihre Mitglieder. Das Löschen einer Gruppe lässt ihre Mitglieder bestehen; Dateien behalten die Gruppen-ID, und sie wird nie an eine andere Gruppe vergeben. Die eingebaute Gruppe users enthält jeden Benutzer und lässt sich nicht umbenennen, löschen oder von Hand mit Mitgliedern versehen ([`users.group.builtin`](/de/docs/reference/errors/#users.group.builtin)).
+Wähle **Gruppe anlegen** im Tab **Gruppen** unter Einstellungen > **Benutzer und Gruppen**. Eine Gruppe hat einen Namen (dieselben Regeln wie bei Benutzernamen, und er darf nicht mit `pithyx-` beginnen), eine **Beschreibung (optional)** mit bis zu 200 Zeichen und Mitglieder. Rechte, die einer Gruppe gegeben werden, gelten für alle ihre Mitglieder. Das Löschen einer Gruppe lässt ihre Mitglieder bestehen; Dateien behalten die Gruppen-ID, und sie wird nie an eine andere Gruppe vergeben. Die eingebaute Gruppe users enthält jeden Benutzer und lässt sich nicht umbenennen, löschen oder von Hand mit Mitgliedern versehen ([`users.group.builtin`](/de/docs/reference/errors/#users.group.builtin)).
 
 ## Sonderrechte
 

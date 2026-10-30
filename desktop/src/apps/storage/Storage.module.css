@@ -84,19 +84,20 @@
 }
 
 .pools {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr));
+  display: flex;
+  flex-direction: column;
   gap: var(--space-3);
 }
 
 .pool {
+  min-width: 0;
+}
+
+.poolDetails {
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
-  padding: var(--space-3) var(--space-4);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  background: var(--color-surface-1);
+  padding: var(--space-3) var(--space-4) var(--space-1);
 }
 
 .poolHead {
@@ -265,26 +266,6 @@
   height: 1.125rem;
   margin: 0;
   accent-color: var(--color-accent);
-}
-
-.usage {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-  font-size: var(--font-size-sm);
-}
-
-.bar {
-  height: 0.375rem;
-  overflow: hidden;
-  border-radius: var(--radius-full);
-  background: var(--color-surface-3);
-}
-
-.fill {
-  display: block;
-  height: 100%;
-  background: var(--color-accent);
 }
 
 .diskOption {
@@ -577,11 +558,6 @@
   gap: var(--space-1);
 }
 
-.poolActions {
-  padding-top: var(--space-2);
-  border-top: 1px solid var(--color-border);
-}
-
 .datasets {
   font-size: var(--font-size-sm);
 }
@@ -812,4 +788,44 @@
 
 .keyGroups > * {
   width: 9rem;
+}
+
+.diskCell {
+  display: grid;
+  justify-items: start;
+  gap: 2px;
+  min-width: 0;
+}
+
+.disksTable {
+  min-height: 0;
+}
+
+.diskDetails {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+}
+
+.diskDetails h2 {
+  margin: 0;
+  font-size: var(--font-size-md);
+}
+
+.facts {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: var(--space-1) var(--space-3);
+  margin: 0;
+  font-size: var(--font-size-sm);
+}
+
+.facts dt {
+  color: var(--color-text-muted);
+}
+
+.facts dd {
+  margin: 0;
+  overflow-wrap: anywhere;
 }

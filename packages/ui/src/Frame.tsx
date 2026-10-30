@@ -128,7 +128,8 @@ export function AppFrame({
           </div>
         )}
         <div className={styles.main}>
-          <div className={styles.scroller}>
+          {/* Focusable, so a page without controls (facts only) still scrolls with the keyboard. */}
+          <div className={styles.scroller} tabIndex={0}>
             {(title !== undefined || hasNavigation) && (
               <div className={styles.header}>
                 {hasNavigation && (

@@ -66,22 +66,22 @@
       },
       "poolLocked": {
         "title": "Pool {pool} ist gesperrt",
-        "body": "{pool} wartet auf seinen Schlüssel. Seine freigegebenen Ordner, Home-Ordner und Apps sind nicht verfügbar, bis ein Administrator ihn in Speicher entsperrt.",
+        "body": "{pool} wartet auf seinen Schlüssel. Seine freigegebenen Ordner, Home-Ordner und Apps sind nicht verfügbar, bis ein Administrator ihn unter Einstellungen > Speicher entsperrt.",
         "action": "Speicher öffnen"
       },
       "poolLockedVault": {
         "title": "Pool {pool} ließ sich nicht entsperren",
-        "body": "Der Schlüssel im Schlüsseltresor hat {pool} nicht entsperrt. Seine Daten sind unberührt, aber seine freigegebenen Ordner, Home-Ordner und Apps sind nicht verfügbar, bis ein Administrator ihn in Speicher mit dem aufbewahrten Schlüssel entsperrt.",
+        "body": "Der Schlüssel im Schlüsseltresor hat {pool} nicht entsperrt. Seine Daten sind unberührt, aber seine freigegebenen Ordner, Home-Ordner und Apps sind nicht verfügbar, bis ein Administrator ihn unter Einstellungen > Speicher mit dem aufbewahrten Schlüssel entsperrt.",
         "action": "Speicher öffnen"
       },
       "poolLockedUsb": {
         "title": "Pool {pool} wartet auf seinen USB-Stick",
-        "body": "Stecke den USB-Stick {stick} mit dem Schlüssel von {pool} ein oder entsperre ihn in Speicher mit dem aufbewahrten Schlüssel. Bis dahin sind seine freigegebenen Ordner, Home-Ordner und Apps nicht verfügbar.",
+        "body": "Stecke den USB-Stick {stick} mit dem Schlüssel von {pool} ein oder entsperre ihn unter Einstellungen > Speicher mit dem aufbewahrten Schlüssel. Bis dahin sind seine freigegebenen Ordner, Home-Ordner und Apps nicht verfügbar.",
         "action": "Speicher öffnen"
       },
       "poolLockedUsbFailed": {
         "title": "Pool {pool} ließ sich nicht vom USB-Stick entsperren",
-        "body": "Die Schlüsseldatei auf dem USB-Stick hat {pool} nicht entsperrt: Sie enthält einen älteren Schlüssel oder ist beschädigt. Seine Daten sind unberührt. Entsperre ihn in Speicher mit dem aufbewahrten Schlüssel und schreibe den Schlüssel danach erneut auf den Stick.",
+        "body": "Die Schlüsseldatei auf dem USB-Stick hat {pool} nicht entsperrt: Sie enthält einen älteren Schlüssel oder ist beschädigt. Seine Daten sind unberührt. Entsperre ihn unter Einstellungen > Speicher mit dem aufbewahrten Schlüssel und schreibe den Schlüssel danach erneut auf den Stick.",
         "action": "Speicher öffnen"
       },
       "resolved": {

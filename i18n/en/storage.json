@@ -22,7 +22,22 @@
     "readOnly": "Read-only (preview)",
     "readOnlyHint": "Imported read-only for a preview: nothing is mounted and nothing on it changes. Check its datasets, then import it for use or export it again.",
     "deleting": "Being deleted",
-    "deletingHint": "The pool is being deleted. The notifications say when it is done."
+    "deletingHint": "The pool is being deleted. The notifications say when it is done.",
+    "toolbar": "Pool actions",
+    "space": "Space of {pool}",
+    "usedShort": "{used} used",
+    "free": "{free} free"
+  },
+  "summary": {
+    "capacity": "Capacity",
+    "pools": "{count, plural, one {# pool} other {# pools}}",
+    "used": "Used",
+    "disks": "Disks",
+    "allHealthy": "all healthy",
+    "problems": "{count, plural, one {# with a problem} other {# with problems}}",
+    "lastScrub": "Last scrub",
+    "never": "Never",
+    "errors": "{count, plural, =0 {no errors} one {# error} other {# errors}}"
   },
   "state": {
     "online": "Healthy",
@@ -63,7 +78,9 @@
     "serial": "Serial number",
     "size": "Size",
     "status": "For a new pool",
-    "intro": "Every disk with its health and whether a new pool may use it."
+    "intro": "Every disk with its health and whether a new pool may use it.",
+    "path": "Device",
+    "details": "Details of the disk"
   },
   "decision": {
     "allowed": "Available",
@@ -157,7 +174,7 @@
       "unlock": "How should the pool unlock?",
       "vault": "Automatically at every start, from the key vault",
       "manual": "By hand after every start",
-      "manualHint": "After every start the pool stays locked until an administrator types its key in Storage. Until then its shared folders, home folders and apps are unavailable. This also protects the data when the whole box is stolen.",
+      "manualHint": "After every start the pool stays locked until an administrator types its key in Settings > Storage. Until then its shared folders, home folders and apps are unavailable. This also protects the data when the whole box is stolen.",
       "summaryNone": "Not encrypted.",
       "summaryVault": "Encrypted; the box unlocks it at every start with the key from its key vault.",
       "summaryManual": "Encrypted; it stays locked after every start until its key is typed."
@@ -558,7 +575,7 @@
       "title": "Pithyx pool key",
       "pool": "Pool: {pool}",
       "date": "Created: {date}",
-      "hint": "This key unlocks the pool's data. Keep it safe and away from the box; whoever has it and the disks can read the data. Type it in Storage to unlock the pool.",
+      "hint": "This key unlocks the pool's data. Keep it safe and away from the box; whoever has it and the disks can read the data. Type it in Settings > Storage to unlock the pool.",
       "emergency": "Without Pithyx: on any Linux with OpenZFS 2.x, connect all disks of the pool and run these commands as root. Paste this hex key when zfs load-key asks for it:",
       "emergencyHint": "Then the pool's data is below the mount points it shows with zfs list. -f is needed when the pool was last used by another system."
     },
@@ -590,7 +607,7 @@
   },
   "forgetKey": {
     "title": "Remove the key of {pool} from the key vault?",
-    "intro": "The pool stays unlocked until the box restarts. After that it stays locked until an administrator types its key in Storage, and its shared folders, home folders and apps are unavailable until then.",
+    "intro": "The pool stays unlocked until the box restarts. After that it stays locked until an administrator types its key in Settings > Storage, and its shared folders, home folders and apps are unavailable until then.",
     "warning": "Make sure you have the pool's key. Without it, the pool's data cannot be read again.",
     "cancel": "Cancel",
     "submit": "Remove from vault"

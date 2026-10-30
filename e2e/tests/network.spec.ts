@@ -1,6 +1,6 @@
 import type { Locator, Page } from '@playwright/test';
 import { expect, test } from './fixtures';
-import { appWindow, openFromStart, signInAsAdmin } from './session';
+import { appWindow, openFromStart, openSettingsPage, signInAsAdmin } from './session';
 
 // Settings > Network against the simulated box (three cards; a loopback browser counts as coming in on enp1s0). Every
 // change waits for Keep or Undo; the tests leave the network as they found it.
@@ -8,8 +8,8 @@ async function openNetwork(page: Page) {
   await signInAsAdmin(page);
   await openFromStart(page, 'Settings');
   const settings = appWindow(page, 'Settings');
-  await settings.getByRole('button', { name: /^Network/ }).click();
-  await expect(settings.getByRole('heading', { name: 'Network', level: 2 })).toBeVisible();
+  await openSettingsPage(settings, 'Network');
+  await expect(settings.getByRole('heading', { name: 'Network', level: 1 })).toBeVisible();
   return settings;
 }
 

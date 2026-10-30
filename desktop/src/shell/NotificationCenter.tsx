@@ -10,13 +10,13 @@ import { showError } from '../errors/errorStore';
 import { translateError } from '../errors/ErrorNotice';
 import { applyEvent } from '../realtime/reducers';
 import { useRealtime } from '../realtime/connection';
-import { IconDeviceDesktop } from '../ui/icons';
+import { IconDatabase, IconDeviceDesktop } from '../ui/icons';
 import { openApp } from '../wm/store';
 import { JobList } from './JobList';
 import { NotificationPanel } from './NotificationPanel';
 import { ToastStack, type JobItem, type NotificationItem } from './Notifications';
 import { useMessages, type Message, type MessageParam } from './messages';
-import { alertSection } from './StorageAlertViews';
+import { alertPage } from './StorageAlertViews';
 import { alertMessage, setAlertMuted, type StorageAlert } from './storageAlerts';
 import { dismissToast, useToasts, type DaemonNotification } from './toasts';
 import type { TaskbarPosition } from './types';
@@ -60,7 +60,7 @@ export function sourceApp(
     return notification.app;
   }
   if (notification.code.startsWith('storage.')) {
-    return coreAppIds.storage;
+    return coreAppIds.settings;
   }
   if (notification.code.startsWith('store.')) {
     return coreAppIds.store;
@@ -70,7 +70,7 @@ export function sourceApp(
     return kind.startsWith('files.')
       ? coreAppIds.files
       : kind.startsWith('storage.')
-        ? coreAppIds.storage
+        ? coreAppIds.settings
         : kind.startsWith('apps.') || kind.startsWith('store.')
           ? coreAppIds.store
           : undefined;
@@ -194,7 +194,7 @@ function useNotificationView() {
       ...(typeof alertKey === 'string'
         ? {
             onAction: () => {
-              openApp(coreAppIds.storage, { args: alertSection({ key: alertKey }) });
+              openApp(coreAppIds.settings, { args: alertPage({ key: alertKey }) });
             },
           }
         : {}),
@@ -356,12 +356,11 @@ export function NotificationCenter({
   );
   const view = useNotificationView();
   const kindLabel = useKindLabel();
-  const storage = findApp(coreAppIds.storage);
   const alertItems = alerts.map((alert): NotificationItem => ({
     id: alert.key,
     app: {
-      icon: storage?.icon ?? IconDeviceDesktop,
-      tone: storage?.tone ?? 'graphite',
+      icon: IconDatabase,
+      tone: 'ocean',
       name: t('notifications.storage'),
     },
     message: alertMessage(alert),
@@ -370,7 +369,7 @@ export function NotificationCenter({
     tone: alert.severity === 'critical' ? 'danger' : 'warning',
     persistent: true,
     onAction: () => {
-      openApp(coreAppIds.storage, { args: alertSection(alert) });
+      openApp(coreAppIds.settings, { args: alertPage(alert) });
     },
     extraActions: [
       {

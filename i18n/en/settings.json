@@ -32,12 +32,12 @@
       "name": "Name",
       "nameHint": "Letters, digits, spaces, dots, dashes and underscores.",
       "pool": "Pool",
-      "noPools": "No pool is ready for shared folders yet. Create a pool in Storage first.",
+      "noPools": "No pool is ready for shared folders yet. Create a pool under Storage first.",
       "description": "Description (optional)",
       "preview": "Show commands",
       "dataset": "The shared folder becomes the dataset {dataset}.",
       "run": "Create shared folder",
-      "openStorage": "Create a pool in Storage…"
+      "openStorage": "Go to the pools…"
     },
     "editDialog": {
       "title": "Edit {name}",
@@ -74,7 +74,7 @@
       "title": "Delete {name}",
       "choice": "What happens with the data?",
       "keep": "Keep the data",
-      "keepDataset": "The shared folder goes away. The dataset {dataset} and its files stay and remain in Storage.",
+      "keepDataset": "The shared folder goes away. The dataset {dataset} and its files stay and remain under Storage.",
       "keepFolder": "The shared folder goes away. The files stay in the folder {path}.",
       "destroy": "Delete the data for good",
       "destroyHint": "The dataset, all its files and every snapshot are deleted. This cannot be undone.",
@@ -84,14 +84,42 @@
       "nothingRuns": "No command runs. {location} and its files stay.",
       "gone": "These are deleted for good:",
       "run": "Delete shared folder"
-    }
+    },
+    "toolbar": "Shared folder actions"
   },
   "overview": {
     "title": "Settings",
     "search": "Search settings",
     "noMatch": "No settings match your search.",
     "all": "All settings",
-    "navigation": "Settings navigation"
+    "navigation": "Settings navigation",
+    "allSettings": "All settings",
+    "box": {
+      "label": "This box",
+      "version": "Pithyx {version}",
+      "runningFor": "Running for",
+      "updates": "Updates",
+      "upToDate": "Up to date",
+      "updateReady": "Pithyx {version} is ready"
+    },
+    "attention": {
+      "openStorage": "Open Storage",
+      "update": {
+        "title": "Pithyx {version} is ready to install",
+        "description": "Install it under Updates; the box restarts once.",
+        "action": "Open Updates"
+      },
+      "apps": {
+        "title": "{count, plural, one {An update for # app is ready} other {Updates for # apps are ready}}",
+        "action": "Open Store"
+      },
+      "trust": {
+        "title": "This device does not trust the box yet",
+        "description": "Trust it once to turn on passkeys and stop the warnings of the browser.",
+        "action": "Trust this device"
+      }
+    },
+    "page": "Overview"
   },
   "categories": {
     "system": "System",
@@ -140,9 +168,9 @@
       "keywords": "smb samba sftp ssh network drive protocol firewall"
     },
     "users": {
-      "title": "Users",
-      "description": "Accounts, passwords and administrators",
-      "keywords": "user account password administrator login people"
+      "title": "Users and groups",
+      "description": "Accounts, passwords, groups and their rights",
+      "keywords": "user account password administrator login people group team members rights permissions"
     },
     "updates": {
       "title": "Updates",
@@ -164,15 +192,30 @@
       "description": "Apps with root access to the box, and revoking it",
       "keywords": "security root access special rights apps docker container socket revoke trust"
     },
-    "groups": {
-      "title": "Groups",
-      "description": "Groups, their members and rights",
-      "keywords": "group team members rights permissions"
-    },
     "notifications": {
       "title": "Notifications",
       "description": "The email server and the box's channels for its alerts",
       "keywords": "notifications email e-mail smtp server webhook ntfy gotify push alerts channels"
+    },
+    "pools": {
+      "title": "Pools",
+      "description": "Pools on your disks, their space and health, and creating, expanding, locking and repairing them",
+      "keywords": "storage pool zfs mirror raid raidz disk space capacity encryption key lock unlock vault usb stick repair replace expand scrub"
+    },
+    "disks": {
+      "title": "Disks",
+      "description": "Every disk with its health and whether a new pool may use it",
+      "keywords": "storage disk drive hdd ssd nvme smart health temperature serial"
+    },
+    "maintenance": {
+      "title": "Health and maintenance",
+      "description": "Problems found, scrub schedules and disk self-tests",
+      "keywords": "storage health alerts scrub schedule smart self-test maintenance"
+    },
+    "storageAdvanced": {
+      "title": "Advanced storage",
+      "description": "Datasets and volumes, exporting and importing a pool",
+      "keywords": "storage advanced dataset volume quota compression export import move pool"
     }
   },
   "info": {
@@ -187,7 +230,8 @@
     "memory": "Memory",
     "uptime": "Running for",
     "unknown": "Not reported",
-    "uptimeValue": "{days, plural, =0 {} one {# day, } other {# days, }}{hours, plural, one {# hour} other {# hours}}, {minutes, plural, one {# minute} other {# minutes}}"
+    "uptimeValue": "{days, plural, =0 {} one {# day, } other {# days, }}{hours, plural, one {# hour} other {# hours}}, {minutes, plural, one {# minute} other {# minutes}}",
+    "section": "This box"
   },
   "fileServices": {
     "intro": "File services let other computers open your shared folders over the network. Users sign in with their Pithyx user name and password.",
@@ -366,7 +410,13 @@
       "connectionWarning": "This browser reaches the box through {name}, which changes. The page may stop answering; open the new address or wait 60 seconds for the old settings to come back.",
       "addresses": "The box will also answer at:",
       "confirm": "Apply"
-    }
+    },
+    "tabs": {
+      "interfaces": "Interfaces",
+      "names": "Host name and name servers",
+      "proxy": "Reverse proxy"
+    },
+    "applyNote": "Changes apply together. If the box cannot be reached afterwards, it goes back to the old settings after 60 seconds."
   },
   "certificates": {
     "intro": "The box speaks HTTPS on port 7484; ports 80 and 443 send every visitor there, unless a host of the reverse proxy has the name. It is its own certificate authority: install its root once on a device, and the device trusts the box and every certificate the box issues.",
@@ -652,15 +702,13 @@
     }
   },
   "regional": {
-    "intro": "Language, formats and time of the box. Everyone can still choose their own language in the user menu.",
+    "intro": "Language, formats and time of the box. Everyone can still choose their own language in Personal settings.",
     "languageTitle": "Language and formats",
     "language": "System language",
     "languageHint": "The sign-in page uses it, and so does everyone whose browser asks for a language Pithyx does not have.",
     "formats": "Formats",
     "formatsLanguage": "Like the language",
     "formatsHint": "How dates, times and numbers look for everyone, for example 31.12.2026 or 12/31/2026.",
-    "preview": "Example: {preview}",
-    "saveLanguage": "Save language and formats",
     "timeTitle": "Date and time",
     "now": "Time on the box",
     "sync": "Clock",
@@ -669,8 +717,9 @@
     "zone": "Time zone",
     "servers": "Time servers",
     "serversHint": "Host names or addresses, separated by spaces. Leave empty for the default servers.",
-    "saveTime": "Save time settings",
-    "saved": "Saved."
+    "saved": "Saved.",
+    "example": "Example",
+    "applyNote": "Applies to the sign-in page and to everyone who has not chosen their own language or formats."
   },
   "restorePoints": {
     "explain": "What are restore points?",
@@ -959,7 +1008,8 @@
       "explain": "The home folder goes with every file, its recycle bin and its snapshots. This cannot be undone. If it belongs to a user whose pool is gone, the user gets a new, empty home folder.",
       "confirm": "Type {folder} to confirm",
       "submit": "Delete home folder"
-    }
+    },
+    "toolbar": "Home folder actions"
   },
   "ups": {
     "intro": "With a UPS, the box shuts down cleanly on a power failure before the battery runs out: apps and file services stop and the pools are unmounted. Pithyx reads the UPS through NUT (Network UPS Tools).",
@@ -1024,7 +1074,8 @@
     "batteryLowHint": "5 to 90; 20 by default.",
     "runtimeLow": "Runtime limit (minutes)",
     "runtimeLowHint": "1 to 60; 5 by default.",
-    "save": "Save"
+    "limitsTitle": "Limits",
+    "applyNote": "Applying saves the settings and connects to the UPS again."
   },
   "notifications": {
     "smtp": {
@@ -1043,12 +1094,13 @@
       "password": "Password",
       "passwordSet": "A password is saved. Type a new one only to replace it.",
       "from": "Sender address",
-      "save": "Save"
+      "applyNote": "A test from a channel shows whether the server works."
     },
     "system": {
       "title": "Channels of the box",
       "explain": "These channels get the system's own alerts (storage, updates, the UPS, failed sign-ins and more) once for all administrators. Every user, administrators too, can add their own channels in the user menu."
-    }
+    },
+    "tabs": "Notifications of the box"
   },
   "security": {
     "intro": "What on the box can do more than an app should.",
@@ -1060,5 +1112,12 @@
       "rights": "Rights: {rights}",
       "revoke": "Revoke root access"
     }
+  },
+  "groups": {
+    "system": "System",
+    "storage": "Storage",
+    "network": "Network",
+    "services": "Services",
+    "access": "Access"
   }
 }

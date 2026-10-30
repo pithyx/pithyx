@@ -214,9 +214,10 @@ function bundleGraph(): Plugin {
   };
 }
 
-// The modules of tables and virtualized lists, which only apps use (D400).
-const tableModules =
-  /[\\/](packages[\\/]ui[\\/]src[\\/]DataTable|react-aria-components[\\/]dist[\\/]private[\\/](Table|TableLayout|Virtualizer)\.mjs|react-stately[\\/]dist[\\/]private[\\/](layout|table|virtualizer)[\\/]|react-aria[\\/]dist[\\/]private[\\/](table|virtualizer)[\\/]|@tanstack[\\/](virtual-core|react-virtual)[\\/])/;
+// The modules only apps use, never the shell: tables and virtualized lists (D400), and the app frame, toolbars, tabs,
+// form sections with selects and radios of D394 (D401). Status.tsx stays shared: the Pithyx menu shows StatusBadge.
+const appOnlyModules =
+  /[\\/](packages[\\/]ui[\\/]src[\\/](DataTable|Frame|Toolbar|Form)[.]|react-aria-components[\\/]dist[\\/]private[\\/](Table|TableLayout|Virtualizer|Tabs|Select|RadioGroup|Toolbar)\.mjs|react-stately[\\/]dist[\\/]private[\\/](layout|table|virtualizer|select|radio|tabs)[\\/]|react-aria[\\/]dist[\\/]private[\\/](table|virtualizer|select|radio|tabs|toolbar)[\\/]|@tanstack[\\/](virtual-core|react-virtual)[\\/])/;
 
 const signIn: readonly string[] = signInNamespaces;
 const desktopShell: readonly string[] = desktopNamespaces;
@@ -278,14 +279,14 @@ export default defineConfig({
               name: 'shared',
               test: (id) =>
                 !/[\\/](sdk[\\/]src|desktop[\\/]src[\\/]apps[\\/][^\\/]+)[\\/]/.test(id) &&
-                !tableModules.test(id),
+                !appOnlyModules.test(id),
               minShareCount: 2,
               priority: 1,
             },
-            // Tables and virtualized lists are code of apps only (DataTable, the folder list, the Log Center): in the
-            // shared chunk they would count toward the desktop as soon as two apps use them (D400). This group comes
-            // after the shared one, so it keeps only what the desktop itself never loads.
-            { name: 'tables', test: tableModules, minShareCount: 2, priority: 0 },
+            // Tables, virtualized lists and the app patterns of D394 are code of apps only: in the shared chunk they
+            // would count toward the desktop as soon as two apps use them (D400, D401). This group comes after the
+            // shared one, so it keeps only what the desktop itself never loads.
+            { name: 'patterns', test: appOnlyModules, minShareCount: 2, priority: 0 },
           ],
         },
       },

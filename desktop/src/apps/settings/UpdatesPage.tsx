@@ -1,5 +1,5 @@
 import type { PithyxApp } from '@pithyx/sdk';
-import { Badge, Button, Checkbox, Dialog, Switch, TextField } from '@pithyx/ui';
+import { Badge, Button, Checkbox, Dialog, FormSection, Switch, TextField } from '@pithyx/ui';
 import { useIsMutating, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -61,12 +61,7 @@ export function UpdatesPage({ app }: { app: PithyxApp }) {
 
   return (
     <div className={styles.content}>
-      <header className={styles.pageHeader}>
-        <div>
-          <h2 className={styles.pageTitle}>{t('pages.updates.title')}</h2>
-          <p className={styles.muted}>{t('updates.intro')}</p>
-        </div>
-      </header>
+      <p className={styles.sectionIntro}>{t('updates.intro')}</p>
       {status.isError && <ErrorNotice error={describeProblem(status.error)} />}
       {data !== undefined && (
         <>
@@ -164,10 +159,7 @@ function Overview({
     ],
   ];
   return (
-    <section className={styles.card} aria-labelledby="updates-pithyx">
-      <h3 id="updates-pithyx" className={styles.sectionTitle}>
-        {t('updates.pithyx')}
-      </h3>
+    <FormSection title={t('updates.pithyx')}>
       <dl className={styles.facts}>
         {facts.map(([label, value]) => (
           <div key={label} className={styles.fact}>
@@ -220,7 +212,7 @@ function Overview({
         )}
       </div>
       {check.isError && <ErrorNotice error={describeProblem(check.error)} />}
-    </section>
+    </FormSection>
   );
 }
 
@@ -242,47 +234,48 @@ function Progress({ job }: { job: Job }) {
   const current = job.progress.currentItem ?? '';
   const reached = STEPS.indexOf(current as (typeof STEPS)[number]);
   return (
-    <section className={styles.card} aria-labelledby="updates-progress" aria-live="polite">
-      <h3 id="updates-progress" className={styles.sectionTitle}>
-        {t(
-          job.kind === 'system.rollback'
-            ? 'updates.progress.rollbackTitle'
-            : 'updates.progress.title',
+    <FormSection
+      title={t(
+        job.kind === 'system.rollback'
+          ? 'updates.progress.rollbackTitle'
+          : 'updates.progress.title',
+      )}
+    >
+      <div className={styles.stack} aria-live="polite">
+        {job.kind !== 'system.rollback' && (
+          <ol className={styles.steps}>
+            {STEPS.map((step, index) => (
+              <li
+                key={step}
+                aria-current={step === current ? 'step' : undefined}
+                data-done={index < reached || job.state === 'succeeded' ? '' : undefined}
+              >
+                {t(`updates.steps.${step}`)}
+              </li>
+            ))}
+          </ol>
         )}
-      </h3>
-      {job.kind !== 'system.rollback' && (
-        <ol className={styles.steps}>
-          {STEPS.map((step, index) => (
-            <li
-              key={step}
-              aria-current={step === current ? 'step' : undefined}
-              data-done={index < reached || job.state === 'succeeded' ? '' : undefined}
-            >
-              {t(`updates.steps.${step}`)}
-            </li>
-          ))}
-        </ol>
-      )}
-      {job.state === 'failed' && job.errorCode !== null ? (
-        <ErrorNotice
-          error={describeProblem({
-            code: job.errorCode,
-            params: job.errorParams ?? {},
-            requestId: job.requestId,
-          })}
-        />
-      ) : (
-        <p role="status">
-          {job.state === 'succeeded'
-            ? t(
-                (job.result as { state?: string } | null)?.state === 'restarting'
-                  ? 'updates.progress.restarting'
-                  : 'updates.progress.done',
-              )
-            : t('updates.progress.running')}
-        </p>
-      )}
-    </section>
+        {job.state === 'failed' && job.errorCode !== null ? (
+          <ErrorNotice
+            error={describeProblem({
+              code: job.errorCode,
+              params: job.errorParams ?? {},
+              requestId: job.requestId,
+            })}
+          />
+        ) : (
+          <p role="status">
+            {job.state === 'succeeded'
+              ? t(
+                  (job.result as { state?: string } | null)?.state === 'restarting'
+                    ? 'updates.progress.restarting'
+                    : 'updates.progress.done',
+                )
+              : t('updates.progress.running')}
+          </p>
+        )}
+      </div>
+    </FormSection>
   );
 }
 
@@ -311,11 +304,8 @@ function Upload({
   });
   const staged = status.staged ?? null;
   return (
-    <section className={styles.card} aria-labelledby="updates-upload">
-      <h3 id="updates-upload" className={styles.sectionTitle}>
-        {t('updates.upload.title')}
-      </h3>
-      <p className={styles.muted}>{t('updates.upload.intro')}</p>
+    <FormSection title={t('updates.upload.title')}>
+      <p className={styles.sectionIntro}>{t('updates.upload.intro')}</p>
       <input
         ref={input}
         type="file"
@@ -372,7 +362,7 @@ function Upload({
         )}
       </div>
       {upload.isError && <ErrorNotice error={describeProblem(upload.error)} />}
-    </section>
+    </FormSection>
   );
 }
 
@@ -393,11 +383,8 @@ function History({
     );
   return (
     <>
-      <section className={styles.card} aria-labelledby="updates-snapshots">
-        <h3 id="updates-snapshots" className={styles.sectionTitle}>
-          {t('updates.snapshots.title')}
-        </h3>
-        <p className={styles.muted}>{t('updates.snapshots.intro')}</p>
+      <FormSection title={t('updates.snapshots.title')}>
+        <p className={styles.sectionIntro}>{t('updates.snapshots.intro')}</p>
         {status.snapshots.length === 0 ? (
           <p className={styles.muted}>{t('updates.snapshots.none')}</p>
         ) : (
@@ -423,11 +410,8 @@ function History({
             ))}
           </ul>
         )}
-      </section>
-      <section className={styles.card} aria-labelledby="updates-history">
-        <h3 id="updates-history" className={styles.sectionTitle}>
-          {t('updates.history.title')}
-        </h3>
+      </FormSection>
+      <FormSection title={t('updates.history.title')}>
         {status.history.length === 0 ? (
           <p className={styles.muted}>{t('updates.history.none')}</p>
         ) : (
@@ -471,7 +455,7 @@ function History({
             </tbody>
           </table>
         )}
-      </section>
+      </FormSection>
     </>
   );
 }
@@ -487,10 +471,7 @@ function UpdateSettings({ app, status }: { app: PithyxApp; status: UpdateStatus 
     onSuccess: (next) => queryClient.setQueryData(updatesKey, next),
   });
   return (
-    <section className={styles.card} aria-labelledby="updates-settings">
-      <h3 id="updates-settings" className={styles.sectionTitle}>
-        {t('updates.settings.title')}
-      </h3>
+    <FormSection title={t('updates.settings.title')}>
       <Switch
         isSelected={status.checkEnabled}
         isDisabled={save.isPending || checking}
@@ -517,7 +498,7 @@ function UpdateSettings({ app, status }: { app: PithyxApp; status: UpdateStatus 
       </label>
       <p className={styles.muted}>{t('updates.settings.channelHint')}</p>
       {save.isError && <ErrorNotice error={describeProblem(save.error)} />}
-    </section>
+    </FormSection>
   );
 }
 
@@ -558,10 +539,7 @@ function Source({ app, status }: { app: PithyxApp; status: UpdateStatus }) {
   const { source } = status;
   const candidate = status.sourceCandidate ?? null;
   return (
-    <section className={styles.card} aria-labelledby="updates-source">
-      <h3 id="updates-source" className={styles.sectionTitle}>
-        {t('updates.source.title')}
-      </h3>
+    <FormSection title={t('updates.source.title')}>
       <dl className={styles.facts}>
         <div className={styles.fact}>
           <dt>{t('updates.source.name')}</dt>
@@ -637,7 +615,7 @@ function Source({ app, status }: { app: PithyxApp; status: UpdateStatus }) {
         )}
       </div>
       {save.isError && <ErrorNotice error={describeProblem(save.error)} />}
-    </section>
+    </FormSection>
   );
 }
 

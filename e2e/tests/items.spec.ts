@@ -17,7 +17,13 @@ async function box(locator: Locator) {
   // boundingBox() does not wait, and expect.poll does not retry a callback that throws: a new icon that is still
   // arriving from the daemon must be on screen first.
   await locator.waitFor({ state: 'visible' });
-  const rect = await locator.boundingBox();
+  // The icon can still be drawn anew between the wait and the measurement, which leaves it without a box for a moment.
+  const until = Date.now() + 5000;
+  let rect = await locator.boundingBox();
+  while (rect === null && Date.now() < until) {
+    await locator.page().waitForTimeout(50);
+    rect = await locator.boundingBox();
+  }
   if (rect === null) {
     throw new Error('element has no box');
   }
@@ -84,7 +90,7 @@ function rightClicks(page: Page) {
 
 test.beforeEach(async ({ page }) => {
   await signInAsAdmin(page);
-  // New users also get a Files shortcut; these tests measure the grid of Storage and About alone.
+  // New users also get a Files shortcut; these tests measure the grid of Settings and About alone.
   await resetDesktopItems(page);
   await page.reload();
   await expect(page.getByRole('navigation', { name: 'Taskbar' })).toBeVisible();
@@ -95,7 +101,7 @@ test.afterEach(async ({ page }) => {
 });
 
 test('icons move on the grid by dragging and keep their place after a reload', async ({ page }) => {
-  const disks = icon(page, 'Storage');
+  const disks = icon(page, 'Settings');
   expect(await cellOf(page, disks)).toEqual({ column: 0, row: 0 });
   expect(await cellOf(page, icon(page, 'About Pithyx'))).toEqual({ column: 0, row: 1 });
 
@@ -122,7 +128,7 @@ test('icons move on the grid by dragging and keep their place after a reload', a
 test('a frame, Ctrl and Shift select several icons, which move and go together', async ({
   page,
 }) => {
-  const disks = icon(page, 'Storage');
+  const disks = icon(page, 'Settings');
   const about = icon(page, 'About Pithyx');
 
   await test.step('a frame drawn over empty desktop selects the icons it touches', async () => {
@@ -162,12 +168,12 @@ test('a frame, Ctrl and Shift select several icons, which move and go together',
     const target = await cellCenter(page, 4, 1);
     await page.mouse.click(target.x, target.y, { button: 'right' });
     await page.getByRole('menuitem', { name: 'New shortcut' }).click();
-    await page.getByRole('menuitem', { name: 'Storage' }).click();
+    await page.getByRole('menuitem', { name: 'Settings', exact: true }).click();
     // cellOf throws while the new shortcut has no box yet, and a poll stops at the first throw.
     await expect(disks).toBeVisible();
     await expect.poll(() => cellOf(page, disks)).toEqual({ column: 4, row: 1 });
     await disks.dblclick();
-    await expect(appWindow(page, 'Storage')).toBeVisible();
+    await expect(appWindow(page, 'Settings')).toBeVisible();
   });
 });
 
@@ -187,13 +193,13 @@ test('a right-click while the desktop menu is open moves the menu there', async 
   });
 
   await test.step('on an icon, its own menu replaces the desktop menu', async () => {
-    const storage = await box(icon(page, 'Storage'));
+    const storage = await box(icon(page, 'Settings'));
     const point = { x: storage.x + storage.width / 2, y: storage.y + storage.height / 2 };
     await page.mouse.click(point.x, point.y, { button: 'right' });
     const itemMenu = page.getByRole('menu', { name: '1 selected item' });
     await expect.poll(async () => openedAt(await box(itemMenu), point)).toBe(true);
     await expect(desktopMenu).toHaveCount(0);
-    await expect(icon(page, 'Storage')).toHaveAttribute('aria-selected', 'true');
+    await expect(icon(page, 'Settings')).toHaveAttribute('aria-selected', 'true');
   });
 
   await test.step('on a sticky note, the menu only closes', async () => {
@@ -227,12 +233,12 @@ test('a right-click on another item of the shell replaces the open menu, and the
     await page.getByRole('button', { name: 'Pithyx menu' }).click();
     await rightClick(start.getByRole('row', { name: 'Log Center' }));
     await expect(page.getByRole('menu', { name: 'Menu for Log Center' })).toBeVisible();
-    await rightClick(start.getByRole('row', { name: 'Storage' }));
-    await expect(page.getByRole('menu', { name: 'Menu for Storage' })).toBeVisible();
+    await rightClick(start.getByRole('row', { name: 'Settings', exact: true }));
+    await expect(page.getByRole('menu', { name: 'Menu for Settings' })).toBeVisible();
     await expect(page.getByRole('menu')).toHaveCount(1);
     await expect(start).toBeVisible();
-    await rightClick(page.getByRole('menu', { name: 'Menu for Storage' }));
-    await expect(page.getByRole('menu', { name: 'Menu for Storage' })).toBeVisible();
+    await rightClick(page.getByRole('menu', { name: 'Menu for Settings' }));
+    await expect(page.getByRole('menu', { name: 'Menu for Settings' })).toBeVisible();
     await page.keyboard.press('Escape');
     await page.keyboard.press('Escape');
     await expect(start).toHaveCount(0);
@@ -332,12 +338,12 @@ test('the start menu and the taskbar put apps on the desktop, and the taskbar cl
       }[];
       return items.map((item) => item.app).sort();
     })
-    .toEqual(['org.pithyx.about', 'org.pithyx.logs', 'org.pithyx.monitor', 'org.pithyx.storage']);
+    .toEqual(['org.pithyx.about', 'org.pithyx.logs', 'org.pithyx.monitor', 'org.pithyx.settings']);
   expect(await rightClicks(page)).toEqual([true, true, true, true]);
 });
 
 test('the keyboard selects, renames, moves and opens icons', async ({ page }) => {
-  const disks = icon(page, 'Storage');
+  const disks = icon(page, 'Settings');
   await disks.click();
   await expect(disks).toBeFocused();
 
@@ -437,8 +443,8 @@ test('sticky notes keep their text on the daemon, move, stay under windows and a
   });
 
   await test.step('windows cover notes', async () => {
-    await icon(page, 'Storage').dblclick();
-    const window = appWindow(page, 'Storage');
+    await icon(page, 'Settings').dblclick();
+    const window = appWindow(page, 'Settings');
     await expect(window).toBeVisible();
     const noteBox = await box(note);
     const covered = await page.evaluate(
@@ -463,7 +469,7 @@ test('sticky notes keep their text on the daemon, move, stay under windows and a
     await expect(note).toHaveCount(0);
     await expect.poll(() => savedNotes(page)).toEqual([]);
     await page.reload();
-    await expect(page.getByRole('option', { name: 'Storage, shortcut' })).toBeVisible();
+    await expect(page.getByRole('option', { name: 'Settings, shortcut' })).toBeVisible();
     await expect(page.getByRole('region', { name: 'Sticky note' })).toHaveCount(0);
   });
 });
@@ -507,7 +513,7 @@ test('the desktop with items and their menus has no accessibility violations', a
   await page.mouse.click(empty.x, empty.y, { button: 'right' });
   await page.getByRole('menuitem', { name: 'New note' }).click();
   await page.getByRole('textbox', { name: 'Sticky note' }).fill('Order disks');
-  await icon(page, 'Storage').click();
+  await icon(page, 'Settings').click();
   // Axe measures colors as drawn, so a dialog that is still fading in reads as low contrast. React Aria marks an
   // element as entering before its animation starts, so wait for the marks too, not only for running animations.
   const scan = async () => {
@@ -522,12 +528,12 @@ test('the desktop with items and their menus has no accessibility violations', a
   };
   expect((await scan()).violations).toEqual([]);
 
-  await icon(page, 'Storage').click({ button: 'right' });
+  await icon(page, 'Settings').click({ button: 'right' });
   await expect(page.getByRole('menuitem', { name: 'Rename' })).toBeVisible();
   expect((await scan()).violations).toEqual([]);
   await page.keyboard.press('Escape');
 
-  await icon(page, 'Storage').focus();
+  await icon(page, 'Settings').focus();
   await page.keyboard.press('F2');
   await expect(page.getByRole('dialog', { name: 'Rename shortcut' })).toBeVisible();
   expect((await scan()).violations).toEqual([]);
@@ -542,7 +548,7 @@ test.describe('phone', () => {
       data: { kind: 'note', text: 'Call Sam', column: 6, row: 0 },
     });
     await page.reload();
-    const disks = await box(icon(page, 'Storage'));
+    const disks = await box(icon(page, 'Settings'));
     const about = await box(icon(page, 'About Pithyx'));
     expect(Math.abs(disks.y - about.y)).toBeLessThan(2);
     expect(about.x).toBeGreaterThan(disks.x);
@@ -550,7 +556,7 @@ test.describe('phone', () => {
     expect(note.y).toBeGreaterThan(disks.y + disks.height);
     expect(note.width).toBeGreaterThan(300);
 
-    await icon(page, 'Storage').tap();
-    await expect(appWindow(page, 'Storage')).toBeVisible();
+    await icon(page, 'Settings').tap();
+    await expect(appWindow(page, 'Settings')).toBeVisible();
   });
 });
