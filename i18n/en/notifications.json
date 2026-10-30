@@ -253,6 +253,12 @@
         "body": "If you read this, the channel {name} works."
       },
       "footer": "Sent by Pithyx on {box}."
+    },
+    "smtp": {
+      "test": {
+        "title": "Test email",
+        "body": "If you read this, the box can send email through {host}."
+      }
     }
   },
   "proxy": {

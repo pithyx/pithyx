@@ -91,7 +91,7 @@ public sealed class LsblkParserTests
             """{"blockdevices":[{"name":"sda","type":"disk","size":1,"serial":"S1","wwn":"0x5000c500a1b2c3d4"}]}""")).Id);
 
     [Fact]
-    public void SkipsLoopAndRamDevices() =>
+    public void SkipsLoopRamAndNetworkBlockDevices() =>
         Assert.Empty(LsblkParser.Parse(
-            """{"blockdevices":[{"name":"loop0","type":"loop","size":1},{"name":"zram0","type":"disk","size":1}]}"""));
+            """{"blockdevices":[{"name":"loop0","type":"loop","size":1},{"name":"zram0","type":"disk","size":1},{"name":"nbd0","type":"disk","size":0},{"name":"nbd1","type":"disk","size":1073741824}]}"""));
 }

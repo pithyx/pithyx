@@ -28,5 +28,8 @@
     "warning": "Warning",
     "danger": "Error",
     "info": "Note"
+  },
+  "details": {
+    "resize": "Width of the details"
   }
 }

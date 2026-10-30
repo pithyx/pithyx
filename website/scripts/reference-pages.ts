@@ -331,7 +331,13 @@ export const pages: ReferencePage[] = [
     id: 'data-table',
     package: 'ui',
     exports: {
-      '@pithyx/ui': ['DataTable', 'DataTableProps', 'DataTableColumn'],
+      '@pithyx/ui': [
+        'DataTable',
+        'DataTableProps',
+        'DataTableColumn',
+        'DetailsPane',
+        'DetailsPaneProps',
+      ],
     },
   },
   {

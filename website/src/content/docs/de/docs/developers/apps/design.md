@@ -25,14 +25,14 @@ Die eigenen Apps von Pithyx folgen einem gemeinsamen Satz von Gestaltungsregeln 
 
 ## Listen und Tabellen
 
-- Einträge mit mehr als zwei Eigenschaften zeigst du als Tabelle: eine Kopfzeile mit sortierbaren Überschriften, Zeilen von 28 bis 30 px mit feinem Zeiger und mindestens 44 px bei Touch, Nebenspalten in der gedämpften Textfarbe, Zahlen rechtsbündig mit Ziffern gleicher Breite, Zustände als `StatusBadge`.
-- Zeig die Details des ausgewählten Eintrags in einer Spalte rechts (250 bis 300 px), die die Werkzeugleiste ein- und ausschaltet, statt in einem Dialog.
+- Einträge mit mehr als zwei Eigenschaften zeigst du als Tabelle: eine Kopfzeile mit sortierbaren Überschriften, Zeilen von 28 bis 30 px mit feinem Zeiger und mindestens 44 px bei Touch (`density="comfortable"` für Zeilen mit zwei Zeilen Text, 52 px), Nebenspalten in der gedämpften Textfarbe, Zahlen rechtsbündig mit Ziffern gleicher Breite, Zustände als `StatusBadge`.
+- Zeig die Details des ausgewählten Eintrags in einer Spalte rechts (250 bis 300 px), die die Werkzeugleiste ein- und ausschaltet, statt in einem Dialog. An ihrem linken Rand lässt sie sich breiter ziehen; außerhalb einer `DataTable` macht das `DetailsPane`.
 - Eine leere Liste sagt in einem Satz, was fehlt, und bietet die Hauptaktion an.
 - `DataTable` erledigt all das, samt Auswahl, Sortierung, `emptyState` und Detailbereich `details`; `virtualized` für lange Listen.
 
 ## Formulare und Einstellungen
 
-- Bau eine Einstellungsseite aus Abschnitten: eine umrandete Karte mit Titelzeile, die Beschriftung links (etwa 200 px, darunter eine Hinweiszeile), das Steuerelement rechts (höchstens 360 px). In der kompakten Größenklasse untereinander.
+- Bau eine Einstellungsseite aus Abschnitten: eine umrandete Karte mit Titelzeile, die Beschriftung links (etwa 200 px, darunter eine Hinweiszeile), das Steuerelement rechts (höchstens 360 px). In einem Abschnitt breiter als 900 px setzt `FormRow` das Steuerelement an den rechten Rand und gibt der Beschriftung den Platz dazwischen. In der kompakten Größenklasse untereinander.
 - Wenn Änderungen erst beim Übernehmen wirken, bekommt die Seite unten eine feste Leiste mit **Verwerfen** und **Übernehmen** und einer Zeile dazu, was das Übernehmen bewirkt. Einstellungen, die sofort wirken (Schalter, Aussehen), brauchen keine Leiste. Misch nicht beide Arten auf einer Seite.
 - Nimm Optionsfelder für zwei bis vier Möglichkeiten, eine Auswahlliste darüber hinaus und einen `Switch` nur für Ein und Aus, das sofort wirkt.
 - `FormSection`, `FormRow`, `ActionBar`, `RadioGroup` und `Select` bauen eine solche Seite.

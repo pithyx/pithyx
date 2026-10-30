@@ -219,6 +219,7 @@ public sealed partial class EndpointMatrixTests : IDisposable
         ["TestSystemNotificationChannel"] = Need.Admin,
         ["GetNotificationSmtp"] = Need.Admin,
         ["SetNotificationSmtp"] = Need.Admin,
+        ["TestNotificationSmtp"] = Need.Admin,
         ["GetSystemRegion"] = Need.Admin,
         ["SetSystemRegion"] = Need.Admin,
         ["GetRootCertificate"] = Need.Anonymous,

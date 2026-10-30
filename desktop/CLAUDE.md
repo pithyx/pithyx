@@ -70,14 +70,14 @@ Direction F of the design pass (#227): structured and calm, laid out like a clas
 
 ### Lists and tables
 
-- Items with more than two attributes are a table: a header row with column separators and sortable headings, rows of 28 to 30 px on fine pointers (44 px on coarse), secondary columns muted, numbers right-aligned with tabular figures, states as badges.
+- Items with more than two attributes are a table: a header row with column separators and sortable headings, rows of 28 to 30 px on fine pointers (44 px on coarse), rows with two lines about 52 px with room above and below (D406), secondary columns muted, numbers right-aligned with tabular figures, states as badges.
 - The selected row uses the selection color with an accent outline; hover uses the hover surface.
-- Details of the selected item go into a details pane on the right (250 to 300 px), switched from the toolbar, not into a dialog.
+- Details of the selected item go into a details pane on the right (250 to 300 px by default, its left edge drags it wider, `DetailsPane`, D406), switched from the toolbar, not into a dialog.
 - Groups inside a list (by day, by type) get a small bold muted heading. An empty list says in one sentence what is missing and offers the primary action.
 
 ### Forms and settings
 
-- A settings page is made of sections: a bordered card with a title row, the label on the left (about 200 px, with a hint line below), the control on the right (at most 360 px); one column in the compact size class.
+- A settings page is made of sections: a bordered card with a title row, the label on the left (about 200 px, with a hint line below), the control on the right (at most 360 px); in a section wider than 900 px the control sits at the right edge and the label takes the room between (D406); one column in the compact size class.
 - A page whose changes need applying has a fixed action bar at the bottom (**Discard**, **Apply**, one line about what applying does); settings that apply at once (toggles, appearance) have none. Never both kinds on one page.
 - Radio buttons for two to four choices, a select beyond that; a toggle only for on and off that applies at once.
 

@@ -2830,6 +2830,23 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/api/system/notifications/smtp/test": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Administrators only. Sends a test email to one address through the server given in the body, saved or not; a missing password takes the saved one, and nothing is stored. Invalid fields answer 400 notifications.smtp.invalid (field to for the address), a failure 502 notifications.channel.failed with the server's words. */
+        post: operations["TestNotificationSmtp"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/system/overview": {
         parameters: {
             query?: never;
@@ -7453,6 +7470,27 @@ export type components = {
             security: components["schemas"]["SmtpSecurity"];
             /** @description The sign-in name, if it needs one. */
             username: null | string;
+        };
+        /** @description Body of `POST /api/system/notifications/smtp/test`: the server as it is in the form, and where to send. */
+        SmtpTestRequest: {
+            /** @description The sender address. */
+            from?: null | string;
+            /** @description The server's name or address. */
+            host: null | string;
+            /** @description The password; null takes the saved one, empty sends without. */
+            password?: null | string;
+            /**
+             * Format: int32
+             * @description 1 to 65535; defaults to 587.
+             * @default 587
+             */
+            port: number;
+            /** @description Defaults to STARTTLS. */
+            security?: components["schemas"]["SmtpSecurity"];
+            /** @description The address that gets the test email. */
+            to: null | string;
+            /** @description The sign-in name, or none. */
+            username?: null | string;
         };
         Snapshot: {
             /**
@@ -15057,6 +15095,37 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["SmtpStatus"];
                 };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    TestNotificationSmtp: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SmtpTestRequest"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Problem details with a stable error code. */
             default: {

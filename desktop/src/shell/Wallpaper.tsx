@@ -10,15 +10,16 @@ interface Cube {
 
 // Boxes drawn like the logo in the menu button: the geometry of ui/Logo.tsx in its 100x100 units, with the lid in its
 // closed position, 13 units lower (as in ui/Logo.module.css), so only a narrow gap shows. Positions are in the 1600x1000
-// viewBox: one large box right of the middle above the amber glow, smaller ones behind it, away from the icon column
-// at the left (D398); depth fades them into the background.
+// viewBox: one large box right of the middle above the amber glow, smaller ones around it, away from the icon column
+// at the left (D398); depth fades them into the background. The lower ones end above y 890, so a 16:9 screen, which
+// cuts the viewBox to y 50 to 950, still shows them whole above the taskbar.
 const CUBES: Cube[] = [
   { x: 1180, y: 420, scale: 6, depth: 1 },
-  { x: 420, y: 780, scale: 3.4, depth: 0.6 },
-  { x: 1470, y: 890, scale: 2.2, depth: 0.45 },
+  { x: 420, y: 710, scale: 3.4, depth: 0.6 },
+  { x: 1460, y: 750, scale: 2.2, depth: 0.45 },
   { x: 660, y: 200, scale: 1.6, depth: 0.35 },
   { x: 360, y: 380, scale: 2.4, depth: 0.4 },
-  { x: 900, y: 860, scale: 1.3, depth: 0.3 },
+  { x: 880, y: 790, scale: 1.3, depth: 0.3 },
 ];
 
 const LID_DROP = 13;

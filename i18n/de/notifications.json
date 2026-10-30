@@ -253,6 +253,12 @@
         "body": "Wenn du das liest, funktioniert der Kanal {name}."
       },
       "footer": "Gesendet von Pithyx auf {box}."
+    },
+    "smtp": {
+      "test": {
+        "title": "Test-E-Mail",
+        "body": "Wenn du das liest, kann die Box über {host} E-Mails senden."
+      }
     }
   },
   "proxy": {

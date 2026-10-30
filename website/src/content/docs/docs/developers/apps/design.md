@@ -25,14 +25,14 @@ Pithyx's own apps follow one set of design rules (D394): structured and calm, wi
 
 ## Lists and tables
 
-- Items with more than two attributes are shown as a table: a header row with sortable headings, rows of 28 to 30 px with a fine pointer and at least 44 px on touch, secondary columns in the muted text color, numbers right-aligned with tabular figures, states as `StatusBadge`.
-- Show the details of the selected item in a pane on the right (250 to 300 px) that the toolbar switches on and off, rather than in a dialog.
+- Items with more than two attributes are shown as a table: a header row with sortable headings, rows of 28 to 30 px with a fine pointer and at least 44 px on touch (`density="comfortable"` for rows with two lines, 52 px), secondary columns in the muted text color, numbers right-aligned with tabular figures, states as `StatusBadge`.
+- Show the details of the selected item in a pane on the right (250 to 300 px) that the toolbar switches on and off, rather than in a dialog. Users can drag its left edge to make it wider; `DetailsPane` does that outside a `DataTable`.
 - An empty list says in one sentence what is missing and offers the primary action.
 - `DataTable` does all of this, including the selection, the sort, the `emptyState` and the `details` pane; `virtualized` for long lists.
 
 ## Forms and settings
 
-- Build a settings page from sections: a bordered card with a title row, the label on the left (about 200 px, with a hint line below), the control on the right (at most 360 px). Stack them in the compact size class.
+- Build a settings page from sections: a bordered card with a title row, the label on the left (about 200 px, with a hint line below), the control on the right (at most 360 px). In a section wider than 900 px, `FormRow` puts the control at the right edge and gives the label the room between. Stack them in the compact size class.
 - If changes take effect only when applied, give the page a fixed bar at the bottom with **Discard** and **Apply** and one line about what applying does. Settings that take effect at once (switches, appearance) need no bar. Do not mix both kinds on one page.
 - Use radio buttons for two to four choices, a select beyond that, and a `Switch` only for on and off that applies at once.
 - `FormSection`, `FormRow`, `ActionBar`, `RadioGroup` and `Select` build such a page.

@@ -1098,7 +1098,12 @@
       "password": "Passwort",
       "passwordSet": "Ein Passwort ist gespeichert. Gib nur ein neues ein, um es zu ersetzen.",
       "from": "Absenderadresse",
-      "applyNote": "Ein Test über einen Kanal zeigt, ob der Server funktioniert."
+      "applyNote": "Übernehmen speichert den Server; mit dem Test unten probierst du ihn vorher aus.",
+      "testTitle": "Test-E-Mail",
+      "testTo": "Senden an",
+      "testToHint": "Der Test nutzt den Server so, wie er oben steht, gespeichert oder nicht.",
+      "testSend": "Test-E-Mail senden",
+      "testSent": "An {address} gesendet. Kommt sie nicht an, schau auch im Spam-Ordner nach."
     },
     "system": {
       "title": "Kanäle der Box",

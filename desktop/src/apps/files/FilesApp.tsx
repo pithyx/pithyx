@@ -26,6 +26,7 @@ import { useTranslation } from 'react-i18next';
 import { useStore } from 'zustand';
 import {
   Button,
+  DetailsPane as SidePane,
   Checkbox,
   cx,
   Dialog,
@@ -266,8 +267,8 @@ export function FilesApp({ app }: { app: PithyxApp }) {
     setSelectionState({ at: here, selection: emptySelection });
   };
   const homeList = homeEntries.filter((entry) => matchesQuery(entry.name, search));
-  // Folders of the tree the user opened or closed, by share and path. Any other folder is open while the folder on
-  // view is inside it, so the tree always shows where the user is.
+  // Folders of the tree the user opened or closed, or went through, by share and path. Any other folder is open while
+  // the folder on view is inside it, so the tree always shows where the user is.
   const [toggled, setToggled] = useState<ReadonlyMap<string, boolean>>(new Map());
   const [renamingState, setRenamingState] = useState<{ at: string; name: string } | null>(null);
   const renaming = renamingState?.at === here ? renamingState.name : null;
@@ -340,6 +341,20 @@ export function FilesApp({ app }: { app: PithyxApp }) {
     };
     if (remember) {
       setHistory((current) => ({ back: [...current.back, place], forward: [] }));
+    }
+    // The tree opened the folders down to the one on view; they stay open when the user goes elsewhere (the recycle
+    // bin, another share) until the user closes them.
+    if (place.share !== null && place.view === 'folder') {
+      const share = place.share;
+      setToggled((current) => {
+        const kept = new Map(current);
+        for (const folder of foldersDownTo(place.path)) {
+          if (!kept.has(treeKey(share, folder))) {
+            kept.set(treeKey(share, folder), true);
+          }
+        }
+        return kept;
+      });
     }
     setPlace(next);
     setAnnouncement(null);
@@ -1758,7 +1773,7 @@ function DetailsPane({
 }) {
   const { t } = useTranslation('files');
   return (
-    <aside className={styles.details} aria-label={t('details')}>
+    <SidePane className={styles.details} label={t('details')}>
       {entry === undefined ? (
         <p className={styles.detailsEmpty}>{t('detailsEmpty')}</p>
       ) : (
@@ -1811,12 +1826,18 @@ function DetailsPane({
           )}
         </>
       )}
-    </aside>
+    </SidePane>
   );
 }
 
 function treeKey(share: string, folder: string): string {
   return `${share}\n${folder}`;
+}
+
+/** The share root and every folder down to and including `path`. */
+function foldersDownTo(path: string): string[] {
+  const parts = path === '' ? [] : path.split('/');
+  return ['', ...parts.map((_, index) => parts.slice(0, index + 1).join('/'))];
 }
 
 /** Whether a folder is the folder or one of its parents; the share root holds every folder. */

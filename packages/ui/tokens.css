@@ -210,7 +210,8 @@
   /* Density of the app frame (D394). Rows and toolbar controls grow to the touch target on coarse pointers. */
   --row-height: 28px;
   --row-height-md: 36px;
-  --row-height-lg: 42px;
+  /* Rows with two lines (a name over its user name, a badge over a note), with room above and below. */
+  --row-height-lg: 52px;
   --toolbar-control-height: 32px;
   --nav-width: 260px;
   --details-width: 280px;
@@ -228,7 +229,7 @@
     --taskbar-height: 52px;
     --row-height: var(--touch-target);
     --row-height-md: var(--touch-target);
-    --row-height-lg: 48px;
+    --row-height-lg: 56px;
     --toolbar-control-height: var(--touch-target);
   }
 }

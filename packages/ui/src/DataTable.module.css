@@ -143,6 +143,7 @@
 }
 
 .comfortable .cell {
+  padding-block: var(--space-2);
   white-space: normal;
 }
 
@@ -178,7 +179,7 @@
   flex: none;
   flex-direction: column;
   gap: var(--space-4);
-  width: var(--details-width);
+  width: var(--details-pane-width, var(--details-width));
   padding: var(--space-4);
   overflow: auto;
   border-left: 1px solid var(--color-border);
@@ -203,6 +204,10 @@
   .cell {
     white-space: normal;
     overflow-wrap: anywhere;
+  }
+
+  .view {
+    --details-handle: none;
   }
 
   .details {

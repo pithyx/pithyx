@@ -105,6 +105,13 @@ public static class NotificationEndpoints
                 TypedResults.Ok(await channels.SetSmtpAsync(request, cancellationToken)))
             .WithName("SetNotificationSmtp")
             .WithDescription("Administrators only. Saves the SMTP server; an empty host removes it. A missing password keeps the saved one, an empty one removes it. Invalid fields answer 400 notifications.smtp.invalid.");
+        system.MapPost("/smtp/test", async (SmtpTestRequest request, ChannelService channels, CancellationToken cancellationToken) =>
+            {
+                await channels.TestSmtpAsync(request, cancellationToken);
+                return TypedResults.NoContent();
+            })
+            .WithName("TestNotificationSmtp")
+            .WithDescription("Administrators only. Sends a test email to one address through the server given in the body, saved or not; a missing password takes the saved one, and nothing is stored. Invalid fields answer 400 notifications.smtp.invalid (field to for the address), a failure 502 notifications.channel.failed with the server's words.");
     }
 
     private static void MapChannels(RouteGroupBuilder group, Func<HttpContext, long?> owner, string prefix, string whose)

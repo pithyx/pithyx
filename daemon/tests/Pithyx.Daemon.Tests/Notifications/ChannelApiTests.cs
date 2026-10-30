@@ -193,6 +193,34 @@ public sealed class ChannelApiTests : IAsyncLifetime
         Assert.Contains("If you read this, the channel Mail works.", mail.Data, StringComparison.Ordinal);
     }
 
+    [Fact]
+    public async Task TheSmtpServerCanBeTriedBeforeItIsSaved()
+    {
+        using var smtp = new SmtpListener();
+        var server = new { host = "127.0.0.1", port = smtp.Port, security = "none", from = "nas@example.com" };
+        using (var noAddress = await _admin.PostAsJsonAsync("/api/system/notifications/smtp/test", new { to = "nobody", server.host, server.port, server.security, server.from }, Token))
+        {
+            Assert.Equal((HttpStatusCode.BadRequest, "notifications.smtp.invalid"), (noAddress.StatusCode, await noAddress.ErrorCodeAsync()));
+        }
+        using (var notAdmin = await _bob.PostAsJsonAsync("/api/system/notifications/smtp/test", new { to = "bob@example.com", server.host, server.port, server.security, server.from }, Token))
+        {
+            Assert.Equal(HttpStatusCode.Forbidden, notAdmin.StatusCode);
+        }
+
+        using (var sent = await _admin.PostAsJsonAsync("/api/system/notifications/smtp/test", new { to = "admin@example.com", server.host, server.port, server.security, server.from }, Token))
+        {
+            Assert.Equal(HttpStatusCode.NoContent, sent.StatusCode);
+        }
+
+        var mail = await smtp.NextAsync();
+        Assert.Contains("RCPT TO:<admin@example.com>", mail.Commands);
+        Assert.Contains("Subject: Test email", mail.Data, StringComparison.Ordinal);
+        Assert.Contains("If you read this, the box can send email through 127.0.0.1.", mail.Data, StringComparison.Ordinal);
+        // Trying the server stores nothing.
+        var status = await OkAsync(_admin.GetAsync("/api/system/notifications/smtp", Token));
+        Assert.False(status.GetProperty("configured").GetBoolean());
+    }
+
     /// <summary>The daemon with webhooks allowed to reach loopback, where the test listeners are.</summary>
     private sealed class ChannelDaemon : DaemonFactory
     {
