@@ -11,6 +11,7 @@ import { toPithyxError } from './daemonError';
 
 export type SmtpStatus = components['schemas']['SmtpStatus'];
 export type SmtpRequest = components['schemas']['SmtpRequest'];
+export type SmtpTestRequest = components['schemas']['SmtpTestRequest'];
 
 /** The query keys of Settings > Notifications. */
 export const smtpKey = ['settings', 'notifications', 'smtp'] as const;
@@ -20,6 +21,7 @@ export const systemChannelsKey = ['settings', 'notifications', 'channels'] as co
 interface NotificationMethods {
   'internal.admin.notifications.smtp': { params: Record<string, never>; result: SmtpStatus };
   'internal.admin.notifications.setSmtp': { params: SmtpRequest; result: SmtpStatus };
+  'internal.admin.notifications.testSmtp': { params: SmtpTestRequest; result: null };
   'internal.admin.notifications.channels': {
     params: Record<string, never>;
     result: NotificationChannelList;
@@ -66,6 +68,18 @@ export function notificationsHost(): HostExtensions {
         daemon(async () =>
           unwrap(await api.PUT('/api/system/notifications/smtp', { body: params as SmtpRequest })),
         ),
+    },
+    'internal.admin.notifications.testSmtp': {
+      validate: (value) => isRecord(value) && typeof value.to === 'string',
+      handle: (params) =>
+        daemon(async () => {
+          unwrap(
+            await api.POST('/api/system/notifications/smtp/test', {
+              body: params as SmtpTestRequest,
+            }),
+          );
+          return null;
+        }),
     },
     'internal.admin.notifications.channels': {
       validate: isRecord,

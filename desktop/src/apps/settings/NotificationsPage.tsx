@@ -1,6 +1,7 @@
 import type { PithyxApp } from '@pithyx/sdk';
 import {
   ActionBar,
+  Button,
   FormRow,
   FormSection,
   PasswordField,
@@ -81,17 +82,22 @@ function SmtpForm({ app, saved }: { app: PithyxApp; saved: SmtpStatus }) {
   const [username, setUsername] = useState(saved.username ?? '');
   const [password, setPassword] = useState('');
   const [from, setFrom] = useState(saved.from ?? '');
+  // The server as the form has it; an empty password keeps (or, for the test, uses) the saved one.
+  const server = () => ({
+    host: host.trim(),
+    port: Number.parseInt(port, 10) || 0,
+    security,
+    username: username.trim() === '' ? null : username.trim(),
+    password: password === '' ? null : password,
+    from: from.trim(),
+  });
+  const [testTo, setTestTo] = useState('');
+  const test = useMutation({
+    mutationFn: (to: string) =>
+      notificationsCall(app, 'internal.admin.notifications.testSmtp', { ...server(), to }),
+  });
   const save = useMutation({
-    mutationFn: () =>
-      notificationsCall(app, 'internal.admin.notifications.setSmtp', {
-        host: host.trim(),
-        port: Number.parseInt(port, 10) || 0,
-        security,
-        username: username.trim() === '' ? null : username.trim(),
-        // Empty keeps the saved password; a new one replaces it.
-        password: password === '' ? null : password,
-        from: from.trim(),
-      }),
+    mutationFn: () => notificationsCall(app, 'internal.admin.notifications.setSmtp', server()),
     onSuccess: async (next) => {
       queryClient.setQueryData(smtpKey, next);
       // Whether email channels are possible shows in the channel list.
@@ -165,6 +171,40 @@ function SmtpForm({ app, saved }: { app: PithyxApp; saved: SmtpStatus }) {
             autoCapitalize="none"
           />
         </FormRow>
+      </FormSection>
+      <FormSection title={t('notifications.smtp.testTitle')}>
+        <FormRow label={t('notifications.smtp.testTo')} hint={t('notifications.smtp.testToHint')}>
+          <form
+            className={styles.rowControls}
+            onSubmit={(event) => {
+              event.preventDefault();
+              test.mutate(testTo.trim());
+            }}
+          >
+            <TextField
+              value={testTo}
+              onChange={(value) => {
+                setTestTo(value);
+                test.reset();
+              }}
+              type="email"
+              autoComplete="email"
+              autoCapitalize="none"
+            />
+            <Button
+              type="submit"
+              isDisabled={testTo.trim() === '' || host.trim() === '' || test.isPending}
+            >
+              {t('notifications.smtp.testSend')}
+            </Button>
+          </form>
+        </FormRow>
+        {test.isSuccess && (
+          <p className={styles.muted} role="status">
+            {t('notifications.smtp.testSent', { address: test.variables })}
+          </p>
+        )}
+        {test.isError && <ErrorNotice error={describeProblem(test.error)} />}
       </FormSection>
       {save.isError && <ErrorNotice error={describeProblem(save.error)} />}
       <PageFooter>

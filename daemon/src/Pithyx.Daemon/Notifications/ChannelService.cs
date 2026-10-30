@@ -185,13 +185,67 @@ public sealed partial class ChannelService(
     {
         ArgumentNullException.ThrowIfNull(request);
         await using var connection = await connections.OpenAsync(cancellationToken);
-        var host = request.Host?.Trim() ?? "";
-        if (host.Length == 0)
+        if (string.IsNullOrWhiteSpace(request.Host))
         {
             await connection.ExecuteAsync(new CommandDefinition("DELETE FROM settings WHERE key = @key", new { key = SmtpSettingsKey }, cancellationToken: cancellationToken));
             return Status(null);
         }
-        var previous = await SmtpAsync(connection, cancellationToken);
+        var settings = CheckedSmtp(request, await SmtpAsync(connection, cancellationToken));
+        await connection.ExecuteAsync(new CommandDefinition(
+            "INSERT INTO settings (key, value) VALUES (@key, @value) ON CONFLICT (key) DO UPDATE SET value = excluded.value",
+            new { key = SmtpSettingsKey, value = JsonSerializer.Serialize(settings, _json) },
+            cancellationToken: cancellationToken));
+        LogSmtpSaved(settings.Host, settings.Port);
+        return Status(settings);
+    }
+
+    /// <summary>
+    /// Sends a test email to one address through the server as it is in the form, saved or not; a missing password takes
+    /// the saved one. Nothing is stored.
+    /// </summary>
+    public async Task TestSmtpAsync(SmtpTestRequest request, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        await using var connection = await connections.OpenAsync(cancellationToken);
+        var to = request.To?.Trim() ?? "";
+        if (!ChannelRules.IsEmail(to))
+        {
+            throw SmtpInvalid("to");
+        }
+        if (string.IsNullOrWhiteSpace(request.Host))
+        {
+            throw SmtpInvalid("host");
+        }
+        var settings = CheckedSmtp(
+            new SmtpRequest(request.Host, request.Port, request.Security, request.Username, request.Password, request.From),
+            await SmtpAsync(connection, cancellationToken));
+        var language = await LanguageAsync(connection, null, cancellationToken);
+        var parameters = new Dictionary<string, JsonElement>(StringComparer.Ordinal) { ["host"] = JsonSerializer.SerializeToElement(settings.Host) };
+        var message = new OutgoingMessage(
+            NotificationRenderer.Render(language, NotificationRenderer.SmtpTestCode, parameters, null, _box),
+            NotificationRenderer.SmtpTestCode,
+            parameters,
+            NotificationLevel.Info,
+            NotificationCategory.System,
+            null,
+            _box,
+            time.GetUtcNow());
+        try
+        {
+            await sender.SendEmailAsync(settings, [to], message, cancellationToken);
+        }
+        catch (PithyxException exception)
+        {
+            LogSmtpTestFailed(settings.Host, settings.Port, exception.Code, exception.Parameters.GetValueOrDefault("detail")?.ToString());
+            throw;
+        }
+        LogSmtpTested(settings.Host, settings.Port);
+    }
+
+    // A non-empty request checked field by field; a null password keeps the saved one, an empty one removes it.
+    private static SmtpSettings CheckedSmtp(SmtpRequest request, SmtpSettings? previous)
+    {
+        var host = request.Host?.Trim() ?? "";
         if (host.Length > 253 || host.Any(c => char.IsWhiteSpace(c) || c is '/' or '@') || Uri.CheckHostName(host.Trim('[', ']')) == UriHostNameType.Unknown)
         {
             throw SmtpInvalid("host");
@@ -219,13 +273,7 @@ public sealed partial class ChannelService(
         {
             throw SmtpInvalid("from");
         }
-        var settings = new SmtpSettings(host, request.Port, request.Security, username, password, from);
-        await connection.ExecuteAsync(new CommandDefinition(
-            "INSERT INTO settings (key, value) VALUES (@key, @value) ON CONFLICT (key) DO UPDATE SET value = excluded.value",
-            new { key = SmtpSettingsKey, value = JsonSerializer.Serialize(settings, _json) },
-            cancellationToken: cancellationToken));
-        LogSmtpSaved(host, request.Port);
-        return Status(settings);
+        return new SmtpSettings(host, request.Port, request.Security, username, password, from);
     }
 
     /// <summary>Remembers the language the user's desktop uses for what the box writes to them.</summary>
@@ -418,6 +466,12 @@ public sealed partial class ChannelService(
 
     [LoggerMessage(Level = LogLevel.Information, Message = "SMTP server set to {Host}:{Port}")]
     private partial void LogSmtpSaved(string host, int port);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Test email sent through {Host}:{Port}")]
+    private partial void LogSmtpTested(string host, int port);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Test email through {Host}:{Port} failed: {Code} {Detail}")]
+    private partial void LogSmtpTestFailed(string host, int port, string code, string? detail);
 
     [LoggerMessage(Level = LogLevel.Information, Message = "Notification {Code} delivered through channel {ChannelId}")]
     private partial void LogDelivered(long channelId, string code);

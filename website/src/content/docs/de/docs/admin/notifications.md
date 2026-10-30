@@ -19,6 +19,8 @@ Es gibt zwei Arten von Kanälen:
 
 E-Mail-Kanäle senden über einen SMTP-Server, den ein Administrator unter Einstellungen > **Benachrichtigungen** > **E-Mail-Server** einträgt: seinen Namen, den Port, die Verschlüsselung (**TLS**, meist Port 465, **STARTTLS**, meist 587, oder **Keine**, nur für einen Server im lokalen Netz), Benutzername und Passwort, falls er sie braucht, und die Absenderadresse; **Übernehmen** in der Leiste unten speichert sie, **Verwerfen** verwirft die Änderungen. Das Passwort wird nie wieder angezeigt; lass das Feld leer, um es zu behalten. Ein leerer Servername entfernt den Server; E-Mail-Kanäle schlagen dann mit [`notifications.smtp.missing`](/de/docs/reference/errors/#notifications.smtp.missing) fehl, und ein neuer lässt sich nicht anlegen.
 
+Unter **Test-E-Mail** schickt **Test-E-Mail senden** eine kurze E-Mail an die Adresse, die du eingibst, über den Server so, wie er oben im Formular steht, vor oder nach dem Übernehmen; ein leeres Passwortfeld nutzt das gespeicherte Passwort. Klappt es nicht, zeigt Pithyx die Worte des Servers, etwa ein falsches Passwort oder einen abgelehnten Absender.
+
 ## Einen Kanal hinzufügen
 
 **Kanal hinzufügen** fragt nach:

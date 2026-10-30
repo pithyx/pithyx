@@ -16,6 +16,7 @@ public sealed record RenderedNotification(string Title, string Body, string Foot
 public static class NotificationRenderer
 {
     public const string TestCode = "notifications.channel.test";
+    public const string SmtpTestCode = "notifications.smtp.test";
     private const string FooterKey = "notifications:notifications.channel.footer";
 
     public static RenderedNotification Render(string language, string code, IReadOnlyDictionary<string, JsonElement> parameters, string? appName, string box)

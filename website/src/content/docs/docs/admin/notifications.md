@@ -19,6 +19,8 @@ There are two kinds of channels:
 
 Email channels send through one SMTP server, which an administrator sets in Settings > **Notifications** > **Email server**: its name, the port, the encryption (**TLS**, usually port 465, **STARTTLS**, usually 587, or **None**, only for a server in the local network), a user name and password if it needs them, and the sender address; **Apply** in the bar at the bottom saves them and **Discard** drops the changes. The password is never shown again; leave the field empty to keep it. An empty server name removes the server; email channels then fail with [`notifications.smtp.missing`](/docs/reference/errors/#notifications.smtp.missing), and a new one cannot be added.
 
+Under **Test email**, **Send test email** sends a short email to the address you type, through the server as the form above has it, before or after you apply it; an empty password field uses the saved password. A failure shows the server's own words, for example a wrong password or a refused sender.
+
 ## Adding a channel
 
 **Add channel** asks for:

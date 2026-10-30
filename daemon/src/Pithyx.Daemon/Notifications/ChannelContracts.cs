@@ -138,6 +138,23 @@ public sealed record SmtpRequest(
     string? Password = null,
     string? From = null);
 
+/// <summary>Body of <c>POST /api/system/notifications/smtp/test</c>: the server as it is in the form, and where to send.</summary>
+/// <param name="To">The address that gets the test email.</param>
+/// <param name="Host">The server's name or address.</param>
+/// <param name="Port">1 to 65535; defaults to 587.</param>
+/// <param name="Security">Defaults to STARTTLS.</param>
+/// <param name="Username">The sign-in name, or none.</param>
+/// <param name="Password">The password; null takes the saved one, empty sends without.</param>
+/// <param name="From">The sender address.</param>
+public sealed record SmtpTestRequest(
+    string? To,
+    string? Host,
+    int Port = 587,
+    SmtpSecurity Security = SmtpSecurity.StartTls,
+    string? Username = null,
+    string? Password = null,
+    string? From = null);
+
 /// <summary>Body of <c>PUT /api/notifications/language</c>.</summary>
 /// <param name="Language">The language the user's desktop uses, <c>en</c> or <c>de</c>.</param>
 public sealed record NotificationLanguageRequest(string Language);

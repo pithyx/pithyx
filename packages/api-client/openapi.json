@@ -2814,6 +2814,40 @@
         }
       }
     },
+    "/api/system/notifications/smtp/test": {
+      "post": {
+        "tags": [
+          "Notifications"
+        ],
+        "description": "Administrators only. Sends a test email to one address through the server given in the body, saved or not; a missing password takes the saved one, and nothing is stored. Invalid fields answer 400 notifications.smtp.invalid (field to for the address), a failure 502 notifications.channel.failed with the server's words.",
+        "operationId": "TestNotificationSmtp",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SmtpTestRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/shares": {
       "get": {
         "tags": [
@@ -20483,6 +20517,61 @@
           }
         },
         "description": "Settings &gt; Notifications, the SMTP server, without its password."
+      },
+      "SmtpTestRequest": {
+        "required": [
+          "to",
+          "host"
+        ],
+        "type": "object",
+        "properties": {
+          "to": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The address that gets the test email."
+          },
+          "host": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The server's name or address."
+          },
+          "port": {
+            "type": "integer",
+            "description": "1 to 65535; defaults to 587.",
+            "format": "int32",
+            "default": 587
+          },
+          "security": {
+            "description": "Defaults to STARTTLS.",
+            "$ref": "#/components/schemas/SmtpSecurity"
+          },
+          "username": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The sign-in name, or none."
+          },
+          "password": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The password; null takes the saved one, empty sends without."
+          },
+          "from": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The sender address."
+          }
+        },
+        "description": "Body of `POST /api/system/notifications/smtp/test`: the server as it is in the form, and where to send."
       },
       "Snapshot": {
         "required": [
