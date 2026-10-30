@@ -1,4 +1,4 @@
-import { Badge } from '@pithyx/ui';
+import { StatusBadge } from '@pithyx/ui';
 import { useTranslation } from 'react-i18next';
 import { useFormatLocale } from '../../i18n';
 import { manifestText } from '../installed';
@@ -17,7 +17,7 @@ export function MaturityBadge({ maturity }: { maturity: string }) {
   if (maturity !== 'beta' && maturity !== 'experimental') {
     return null;
   }
-  return <Badge tone="highlight">{t(`info.maturity.${maturity}`)}</Badge>;
+  return <StatusBadge tone="warning">{t(`info.maturity.${maturity}`)}</StatusBadge>;
 }
 
 /**
@@ -152,9 +152,9 @@ export function ManifestScreenshots({
   }
   return (
     <section className={styles.group} aria-labelledby={`store-screenshots-${appId}`}>
-      <h3 id={`store-screenshots-${appId}`} className={styles.sectionTitle}>
+      <h2 id={`store-screenshots-${appId}`} className={styles.sectionTitle}>
         {t('catalog.screenshots')}
-      </h3>
+      </h2>
       <ul className={styles.screenshots}>
         {screenshots.map((shot, index) => (
           <li key={shot.file}>

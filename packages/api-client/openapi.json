@@ -21248,7 +21248,9 @@
           "categories",
           "keywords",
           "maturity",
-          "incompatible"
+          "incompatible",
+          "publishedAt",
+          "critical"
         ],
         "type": "object",
         "properties": {
@@ -21340,6 +21342,15 @@
               }
             ],
             "description": "Why this box cannot install a catalog version, with what the user needs to know (D393)."
+          },
+          "publishedAt": {
+            "type": "string",
+            "description": "When the catalog published Version, for the Store's new and updated apps.",
+            "format": "date-time"
+          },
+          "critical": {
+            "type": "boolean",
+            "description": "Version asks for a critical right (root on the box), shown as the badge Root access before the install (D388)."
           }
         },
         "description": "An app of a catalog, at the newest version this box can run, or at its newest version when it can run none."

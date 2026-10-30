@@ -1,4 +1,4 @@
-import { Badge } from '@pithyx/ui';
+import { StatusBadge } from '@pithyx/ui';
 import { useTranslation } from 'react-i18next';
 import type { StoreAppSummary } from '../sdk/store';
 import styles from './Store.module.css';
@@ -15,7 +15,7 @@ export function readsManifest(incompatible: Incompatible | null): boolean {
 /** The badge of an app this box cannot install (D393). */
 export function IncompatibleBadge() {
   const { t } = useTranslation('store');
-  return <Badge tone="neutral">{t('catalog.incompatible')}</Badge>;
+  return <StatusBadge tone="warning">{t('catalog.incompatible')}</StatusBadge>;
 }
 
 /** Why this box cannot install the app, in a sentence that says what may help. */

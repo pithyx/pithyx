@@ -17,7 +17,7 @@ A catalog is a Git repository that lists apps for the Store. Pithyx has two proj
 - **Sequence.** Each publish raises the index `sequence` by one. The box refuses a lower number ([`store.catalog.sequence_old`](/docs/reference/errors/#store.catalog.sequence_old)).
 - **Signature.** Ed25519 over the exact bytes of `index.json`. A box accepts a project catalog if at least one signature comes from a key it trusts for the channel and every signature by a trusted key verifies. Unknown key ids are ignored, which allows key rotation. A failed check is [`store.catalog.signature_invalid`](/docs/reference/errors/#store.catalog.signature_invalid). Custom catalogs are not signed and the Store marks their apps as not verified.
 - **On the box.** Catalogs are shallow clones in `/var/lib/pithyx/catalogs/<id>/`, fetched with git over https or ssh (3 minute timeout, no hooks, no submodules). A failed fetch keeps the last verified copy. Every file is checked against the index hash.
-- **Channels and updates.** The Store settings have a channel (stable reads `catalog`, beta reads `catalog-next`), an update policy (automatic, notify or none; default notify), a daily check time (default 03:00 with a random delay of up to 60 minutes) and a per-app override. An update that needs new permissions, root or elevated rights is never installed automatically, and neither is any update of an app holding a right of the tier root access (`docker.socket.raw`, D388).
+- **Channels and updates.** The Store has a channel on its page **Catalogs** (stable reads `catalog`, beta reads `catalog-next`), and on its page **Updates** an update policy (automatic, notify or none; default notify) and a daily check time (default 03:00 with a random delay of up to 60 minutes); each app can override the policy. An update that needs new permissions, root or elevated rights is never installed automatically, and neither is any update of an app holding a right of the tier root access (`docker.socket.raw`, D388).
 
 ## The review
 
@@ -51,7 +51,7 @@ From `sdk/schema/catalog.v1.rules.json`:
 
 1. Create a repository from `pithyx/catalog-template`. The publish job refuses the template's placeholder id.
 2. Put your apps in `apps/<id>/`. The CLI commands run in the repository root: `pithyx catalog check`, `pending`, `index`, `sign` and `verify` (see [@pithyx/cli](/docs/sdk/cli/#pithyx-catalog)).
-3. In the Store, open the **Own** tab and add the repository by URL.
+3. In the Store, open **Catalogs**, choose **Add catalog** and enter the repository's URL.
    - A public `https://host/path` URL is fetched at once.
    - A private repository uses an SSH URL such as `git@host:owner/repo.git`. The box creates an SSH deploy key and shows its public half; add it to the repository as a read-only key, then fetch.
    - Images in a private registry need a read token (`user:token`). The Store has no field for it; set it through the API with `PATCH /api/store/catalogs/{key}` and `registryToken`.

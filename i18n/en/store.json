@@ -1,17 +1,42 @@
 {
-  "tabs": {
-    "label": "Store sections",
+  "nav": {
+    "label": "Store",
+    "search": "Search",
+    "discover": "Discover",
+    "all": "All apps",
+    "categories": "Categories",
+    "yours": "Your apps",
     "installed": "Installed",
-    "official": "Official",
-    "community": "Community",
-    "own": "Own",
     "updates": "Updates",
-    "updatesCount": "Updates ({count})"
+    "updatesCount": "{count, plural, one {# update} other {# updates}}",
+    "catalogs": "Catalogs"
+  },
+  "search": {
+    "label": "Search apps",
+    "placeholder": "Search apps by name, description or keyword",
+    "results": "Results for “{query}”"
+  },
+  "discover": {
+    "featured": {
+      "official": "New in the official catalog",
+      "community": "New in the community catalog",
+      "custom": "New in {name}"
+    },
+    "recent": "New and updated",
+    "noCatalogs": "No catalog is switched on, so there are no apps to show.",
+    "showCatalogs": "Show catalogs"
+  },
+  "card": {
+    "official": "Official catalog",
+    "community": "Community catalog",
+    "custom": "{name}, not verified",
+    "sideload": "Installed from a file",
+    "update": "Update"
   },
   "installed": {
     "title": "Installed apps",
     "intro": "Apps installed on this box. Everyone finds the apps they may use in their Pithyx menu.",
-    "empty": "No apps are installed yet. Install one from its package file (.pithyxapp).",
+    "empty": "No apps are installed yet.",
     "loading": "Loading the apps",
     "pool": "App data lives on the pool {pool}.",
     "installFromFile": "Install from file",
@@ -19,7 +44,8 @@
     "disabled": "Disabled",
     "busy": "In progress",
     "unavailable": "Pool not available",
-    "unverified": "Unverified"
+    "unverified": "Unverified",
+    "toolbar": "Installed apps"
   },
   "detail": {
     "back": "Installed apps",
@@ -107,7 +133,7 @@
     "policy": {
       "title": "Updates",
       "label": "When a catalog has a newer version",
-      "box": "As set in the Store's settings",
+      "box": "As set for the box under Updates",
       "hint": "An update that asks for new permissions or special rights never installs on its own."
     },
     "rollback": {
@@ -226,26 +252,12 @@
     "stopped": "The removal stopped."
   },
   "catalog": {
-    "official": {
-      "title": "Official apps",
-      "intro": "Apps of the Pithyx project, reviewed, built and signed by the project."
-    },
-    "community": {
-      "title": "Community apps",
-      "intro": "Apps from developers outside the project. The project reviews them before they are published, but cannot vouch for them as for its own apps. You can switch this catalog off in the Store settings."
-    },
-    "own": {
-      "title": "Your catalogs",
-      "intro": "Apps of the catalogs you added. They are not verified by the Pithyx project."
-    },
-    "search": "Search apps",
-    "searchPlaceholder": "Name, description or developer",
     "loading": "Loading the apps",
     "empty": "This catalog has no apps yet.",
     "noMatch": "No app matches “{query}”.",
     "apps": "Apps",
     "newNotice": "{name} has not been fetched yet.",
-    "failedNotice": "The last fetch of {name} failed; the apps shown come from its last checked copy. The Store's settings say why.",
+    "failedNotice": "The last fetch of {name} failed; the apps shown come from its last checked copy. The page Catalogs says why.",
     "updateAvailable": "Update available",
     "installed": "Installed",
     "installedVersion": "Version {version} installed",
@@ -265,8 +277,6 @@
     "sourceLink": "Source of this version in the catalog",
     "versions": "Versions",
     "needs": "needs Pithyx {range}",
-    "category": "Category",
-    "allCategories": "All categories",
     "noCategoryMatch": "No app in this category matches.",
     "incompatible": "Not compatible",
     "incompatibleReason": {
@@ -283,7 +293,6 @@
   },
   "updates": {
     "title": "Updates",
-    "intro": "Newer versions of installed apps. The Store's settings decide what the box does with them on its own.",
     "versions": "{from} to {to}",
     "newPermissions": "{count, plural, one {Asks for # new permission} other {Asks for # new permissions}}",
     "elevated": "Asks for special rights",
@@ -294,12 +303,11 @@
       "none": "Waits for you"
     },
     "update": "Update",
-    "critical": "Has root access: never updates by itself. Install the update with one click after you checked it."
+    "critical": "Has root access: never updates by itself. Install the update with one click after you checked it.",
+    "toolbar": "Updates",
+    "empty": "Every installed app is up to date."
   },
   "settings": {
-    "open": "Store settings",
-    "back": "Store",
-    "title": "Store settings",
     "save": "Save",
     "updates": {
       "title": "Updates",
@@ -312,7 +320,7 @@
       "policyHints": {
         "automatic": "Updates that ask for new permissions or special rights still wait for you.",
         "notify": "A notification on the desktops of administrators.",
-        "none": "Updates only appear in the tab Updates."
+        "none": "Updates only appear under Updates."
       },
       "time": "Daily check time",
       "timeHint": "HH:MM in the box's time zone. Each box adds its own delay of up to an hour.",
@@ -347,7 +355,7 @@
       "verified": "Checked {time}, {count, plural, one {# app} other {# apps}}.",
       "deployKey": "Deploy key",
       "deployKeyHint": "This catalog is private: its repository must have this key as a read-only deploy key.",
-      "deployKeyNext": "Add this key to the repository as a deploy key without write access, then fetch the catalog in the Store's settings.",
+      "deployKeyNext": "Add this key to the repository as a deploy key without write access, then fetch the catalog under Catalogs.",
       "hostKey": "Server key pinned at the first connection: {key}",
       "sync": "Fetch now",
       "remove": "Remove",
@@ -356,16 +364,14 @@
       "url": "Repository URL",
       "urlHint": "https://… for a public catalog, git@host:owner/repository.git for a private one.",
       "addWarning": "Apps of your own catalogs are not checked by the Pithyx project. Add only catalogs you trust.",
-      "added": "The catalog is being fetched."
+      "added": "The catalog is being fetched.",
+      "toolbar": "Catalogs",
+      "intro": "A catalog is a Git repository with apps. The box fetches the catalogs that are switched on once a day and checks the signature of the project's two."
     },
     "community": {
       "title": "Use the community catalog?",
       "warning": "Community apps come from developers outside the Pithyx project. The project reviews them before they are published, but cannot vouch for them as for its own apps.",
       "confirm": "Use it"
-    },
-    "file": {
-      "title": "Install from a file",
-      "intro": "Install an app from its package file (.pithyxapp). Such apps are not verified."
     }
   },
   "elevated": {

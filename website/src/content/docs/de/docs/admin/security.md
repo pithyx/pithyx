@@ -65,7 +65,7 @@ Manche Apps brauchen ein Recht, das root auf der Box ist, heute den ungefilterte
 - Die App trägt im Store und auf ihrer Seite das Abzeichen **Root-Zugriff**.
 - **Einstellungen > Sicherheit** listet jede App mit Root-Zugriff und ihre Rechte. **Root-Zugriff entziehen** nimmt das Recht sofort weg, ohne Passwort; der Hintergrunddienst der App startet ohne es neu. Gibst du es wieder, verlangt Pithyx die volle Zustimmung.
 - Jeder andere Administrator bekommt die Benachrichtigung "<App> hat jetzt Root-Zugriff", auch per E-Mail oder Webhook, wo eingerichtet.
-- Die App aktualisiert sich nie von selbst, egal was die Update-Regel sagt. Lies die Versionshinweise und installiere ihr Update mit einem Klick im Tab **Updates** des Stores.
+- Die App aktualisiert sich nie von selbst, egal was die Update-Regel sagt. Lies die Versionshinweise und installiere ihr Update mit einem Klick auf der Seite **Updates** des Stores.
 
 ## Was die Box verlässt
 

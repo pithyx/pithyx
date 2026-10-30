@@ -25,6 +25,8 @@ export interface AppFrameProps {
   navigation?: ReactNode;
   /** The page title, shown as the page's heading. */
   title?: ReactNode;
+  /** Content at the end of the title row, for example a wide search field over the whole app. */
+  titleEnd?: ReactNode;
   /** The page's toolbar, usually a `Toolbar`, between the title and the content. */
   toolbar?: ReactNode;
   /** The page's content. */
@@ -44,6 +46,8 @@ export interface AppFrameProps {
   defaultView?: AppFrameView;
   /** Called when the user drills into a page or goes back to the navigation. */
   onViewChange?: (view: AppFrameView) => void;
+  /** Names the page shown; when it changes, the page scrolls back to its top. */
+  pageKey?: string;
   /** Extra class names, added after the frame's own. */
   className?: string;
 }
@@ -71,6 +75,7 @@ export interface AppFrameProps {
 export function AppFrame({
   navigation,
   title,
+  titleEnd,
   toolbar,
   children,
   footer,
@@ -79,6 +84,7 @@ export function AppFrame({
   view: controlledView,
   defaultView = 'navigation',
   onViewChange,
+  pageKey,
   className,
 }: AppFrameProps) {
   const texts = useUiTexts();
@@ -86,6 +92,7 @@ export function AppFrame({
   const view = controlledView ?? ownView;
   const titleRef = useRef<HTMLHeadingElement>(null);
   const navigationRef = useRef<HTMLDivElement>(null);
+  const scrollerRef = useRef<HTMLDivElement>(null);
   const moved = useRef(false);
 
   const change = (next: AppFrameView) => {
@@ -110,6 +117,13 @@ export function AppFrame({
     titleRef.current?.focus();
   }, [view]);
 
+  // Another page starts at its top, not where the previous one was scrolled to.
+  useEffect(() => {
+    if (scrollerRef.current !== null) {
+      scrollerRef.current.scrollTop = 0;
+    }
+  }, [pageKey]);
+
   const hasNavigation = navigation !== undefined;
   return (
     <div className={cx(styles.frame, className)}>
@@ -129,7 +143,7 @@ export function AppFrame({
         )}
         <div className={styles.main}>
           {/* Focusable, so a page without controls (facts only) still scrolls with the keyboard. */}
-          <div className={styles.scroller} tabIndex={0}>
+          <div ref={scrollerRef} className={styles.scroller} tabIndex={0}>
             {(title !== undefined || hasNavigation) && (
               <div className={styles.header}>
                 {hasNavigation && (
@@ -143,10 +157,15 @@ export function AppFrame({
                     {texts.frame.back}
                   </AriaButton>
                 )}
-                {title !== undefined && (
-                  <h1 ref={titleRef} className={styles.title} tabIndex={-1}>
-                    {title}
-                  </h1>
+                {(title !== undefined || titleEnd !== undefined) && (
+                  <div className={styles.titleRow}>
+                    {title !== undefined && (
+                      <h1 ref={titleRef} className={styles.title} tabIndex={-1}>
+                        {title}
+                      </h1>
+                    )}
+                    {titleEnd !== undefined && <div className={styles.titleEnd}>{titleEnd}</div>}
+                  </div>
                 )}
               </div>
             )}

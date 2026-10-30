@@ -17,7 +17,7 @@ Ein Katalog ist ein Git-Repository, das Apps für den Store auflistet. Pithyx ha
 - **Sequenz.** Jede Veröffentlichung erhöht die `sequence` des Index um eins. Die Box lehnt eine niedrigere Nummer ab ([`store.catalog.sequence_old`](/de/docs/reference/errors/#store.catalog.sequence_old)).
 - **Signatur.** Ed25519 über die exakten Bytes von `index.json`. Eine Box akzeptiert einen Projektkatalog, wenn mindestens eine Signatur von einem Schlüssel stammt, dem sie für den Kanal vertraut, und jede Signatur eines vertrauten Schlüssels stimmt. Unbekannte Schlüssel-IDs werden ignoriert, was eine Schlüsselrotation erlaubt. Eine fehlgeschlagene Prüfung ist [`store.catalog.signature_invalid`](/de/docs/reference/errors/#store.catalog.signature_invalid). Eigene Kataloge sind nicht signiert, und der Store markiert ihre Apps als nicht geprüft.
 - **Auf der Box.** Kataloge sind flache Klone in `/var/lib/pithyx/catalogs/<id>/`, abgeholt mit git über https oder ssh (3 Minuten Timeout, keine Hooks, keine Submodule). Ein fehlgeschlagener Abruf behält die letzte geprüfte Kopie. Jede Datei wird gegen den Hash im Index geprüft.
-- **Kanäle und Updates.** Die Store-Einstellungen haben einen Kanal (stable liest `catalog`, beta liest `catalog-next`), eine Update-Richtlinie (automatisch, benachrichtigen oder keine; Standard benachrichtigen), eine tägliche Prüfzeit (Standard 03:00 mit einer zufälligen Verzögerung von bis zu 60 Minuten) und eine Ausnahme pro App. Ein Update, das neue Berechtigungen, root oder erhöhte Rechte braucht, wird nie automatisch installiert, und auch kein Update einer App mit einem Recht der Stufe Root-Zugriff (`docker.socket.raw`, D388).
+- **Kanäle und Updates.** Der Store hat auf seiner Seite **Kataloge** einen Kanal (stable liest `catalog`, beta liest `catalog-next`) und auf seiner Seite **Updates** eine Update-Richtlinie (automatisch, benachrichtigen oder keine; Standard benachrichtigen) und eine tägliche Prüfzeit (Standard 03:00 mit einer zufälligen Verzögerung von bis zu 60 Minuten); jede App kann die Richtlinie überschreiben. Ein Update, das neue Berechtigungen, root oder erhöhte Rechte braucht, wird nie automatisch installiert, und auch kein Update einer App mit einem Recht der Stufe Root-Zugriff (`docker.socket.raw`, D388).
 
 ## Die Prüfung
 
@@ -51,7 +51,7 @@ Aus `sdk/schema/catalog.v1.rules.json`:
 
 1. Erstelle ein Repository aus `pithyx/catalog-template`. Der Publish-Job lehnt die Platzhalter-ID der Vorlage ab.
 2. Lege deine Apps in `apps/<id>/` ab. Die CLI-Befehle laufen im Wurzelverzeichnis des Repositorys: `pithyx catalog check`, `pending`, `index`, `sign` und `verify` (siehe [@pithyx/cli](/de/docs/sdk/cli/#pithyx-catalog)).
-3. Öffne im Store den Tab **Eigene** und füge das Repository per URL hinzu.
+3. Öffne im Store **Kataloge**, wähle **Katalog hinzufügen** und gib die URL des Repositorys ein.
    - Eine öffentliche URL `https://host/path` wird sofort abgerufen.
    - Ein privates Repository nutzt eine SSH-URL wie `git@host:owner/repo.git`. Die Box erstellt einen SSH-Deploy-Key und zeigt dessen öffentlichen Teil; füge ihn dem Repository als schreibgeschützten Schlüssel hinzu und rufe dann ab.
    - Images in einer privaten Registry brauchen ein Lese-Token (`user:token`). Der Store hat dafür kein Feld; setze es über die API mit `PATCH /api/store/catalogs/{key}` und `registryToken`.
