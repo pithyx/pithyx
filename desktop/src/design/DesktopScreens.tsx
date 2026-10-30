@@ -17,7 +17,7 @@ import { Window, type WindowProps } from '../shell/Window';
 import { Button, cx, Dialog, Menu, MenuItem, MenuPopover, MenuTrigger } from '@pithyx/ui';
 import styles from './DesktopScreens.module.css';
 import { settingsMatches } from '../desktop/settingsSearch';
-import { ThemeOptions } from '../desktop/ThemeOptions';
+import { ThemeOptions, useSubmenuPlacement } from '../desktop/ThemeOptions';
 import { WindowMenu } from '../wm/WindowMenu';
 import { Scripted, type ScriptStep } from './CoreAppScene';
 import { LiveFiles, LiveLogs, LiveSettings } from './LiveApps';
@@ -153,6 +153,7 @@ function useUser() {
 // The account menu as the desktop draws it (Desktop.tsx), with the box always reachable.
 function UserMenu({ trigger, open }: { trigger: ReactNode; open: boolean }) {
   const { t } = useTranslation();
+  const submenuPlacement = useSubmenuPlacement();
   return (
     <MenuTrigger defaultOpen={open}>
       {trigger}
@@ -168,7 +169,7 @@ function UserMenu({ trigger, open }: { trigger: ReactNode; open: boolean }) {
             </MenuItem>
             <SubmenuTrigger>
               <MenuItem icon={<IconPalette size={18} stroke={1.75} />}>{t('menu.theme')}</MenuItem>
-              <MenuPopover>
+              <MenuPopover placement={submenuPlacement}>
                 <ThemeOptions />
               </MenuPopover>
             </SubmenuTrigger>

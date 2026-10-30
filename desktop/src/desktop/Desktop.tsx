@@ -26,7 +26,7 @@ import { appsFor, findApp } from '../apps/registry';
 import { coreAppIds } from '../apps/ids';
 import { initialsOf } from '../auth/parts';
 import { clearSessionHint } from '../auth/sessionHint';
-import { ThemeOptions } from './ThemeOptions';
+import { ThemeOptions, useSubmenuPlacement } from './ThemeOptions';
 import { useDaemonStatus } from '../daemonStatus';
 import { showError } from '../errors/errorStore';
 import { useRealtime } from '../realtime/connection';
@@ -90,6 +90,7 @@ function UserMenu({
 }) {
   const { t } = useTranslation();
   const status = useDaemonStatus();
+  const submenuPlacement = useSubmenuPlacement();
   return (
     <MenuTrigger>
       {trigger}
@@ -114,7 +115,7 @@ function UserMenu({
               <MenuItem id="theme" icon={<IconPalette size={18} stroke={1.75} />}>
                 {t('menu.theme')}
               </MenuItem>
-              <MenuPopover>
+              <MenuPopover placement={submenuPlacement}>
                 <ThemeOptions />
               </MenuPopover>
             </SubmenuTrigger>
