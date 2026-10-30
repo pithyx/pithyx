@@ -1,7 +1,7 @@
 ---
 title: 'Design guidelines'
 description: 'How an app looks and behaves like the rest of Pithyx: the app frame, toolbars, tables, forms, state and rights.'
-status: draft
+status: ready
 audience: developer
 sidebar:
   order: 6
@@ -20,8 +20,8 @@ Pithyx's own apps follow one set of design rules (D394): structured and calm, wi
 ## Toolbars
 
 - The primary action comes first as the only filled button of the view (`Button` with the primary variant), then the other actions as buttons with an icon and a label, grouped by separators. View options and a switch for the details pane go at the end; search goes at the end or into the address bar.
-- Buttons have labels. Use `IconButton` only where the width runs out, with a tooltip and an accessible name.
-- `Toolbar` with `ToolbarSeparator` and its `end` section; `Tabs` with a `count` per tab.
+- Buttons have labels. Show only the icon where the width runs out, with a tooltip and an accessible name: `ToolbarButton` does this by itself in a narrow window, `IconButton` for a button that never has room for a label.
+- `Toolbar` with `ToolbarButton`, `ToolbarSeparator` and its `end` section; `Tabs` with a `count` per tab.
 
 ## Lists and tables
 

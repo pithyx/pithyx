@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- Design checks for the whole design pass (D405, #328): `pnpm design:test` checks every screen of the design gallery on the four viewports of `desktop/CLAUDE.md` (phone, tablet, laptop and now ultrawide) and, new, for accessibility and contrast in light and dark. The gallery runs the real Files, Settings, Log Center, Resource Monitor, Store and Personal settings on invented sample data, also in its desktop scenes, where mock windows of the old look and the Storage app were left. `pnpm design:docs` renders the website's screenshots from it in English and German; the landing page shows nine of them.
+- `ToolbarButton` in `@pithyx/ui` (#328): a toolbar button with an icon and a label that shows only the icon, with the label as its tooltip, when the app is narrower than 760 px. Files uses it, so its toolbar stays on one line in a narrow window.
 - The Store after the design pass (D394, D404, #327): one frame with a navigation column (**Discover**, **All apps**, the categories of the enabled catalogs, **Installed**, **Updates** with the number of waiting updates, **Catalogs**) and a search over every catalog at the top. **Discover** features the newest app the box can install and lists the newest apps under **New and updated**. Apps are cards with their icon, name, catalog, short description and the one action their state allows (**Install**, **Update** with the version, **Open** with **Installed**), with the badges **Root access** and **Not compatible**. **Updates** holds the update policy and the check time, **Catalogs** the channel and every catalog as a card; the tabs Official, Community and Own and the gear for the Store settings are gone. The catalog list of `GET /api/store/apps` carries `publishedAt` and `critical` for each app. `AppFrame` in `@pithyx/ui` takes `titleEnd` (content at the end of the title row) and `pageKey` (a new page scrolls to its top).
 - The Resource Monitor after the design pass (D394, #326): a navigation by part (Overview, CPU, Memory, Disks, Network, Temperatures, Processes), the time range in the toolbar, the uptime and load in the status bar, and an overview with CPU, memory, network and disks as totals, the temperatures and the top processes.
 - The Log Center after the design pass (D394, D403, #326): the sources in a navigation column grouped under System and Apps with their warnings and errors, a toolbar with the level (All, Warnings, Errors, Debug, with counts), the time range, search, **Pause** and **Live**, **Export** and **Retention**, entries grouped by day with level badges, and a status bar. The Log Center is live: new entries arrive with the topic `system/logs` without asking again. `GET /api/logs/counts` counts warnings and errors per source.
@@ -54,6 +56,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Changed
 
+- The recycle bin in Files is a sortable table (name, original location, size, deleted, deleted by, kept until; a narrow window keeps the name, size and date) with **Restore** as the primary action; **Delete for good** and **Empty recycle bin** are no longer filled red buttons and still ask first (#328).
+- Settings > **Home folders** shows the home pool and the default quota in form rows with the label on the left (#328).
+- The account menu opens beside the account button in the Pithyx menu's left bar instead of above the menu (#328).
 - Tables and virtualized lists are a chunk of their own that only the apps showing one load, so the desktop loaded after sign-in stays below its budget as the design pass brings tables to more apps (D400, #324).
 - The Store keeps showing catalog apps this box cannot install (D393, #318): the badge **Not compatible**, and on the app's page why (a newer Pithyx needed, another processor, an older or newer app format) without an install button. The list of versions gives each version's reason. Before, such apps were left out.
 - Personal settings (D392, #316): the account menu was twelve entries long and now has only **Personal settings** and **Appearance**. **Personal settings** is a window for every user, also in the Pithyx menu, with account and security (two-factor sign-in, passkeys, trust this device), the desktop (language, appearance, accent color, wallpaper, taskbar position, get desktop from), apps (default apps, open at sign-in) and notifications (channels); each row shows its current value and whether it applies to this device or to every device.
@@ -66,6 +71,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Fixed
 
+- Files' **Modified** column fits a date with its time instead of cutting it off, and the path's crumbs keep a target of 24 px in a narrow window (#328).
+- A long word under a desktop icon, such as "Einstellungen", breaks at a hyphen instead of anywhere (#328).
 - A long name in a navigation column (`NavList` of `@pithyx/ui`) ends with an ellipsis instead of widening every item and hiding the counts (#341).
 - The Log Center no longer shows an entry's request id (it stays searchable).
 - `Meter` of `@pithyx/ui` has the role `meter` alone; React Aria's fallback list `meter progressbar` failed the accessibility check.

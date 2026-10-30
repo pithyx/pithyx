@@ -1,7 +1,7 @@
 ---
 title: 'Gestaltungsrichtlinien'
 description: 'Wie eine App aussieht und sich verhält wie der Rest von Pithyx: App-Rahmen, Werkzeugleisten, Tabellen, Formulare, Zustände und Rechte.'
-status: draft
+status: ready
 audience: developer
 sidebar:
   order: 6
@@ -20,8 +20,8 @@ Die eigenen Apps von Pithyx folgen einem gemeinsamen Satz von Gestaltungsregeln 
 ## Werkzeugleisten
 
 - Die Hauptaktion kommt zuerst, als einziger gefüllter Knopf der Ansicht (`Button` in der primären Variante), danach die übrigen Aktionen als Knöpfe mit Icon und Beschriftung, durch Trenner gruppiert. Ansichtsoptionen und ein Schalter für die Detailspalte kommen ans Ende; die Suche ans Ende oder in die Adresszeile.
-- Knöpfe haben eine Beschriftung. Nimm `IconButton` nur, wo die Breite nicht reicht, mit Tooltip und zugänglichem Namen.
-- `Toolbar` mit `ToolbarSeparator` und dem Bereich `end`; `Tabs` mit einem `count` pro Tab.
+- Knöpfe haben eine Beschriftung. Zeig nur das Icon, wo die Breite nicht reicht, mit Tooltip und zugänglichem Namen: `ToolbarButton` macht das in einem schmalen Fenster von selbst, `IconButton` ist für einen Knopf, der nie Platz für eine Beschriftung hat.
+- `Toolbar` mit `ToolbarButton`, `ToolbarSeparator` und dem Bereich `end`; `Tabs` mit einem `count` pro Tab.
 
 ## Listen und Tabellen
 
