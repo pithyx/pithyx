@@ -109,7 +109,10 @@ export function OverviewPage({
             action: {
               label: t('overview.attention.apps.action'),
               onPress: () => {
-                void internalCall(app, 'internal.admin.openApp', { app: coreAppIds.store });
+                void internalCall(app, 'internal.admin.openApp', {
+                  app: coreAppIds.store,
+                  page: 'updates',
+                });
               },
             },
           } satisfies AttentionItem,

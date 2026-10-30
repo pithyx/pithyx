@@ -75,7 +75,7 @@ _Aus Datei installieren zeigt das Paket vor der Installation: den Hinweis, dass 
 
 Nur ein Administrator kann ein Paket installieren.
 
-1. Öffne den Store und den Tab **Installiert** und wähle **Aus Datei installieren**.
+1. Öffne den Store, dann **Installiert**, und wähle **Aus Datei installieren**.
 2. Wähle die `.pithyxapp`-Datei. Der Dialog **App installieren** zeigt die Version und ob es sich um eine Installation, ein Update, eine Neuinstallation oder ein Downgrade handelt, außerdem den Autor, die Dateianzahl und die Größe sowie die Warnung "Dieses Paket stammt aus einer Datei und ist nicht geprüft."
 3. Sieh dir die Berechtigungen an, die die App anfordert, die Ordner, die sie haben will, ob sie ein Backend hat, ob sie als root läuft und wer sie nutzen darf.
 4. Bei der ersten App-Installation der Box wählst du den Pool für die App-Daten; jede App legt ihre Dateien dort ab. Ohne Pool sagt der Dialog, dass du zuerst unter Einstellungen > Pools einen anlegen sollst.

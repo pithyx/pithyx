@@ -141,7 +141,7 @@ await test('a granted directory.read lists everyone, a revoked one falls back', 
 - Das Frontend direkt in einem Tab zu öffnen scheitert: `connect()` wartet 10 Sekunden auf einen Desktop und weist dann mit [`sdk.transport.closed`](/de/docs/reference/errors/#sdk.transport.closed) ab.
 - Der Mock liefert die Content-Security-Policy der Box, also scheitert eine Anfrage an einen anderen Server ohne `network.internet` im Mock wie auf der Box.
 - `pithyx dev` braucht eine gültige `pithyx.json`. Ein Backend läuft mit `docker compose up --wait --build` aus `backend/compose.dev.yaml`, falls vorhanden, sonst aus `backend/compose.yaml`, wobei der Port jedes Endpunkts für den Proxy auf `127.0.0.1` veröffentlicht wird; Strg+C führt `docker compose down` aus und behält die Volumes.
-- Teste auf der Box, bevor du veröffentlichst: Installiere das Paket als Administrator mit **Aus Datei installieren** im Tab **Installiert** des Stores (siehe [Deine erste App](/de/docs/developers/apps/first-app/)) und prüfe die Aufrufe, die der Mock nicht bedient.
+- Teste auf der Box, bevor du veröffentlichst: Installiere das Paket als Administrator mit **Aus Datei installieren** auf der Seite **Installiert** des Stores (siehe [Deine erste App](/de/docs/developers/apps/first-app/)) und prüfe die Aufrufe, die der Mock nicht bedient.
 
 ## Fehlercodes
 

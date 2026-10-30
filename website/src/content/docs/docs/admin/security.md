@@ -65,7 +65,7 @@ Some apps need a right that is root on the box, today the unfiltered container s
 - The app carries the badge **Root access** in the Store and on its page.
 - **Settings > Security** lists every app with root access and its rights. **Revoke root access** takes the right away at once, without a password; the app's background service restarts without it. Granting it again asks for the full consent.
 - Every other administrator gets the notification "<app> has root access now", also by email or webhook where set up.
-- The app never updates by itself, whatever the update policy says. Read the release notes and install its update with one click in the Store's **Updates** tab.
+- The app never updates by itself, whatever the update policy says. Read the release notes and install its update with one click on the Store's page **Updates**.
 
 ## What leaves the box
 
