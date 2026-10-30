@@ -57,6 +57,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Changed
 
+- The npm packages `@pithyx/sdk`, `@pithyx/ui` and `@pithyx/cli` are at `2.1.0` in the repository: `@pithyx/ui` brings the tokens and patterns of the design pass (`AppFrame`, `NavList`, `Toolbar`, `ToolbarButton`, `Tabs`, `DataTable` with `hideWhenNarrow`, `FormSection`, `FormRow`, `ActionBar`, `RadioGroup`, `Select`, `Card`, `Meter`, `StatusBadge`, `AttentionList`, `SummaryTiles`), and `TextField` takes no `label` inside a `FormRow`. Nothing was removed, so apps on 2.0.0 keep working. The templates move to 2.1.0 once it is published (#227).
 - The recycle bin in Files is a sortable table (name, original location, size, deleted, deleted by, kept until; a narrow window keeps the name, size and date) with **Restore** as the primary action; **Delete for good** and **Empty recycle bin** are no longer filled red buttons and still ask first (#328).
 - Settings > **Home folders** shows the home pool and the default quota in form rows with the label on the left (#328).
 - The account menu opens beside the account button in the Pithyx menu's left bar instead of above the menu (#328).
