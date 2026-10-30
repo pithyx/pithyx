@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- Settings > **Notifications** > **Email server** has **Send test email**: a short email to an address you type, through the server as the form has it, saved or not (`POST /api/system/notifications/smtp/test`, #361).
+- The details pane of tables, the Log Center and Files can be dragged wider at its left edge, or with the arrow keys on its handle (`DetailsPane` in `@pithyx/ui`, D406, #357).
 - The search of the Pithyx menu finds the pages of Settings for administrators, by their name, description and keywords in the user's language; a result opens Settings on its page (D394, #346).
 - Design checks for the whole design pass (D405, #328): `pnpm design:test` checks every screen of the design gallery on the four viewports of `desktop/CLAUDE.md` (phone, tablet, laptop and now ultrawide) and, new, for accessibility and contrast in light and dark. The gallery runs the real Files, Settings, Log Center, Resource Monitor, Store and Personal settings on invented sample data, also in its desktop scenes, where mock windows of the old look and the Storage app were left. `pnpm design:docs` renders the website's screenshots from it in English and German; the landing page shows nine of them.
 - The design gallery has screens for the window menu, the Appearance submenu, a name conflict in Files, the two-factor setup and its recovery codes, the language page, a checked backup and the network confirmation, so `pnpm design:docs` now renders every website screenshot except those of the installer, the sign-in and `pithyx dev`; its sample data follows the language, so the German pictures show German names (#350).
@@ -59,6 +61,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Changed
 
+- Tables with two-line rows (users and groups, shared folders, home folders, disks) have taller rows with room above and below (52 px, D406, #358).
+- In a wide window, settings sections put the control at their right edge and give the label and its hint the room between, instead of leaving the right half empty (D406, #359).
+- The two lower boxes of the wallpaper sit higher, so a 16:9 screen shows them above the taskbar, and the boxes in the back are less faint on the dark wallpaper (#354).
 - The npm packages `@pithyx/sdk`, `@pithyx/ui` and `@pithyx/cli` are at `2.1.0`: `@pithyx/ui` brings the tokens and patterns of the design pass (`AppFrame`, `NavList`, `Toolbar`, `ToolbarButton`, `Tabs`, `DataTable` with `hideWhenNarrow`, `FormSection`, `FormRow`, `ActionBar`, `RadioGroup`, `Select`, `Card`, `Meter`, `StatusBadge`, `AttentionList`, `SummaryTiles`), and `TextField` takes no `label` inside a `FormRow`. Nothing was removed, so apps on 2.0.0 keep working. 2.1.0 is on npm as `latest` since 2026-10-30; the templates use it, the showcase with a navigation column and a page of the design patterns, the chat with its messages grouped by day (#227, pithyx/app-showcase#5, pithyx/app-chat#5, pithyx/app-blank#5).
 - The recycle bin in Files is a sortable table (name, original location, size, deleted, deleted by, kept until; a narrow window keeps the name, size and date) with **Restore** as the primary action; **Delete for good** and **Empty recycle bin** are no longer filled red buttons and still ask first (#328).
 - Settings > **Home folders** shows the home pool and the default quota in form rows with the label on the left (#328).
@@ -76,6 +81,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Fixed
 
+- The folder tree in Files keeps the folders open that the user went through, also after going to the recycle bin or another share (#355).
+- Settings > **Disks** no longer lists the empty network block devices (`nbd0` to `nbd15`) the kernel creates once its `nbd` module is loaded (#356).
+- Choosing a source far down the Log Center's list no longer scrolls the list back to the top (#360).
 - Files scrolls to a new folder or file while it is being named, so its name field shows also in a long folder (#352).
 - Files no longer loses a folder created right after it opened: **New folder** before the folder's first page arrived left an empty list without the new folder and its name field (#350).
 - On a phone, the submenu **Appearance** of the account menu opens below its item instead of beside it, where it ran off the screen (#350).

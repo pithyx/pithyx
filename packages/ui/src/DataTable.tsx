@@ -15,6 +15,7 @@ import {
   type SortDescriptor,
 } from 'react-aria-components';
 import { cx } from './cx';
+import { DetailsPane } from './DetailsPane';
 import styles from './DataTable.module.css';
 
 /** A column of a {@link DataTable}. */
@@ -73,7 +74,7 @@ export interface DataTableProps<T> {
   defaultSort?: SortDescriptor;
   /** Shown in the body while there are no rows: one sentence about what is missing and the primary action. */
   emptyState?: ReactNode;
-  /** `compact` rows (the default, 28 px) or `comfortable` ones (42 px) for two lines; 44 px on touch either way. */
+  /** `compact` rows (the default, 28 px) or `comfortable` ones (52 px) for two lines; 44 and 56 px on touch. */
   density?: 'compact' | 'comfortable';
   /**
    * Renders only the visible rows, for long lists. The table then needs a bounded height, for example the content of
@@ -88,7 +89,9 @@ export interface DataTableProps<T> {
   className?: string;
 }
 
-const ROW_HEIGHT = { compact: 28, comfortable: 42, touch: 44 } as const;
+const ROW_HEIGHT = { compact: 28, comfortable: 52 } as const;
+// Keep in step with --row-height and --row-height-lg on coarse pointers (tokens.css).
+const TOUCH_ROW_HEIGHT = { compact: 44, comfortable: 56 } as const;
 
 function isCoarsePointer(): boolean {
   return typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches;
@@ -227,7 +230,7 @@ export function DataTable<T>({
     </Table>
   );
 
-  const height = isCoarsePointer() ? ROW_HEIGHT.touch : ROW_HEIGHT[density];
+  const height = isCoarsePointer() ? TOUCH_ROW_HEIGHT[density] : ROW_HEIGHT[density];
   return (
     <div className={styles.container}>
       <div className={styles.view}>
@@ -244,9 +247,12 @@ export function DataTable<T>({
           )}
         </div>
         {details !== undefined && (
-          <aside className={styles.details} aria-label={detailsLabel}>
+          <DetailsPane
+            className={styles.details}
+            {...(detailsLabel === undefined ? {} : { label: detailsLabel })}
+          >
             {details}
-          </aside>
+          </DetailsPane>
         )}
       </div>
     </div>

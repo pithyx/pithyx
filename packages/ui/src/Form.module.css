@@ -68,6 +68,14 @@
   min-width: 0;
 }
 
+/* A wide section puts the control at its right edge and gives the label and its hint the room in between, so a
+   maximized window shows no empty half (D406). */
+@container pithyx-form (width >= 900px) {
+  .row {
+    grid-template-columns: minmax(var(--form-label-width), 1fr) var(--form-control-width);
+  }
+}
+
 @container pithyx-form (width < 600px) {
   .row {
     grid-template-columns: minmax(0, 1fr);

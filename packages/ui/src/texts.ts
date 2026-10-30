@@ -47,6 +47,11 @@ export interface UiTexts {
     /** The expand button, announced together with the card's title. */
     details: string;
   };
+  /** `DetailsPane`. */
+  details: {
+    /** The name of the handle that changes the pane's width. */
+    resize: string;
+  };
   /** `AttentionList`. */
   attention: {
     /** The default heading. */

@@ -1,4 +1,5 @@
 import {
+  keepPreviousData,
   useInfiniteQuery,
   useQuery,
   useQueryClient,
@@ -10,6 +11,7 @@ import { useTranslation } from 'react-i18next';
 import { ErrorNotice } from '../../errors/ErrorNotice';
 import {
   AppFrame,
+  DetailsPane,
   Button,
   Menu,
   MenuItem,
@@ -118,12 +120,16 @@ export function LogsApp({ app }: SdkAppProps) {
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (last) => last.nextCursor ?? undefined,
   });
+  // The navigation keeps the sources and counts it shows while newer ones load, so it neither shrinks nor loses its
+  // scroll position when a source is chosen.
   const sources = useQuery({
     queryKey: ['logs', 'sources', now],
     queryFn: () => logsCall(app, 'internal.admin.logs.sources', {}),
+    placeholderData: keepPreviousData,
   });
   const counts = useQuery({
     queryKey: countsKey,
+    placeholderData: keepPreviousData,
     // All time counts from the start of the current logs.
     queryFn: () =>
       logsCall(app, 'internal.admin.logs.counts', { from: from ?? new Date(0).toISOString() }),
@@ -638,9 +644,9 @@ function EntryDetails({
   const locale = useFormatLocale();
   if (entry === null) {
     return (
-      <aside className={styles.details} aria-label={t('details.label')}>
+      <DetailsPane className={styles.details} label={t('details.label')}>
         <p className={styles.muted}>{t('details.none')}</p>
-      </aside>
+      </DetailsPane>
     );
   }
   const time = new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeStyle: 'medium' });
@@ -652,7 +658,7 @@ function EntryDetails({
     ...(entry.archived ? [[t('details.stored'), t('details.archive')] as [string, string]] : []),
   ];
   return (
-    <aside className={styles.details} aria-label={t('details.label')}>
+    <DetailsPane className={styles.details} label={t('details.label')}>
       <p className={styles.detailMessage}>{entry.message}</p>
       <dl className={styles.fields}>
         {[
@@ -665,6 +671,6 @@ function EntryDetails({
           </div>
         ))}
       </dl>
-    </aside>
+    </DetailsPane>
   );
 }

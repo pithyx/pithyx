@@ -19,6 +19,7 @@ export {
 } from './Controls';
 export { cx } from './cx';
 export { DataTable, type DataTableColumn, type DataTableProps } from './DataTable';
+export { DetailsPane, type DetailsPaneProps } from './DetailsPane';
 export { Dialog, type DialogProps } from './Dialog';
 export {
   ActionBar,
