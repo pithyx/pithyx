@@ -40,29 +40,8 @@ import { StorageAdvancedPage } from './StoragePages';
 import { UpdatesPage } from './UpdatesPage';
 import { UpsPage } from './UpsPage';
 
-export type SettingsPageId =
-  | 'info'
-  | 'pools'
-  | 'disks'
-  | 'maintenance'
-  | 'storageAdvanced'
-  | 'network'
-  | 'reverseProxy'
-  | 'certificates'
-  | 'regional'
-  | 'updates'
-  | 'ups'
-  | 'notifications'
-  | 'backup'
-  | 'security'
-  | 'shares'
-  | 'homes'
-  | 'fileServices'
-  | 'users';
-
-/** The groups of the navigation in their order: everything that sets up or changes the box (D402). */
-export const SETTINGS_GROUPS = ['system', 'storage', 'network', 'services', 'access'] as const;
-export type SettingsGroup = (typeof SETTINGS_GROUPS)[number];
+export { SETTINGS_GROUPS, type SettingsGroup, type SettingsPageId } from './pageIds';
+import type { SettingsGroup, SettingsPageId } from './pageIds';
 
 export interface SettingsPageInfo {
   id: SettingsPageId;
