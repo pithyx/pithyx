@@ -82,7 +82,7 @@ test('a shared folder is edited and deleted with its files kept', async ({ page 
   await settings.getByRole('button', { name: 'Edit', exact: true }).click();
   const edit = page.getByRole('dialog', { name: 'Edit Team files' });
   await edit.getByLabel('Description', { exact: true }).fill('Plans and notes');
-  await edit.getByRole('button', { name: 'Save' }).click();
+  await edit.getByLabel('Description', { exact: true }).press('Enter');
   await expect(edit.getByText('Saved.')).toBeVisible();
   await expect(edit).toContainText('Administrator, full access');
   await edit.getByRole('button', { name: 'Close' }).click();

@@ -108,7 +108,8 @@ test('the Info Center, Network, File services and Users pages open from the navi
   await settings.getByText('Offer shared folders over SFTP').click();
   await expect(sftp).toBeChecked();
   await settings.getByLabel('Workgroup').fill('home-lab');
-  await settings.getByRole('button', { name: 'Save' }).click();
+  // Leaving the field applies it, like the switches.
+  await settings.getByLabel('Workgroup').blur();
   await expect(settings.getByLabel('Workgroup')).toHaveValue('HOME-LAB');
   expect(await violations(page)).toEqual([]);
 

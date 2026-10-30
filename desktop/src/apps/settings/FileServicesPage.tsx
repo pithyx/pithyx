@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ErrorNotice } from '../../errors/ErrorNotice';
-import { Button, cx, FormRow, FormSection, StatusBadge, Switch, TextField } from '@pithyx/ui';
+import { cx, FormRow, FormSection, StatusBadge, Switch, TextField } from '@pithyx/ui';
 import {
   systemCall,
   type FileServiceSettings,
@@ -46,6 +46,12 @@ function FileServicesForm({ app, saved }: { app: PithyxApp; saved: FileServiceSe
       setWorkgroup(next.workgroup);
     },
   });
+  // The workgroup applies like the switches around it, when the field is left or with Enter.
+  const commitWorkgroup = () => {
+    if (workgroup.trim().toUpperCase() !== saved.workgroup && !save.isPending) {
+      save.mutate({ workgroup });
+    }
+  };
   // The address the browser uses reaches the box from this computer; other computers may need another one.
   const host = window.location.hostname;
   const addresses = {
@@ -77,25 +83,18 @@ function FileServicesForm({ app, saved }: { app: PithyxApp; saved: FileServiceSe
         </FormRow>
         <FormRow label={t('fileServices.smb.workgroup')} hint={t('fileServices.smb.workgroupHint')}>
           <form
-            className={styles.rowControls}
             onSubmit={(event) => {
               event.preventDefault();
-              save.mutate({ workgroup });
+              commitWorkgroup();
             }}
           >
             <TextField
               value={workgroup}
               onChange={setWorkgroup}
+              onBlur={commitWorkgroup}
               autoComplete="off"
               maxLength={15}
             />
-            <Button
-              type="submit"
-              variant="primary"
-              isDisabled={workgroup.trim().toUpperCase() === saved.workgroup || save.isPending}
-            >
-              {t('fileServices.save')}
-            </Button>
           </form>
         </FormRow>
         <FormRow label={t('fileServices.connect')}>

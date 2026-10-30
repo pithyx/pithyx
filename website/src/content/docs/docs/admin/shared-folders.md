@@ -33,7 +33,7 @@ _The edit dialog of a shared folder: network access per protocol and rights per 
 
 The edit dialog has three parts.
 
-- **Name and description.** Renaming changes only the name users see; the dataset keeps its name.
+- **Name and description.** Renaming changes only the name users see; the dataset keeps its name. Like everything else in the dialog, they apply at once: when you leave the field or press Enter.
 - **Rights.** Per user and per group: no access, read, or read and write. A user gets the most that it or one of its groups is given, and administrators can always read and change everything. Every user is in the group users, shown as "every user". Changes apply right away. See [Permissions](/docs/admin/permissions/).
 - **Network access.** Switches **Offer over SMB**, **Show over SFTP**, **Offer over WebDAV** and **Offer over FTP**, all on by default, and **Require encryption over SMB** (off by default; older clients without SMB encryption cannot connect then). A user needs both the protocol right and the folder switch. See [File services](/docs/admin/file-services/).
 
