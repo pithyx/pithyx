@@ -144,8 +144,9 @@ export const sampleLogEntries: LogEntry[] = [
       data: { exitCode: '137', container: 'worker' },
     },
   ),
+  entry(208, '2026-09-26T12:12:11Z', 'info', 'app/org.example.notes', 'Backend started'),
   entry(
-    208,
+    207,
     '2026-09-26T12:12:09Z',
     'info',
     'store',
@@ -154,7 +155,6 @@ export const sampleLogEntries: LogEntry[] = [
       user: 'anna',
     },
   ),
-  entry(207, '2026-09-26T12:12:11Z', 'info', 'app/org.example.notes', 'Backend started'),
   entry(
     206,
     '2026-09-26T11:58:40Z',
@@ -244,19 +244,21 @@ export const logsAnswers: ExtraAnswers = {
   'internal.admin.logs.settings': () => sampleLogStatus,
 };
 
-// An hour of measurements, one bucket per minute, with a scrub of tank in the last quarter of an hour.
+// An hour of measurements in buckets of 5 seconds, as the daemon keeps them, with a scrub of tank in the last quarter
+// of the hour and a large upload in its second half. The curves are made up of a few waves.
 const GB = 1_000_000_000;
-const MINUTES = 60;
+const STEPS = 720;
+const STEP_SECONDS = 5;
 const wave = (index: number, base: number, swing: number, period: number) =>
   Math.max(
     0,
-    base + swing * Math.sin((index / period) * Math.PI * 2) + swing * 0.3 * Math.sin(index * 1.7),
+    base + swing * Math.sin((index / period) * Math.PI * 2) + swing * 0.25 * Math.sin(index * 0.9),
   );
 const end = Date.parse('2026-09-26T12:32:00Z');
-const times = Array.from({ length: MINUTES }, (_, index) =>
-  new Date(end - (MINUTES - index) * 60_000).toISOString(),
+const times = Array.from({ length: STEPS }, (_, index) =>
+  new Date(end - (STEPS - index) * STEP_SECONDS * 1000).toISOString(),
 );
-const scrub = (index: number) => index >= 44;
+const scrub = (index: number) => index >= 540;
 
 const latestSample: ResourceSample = {
   at: '2026-09-26T12:32:00Z',
@@ -295,29 +297,31 @@ export const sampleResources: ResourceSnapshot = {
   memoryTotalBytes: 16 * GB,
   latest: latestSample,
   history: {
-    bucketSeconds: 60,
+    bucketSeconds: STEP_SECONDS,
     times,
-    cpuPercent: times.map((_, index) => wave(index, scrub(index) ? 24 : 9, 5, 17)),
-    memoryUsedBytes: times.map((_, index) => wave(index, 4.4 * GB, 0.2 * GB, 23)),
-    arcBytes: times.map((_, index) => Math.min(7.4 * GB, 5.8 * GB + index * 0.03 * GB)),
+    cpuPercent: times.map((_, index) => wave(index, scrub(index) ? 24 : 9, 5, 204)),
+    memoryUsedBytes: times.map((_, index) => wave(index, 4.4 * GB, 0.2 * GB, 276)),
+    arcBytes: times.map((_, index) => Math.min(7.4 * GB, 5.8 * GB + index * 0.0025 * GB)),
     network: [
       {
         name: 'enp1s0',
-        in: times.map((_, index) => wave(index, 2_600_000, 1_400_000, 13)),
-        out: times.map((_, index) => wave(index, index > 30 ? 19_000_000 : 1_200_000, 900_000, 9)),
+        in: times.map((_, index) => wave(index, 2_600_000, 1_400_000, 156)),
+        out: times.map((_, index) =>
+          wave(index, index > 360 ? 19_000_000 : 1_200_000, 900_000, 108),
+        ),
       },
     ],
     disks: ['sda', 'sdb', 'sdc', 'nvme0n1'].map((name) => ({
       name,
       in: times.map((_, index) =>
         name === 'nvme0n1'
-          ? wave(index, 150_000, 80_000, 11)
+          ? wave(index, 150_000, 80_000, 132)
           : scrub(index)
-            ? wave(index, 180_000_000, 8_000_000, 5)
-            : wave(index, 900_000, 600_000, 7),
+            ? wave(index, 180_000_000, 8_000_000, 60)
+            : wave(index, 900_000, 600_000, 84),
       ),
       out: times.map((_, index) =>
-        wave(index, name === 'nvme0n1' ? 420_000 : 160_000, 120_000, 19),
+        wave(index, name === 'nvme0n1' ? 420_000 : 160_000, 120_000, 228),
       ),
     })),
   },
@@ -516,11 +520,72 @@ export const sampleStoreState: StoreState = {
       releaseNotes: { en: 'Faster library scans and subtitles in more languages.' },
     },
   ],
-  catalogs: [],
+  catalogs: [
+    {
+      key: 1,
+      id: 'org.pithyx.official',
+      kind: 'official',
+      url: 'https://github.com/pithyx/apps-official.git',
+      name: { en: 'Pithyx apps' },
+      description: null,
+      homepage: null,
+      enabled: true,
+      busy: false,
+      status: 'ok',
+      verified: true,
+      verifiedAt: '2026-09-26T01:00:11Z',
+      checkedAt: '2026-09-26T01:00:11Z',
+      commit: null,
+      sequence: 12,
+      appCount: 6,
+      errorCode: null,
+      errorParams: null,
+      hasRegistryToken: false,
+      hostKey: null,
+      sshPublicKey: null,
+    },
+  ],
 };
 
 export const storeAnswers: ExtraAnswers = {
   'internal.admin.apps.list': () => sampleInstalledApps,
   'internal.admin.store.state': () => sampleStoreState,
   'internal.admin.store.search': () => ({ apps: sampleStoreApps }),
+};
+
+const home = (
+  shareId: number,
+  userId: number,
+  username: string,
+  displayName: string | null,
+  usedBytes: number,
+) => ({
+  shareId,
+  userId,
+  username,
+  displayName,
+  folder: username,
+  pool: 'tank',
+  usedBytes,
+  quotaBytes: 500 * GB,
+  ownQuotaBytes: null,
+  unavailable: null,
+});
+
+export const homesAnswers: ExtraAnswers = {
+  'internal.admin.homes.overview': () => ({
+    pool: 'tank',
+    defaultQuotaBytes: 500 * GB,
+    moving: null,
+    pools: [
+      { name: 'tank', availableBytes: 13_900 * GB, unavailable: null },
+      { name: 'backup', availableBytes: 1_300 * GB, unavailable: null },
+    ],
+    homes: [
+      home(11, 1, 'ada', 'Ada Admin', 84 * GB),
+      home(12, 2, 'ben', 'Ben Berger', 212 * GB),
+      home(13, 3, 'carla.mueller-schmidt', 'Carla Müller-Schmidt', 37 * GB),
+      home(14, 4, 'guest', 'Guest', 0.2 * GB),
+    ],
+  }),
 };

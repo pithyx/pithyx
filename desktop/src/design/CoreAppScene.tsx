@@ -40,10 +40,14 @@ function scopes(inside?: string): ParentNode[] {
   return [...holders.reverse(), document];
 }
 
+// Buttons and tabs by the start of their text; rows and options, which start with a date or a time, anywhere in it.
 function byText(root: ParentNode, selector: string, wanted: string): HTMLElement | undefined {
-  return [...root.querySelectorAll<HTMLElement>(selector)].find((element) =>
-    element.textContent.trim().startsWith(wanted),
-  );
+  return [...root.querySelectorAll<HTMLElement>(selector)].find((element) => {
+    const content = element.textContent.trim();
+    return element.matches('[role="row"], [role="option"]')
+      ? content.includes(wanted)
+      : content.startsWith(wanted);
+  });
 }
 
 // The control a visible label names, for React Aria fields (label for=) and native ones (label around the input).
@@ -72,7 +76,13 @@ function attempt(step: ScriptStep): boolean {
     // A button, radio, tab or table row by its text, else a native radio button or checkbox by its label.
     const button =
       scopes(step.inside)
-        .map((root) => byText(root, 'button, [role="radio"], [role="tab"], [role="row"]', wanted))
+        .map((root) =>
+          byText(
+            root,
+            'button, [role="radio"], [role="tab"], [role="row"], [role="option"]',
+            wanted,
+          ),
+        )
         .find((found) => found !== undefined) ?? control(wanted);
     if (
       button === undefined ||

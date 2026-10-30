@@ -229,10 +229,10 @@ test('deletes into the recycle bin, restores, and deletes for good only after as
   await expect(row(page, 'keep.txt')).toHaveCount(0);
 
   await filesWindow(page).getByRole('button', { name: 'Recycle bin of Shared' }).click();
-  const bin = filesWindow(page).getByRole('listbox', { name: 'Recycle bin of Shared' });
-  await bin.getByRole('option', { name: 'keep.txt' }).click();
+  const bin = filesWindow(page).getByRole('grid', { name: 'Recycle bin of Shared' });
+  await bin.getByRole('row', { name: 'keep.txt' }).click();
   await filesWindow(page).getByRole('button', { name: 'Restore' }).click();
-  await expect(bin.getByRole('option', { name: 'keep.txt' })).toHaveCount(0);
+  await expect(bin.getByRole('row', { name: 'keep.txt' })).toHaveCount(0);
 
   await filesWindow(page).getByRole('button', { name: 'Back' }).click();
   await expect(row(page, 'keep.txt')).toBeVisible();
@@ -243,7 +243,7 @@ test('deletes into the recycle bin, restores, and deletes for good only after as
   await confirm.getByRole('button', { name: 'Delete permanently' }).click();
   await expect(row(page, 'gone.txt')).toHaveCount(0);
   await filesWindow(page).getByRole('button', { name: 'Recycle bin of Shared' }).click();
-  await expect(bin.getByRole('option', { name: 'gone.txt' })).toHaveCount(0);
+  await expect(bin.getByRole('row', { name: 'gone.txt' })).toHaveCount(0);
 });
 
 test('shows changes made elsewhere while the folder is open', async ({ page, browser }) => {

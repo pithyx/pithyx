@@ -462,57 +462,14 @@
 }
 
 .binBar {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--pithyx-space);
   padding: var(--pithyx-space) 12px;
   border-bottom: 1px solid var(--pithyx-color-border);
 }
 
 .binNote {
-  flex: 1;
-  min-width: 12em;
   margin: 0;
   color: var(--pithyx-color-text-muted);
   font-size: 0.8125em;
-}
-
-.binList {
-  display: grid;
-  outline: none;
-  font-size: 0.875em;
-}
-
-.binRow {
-  display: grid;
-  gap: 2px;
-  padding: 6px 12px;
-  border-bottom: 1px solid var(--pithyx-color-border);
-  cursor: default;
-  outline: none;
-}
-
-.binRow[data-hovered] {
-  background: var(--pithyx-color-hover);
-}
-
-.binRow[data-selected] {
-  background: var(--pithyx-color-selected);
-}
-
-.binRow[data-focus-visible] {
-  outline: 2px solid var(--pithyx-color-focus);
-  outline-offset: -2px;
-}
-
-.binMeta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 2px 16px;
-  padding-left: calc(18px + var(--pithyx-space));
-  color: var(--pithyx-color-text-muted);
-  font-size: 0.875em;
 }
 
 .more {

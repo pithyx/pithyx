@@ -85,16 +85,19 @@
   "bin": {
     "title": "Papierkorb von {share}",
     "empty": "Leer. Nur die Hoffnung ist geblieben.",
-    "never": "Bleibt bis zum Leeren",
+    "never": "Bis zum Leeren",
     "restore": "Wiederherstellen",
     "delete": "Endgültig löschen",
     "emptyBin": "Papierkorb leeren",
     "retention": "Gelöschte Elemente bleiben {days, plural, one {# Tag} other {# Tage}} erhalten.",
     "retentionForever": "Gelöschte Elemente bleiben erhalten, bis der Papierkorb geleert wird.",
-    "fromPath": "Aus {path}",
-    "deletedOn": "Gelöscht am {date}",
-    "expiresOn": "Endgültig gelöscht am {date}",
-    "more": "Mehr anzeigen"
+    "more": "Mehr anzeigen",
+    "columns": {
+      "from": "Ursprünglicher Ort",
+      "deleted": "Gelöscht",
+      "by": "Gelöscht von",
+      "expires": "Bleibt bis"
+    }
   },
   "job": {
     "cancel": "Abbrechen",
