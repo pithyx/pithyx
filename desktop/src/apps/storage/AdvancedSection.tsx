@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { formatBytes } from '../../desktop/format';
 import { ErrorNotice } from '../../errors/ErrorNotice';
 import { useFormatLocale } from '../../i18n';
-import { Button } from '@pithyx/ui';
+import { Button, FormSection } from '@pithyx/ui';
 import type { Pool } from '../sdk/internal';
 import { DatasetDialog, type DatasetAction } from './DatasetDialog';
 import { datasetRole } from './datasets';
@@ -32,19 +32,12 @@ export function AdvancedSection({ app, onDatasets }: { app: PithyxApp; onDataset
   );
   return (
     <div className={styles.storage}>
-      <header className={styles.pageHeader}>
-        <div>
-          <p className={styles.muted}>{t('advanced.intro')}</p>
-        </div>
-      </header>
+      <p className={styles.muted}>{t('advanced.intro')}</p>
       {pools.isError && <ErrorNotice error={describeProblem(pools.error)} />}
 
       {/* Nothing in 1.0 uses a volume (no iSCSI, no virtual machines), so only existing ones show, to delete them. */}
       {volumes.length > 0 && (
-        <section className={styles.section} aria-labelledby="advanced-volumes">
-          <h3 id="advanced-volumes" className={styles.sectionTitle}>
-            {t('advanced.volumes.title')}
-          </h3>
+        <FormSection title={t('advanced.volumes.title')}>
           <p className={styles.muted}>{t('advanced.volumes.explain')}</p>
           <ul className={styles.plainList} aria-label={t('advanced.volumes.title')}>
             {volumes.map((volume) => (
@@ -68,13 +61,10 @@ export function AdvancedSection({ app, onDatasets }: { app: PithyxApp; onDataset
               </li>
             ))}
           </ul>
-        </section>
+        </FormSection>
       )}
 
-      <section className={styles.section} aria-labelledby="advanced-export">
-        <h3 id="advanced-export" className={styles.sectionTitle}>
-          {t('advanced.export.title')}
-        </h3>
+      <FormSection title={t('advanced.export.title')}>
         <p className={styles.muted}>{t('advanced.export.explain')}</p>
         {writable.length === 0 ? (
           <p className={styles.muted}>{t('pools.empty')}</p>
@@ -94,12 +84,9 @@ export function AdvancedSection({ app, onDatasets }: { app: PithyxApp; onDataset
             ))}
           </div>
         )}
-      </section>
+      </FormSection>
 
-      <section className={styles.section} aria-labelledby="advanced-import">
-        <h3 id="advanced-import" className={styles.sectionTitle}>
-          {t('advanced.import.title')}
-        </h3>
+      <FormSection title={t('advanced.import.title')}>
         <p className={styles.muted}>{t('advanced.import.explain')}</p>
         <div className={styles.buttons}>
           <Button
@@ -112,19 +99,16 @@ export function AdvancedSection({ app, onDatasets }: { app: PithyxApp; onDataset
             {t('import.button')}
           </Button>
         </div>
-      </section>
+      </FormSection>
 
-      <section className={styles.section} aria-labelledby="advanced-datasets">
-        <h3 id="advanced-datasets" className={styles.sectionTitle}>
-          {t('advanced.datasets.title')}
-        </h3>
+      <FormSection title={t('advanced.datasets.title')}>
         <p className={styles.muted}>{t('advanced.datasets.explain')}</p>
         <div className={styles.buttons}>
           <Button size="sm" onPress={onDatasets}>
             {t('advanced.datasets.button')}
           </Button>
         </div>
-      </section>
+      </FormSection>
 
       {action !== null && (
         <DatasetDialog

@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { ErrorNotice } from '../../errors/ErrorNotice';
 import { useMessages } from '../../shell/messages';
 import { alertMessage } from '../../shell/storageAlerts';
-import { Badge, Button } from '@pithyx/ui';
+import { Badge, Button, FormSection } from '@pithyx/ui';
 import {
   internalCall,
   type Pool,
@@ -33,18 +33,11 @@ export function MaintenanceSection({ app }: { app: PithyxApp }) {
 
   return (
     <div className={styles.storage}>
-      <header className={styles.pageHeader}>
-        <div>
-          <p className={styles.muted}>{t('health.intro')}</p>
-        </div>
-      </header>
-      <section aria-labelledby="storage-alerts" className={styles.section}>
-        <h3 id="storage-alerts" className={styles.sectionTitle}>
-          {t('health.alerts')}
-        </h3>
+      <p className={styles.muted}>{t('health.intro')}</p>
+      <FormSection title={t('health.alerts')}>
         {health.isError && <ErrorNotice error={describeProblem(health.error)} />}
         {health.data !== undefined && <AlertList app={app} alerts={health.data.alerts} />}
-      </section>
+      </FormSection>
       {schedules.isError && <ErrorNotice error={describeProblem(schedules.error)} />}
       {schedules.data !== undefined && (
         <Schedules app={app} pools={pools.data?.pools ?? []} schedules={schedules.data} />
@@ -168,78 +161,80 @@ function Schedules({
     <>
       {change.isError && <ErrorNotice error={describeProblem(change.error)} />}
       {scrub.isError && <ErrorNotice error={describeProblem(scrub.error)} />}
-      <h3 className={styles.sectionTitle}>{t('health.scrub.title')}</h3>
-      <p className={styles.muted}>{t('health.scrub.intro')}</p>
-      {pools.map((pool) => {
-        const schedule = schedules.schedules.find(
-          (entry) => entry.kind === 'scrub' && entry.target === pool.name,
-        );
-        const scrubbing = pool.scan?.kind === 'scrub' && pool.scan.state === 'scanning';
-        const paused = scrubbing && pool.scan?.paused === true;
-        return (
-          <div key={pool.name} className={styles.scheduleRow}>
-            {frequencySelect(
-              'scrub',
-              pool.name,
-              schedule?.frequency ?? 'monthly',
-              t('health.scrub.schedule', { pool: pool.name }),
-            )}
-            <span className={styles.muted}>{next(schedule?.nextRunAt ?? null)}</span>
-            <div className={styles.buttons}>
-              {(!scrubbing || paused) && (
-                <Button
-                  size="sm"
-                  isDisabled={scrub.isPending}
-                  onPress={() => {
-                    scrub.mutate({ pool: pool.name, action: 'start' });
-                  }}
-                >
-                  {paused ? t('health.scrub.resume') : t('health.scrub.start')}
-                </Button>
+      <FormSection title={t('health.scrub.title')}>
+        <p className={styles.muted}>{t('health.scrub.intro')}</p>
+        {pools.map((pool) => {
+          const schedule = schedules.schedules.find(
+            (entry) => entry.kind === 'scrub' && entry.target === pool.name,
+          );
+          const scrubbing = pool.scan?.kind === 'scrub' && pool.scan.state === 'scanning';
+          const paused = scrubbing && pool.scan?.paused === true;
+          return (
+            <div key={pool.name} className={styles.scheduleRow}>
+              {frequencySelect(
+                'scrub',
+                pool.name,
+                schedule?.frequency ?? 'monthly',
+                t('health.scrub.schedule', { pool: pool.name }),
               )}
-              {scrubbing && !paused && (
-                <Button
-                  size="sm"
-                  isDisabled={scrub.isPending}
-                  onPress={() => {
-                    scrub.mutate({ pool: pool.name, action: 'pause' });
-                  }}
-                >
-                  {t('health.scrub.pause')}
-                </Button>
-              )}
-              {scrubbing && (
-                <Button
-                  size="sm"
-                  variant="quiet"
-                  isDisabled={scrub.isPending}
-                  onPress={() => {
-                    scrub.mutate({ pool: pool.name, action: 'stop' });
-                  }}
-                >
-                  {t('health.scrub.stop')}
-                </Button>
-              )}
+              <span className={styles.muted}>{next(schedule?.nextRunAt ?? null)}</span>
+              <div className={styles.buttons}>
+                {(!scrubbing || paused) && (
+                  <Button
+                    size="sm"
+                    isDisabled={scrub.isPending}
+                    onPress={() => {
+                      scrub.mutate({ pool: pool.name, action: 'start' });
+                    }}
+                  >
+                    {paused ? t('health.scrub.resume') : t('health.scrub.start')}
+                  </Button>
+                )}
+                {scrubbing && !paused && (
+                  <Button
+                    size="sm"
+                    isDisabled={scrub.isPending}
+                    onPress={() => {
+                      scrub.mutate({ pool: pool.name, action: 'pause' });
+                    }}
+                  >
+                    {t('health.scrub.pause')}
+                  </Button>
+                )}
+                {scrubbing && (
+                  <Button
+                    size="sm"
+                    variant="quiet"
+                    isDisabled={scrub.isPending}
+                    onPress={() => {
+                      scrub.mutate({ pool: pool.name, action: 'stop' });
+                    }}
+                  >
+                    {t('health.scrub.stop')}
+                  </Button>
+                )}
+              </div>
             </div>
-          </div>
-        );
-      })}
-      <h3 className={styles.sectionTitle}>{t('health.selfTests.title')}</h3>
-      <p className={styles.muted}>{t('health.selfTests.intro')}</p>
-      {(['shortSelfTest', 'longSelfTest'] as const).map((kind) => {
-        const schedule = schedules.schedules.find((entry) => entry.kind === kind);
-        return (
-          <div key={kind} className={styles.scheduleRow}>
-            {frequencySelect(
-              kind,
-              '',
-              schedule?.frequency ?? (kind === 'shortSelfTest' ? 'weekly' : 'monthly'),
-              t(`health.selfTests.${kind}`),
-            )}
-            <span className={styles.muted}>{next(schedule?.nextRunAt ?? null)}</span>
-          </div>
-        );
-      })}
+          );
+        })}
+      </FormSection>
+      <FormSection title={t('health.selfTests.title')}>
+        <p className={styles.muted}>{t('health.selfTests.intro')}</p>
+        {(['shortSelfTest', 'longSelfTest'] as const).map((kind) => {
+          const schedule = schedules.schedules.find((entry) => entry.kind === kind);
+          return (
+            <div key={kind} className={styles.scheduleRow}>
+              {frequencySelect(
+                kind,
+                '',
+                schedule?.frequency ?? (kind === 'shortSelfTest' ? 'weekly' : 'monthly'),
+                t(`health.selfTests.${kind}`),
+              )}
+              <span className={styles.muted}>{next(schedule?.nextRunAt ?? null)}</span>
+            </div>
+          );
+        })}
+      </FormSection>
     </>
   );
 }
