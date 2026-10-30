@@ -2,7 +2,7 @@
 import '../theme/index.css';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import i18next from 'i18next';
-import { StrictMode } from 'react';
+import { StrictMode, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
 import { initI18n, loadAllTranslations } from '../i18n';
 
@@ -25,6 +25,8 @@ await loadAllTranslations();
 // After i18n, so the sample data can follow the language (sampleLanguage.ts).
 const { Gallery, taskbarFrom } = await import('./Gallery');
 const { screens } = await import('./screens');
+const { answerRestWithSamples } = await import('./restSample');
+answerRestWithSamples();
 const taskbar = taskbarFrom(params.get('taskbar'));
 
 const screen = screens.find((entry) => entry.id === params.get('screen'));
@@ -38,6 +40,15 @@ const client = new QueryClient({
   defaultOptions: { queries: { retry: false, staleTime: Infinity } },
 });
 
+// The root is marked busy in design.html until the screen is drawn, so the checks never look at an empty page; the
+// screen's own script keeps it busy after that.
+function Drawn() {
+  useEffect(() => {
+    root?.removeAttribute('data-design-busy');
+  }, []);
+  return null;
+}
+
 createRoot(root).render(
   <StrictMode>
     <QueryClientProvider client={client}>
@@ -46,6 +57,7 @@ createRoot(root).render(
       ) : (
         screen.render({ taskbar, accent, locale: i18next.language })
       )}
+      <Drawn />
     </QueryClientProvider>
   </StrictMode>,
 );

@@ -1,7 +1,7 @@
 // Sample storage for the design gallery: a box with a healthy RAID-Z1 pool, a degraded mirror, an empty disk and one
 // with old data. The real Storage and Settings components render it through a stand-in for the SDK app, so the
 // gallery shows exactly what the apps show. Everything here is user data or raw values, never interface text.
-import { createFormatters, type PithyxApp } from '@pithyx/sdk';
+import { createFormatters, PithyxError, type PithyxApp } from '@pithyx/sdk';
 import i18next from 'i18next';
 import type {
   Dataset,
@@ -1288,6 +1288,17 @@ export function sampleApp(
       watch: () => Promise.resolve({ topic: '' }),
       unwatch: () => Promise.resolve(),
       versions: () => Promise.resolve([]),
+      // A name the folder already has is refused as the daemon does, so Files asks what to do.
+      upload: (location: { share: string }, path: string, name: string) =>
+        (files.folders[`${location.share}:${path}`] ?? []).some((entry) => entry.name === name)
+          ? Promise.reject(
+              new PithyxError({
+                code: 'fs.entry.exists',
+                params: { name },
+                detail: 'The name exists already.',
+              }),
+            )
+          : Promise.resolve({ name, kind: 'file', size: 0, modified: '2026-09-26T12:32:00Z' }),
     },
     trash: files && {
       list: (location: { share: string }) =>

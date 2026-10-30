@@ -1,6 +1,6 @@
-import { IconAlertTriangle, IconLogout, IconPalette, IconUserCog } from '../ui/icons';
+import { IconAlertTriangle, IconPalette, IconUserCog } from '../ui/icons';
 import type { ReactNode } from 'react';
-import { Header, MenuSection } from 'react-aria-components';
+import { Header, MenuSection, SubmenuTrigger } from 'react-aria-components';
 import { useTranslation } from 'react-i18next';
 import { AppSwitcher } from '../shell/AppSwitcher';
 import { DesktopIcon } from '../shell/DesktopIcon';
@@ -14,18 +14,12 @@ import { StickyNote } from '../shell/StickyNote';
 import { Taskbar } from '../shell/Taskbar';
 import type { RunningApp, TaskbarPosition } from '../shell/types';
 import { Window, type WindowProps } from '../shell/Window';
-import {
-  Button,
-  cx,
-  Dialog,
-  Menu,
-  MenuItem,
-  MenuPopover,
-  MenuSeparator,
-  MenuTrigger,
-} from '@pithyx/ui';
+import { Button, cx, Dialog, Menu, MenuItem, MenuPopover, MenuTrigger } from '@pithyx/ui';
 import styles from './DesktopScreens.module.css';
 import { settingsMatches } from '../desktop/settingsSearch';
+import { ThemeOptions } from '../desktop/ThemeOptions';
+import { WindowMenu } from '../wm/WindowMenu';
+import { Scripted, type ScriptStep } from './CoreAppScene';
 import { LiveFiles, LiveLogs, LiveSettings } from './LiveApps';
 import {
   currentFolder,
@@ -65,6 +59,9 @@ interface SceneProps {
   notificationsOpen?: boolean;
   switcherOpen?: boolean;
   entering?: boolean;
+  /** The focused Files window gets its window menu, which `script` can open. */
+  windowMenu?: boolean;
+  script?: readonly ScriptStep[];
 }
 
 function runningApps(windows: WindowSet, apps: Apps): RunningApp[] {
@@ -153,6 +150,7 @@ function useUser() {
   return { ...user, role: t('roles.administrator') };
 }
 
+// The account menu as the desktop draws it (Desktop.tsx), with the box always reachable.
 function UserMenu({ trigger, open }: { trigger: ReactNode; open: boolean }) {
   const { t } = useTranslation();
   return (
@@ -162,15 +160,19 @@ function UserMenu({ trigger, open }: { trigger: ReactNode; open: boolean }) {
         <Menu aria-label={t('start.userMenu', { name: user.name })}>
           <MenuSection>
             <Header className={styles.menuHeader}>
-              {t('menu.signedInAs', { name: user.name })}
+              <span className={styles.menuName}>{t('menu.signedInAs', { name: user.name })}</span>
+              <span>{t('status.connected', { mode: 'real' })}</span>
             </Header>
             <MenuItem icon={<IconUserCog size={18} stroke={1.75} />}>
               {t('menu.preferences')}
             </MenuItem>
-            <MenuItem icon={<IconPalette size={18} stroke={1.75} />}>{t('menu.theme')}</MenuItem>
+            <SubmenuTrigger>
+              <MenuItem icon={<IconPalette size={18} stroke={1.75} />}>{t('menu.theme')}</MenuItem>
+              <MenuPopover>
+                <ThemeOptions />
+              </MenuPopover>
+            </SubmenuTrigger>
           </MenuSection>
-          <MenuSeparator />
-          <MenuItem icon={<IconLogout size={18} stroke={1.75} />}>{t('menu.signOut')}</MenuItem>
         </Menu>
       </MenuPopover>
     </MenuTrigger>
@@ -186,56 +188,76 @@ export function DesktopScene({
   notificationsOpen = false,
   switcherOpen = false,
   entering = false,
+  windowMenu = false,
+  script = [],
 }: SceneProps) {
   const apps = useApps();
   const filesTitle = useFilesTitle();
   return (
-    <DesktopShell
-      taskbarPosition={context.taskbar}
-      entering={entering}
-      taskbar={
-        <Taskbar
-          position={context.taskbar}
-          apps={runningApps(windows, apps)}
-          startOpen={startOpen}
-          jobs={windows === 'none' ? 0 : jobs.length}
-          unread={windows === 'none' ? 0 : 2}
-          notificationsOpen={notificationsOpen}
-          switcherOpen={switcherOpen}
-          now={now}
-          locale={context.locale}
-        />
-      }
-      overlays={overlays}
-    >
-      {items && (
-        <>
-          <DesktopItems>
-            {desktopItems.map((entry, index) => (
-              <DesktopIcon
-                key={entry.name}
-                name={entry.name}
-                item={entry.item}
-                selected={index === 1}
-              />
-            ))}
-            {desktopShortcuts.map((id) => (
-              <DesktopIcon
-                key={id}
-                name={apps[id].name}
-                item={{ kind: 'shortcut', app: apps[id] }}
-              />
-            ))}
-          </DesktopItems>
-          <div className={styles.noteSlot}>
-            <StickyNote text={noteText} x={76} y={6} />
-          </div>
-        </>
-      )}
-      {windowsFor(windows, apps, filesTitle).map((props) => (
-        <Window key={props.title} {...props} />
-      ))}
-    </DesktopShell>
+    <Scripted steps={script}>
+      <DesktopShell
+        taskbarPosition={context.taskbar}
+        entering={entering}
+        taskbar={
+          <Taskbar
+            position={context.taskbar}
+            apps={runningApps(windows, apps)}
+            startOpen={startOpen}
+            jobs={windows === 'none' ? 0 : jobs.length}
+            unread={windows === 'none' ? 0 : 2}
+            notificationsOpen={notificationsOpen}
+            switcherOpen={switcherOpen}
+            now={now}
+            locale={context.locale}
+          />
+        }
+        overlays={overlays}
+      >
+        {items && (
+          <>
+            <DesktopItems>
+              {desktopItems.map((entry, index) => (
+                <DesktopIcon
+                  key={entry.name}
+                  name={entry.name}
+                  item={entry.item}
+                  selected={index === 1}
+                />
+              ))}
+              {desktopShortcuts.map((id) => (
+                <DesktopIcon
+                  key={id}
+                  name={apps[id].name}
+                  item={{ kind: 'shortcut', app: apps[id] }}
+                />
+              ))}
+            </DesktopItems>
+            <div className={styles.noteSlot}>
+              <StickyNote text={noteText} x={76} y={6} />
+            </div>
+          </>
+        )}
+        {windowsFor(windows, apps, filesTitle).map((props) => (
+          <Window
+            key={props.title}
+            {...props}
+            {...(windowMenu && props.app === apps.files
+              ? {
+                  icon: (
+                    <WindowMenu
+                      id="files"
+                      app={apps.files}
+                      title={filesTitle}
+                      placement={{ kind: 'free' }}
+                      free
+                    />
+                  ),
+                }
+              : {})}
+          />
+        ))}
+      </DesktopShell>
+    </Scripted>
   );
 }
 
@@ -267,10 +289,12 @@ export function StartMenuScene({
   context,
   search,
   userMenuOpen = false,
+  script = [],
 }: {
   context: SceneContext;
   search: boolean;
   userMenuOpen?: boolean;
+  script?: readonly ScriptStep[];
 }) {
   const apps = useApps();
   const currentUser = useUser();
@@ -281,6 +305,7 @@ export function StartMenuScene({
     <DesktopScene
       context={context}
       startOpen
+      script={script}
       overlays={
         <StartMenu
           position={context.taskbar}
