@@ -180,6 +180,22 @@ function ShareTable({
   const { t } = useTranslation('settings');
   const locale = useFormatLocale();
   const bytes = (value: number) => formatBytes(value, locale);
+  const used = (share: ShareDetails) =>
+    share.dataset === null
+      ? null
+      : share.usedBytes === null
+        ? t('shares.missing')
+        : share.quotaBytes !== null
+          ? t('shares.usedQuota', {
+              used: bytes(share.usedBytes),
+              quota: bytes(share.quotaBytes),
+            })
+          : t('shares.used', {
+              used: bytes(share.usedBytes),
+              free: bytes(share.availableBytes ?? 0),
+            });
+  // Four columns without fixed widths, so the table fits a phone without scrolling sideways: the description goes
+  // below the name and the space below the pool.
   const columns: DataTableColumn<ShareDetails>[] = [
     {
       id: 'name',
@@ -187,7 +203,10 @@ function ShareTable({
       cell: (share) => (
         <span className={styles.stack}>
           <span className={styles.shareName}>{share.name}</span>{' '}
-          <span className={styles.path}>{breakable(share.dataset ?? share.path)}</span>
+          <span className={styles.path}>{breakable(share.dataset ?? share.path)}</span>{' '}
+          <span className={styles.detail}>
+            {share.description === '' ? t('shares.noDescription') : share.description}
+          </span>
         </span>
       ),
       sortValue: (share) => share.name,
@@ -196,39 +215,12 @@ function ShareTable({
     {
       id: 'pool',
       label: t('shares.columns.pool'),
-      width: 110,
-      cell: (share) => share.pool ?? t('shares.folder'),
+      cell: (share) => (
+        <span className={styles.stack}>
+          {share.pool ?? t('shares.folder')} <span className={styles.detail}>{used(share)}</span>
+        </span>
+      ),
       sortValue: (share) => share.pool ?? '',
-    },
-    {
-      id: 'used',
-      label: t('shares.columns.used'),
-      muted: true,
-      cell: (share) =>
-        share.dataset === null
-          ? null
-          : share.usedBytes === null
-            ? t('shares.missing')
-            : share.quotaBytes !== null
-              ? t('shares.usedQuota', {
-                  used: bytes(share.usedBytes),
-                  quota: bytes(share.quotaBytes),
-                })
-              : t('shares.used', {
-                  used: bytes(share.usedBytes),
-                  free: bytes(share.availableBytes ?? 0),
-                }),
-      sortValue: (share) => share.usedBytes ?? 0,
-    },
-    {
-      id: 'description',
-      label: t('shares.columns.description'),
-      cell: (share) =>
-        share.description === '' ? (
-          <span className={styles.muted}>{t('shares.noDescription')}</span>
-        ) : (
-          share.description
-        ),
     },
     {
       id: 'rights',
@@ -250,7 +242,6 @@ function ShareTable({
     {
       id: 'restorePoints',
       label: t('shares.columns.restorePoints'),
-      width: 200,
       cell: (share) =>
         share.restorePoints === null ? (
           <span className={styles.muted}>{t('restorePoints.folder')}</span>
