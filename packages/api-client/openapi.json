@@ -16314,7 +16314,7 @@
               },
               "description": "One log entry of the daemon, a system service or an app."
             },
-            "description": "The newest entries of one write, oldest first, at most int LogsAdded.MaxEntries."
+            "description": "The newest entries of one write, oldest first, at most 200."
           },
           "truncated": {
             "type": "boolean",

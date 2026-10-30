@@ -96,7 +96,8 @@ export function describeSource(source: string): { group: SourceGroup; name: stri
   return { group: 'daemon', name: source };
 }
 
-function currentSource(source: string): string {
+/** The source a core app writes to now, also for its entries from before migration 0022 (`app/files`). */
+export function currentSource(source: string): string {
   const { group, name } = describeSource(source);
   return group === 'app' ? `app/${name}` : source;
 }
@@ -108,6 +109,15 @@ export function groupSources(sources: readonly string[]): Record<SourceGroup, st
     groups[describeSource(source).group].push(source);
   }
   return groups;
+}
+
+/** The sources with the ones of live entries added, as the daemon lists them. */
+export function addSources(sources: readonly string[], entries: readonly LogEntry[]): string[] {
+  const known = new Set(sources);
+  const added = entries
+    .map((entry) => currentSource(entry.source))
+    .filter((source) => !known.has(source));
+  return added.length === 0 ? [...sources] : [...new Set([...sources, ...added])].sort();
 }
 
 /** Warnings and errors of one source, or of every source for null. */

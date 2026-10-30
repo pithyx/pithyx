@@ -5614,7 +5614,7 @@ export type components = {
          *     without asking again (asking would log the request and so feed itself). The snapshot has none.
          */
         LogsAdded: {
-            /** @description The newest entries of one write, oldest first, at most int LogsAdded.MaxEntries. */
+            /** @description The newest entries of one write, oldest first, at most 200. */
             entries: {
                 /** @description True when the entry comes from the archive on a pool. */
                 archived: boolean;

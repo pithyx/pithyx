@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   addCounts,
+  addSources,
   countOf,
   DEFAULT_VIEW,
   describeSource,
@@ -91,6 +92,12 @@ describe('log filters', () => {
     );
     expect(matches(view, entry({ source: 'system/smbd', message: 'a.jpg' }))).toBe(false);
     expect(matches({ ...DEFAULT_VIEW, level: 'errors' }, entry({ level: 'warn' }))).toBe(false);
+  });
+
+  it('adds the sources of live entries under their current name', () => {
+    expect(
+      addSources(['daemon'], [entry({ source: 'app/files' }), entry({ source: 'daemon' })]),
+    ).toEqual(['app/org.pithyx.files', 'daemon']);
   });
 
   it('adds the warnings and errors of live entries to their source', () => {

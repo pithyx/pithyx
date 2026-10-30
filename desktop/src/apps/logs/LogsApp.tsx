@@ -44,6 +44,7 @@ import {
 } from '../sdk/logs';
 import {
   addCounts,
+  addSources,
   countOf,
   dayOf,
   DEFAULT_VIEW,
@@ -142,6 +143,7 @@ export function LogsApp({ app }: SdkAppProps) {
     const [current, at] = JSON.parse(viewKey) as [LogView, number];
     const key = ['logs', 'entries', filterOf(current, at)];
     const countKey = ['logs', 'counts', rangeStart(current.range, at) ?? ALL];
+    const sourcesKey = ['logs', 'sources', at];
     void logsCall(app, 'internal.admin.logs.watch', { watch: true });
     const stop = onLogs(app, (added) => {
       if (added.truncated) {
@@ -152,6 +154,10 @@ export function LogsApp({ app }: SdkAppProps) {
       if (added.entries.length === 0) {
         return;
       }
+      // A source that logs for the first time shows in the navigation at once.
+      queryClient.setQueryData<string[]>(sourcesKey, (previous) =>
+        previous === undefined ? previous : addSources(previous, added.entries),
+      );
       queryClient.setQueryData<LogCount[]>(countKey, (previous) =>
         previous === undefined ? previous : addCounts(previous, added.entries),
       );
