@@ -120,7 +120,7 @@ test('the Files app, its menu and its recycle bin have no accessibility violatio
   await files.getByRole('row', { name: /^old\.txt/ }).click();
   await page.keyboard.press('Delete');
   await files.getByRole('button', { name: 'Recycle bin of Shared' }).click();
-  await expect(files.getByRole('option', { name: 'old.txt' })).toBeVisible();
+  await expect(files.getByRole('row', { name: 'old.txt' })).toBeVisible();
   expect(await violations(page)).toEqual([]);
 });
 
