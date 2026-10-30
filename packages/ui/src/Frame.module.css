@@ -57,6 +57,21 @@
   padding: var(--space-5) var(--space-6) 0;
 }
 
+.titleRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3) var(--space-4);
+  align-self: stretch;
+}
+
+.titleEnd {
+  display: flex;
+  flex: 1 1 auto;
+  justify-content: flex-end;
+  min-width: 0;
+}
+
 .title {
   margin: 0;
   font-size: var(--font-size-2xl);

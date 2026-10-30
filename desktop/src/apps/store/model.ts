@@ -420,3 +420,35 @@ export function inCategory<T extends { categories: readonly string[] }>(
 export function screenshotUrl(appId: string, file: string): string {
   return `/apps/${appId}/${file.replace(/^frontend\//, '')}`;
 }
+
+/** What Discover needs of a catalog app. */
+export interface DiscoverEntry {
+  kind: 'official' | 'community' | 'custom';
+  installedVersion: string | null;
+  incompatible: unknown;
+  publishedAt: string;
+}
+
+const KIND_ORDER = ['official', 'community', 'custom'] as const;
+
+const newestFirst = (a: DiscoverEntry, b: DiscoverEntry) =>
+  Date.parse(b.publishedAt) - Date.parse(a.publishedAt);
+
+/**
+ * Discover's apps (D404): the featured app is the newest one the box can install and does not have yet, from the
+ * official catalog first, then the community catalog, then the others; below it the newest apps by the date their
+ * shown version was published, including those this box cannot install (marked, D393). The box keeps no statistics,
+ * so nothing is ranked by popularity.
+ */
+export function discover<T extends DiscoverEntry>(
+  apps: readonly T[],
+  limit = 9,
+): { featured: T | null; recent: T[] } {
+  const candidates = apps
+    .filter((app) => app.incompatible === null && app.installedVersion === null)
+    .sort((a, b) => KIND_ORDER.indexOf(a.kind) - KIND_ORDER.indexOf(b.kind) || newestFirst(a, b));
+  return {
+    featured: candidates[0] ?? null,
+    recent: [...apps].sort(newestFirst).slice(0, limit),
+  };
+}

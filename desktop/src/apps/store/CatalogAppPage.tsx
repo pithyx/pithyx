@@ -1,5 +1,5 @@
 import type { PithyxApp } from '@pithyx/sdk';
-import { Badge, Button } from '@pithyx/ui';
+import { Button, StatusBadge } from '@pithyx/ui';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -10,7 +10,6 @@ import { IconArrowLeft, IconDownload, IconExternalLink } from '../../ui/icons';
 import { manifestText } from '../installed';
 import { storeCall, type StoreAppDetails, type StoreAppSummary } from '../sdk/store';
 import { describeProblem, formatDate } from '../storage/shared';
-import { SourceBadge } from './CatalogBrowser';
 import {
   IncompatibleBadge,
   IncompatibleNotice,
@@ -56,32 +55,32 @@ export function CatalogAppPage({
   const installed = summary.installedVersion !== null;
 
   return (
-    <div className={styles.app}>
-      <nav className={styles.crumbs}>
-        <button type="button" className={styles.back} onClick={onBack}>
-          <IconArrowLeft size={16} stroke={1.75} aria-hidden />
-          {backLabel}
-        </button>
-      </nav>
+    <>
+      <Button className={styles.back} variant="quiet" size="sm" onPress={onBack}>
+        <IconArrowLeft size={16} stroke={1.75} aria-hidden />
+        {backLabel}
+      </Button>
       <article className={styles.page} aria-labelledby="store-catalog-app-name">
         <header className={styles.appHeader}>
           <AppIcon app={{ icon: summary.icon, tone: 'graphite' }} size={64} />
           <div className={styles.headerText}>
-            <h2 id="store-catalog-app-name" className={styles.pageTitle}>
+            <h1 id="store-catalog-app-name" className={styles.appTitle}>
               {name}
-            </h2>
+            </h1>
             <p className={styles.muted}>
               {t('installed.version', { version: summary.version })}
               {summary.author !== null && ` · ${summary.author}`}
             </p>
             <span className={styles.badges}>
-              <SourceBadge kind={summary.kind} />
+              <StatusBadge tone={summary.kind === 'custom' ? 'warning' : 'info'}>
+                {t(`catalog.badge.${summary.kind}`)}
+              </StatusBadge>
               <MaturityBadge maturity={summary.maturity} />
               {incompatible !== null && <IncompatibleBadge />}
               {installed && (
-                <Badge tone="neutral">
+                <StatusBadge tone="success">
                   {t('catalog.installedVersion', { version: summary.installedVersion })}
-                </Badge>
+                </StatusBadge>
               )}
             </span>
           </div>
@@ -126,9 +125,9 @@ export function CatalogAppPage({
             {facts?.root === true && <p className={styles.warning}>{t('install.root')}</p>}
             {facts !== null && facts.elevated.length > 0 && (
               <section className={styles.group} aria-labelledby="store-catalog-elevated">
-                <h3 id="store-catalog-elevated" className={styles.sectionTitle}>
+                <h2 id="store-catalog-elevated" className={styles.sectionTitle}>
                   {t('elevated.section')}
-                </h3>
+                </h2>
                 <p className={styles.warning}>{t('elevated.warning')}</p>
                 <ul className={styles.permissions}>
                   {facts.elevated.map((right) => (
@@ -141,9 +140,9 @@ export function CatalogAppPage({
             )}
             {facts !== null && (
               <section className={styles.group} aria-labelledby="store-catalog-permissions">
-                <h3 id="store-catalog-permissions" className={styles.sectionTitle}>
+                <h2 id="store-catalog-permissions" className={styles.sectionTitle}>
                   {t('detail.permissions.title')}
-                </h3>
+                </h2>
                 <p className={styles.muted}>
                   {facts.backend ? t('install.backend.yes') : t('install.backend.no')}
                 </p>
@@ -165,9 +164,9 @@ export function CatalogAppPage({
               </section>
             )}
             <section className={styles.group} aria-labelledby="store-catalog-facts">
-              <h3 id="store-catalog-facts" className={styles.sectionTitle}>
+              <h2 id="store-catalog-facts" className={styles.sectionTitle}>
                 {t('detail.facts.title')}
-              </h3>
+              </h2>
               <dl className={styles.facts}>
                 <dt>{t('detail.facts.author')}</dt>
                 <dd>{summary.author ?? '-'}</dd>
@@ -213,7 +212,7 @@ export function CatalogAppPage({
           }}
         />
       )}
-    </div>
+    </>
   );
 }
 
@@ -235,9 +234,9 @@ export function CatalogScreenshots({ details, name }: { details: StoreAppDetails
   }
   return (
     <section className={styles.group} aria-labelledby="store-screenshots">
-      <h3 id="store-screenshots" className={styles.sectionTitle}>
+      <h2 id="store-screenshots" className={styles.sectionTitle}>
         {t('catalog.screenshots')}
-      </h3>
+      </h2>
       <ul className={styles.screenshots}>
         {details.screenshots.map((url, index) => (
           <li key={url}>
@@ -261,9 +260,9 @@ export function CatalogVersions({ details }: { details: StoreAppDetails }) {
   const reason = useVersionReason();
   return (
     <section className={styles.group} aria-labelledby="store-catalog-versions">
-      <h3 id="store-catalog-versions" className={styles.sectionTitle}>
+      <h2 id="store-catalog-versions" className={styles.sectionTitle}>
         {t('catalog.versions')}
-      </h3>
+      </h2>
       <ul className={styles.permissions}>
         {details.versions.map((version) => (
           <li key={version.version} className={styles.permission}>

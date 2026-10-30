@@ -1,5 +1,5 @@
 import type { PithyxApp } from '@pithyx/sdk';
-import { Badge, Button, Dialog, PasswordField, Switch, TextField } from '@pithyx/ui';
+import { Button, StatusBadge, Dialog, PasswordField, Switch, TextField } from '@pithyx/ui';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -253,9 +253,9 @@ export function ElevatedSection({ app, details }: { app: PithyxApp; details: App
   const facts = manifestFacts(details.manifest);
   return (
     <section className={styles.group} aria-labelledby="store-elevated">
-      <h3 id="store-elevated" className={styles.sectionTitle}>
+      <h2 id="store-elevated" className={styles.sectionTitle}>
         {t('elevated.section')}
-      </h3>
+      </h2>
       <p className={styles.muted}>{t('elevated.sectionIntro')}</p>
       <ul className={styles.permissions}>
         {details.elevated.map((entry) => (
@@ -401,7 +401,9 @@ export function ElevatedBadge({ details }: { details: AppDetails }) {
   const { t } = useTranslation('store');
   const granted = details.elevated.filter((entry) => entry.granted);
   if (granted.some((entry) => entry.tier === 'critical')) {
-    return <Badge tone="danger">{t('elevated.rootBadge')}</Badge>;
+    return <StatusBadge tone="danger">{t('elevated.rootBadge')}</StatusBadge>;
   }
-  return granted.length > 0 ? <Badge tone="danger">{t('elevated.badge')}</Badge> : null;
+  return granted.length > 0 ? (
+    <StatusBadge tone="warning">{t('elevated.badge')}</StatusBadge>
+  ) : null;
 }

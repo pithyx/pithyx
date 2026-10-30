@@ -120,3 +120,12 @@ export { default as IconTool } from '@tabler/icons-react/dist/esm/icons/IconTool
 export { default as IconPlayerPause } from '@tabler/icons-react/dist/esm/icons/IconPlayerPause.mjs';
 export { default as IconPlayerPlay } from '@tabler/icons-react/dist/esm/icons/IconPlayerPlay.mjs';
 export { default as IconTemperature } from '@tabler/icons-react/dist/esm/icons/IconTemperature.mjs';
+export { default as IconStar } from '@tabler/icons-react/dist/esm/icons/IconStar.mjs';
+export { default as IconPackage } from '@tabler/icons-react/dist/esm/icons/IconPackage.mjs';
+export { default as IconChecklist } from '@tabler/icons-react/dist/esm/icons/IconChecklist.mjs';
+export { default as IconMessageCircle } from '@tabler/icons-react/dist/esm/icons/IconMessageCircle.mjs';
+export { default as IconSmartHome } from '@tabler/icons-react/dist/esm/icons/IconSmartHome.mjs';
+export { default as IconSchool } from '@tabler/icons-react/dist/esm/icons/IconSchool.mjs';
+export { default as IconCoin } from '@tabler/icons-react/dist/esm/icons/IconCoin.mjs';
+export { default as IconDeviceGamepad2 } from '@tabler/icons-react/dist/esm/icons/IconDeviceGamepad2.mjs';
+export { default as IconBooks } from '@tabler/icons-react/dist/esm/icons/IconBooks.mjs';

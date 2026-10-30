@@ -5,6 +5,7 @@ import {
   accessOf,
   appPools,
   deviceNote,
+  discover,
   elevatedKind,
   folderPath,
   inCategory,
@@ -226,5 +227,53 @@ describe('store fields (D389)', () => {
     expect(screenshotUrl('com.example.chat', 'frontend/screenshots/a.png')).toBe(
       '/apps/com.example.chat/screenshots/a.png',
     );
+  });
+});
+
+describe('discover', () => {
+  const entry = (
+    id: string,
+    kind: 'official' | 'community' | 'custom',
+    publishedAt: string,
+    more: { installedVersion?: string; incompatible?: object } = {},
+  ) => ({
+    id,
+    kind,
+    publishedAt,
+    installedVersion: more.installedVersion ?? null,
+    incompatible: more.incompatible ?? null,
+  });
+
+  it('features the newest app the box does not have, from the official catalog first', () => {
+    const apps = [
+      entry('community-new', 'community', '2026-10-20T00:00:00Z'),
+      entry('official-old', 'official', '2026-09-01T00:00:00Z'),
+      entry('official-new', 'official', '2026-10-01T00:00:00Z'),
+      entry('official-installed', 'official', '2026-10-25T00:00:00Z', {
+        installedVersion: '1.0.0',
+      }),
+      entry('official-too-new', 'official', '2026-10-28T00:00:00Z', { incompatible: {} }),
+    ];
+    expect(discover(apps).featured?.id).toBe('official-new');
+    expect(discover(apps.filter((app) => app.kind !== 'official')).featured?.id).toBe(
+      'community-new',
+    );
+  });
+
+  it('lists the newest apps, installed and incompatible ones included, up to the limit', () => {
+    const apps = [
+      entry('a', 'official', '2026-10-01T00:00:00Z'),
+      entry('b', 'custom', '2026-10-03T00:00:00Z', { installedVersion: '1.0.0' }),
+      entry('c', 'community', '2026-10-02T00:00:00Z'),
+      entry('d', 'official', '2026-10-04T00:00:00Z', { incompatible: {} }),
+    ];
+    expect(discover(apps, 3).recent.map((app) => app.id)).toEqual(['d', 'b', 'c']);
+  });
+
+  it('features nothing when every app is installed or cannot run here', () => {
+    expect(
+      discover([entry('a', 'official', '2026-10-01T00:00:00Z', { installedVersion: '1.0.0' })])
+        .featured,
+    ).toBeNull();
   });
 });

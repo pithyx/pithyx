@@ -1,5 +1,5 @@
 import type { PithyxApp } from '@pithyx/sdk';
-import { Badge, Button, Dialog, Switch } from '@pithyx/ui';
+import { Button, Dialog, StatusBadge, Switch } from '@pithyx/ui';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -136,31 +136,29 @@ export function AppPage({
   );
 
   return (
-    <div className={styles.app}>
-      <nav className={styles.crumbs}>
-        <button type="button" className={styles.back} onClick={onBack}>
-          <IconArrowLeft size={16} stroke={1.75} aria-hidden />
-          {backLabel}
-        </button>
-      </nav>
+    <>
+      <Button className={styles.back} variant="quiet" size="sm" onPress={onBack}>
+        <IconArrowLeft size={16} stroke={1.75} aria-hidden />
+        {backLabel}
+      </Button>
       <article className={styles.page} aria-labelledby="store-app-name">
         <header className={styles.appHeader}>
           <AppIcon app={{ icon: iconUrl(details), tone: 'graphite' }} size={64} />
           <div className={styles.headerText}>
-            <h2 id="store-app-name" className={styles.pageTitle}>
+            <h1 id="store-app-name" className={styles.appTitle}>
               {name}
-            </h2>
+            </h1>
             <p className={styles.muted}>
               {t('installed.version', { version: details.version })}
               {facts.author !== null && ` · ${facts.author}`}
             </p>
             <span className={styles.badges}>
-              <Badge tone="neutral">
+              <StatusBadge tone={details.source === 'sideload' ? 'warning' : 'info'}>
                 {details.source === 'catalog' && details.catalog !== null
                   ? t('detail.source.fromCatalog', { catalog: details.catalog })
                   : t('detail.source.sideload')}
-              </Badge>
-              {details.busy && <Badge tone="accent">{t('installed.busy')}</Badge>}
+              </StatusBadge>
+              {details.busy && <StatusBadge tone="info">{t('installed.busy')}</StatusBadge>}
               <ElevatedBadge details={details} />
               <MaturityBadge maturity={facts.maturity} />
             </span>
@@ -242,9 +240,9 @@ export function AppPage({
         </div>
 
         <section className={styles.group} aria-labelledby="store-permissions">
-          <h3 id="store-permissions" className={styles.sectionTitle}>
+          <h2 id="store-permissions" className={styles.sectionTitle}>
             {t('detail.permissions.title')}
-          </h3>
+          </h2>
           {details.permissions.length === 0 ? (
             <p className={styles.muted}>{t('detail.permissions.none')}</p>
           ) : (
@@ -285,9 +283,9 @@ export function AppPage({
         <AccessSection app={app} appId={appId} />
 
         <section className={styles.group} aria-labelledby="store-policy">
-          <h3 id="store-policy" className={styles.sectionTitle}>
+          <h2 id="store-policy" className={styles.sectionTitle}>
             {t('detail.policy.title')}
-          </h3>
+          </h2>
           <label className={styles.fieldLabel} htmlFor="store-policy-select">
             {t('detail.policy.label')}
           </label>
@@ -315,9 +313,9 @@ export function AppPage({
         </section>
 
         <section className={styles.group} aria-labelledby="store-logs">
-          <h3 id="store-logs" className={styles.sectionTitle}>
+          <h2 id="store-logs" className={styles.sectionTitle}>
             {t('detail.logs.title')}
-          </h3>
+          </h2>
           <Switch
             isSelected={details.logLevel === 'debug'}
             onChange={(debug) => {
@@ -331,9 +329,9 @@ export function AppPage({
         </section>
 
         <section className={styles.group} aria-labelledby="store-facts">
-          <h3 id="store-facts" className={styles.sectionTitle}>
+          <h2 id="store-facts" className={styles.sectionTitle}>
             {t('detail.facts.title')}
-          </h3>
+          </h2>
           <dl className={styles.facts}>
             <dt>{t('detail.facts.version')}</dt>
             <dd>{details.version}</dd>
@@ -413,7 +411,7 @@ export function AppPage({
           }}
         />
       )}
-    </div>
+    </>
   );
 }
 
