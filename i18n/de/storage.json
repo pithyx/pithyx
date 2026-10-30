@@ -22,7 +22,22 @@
     "readOnly": "Schreibgeschützt (Vorschau)",
     "readOnlyHint": "Schreibgeschützt zur Vorschau importiert: Nichts ist eingehängt und nichts daran ändert sich. Prüf seine Datasets, dann importiere ihn zur Nutzung oder exportiere ihn wieder.",
     "deleting": "Wird gelöscht",
-    "deletingHint": "Der Pool wird gelöscht. Die Benachrichtigungen sagen dir, wenn es fertig ist."
+    "deletingHint": "Der Pool wird gelöscht. Die Benachrichtigungen sagen dir, wenn es fertig ist.",
+    "toolbar": "Aktionen für Pools",
+    "space": "Platz von {pool}",
+    "usedShort": "{used} belegt",
+    "free": "{free} frei"
+  },
+  "summary": {
+    "capacity": "Kapazität",
+    "pools": "{count, plural, one {# Pool} other {# Pools}}",
+    "used": "Belegt",
+    "disks": "Platten",
+    "allHealthy": "alle in Ordnung",
+    "problems": "{count, plural, one {# mit einem Problem} other {# mit Problemen}}",
+    "lastScrub": "Letzter Scrub",
+    "never": "Nie",
+    "errors": "{count, plural, =0 {keine Fehler} one {# Fehler} other {# Fehler}}"
   },
   "state": {
     "online": "Intakt",

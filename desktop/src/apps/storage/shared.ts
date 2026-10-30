@@ -30,6 +30,18 @@ export function stateTone(state: string): 'accent' | 'highlight' | 'danger' | 'n
   return state === 'DEGRADED' ? 'highlight' : state === 'UNKNOWN' ? 'neutral' : 'danger';
 }
 
+/** A state as the tone of a `StatusBadge` (D394): healthy green, degraded orange, failed red. */
+export function stateStatus(state: string): 'success' | 'warning' | 'danger' | 'neutral' {
+  const tone = stateTone(state);
+  return tone === 'accent'
+    ? 'success'
+    : tone === 'highlight'
+      ? 'warning'
+      : tone === 'danger'
+        ? 'danger'
+        : 'neutral';
+}
+
 const STATES = [
   'online',
   'degraded',

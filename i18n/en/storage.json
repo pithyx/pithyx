@@ -22,7 +22,22 @@
     "readOnly": "Read-only (preview)",
     "readOnlyHint": "Imported read-only for a preview: nothing is mounted and nothing on it changes. Check its datasets, then import it for use or export it again.",
     "deleting": "Being deleted",
-    "deletingHint": "The pool is being deleted. The notifications say when it is done."
+    "deletingHint": "The pool is being deleted. The notifications say when it is done.",
+    "toolbar": "Pool actions",
+    "space": "Space of {pool}",
+    "usedShort": "{used} used",
+    "free": "{free} free"
+  },
+  "summary": {
+    "capacity": "Capacity",
+    "pools": "{count, plural, one {# pool} other {# pools}}",
+    "used": "Used",
+    "disks": "Disks",
+    "allHealthy": "all healthy",
+    "problems": "{count, plural, one {# with a problem} other {# with problems}}",
+    "lastScrub": "Last scrub",
+    "never": "Never",
+    "errors": "{count, plural, =0 {no errors} one {# error} other {# errors}}"
   },
   "state": {
     "online": "Healthy",

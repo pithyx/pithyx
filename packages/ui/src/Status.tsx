@@ -4,8 +4,7 @@ import {
   Button as AriaButton,
   Disclosure,
   DisclosurePanel,
-  Meter as AriaMeter,
-  type MeterProps as AriaMeterProps,
+  useLocale,
 } from 'react-aria-components';
 import { Button } from './Button';
 import { cx } from './cx';
@@ -47,9 +46,15 @@ export function StatusBadge({
 }
 
 /** The props of {@link Meter}. */
-export interface MeterProps extends Omit<AriaMeterProps, 'className' | 'children'> {
+export interface MeterProps {
   /** The accessible name, for example "Space of tank". */
   'aria-label': string;
+  /** The value, between `minValue` and `maxValue`. */
+  value: number;
+  /** The lowest value; 0 when left out. */
+  minValue?: number;
+  /** The highest value; 100 when left out. */
+  maxValue?: number;
   /** The text above the start of the bar, for example "1.3 TB used". */
   start?: ReactNode;
   /** The text above the end of the bar, for example "2.3 TB free". */
@@ -68,7 +73,7 @@ export interface MeterProps extends Omit<AriaMeterProps, 'className' | 'children
 /**
  * A quantity within a known range, such as the space of a pool, with optional texts above both ends of the bar.
  *
- * @param props - React Aria's meter props (`value`, `minValue`, `maxValue`) plus the name, texts and tone.
+ * @param props - The value with its range, the name, the texts and the tone.
  * @returns The meter.
  *
  * @example
@@ -76,27 +81,51 @@ export interface MeterProps extends Omit<AriaMeterProps, 'className' | 'children
  * <Meter aria-label="Space of tank" value={41} start="1.3 TB used" end="2.3 TB free" valueLabel="1.3 TB used, 2.3 TB free" />
  * ```
  */
-export function Meter({ start, end, tone = 'accent', className, ...props }: MeterProps) {
+export function Meter({
+  'aria-label': label,
+  value,
+  minValue = 0,
+  maxValue = 100,
+  valueLabel,
+  start,
+  end,
+  tone = 'accent',
+  className,
+}: MeterProps) {
+  const { locale } = useLocale();
+  const range = maxValue - minValue;
+  const percentage =
+    range <= 0 ? 0 : Math.min(100, Math.max(0, ((value - minValue) / range) * 100));
+  // The role alone: React Aria's fallback list `meter progressbar` is refused by axe.
   return (
-    <AriaMeter {...props} className={cx(styles.meter, className)}>
-      {({ percentage }) => (
-        <>
-          {(start !== undefined || end !== undefined) && (
-            <span className={styles.meterTexts}>
-              <span>{start}</span>
-              <span>{end}</span>
-            </span>
-          )}
-          <span className={styles.meterTrack}>
-            <span
-              className={styles.meterFill}
-              data-tone={tone}
-              style={{ width: `${String(percentage)}%` }}
-            />
-          </span>
-        </>
+    <div
+      role="meter"
+      aria-label={label}
+      aria-valuenow={value}
+      aria-valuemin={minValue}
+      aria-valuemax={maxValue}
+      aria-valuetext={
+        valueLabel ??
+        new Intl.NumberFormat(locale, { style: 'percent', maximumFractionDigits: 0 }).format(
+          percentage / 100,
+        )
+      }
+      className={cx(styles.meter, className)}
+    >
+      {(start !== undefined || end !== undefined) && (
+        <span className={styles.meterTexts}>
+          <span>{start}</span>
+          <span>{end}</span>
+        </span>
       )}
-    </AriaMeter>
+      <span className={styles.meterTrack}>
+        <span
+          className={styles.meterFill}
+          data-tone={tone}
+          style={{ width: `${String(percentage)}%` }}
+        />
+      </span>
+    </div>
   );
 }
 
