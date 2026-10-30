@@ -141,7 +141,7 @@ export const startRecent: RecentFile[] = [
 ];
 
 /** A query that matches the Photos app in each language. */
-export const searchQuery: Record<Language, string> = { en: 'pho', de: 'fot' };
+export const searchQuery: Record<Language, string> = { en: 'sha', de: 'frei' };
 
 export const searchFiles: StartEntry[] = [
   { id: 's-folder', name: 'Photos 2026', detail: '/home/alex/Desktop', icon: IconFolder },

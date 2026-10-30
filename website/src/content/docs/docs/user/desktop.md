@@ -83,7 +83,7 @@ To move the taskbar, open **Personal settings** (in the Pithyx menu's left bar),
 - the app list with a search field, grouped into **System** (only for administrators: the apps that come with Pithyx), **Apps** and **You**,
 - tiles: administrators see the state of each pool, the system (processor and memory) and the updates, each opening its app; everybody sees **Your folders**, the home folder and the shared folders with the access they have, each opening in Files.
 
-The search field finds apps by name only; settings and files are not found there. Your account menu (click your initials) has **Personal settings** and **Appearance**. Personal settings ([Your account](/docs/user/account/#personal-settings)) also has:
+The search field finds apps by name, and administrators also find the pages of Settings by their name or by what they set ("quota", "time zone"); choosing one opens Settings on that page. Files are not found there. Your account menu (click your initials) has **Personal settings** and **Appearance**. Personal settings ([Your account](/docs/user/account/#personal-settings)) also has:
 
 - **Default apps**: the file types you chose to always open one way in Files, each with **Forget** ([Files](/docs/user/files/))
 - **Open at sign-in**: tick up to 10 apps that open each time you sign in, on every device, in the order you ticked them. A reload of the page only brings back your windows, and an app that is already open is not opened twice. An app may be marked **Suggested by the app**; it is never ticked for you.

@@ -62,7 +62,9 @@ import { announce } from '../wm/announce';
 import { requestClose, requestCloseAll } from '../wm/commands';
 import { WindowLayer } from '../wm/WindowLayer';
 import { useMinuteClock } from './clock';
+import { settingsMatches } from './settingsSearch';
 import styles from './Desktop.module.css';
+import i18next from 'i18next';
 import { loadTranslations, useFormatLocale } from '../i18n';
 import { trustHintDismissed, trustQuery } from '../security/trust';
 
@@ -70,6 +72,9 @@ type User = components['schemas']['UserInfo'];
 
 /** Where a popover opens from the status area, so it never covers the taskbar. */
 // The account menu opens from the profile in the start menu, which sits next to the taskbar.
+/** The id of a menu search result that opens a page of Settings: the prefix and the page. */
+const SETTINGS_RESULT = 'settings:';
+
 /**
  * The account menu: who is signed in, Personal settings (D392) and the appearance, which people switch often. It opens
  * beside the account button in the menu's rail, so it stays attached to the Pithyx menu wherever the taskbar is.
@@ -459,6 +464,27 @@ export function Desktop({ user, entering }: { user: User; entering: boolean }) {
   const matches = apps
     .filter((app) => needle !== '' && app.name.toLocaleLowerCase(i18n.language).includes(needle))
     .map((app) => ({ id: app.id, name: app.name, detail: t('start.appDetail'), app }));
+  // Administrators also find the pages of Settings; their texts load with the first search.
+  const searchesSettings = startOpen && permissions.admin && needle !== '';
+  const settingsTexts = useQuery({
+    queryKey: ['translations', 'settings', i18n.language],
+    queryFn: () => loadTranslations('settings').then(() => true),
+    enabled: searchesSettings,
+    staleTime: Infinity,
+  });
+  const settingsApp = apps.find((app) => app.id === coreAppIds.settings);
+  const settingsText = i18next.getFixedT(i18n.language, 'settings') as unknown as (
+    key: string,
+  ) => string;
+  const settingsFound =
+    searchesSettings && settingsTexts.data === true
+      ? settingsMatches(query, settingsText, i18n.language).map(({ page, group, title }) => ({
+          id: `${SETTINGS_RESULT}${page}`,
+          name: title,
+          detail: t('start.settingsPath', { section: settingsText(`groups.${group}`) }),
+          ...(settingsApp === undefined ? {} : { app: settingsApp }),
+        }))
+      : [];
 
   return (
     <UiProvider locale={locale}>
@@ -547,7 +573,7 @@ export function Desktop({ user, entering }: { user: User; entering: boolean }) {
                 query={query}
                 onQueryChange={setQuery}
                 groups={startGroups}
-                results={{ apps: matches, settings: [], files: [] }}
+                results={{ apps: matches, settings: settingsFound, files: [] }}
                 tiles={
                   <StartTiles
                     isAdmin={permissions.admin}
@@ -595,7 +621,16 @@ export function Desktop({ user, entering }: { user: User; entering: boolean }) {
                   closeStart(false);
                   setPowerAction(action);
                 }}
-                onOpen={open}
+                onOpen={(id) => {
+                  if (id.startsWith(SETTINGS_RESULT)) {
+                    closeStart(false);
+                    openApp(coreAppIds.settings, {
+                      args: { page: id.slice(SETTINGS_RESULT.length) },
+                    });
+                  } else {
+                    open(id);
+                  }
+                }}
                 {...(addToDesktop === undefined ? {} : { onAddToDesktop: addToDesktop })}
                 onSignOut={() => {
                   closeStart(false);

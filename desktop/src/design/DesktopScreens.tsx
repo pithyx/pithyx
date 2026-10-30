@@ -1,11 +1,4 @@
-import {
-  IconAlertTriangle,
-  IconLogout,
-  IconNetwork,
-  IconPalette,
-  IconShieldLock,
-  IconUserCog,
-} from '../ui/icons';
+import { IconAlertTriangle, IconLogout, IconPalette, IconUserCog } from '../ui/icons';
 import type { ReactNode } from 'react';
 import { Header, MenuSection } from 'react-aria-components';
 import { useTranslation } from 'react-i18next';
@@ -32,6 +25,7 @@ import {
   MenuTrigger,
 } from '@pithyx/ui';
 import styles from './DesktopScreens.module.css';
+import { settingsMatches } from '../desktop/settingsSearch';
 import { LiveFiles, LiveLogs, LiveSettings } from './LiveApps';
 import {
   currentFolder,
@@ -245,27 +239,23 @@ export function DesktopScene({
   );
 }
 
-function useSearchResults(apps: Apps): StartResults {
-  const { t } = useTranslation();
-  const { t: settings } = useTranslation('settings');
+function useSearchResults(apps: Apps, query: string): StartResults {
+  const { t, i18n } = useTranslation();
+  const settingsText = i18n.getFixedT(i18n.language, 'settings') as unknown as (
+    key: string,
+  ) => string;
+  const needle = query.toLocaleLowerCase(i18n.language);
   return {
-    apps: [
-      { id: 's-photos', name: apps.photos.name, detail: t('start.appDetail'), app: apps.photos },
-    ],
-    settings: [
-      {
-        id: 's-network',
-        name: settings('pages.network.title'),
-        detail: t('start.settingsPath', { section: settings('categories.system') }),
-        icon: IconNetwork,
-      },
-      {
-        id: 's-users',
-        name: settings('pages.users.title'),
-        detail: t('start.settingsPath', { section: settings('categories.accounts') }),
-        icon: IconShieldLock,
-      },
-    ],
+    apps: Object.values(apps)
+      .filter((app) => app.name.toLocaleLowerCase(i18n.language).includes(needle))
+      .map((app) => ({ id: `s-${app.id}`, name: app.name, detail: t('start.appDetail'), app })),
+    // The same search as the desktop's, over the real page texts.
+    settings: settingsMatches(query, settingsText, i18n.language).map(({ page, group, title }) => ({
+      id: `s-${page}`,
+      name: title,
+      detail: t('start.settingsPath', { section: settingsText(`groups.${group}`) }),
+      app: apps.settings,
+    })),
     files: searchFiles,
   };
 }
@@ -283,10 +273,10 @@ export function StartMenuScene({
   userMenuOpen?: boolean;
 }) {
   const apps = useApps();
-  const results = useSearchResults(apps);
   const currentUser = useUser();
   const { t, i18n } = useTranslation();
   const query = search ? searchQuery[i18n.language === 'de' ? 'de' : 'en'] : '';
+  const results = useSearchResults(apps, query);
   return (
     <DesktopScene
       context={context}

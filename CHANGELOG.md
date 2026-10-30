@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- The search of the Pithyx menu finds the pages of Settings for administrators, by their name, description and keywords in the user's language; a result opens Settings on its page (D394, #346).
 - Design checks for the whole design pass (D405, #328): `pnpm design:test` checks every screen of the design gallery on the four viewports of `desktop/CLAUDE.md` (phone, tablet, laptop and now ultrawide) and, new, for accessibility and contrast in light and dark. The gallery runs the real Files, Settings, Log Center, Resource Monitor, Store and Personal settings on invented sample data, also in its desktop scenes, where mock windows of the old look and the Storage app were left. `pnpm design:docs` renders the website's screenshots from it in English and German; the landing page shows nine of them.
 - `hideWhenNarrow` for a `DataTable` column in `@pithyx/ui` (#328): the column is left out while the table is narrower than 600 px, for a secondary value the details pane also shows. Settings > **Users and groups** uses it for the file services, so the users table no longer scrolls sideways on a phone.
 - `ToolbarButton` in `@pithyx/ui` (#328): a toolbar button with an icon and a label that shows only the icon, with the label as its tooltip, when the app is narrower than 760 px. Files uses it, so its toolbar stays on one line in a narrow window.
