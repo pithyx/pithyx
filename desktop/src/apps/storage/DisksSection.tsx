@@ -66,7 +66,7 @@ export function DisksSection({ app }: { app: PithyxApp }) {
         <span className={styles.diskCell}>
           <span className={styles.mono}>{row.disk.name}</span>
           <span className={styles.muted}>
-            {[row.disk.model, formatBytes(row.disk.sizeBytes, locale)]
+            {[row.disk.serial, formatBytes(row.disk.sizeBytes, locale)]
               .filter((part) => part !== null && part !== '')
               .join(' · ')}
           </span>
