@@ -86,8 +86,9 @@ test('the desktop with windows, menus and the start menu has no accessibility vi
   expect(await violations(page)).toEqual([]);
   await page.keyboard.press('Escape');
 
-  // Personal settings would cover part of the disk table's rows, whose targets axe then counts as too small.
+  // Personal settings would cover parts of the other windows, whose buttons axe then counts as too small.
   await appWindow(page, 'Settings').getByRole('button', { name: 'Close' }).click();
+  await appWindow(page, 'About Pithyx').getByRole('button', { name: 'Close' }).click();
   const settings = await openPersonalSettings(page);
   await expect(settings.getByRole('heading', { name: 'Account', level: 1 })).toBeVisible();
   expect(await violations(page)).toEqual([]);

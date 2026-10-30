@@ -210,9 +210,10 @@ test('dragging a window causes no long tasks', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await signInAsAdmin(page);
   await openFromDesktop(page, 'Settings');
-  // Settings loads the box's overview after it opens; the drag measures the window manager, not that first render.
+  // Settings renders its frame after its chunk loads (a narrow window shows only the navigation); the drag measures the
+  // window manager, not that first render.
   await expect(
-    appWindow(page, 'Settings').getByRole('heading', { name: 'All settings', level: 2 }),
+    appWindow(page, 'Settings').getByRole('navigation', { name: 'Settings navigation' }),
   ).toBeVisible();
   await page.getByRole('button', { name: 'Pithyx menu' }).click();
   await page
