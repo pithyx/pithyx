@@ -1,8 +1,9 @@
 import type { PithyxApp } from '@pithyx/sdk';
+import { DataTable, StatusBadge, type DataTableColumn } from '@pithyx/ui';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { formatBytes } from '../../desktop/format';
 import { ErrorNotice } from '../../errors/ErrorNotice';
-import { Badge, cx } from '@pithyx/ui';
 import type { SmartReport, StorageDisk } from '../sdk/internal';
 import {
   describeProblem,
@@ -23,106 +24,134 @@ function known<T extends string>(values: readonly T[], value: string | null, fal
   return values.find((entry) => entry === value) ?? fallback;
 }
 
-/** Every disk with the guard's verdict for a new pool and its SMART health. Live through the storage topics. */
+type Row = StorageDisk & { report: SmartReport | undefined };
+
+const decisionTones = {
+  allowed: 'success',
+  refused: 'neutral',
+  needsSerialConfirmation: 'warning',
+} as const;
+const smartTones = {
+  passed: 'success',
+  warning: 'warning',
+  failed: 'danger',
+  unsupported: 'neutral',
+  unknown: 'neutral',
+} as const;
+
+/**
+ * Every disk with the guard's verdict for a new pool and its SMART health (D394: a table with the selected disk's
+ * details on the right). Live through the storage topics.
+ */
 export function DisksSection({ app }: { app: PithyxApp }) {
   const { t } = useTranslation('storage');
+  const locale = useFormatLocale();
   const disks = useDisks(app);
   const health = useHealth(app);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const reports = new Map((health.data?.smart ?? []).map((report) => [report.diskId, report]));
+  const rows: Row[] = (disks.data?.disks ?? []).map((entry) => ({
+    ...entry,
+    report: reports.get(entry.disk.id),
+  }));
+  const selected = rows.find((row) => row.disk.id === selectedId);
+  const smartState = (row: Row) => known(SMART_STATES, row.report?.state ?? null, 'unknown');
+  const columns: DataTableColumn<Row>[] = [
+    {
+      id: 'name',
+      label: t('disks.name'),
+      isRowHeader: true,
+      sortValue: (row) => row.disk.name,
+      cell: (row) => (
+        <span className={styles.diskCell}>
+          <span className={styles.mono}>{row.disk.name}</span>
+          <span className={styles.muted}>
+            {[row.disk.model, formatBytes(row.disk.sizeBytes, locale)]
+              .filter((part) => part !== null && part !== '')
+              .join(' · ')}
+          </span>
+        </span>
+      ),
+    },
+    {
+      id: 'status',
+      label: t('disks.status'),
+      sortValue: (row) => row.guard.decision,
+      cell: (row) => (
+        <span className={styles.diskCell}>
+          <StatusBadge tone={decisionTones[row.guard.decision]}>
+            {t(`decision.${row.guard.decision}`)}
+          </StatusBadge>
+          <span className={styles.reason}>{guardReason(t, row.guard)}</span>
+        </span>
+      ),
+    },
+    {
+      id: 'smart',
+      label: t('health.smart.state'),
+      sortValue: (row) => smartState(row),
+      cell: (row) => (
+        <span className={styles.diskCell}>
+          <StatusBadge tone={smartTones[smartState(row)]}>
+            {t(`health.smart.states.${smartState(row)}`)}
+          </StatusBadge>
+          <span className={styles.reason}>{smartDetails(t, row.report, locale)}</span>
+        </span>
+      ),
+    },
+  ];
   return (
     <div className={styles.storage}>
-      <header className={styles.pageHeader}>
-        <div>
-          <p className={styles.muted}>{t('disks.intro')}</p>
-        </div>
-      </header>
+      <p className={styles.muted}>{t('disks.intro')}</p>
       {disks.data?.environment === 'dev' && <p className={styles.notice}>{t('dev')}</p>}
       {disks.isError && <ErrorNotice error={describeProblem(disks.error)} />}
       {health.isError && <ErrorNotice error={describeProblem(health.error)} />}
       {disks.data !== undefined && (
-        <DiskTable disks={disks.data.disks} reports={health.data?.smart ?? []} />
+        <DataTable
+          aria-label={t('disks.caption')}
+          className={styles.disksTable}
+          columns={columns}
+          items={rows}
+          getKey={(row) => row.disk.id}
+          density="comfortable"
+          selectionMode="single"
+          selectedKeys={selected === undefined ? new Set() : new Set([selected.disk.id])}
+          onSelectionChange={(keys) => {
+            const [key] = keys === 'all' ? [] : [...keys];
+            setSelectedId(key === undefined ? null : String(key));
+          }}
+          {...(selected === undefined
+            ? {}
+            : { details: <DiskDetails row={selected} />, detailsLabel: t('disks.details') })}
+        />
       )}
     </div>
   );
 }
 
-function DiskTable({ disks, reports }: { disks: StorageDisk[]; reports: SmartReport[] }) {
+/** The facts of the selected disk that the table leaves out. */
+function DiskDetails({ row }: { row: Row }) {
   const { t } = useTranslation('storage');
   const locale = useFormatLocale();
-  const byId = new Map(reports.map((report) => [report.diskId, report]));
+  const { disk } = row;
   return (
-    <table className={cx(styles.table, styles.stack)}>
-      <caption className="visually-hidden">{t('disks.caption')}</caption>
-      <thead>
-        <tr>
-          <th scope="col">{t('disks.name')}</th>
-          <th scope="col" className={styles.optional}>
-            {t('disks.model')}
-          </th>
-          <th scope="col">{t('disks.serial')}</th>
-          <th scope="col" className={styles.number}>
-            {t('disks.size')}
-          </th>
-          <th scope="col">{t('disks.status')}</th>
-          <th scope="col">{t('health.smart.state')}</th>
-        </tr>
-      </thead>
-      <tbody>
-        {disks.map(({ disk, guard }) => {
-          const report = byId.get(disk.id);
-          const state = known(SMART_STATES, report?.state ?? null, 'unknown');
-          return (
-            <tr key={disk.id}>
-              <th scope="row" className={styles.mono}>
-                {disk.name}
-              </th>
-              <td className={styles.optional} data-label={t('disks.model')}>
-                {disk.model ?? ''}
-              </td>
-              <td className={styles.mono} data-label={t('disks.serial')}>
-                {disk.serial ?? ''}
-              </td>
-              <td className={styles.number} data-label={t('disks.size')}>
-                {formatBytes(disk.sizeBytes, locale)}
-              </td>
-              <td data-label={t('disks.status')}>
-                <div className={styles.verdict}>
-                  <Badge
-                    tone={
-                      guard.decision === 'allowed'
-                        ? 'accent'
-                        : guard.decision === 'refused'
-                          ? 'neutral'
-                          : 'highlight'
-                    }
-                  >
-                    {t(`decision.${guard.decision}`)}
-                  </Badge>
-                  <span className={styles.reason}>{guardReason(t, guard)}</span>
-                </div>
-              </td>
-              <td data-label={t('health.smart.state')}>
-                <div className={styles.verdict}>
-                  <Badge
-                    tone={
-                      state === 'passed'
-                        ? 'accent'
-                        : state === 'failed'
-                          ? 'danger'
-                          : state === 'warning'
-                            ? 'highlight'
-                            : 'neutral'
-                    }
-                  >
-                    {t(`health.smart.states.${state}`)}
-                  </Badge>
-                  <span className={styles.reason}>{smartDetails(t, report, locale)}</span>
-                </div>
-              </td>
-            </tr>
-          );
-        })}
-      </tbody>
-    </table>
+    <div className={styles.diskDetails}>
+      <h2 className={styles.mono}>{disk.name}</h2>
+      <dl className={styles.facts}>
+        <dt>{t('disks.model')}</dt>
+        <dd>{disk.model ?? ''}</dd>
+        <dt>{t('disks.serial')}</dt>
+        <dd className={styles.mono}>{disk.serial ?? ''}</dd>
+        <dt>{t('disks.size')}</dt>
+        <dd>{formatBytes(disk.sizeBytes, locale)}</dd>
+        <dt>{t('disks.path')}</dt>
+        <dd className={styles.mono}>{disk.path}</dd>
+        <dt>{t('disks.status')}</dt>
+        <dd>{guardReason(t, row.guard)}</dd>
+        <dt>{t('health.smart.state')}</dt>
+        <dd>{smartDetails(t, row.report, locale)}</dd>
+      </dl>
+    </div>
   );
 }
 

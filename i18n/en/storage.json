@@ -78,7 +78,9 @@
     "serial": "Serial number",
     "size": "Size",
     "status": "For a new pool",
-    "intro": "Every disk with its health and whether a new pool may use it."
+    "intro": "Every disk with its health and whether a new pool may use it.",
+    "path": "Device",
+    "details": "Details of the disk"
   },
   "decision": {
     "allowed": "Available",

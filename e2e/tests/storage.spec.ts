@@ -31,7 +31,7 @@ async function openDisks(storage: ReturnType<typeof appWindow>) {
 
 function diskRow(storage: ReturnType<typeof appWindow>, name: string) {
   return storage
-    .getByRole('table', { name: 'Disks and whether a new pool may use them' })
+    .getByRole('grid', { name: 'Disks and whether a new pool may use them' })
     .getByRole('row', { name: new RegExp(`^${name} `) });
 }
 

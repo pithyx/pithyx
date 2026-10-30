@@ -78,7 +78,9 @@
     "serial": "Seriennummer",
     "size": "Größe",
     "status": "Für einen neuen Pool",
-    "intro": "Jede Platte mit ihrem Zustand und ob ein neuer Pool sie verwenden darf."
+    "intro": "Jede Platte mit ihrem Zustand und ob ein neuer Pool sie verwenden darf.",
+    "path": "Gerät",
+    "details": "Details der Platte"
   },
   "decision": {
     "allowed": "Verfügbar",
