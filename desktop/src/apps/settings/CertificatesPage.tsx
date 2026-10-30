@@ -4,7 +4,7 @@ import { useId, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ErrorNotice } from '../../errors/ErrorNotice';
 import { useFormatLocale } from '../../i18n';
-import { Badge, Button, Dialog, Switch, TextField } from '@pithyx/ui';
+import { Badge, Button, Dialog, FormSection, Switch, TextField } from '@pithyx/ui';
 import { TrustSteps } from '../../security/TrustSteps';
 import {
   tlsCall,
@@ -38,11 +38,7 @@ export function CertificatesPage({ app }: { app: PithyxApp }) {
   });
   return (
     <div className={styles.content}>
-      <header className={styles.pageHeader}>
-        <div>
-          <p className={styles.muted}>{t('certificates.intro')}</p>
-        </div>
-      </header>
+      <p className={styles.sectionIntro}>{t('certificates.intro')}</p>
       {settings.isError && <ErrorNotice error={describeProblem(settings.error)} />}
       {settings.data !== undefined && <Certificates app={app} settings={settings.data} />}
     </div>
@@ -53,11 +49,8 @@ function Certificates({ app, settings }: { app: PithyxApp; settings: TlsSettings
   const { t } = useTranslation('settings');
   return (
     <div className={styles.form}>
-      <section className={styles.card} aria-labelledby="certificates-connection">
-        <h3 id="certificates-connection" className={styles.sectionTitle}>
-          {t('certificates.connection.title')}
-        </h3>
-        <p className={styles.muted}>{t('certificates.connection.explain')}</p>
+      <FormSection title={t('certificates.connection.title')}>
+        <p className={styles.sectionIntro}>{t('certificates.connection.explain')}</p>
         {!settings.https && (
           <p className={styles.notice} role="note">
             {t('certificates.connection.plain')}
@@ -67,7 +60,7 @@ function Certificates({ app, settings }: { app: PithyxApp; settings: TlsSettings
           certificate={settings.active}
           source={t(`certificates.source.${settings.source}`)}
         />
-      </section>
+      </FormSection>
       <TrustSection settings={settings} />
       <AuthoritySection app={app} settings={settings} />
       <NamesSection app={app} settings={settings} />
@@ -120,10 +113,7 @@ function CertificateFacts({
 function TrustSection({ settings }: { settings: TlsSettings }) {
   const { t } = useTranslation('settings');
   return (
-    <section className={styles.card} aria-labelledby="certificates-trust">
-      <h3 id="certificates-trust" className={styles.sectionTitle}>
-        {t('certificates.trust.title')}
-      </h3>
+    <FormSection title={t('certificates.trust.title')}>
       <TrustSteps
         facts={
           <>
@@ -132,7 +122,7 @@ function TrustSection({ settings }: { settings: TlsSettings }) {
           </>
         }
       />
-    </section>
+    </FormSection>
   );
 }
 
@@ -142,11 +132,8 @@ function AuthoritySection({ app, settings }: { app: PithyxApp; settings: TlsSett
   const [creating, setCreating] = useState(false);
   const { authority } = settings;
   return (
-    <section className={styles.card} aria-labelledby="certificates-authority">
-      <h3 id="certificates-authority" className={styles.sectionTitle}>
-        {t('certificates.authority.title')}
-      </h3>
-      <p className={styles.muted}>{t('certificates.authority.explain')}</p>
+    <FormSection title={t('certificates.authority.title')}>
+      <p className={styles.sectionIntro}>{t('certificates.authority.explain')}</p>
       {authority.restricted ? (
         <dl className={styles.facts}>
           <div className={styles.fact}>
@@ -188,7 +175,7 @@ function AuthoritySection({ app, settings }: { app: PithyxApp; settings: TlsSett
           }}
         />
       )}
-    </section>
+    </FormSection>
   );
 }
 
@@ -285,11 +272,8 @@ function NamesSection({ app, settings }: { app: PithyxApp; settings: TlsSettings
     },
   });
   return (
-    <section className={styles.card} aria-labelledby="certificates-names">
-      <h3 id="certificates-names" className={styles.sectionTitle}>
-        {t('certificates.names.title')}
-      </h3>
-      <p className={styles.muted}>{t('certificates.names.explain')}</p>
+    <FormSection title={t('certificates.names.title')}>
+      <p className={styles.sectionIntro}>{t('certificates.names.explain')}</p>
       <p className={styles.mono}>{settings.boxNames.join(', ')}</p>
       <form
         className={styles.group}
@@ -319,7 +303,7 @@ function NamesSection({ app, settings }: { app: PithyxApp; settings: TlsSettings
         </div>
       </form>
       {save.isError && <ErrorNotice error={describeProblem(save.error)} />}
-    </section>
+    </FormSection>
   );
 }
 
@@ -331,11 +315,8 @@ function IssuedSection({ app, settings }: { app: PithyxApp; settings: TlsSetting
     mutationFn: (id: number) => tlsCall(app, 'internal.admin.tls.downloadIssued', { id }),
   });
   return (
-    <section className={styles.card} aria-labelledby="certificates-issued">
-      <h3 id="certificates-issued" className={styles.sectionTitle}>
-        {t('certificates.issued.title')}
-      </h3>
-      <p className={styles.muted}>{t('certificates.issued.explain')}</p>
+    <FormSection title={t('certificates.issued.title')}>
+      <p className={styles.sectionIntro}>{t('certificates.issued.explain')}</p>
       <div className={styles.buttons}>
         <Button
           variant="primary"
@@ -382,7 +363,7 @@ function IssuedSection({ app, settings }: { app: PithyxApp; settings: TlsSetting
           }}
         />
       )}
-    </section>
+    </FormSection>
   );
 }
 
@@ -625,11 +606,8 @@ function CustomSection({ app, settings }: { app: PithyxApp; settings: TlsSetting
     },
   });
   return (
-    <section className={styles.card} aria-labelledby="certificates-custom">
-      <h3 id="certificates-custom" className={styles.sectionTitle}>
-        {t('certificates.custom.title')}
-      </h3>
-      <p className={styles.muted}>{t('certificates.custom.explain')}</p>
+    <FormSection title={t('certificates.custom.title')}>
+      <p className={styles.sectionIntro}>{t('certificates.custom.explain')}</p>
       {settings.custom !== null && (
         <>
           <CertificateFacts certificate={settings.custom} />
@@ -682,6 +660,6 @@ function CustomSection({ app, settings }: { app: PithyxApp; settings: TlsSetting
       </form>
       {upload.isError && <ErrorNotice error={describeProblem(upload.error)} />}
       {remove.isError && <ErrorNotice error={describeProblem(remove.error)} />}
-    </section>
+    </FormSection>
   );
 }
