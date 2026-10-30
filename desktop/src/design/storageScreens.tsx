@@ -1,22 +1,32 @@
 import { SettingsApp } from '../apps/settings/SettingsApp';
-import { StorageApp } from '../apps/storage/StorageApp';
 import { CoreAppScene, type ScriptStep } from './CoreAppScene';
 import type { ScreenDefinition } from './screens';
 import type { ExtraAnswers } from './storageSample';
 import { samplePoolsExpanding, samplePoolsWithPreview } from './storageSample';
 
+// Storage is a group of Settings (D402); the datasets open from its advanced page.
+const storagePages = {
+  pools: 'pools',
+  disks: 'disks',
+  maintenance: 'maintenance',
+  advanced: 'storageAdvanced',
+  datasets: 'storageAdvanced',
+} as const;
+
 function storage(
-  section: string,
+  section: keyof typeof storagePages,
   script: ScriptStep[] = [],
   answers: ExtraAnswers = {},
 ): ScreenDefinition['render'] {
+  const opening: ScriptStep[] =
+    section === 'datasets' ? [{ press: 'storage:advanced.datasets.button' }] : [];
   return (context) => (
     <CoreAppScene
       context={context}
-      app="storage"
-      Component={StorageApp}
-      launch={{ section }}
-      script={script}
+      app="settings"
+      Component={SettingsApp}
+      launch={{ page: storagePages[section] }}
+      script={[...opening, ...script]}
       answers={answers}
     />
   );

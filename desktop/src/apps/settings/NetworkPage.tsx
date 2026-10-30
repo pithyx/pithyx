@@ -23,7 +23,6 @@ import {
 import { describeProblem } from '../storage/shared';
 import { PageFooter } from './footer';
 import { ApplyDialog, GlobalDialog, InterfaceDialog, type Editing } from './NetworkDialogs';
-import { ReverseProxyPage } from './ReverseProxyPage';
 import styles from './Settings.module.css';
 
 const KIND_ORDER = { ethernet: 0, bond: 1, vlan: 2 } as const;
@@ -86,7 +85,6 @@ export function NetworkPage({ app }: { app: PithyxApp }) {
             <TabList aria-label={t('pages.network.title')}>
               <Tab id="interfaces">{t('network.tabs.interfaces')}</Tab>
               <Tab id="names">{t('network.tabs.names')}</Tab>
-              <Tab id="proxy">{t('network.tabs.proxy')}</Tab>
             </TabList>
             <TabPanel id="interfaces" className={styles.tabPanel}>
               <div className={styles.buttons}>
@@ -126,9 +124,6 @@ export function NetworkPage({ app }: { app: PithyxApp }) {
                   setEditing({ kind: 'global' });
                 }}
               />
-            </TabPanel>
-            <TabPanel id="proxy" className={styles.tabPanel}>
-              <ReverseProxyPage app={app} />
             </TabPanel>
           </Tabs>
           <PageFooter>

@@ -16,14 +16,14 @@ Pithyx 1.0 is marked beta: we consider it stable, but it has not yet proven itse
 ## What you get
 
 - **A web desktop.** Windows, a taskbar, desktop shortcuts and notes, in a browser on a PC, tablet or phone. See [The desktop](/docs/user/desktop/).
-- **Storage with ZFS.** You build pools from your disks in the Storage app and create shared folders on them. New pools use compression and can be encrypted with a key. See [Storage](/docs/admin/storage/).
+- **Storage with ZFS.** You build pools from your disks in Settings and create shared folders on them. New pools use compression and can be encrypted with a key. See [Storage](/docs/admin/storage/).
 - **File sharing.** Shared folders are available over SMB, SFTP, WebDAV and FTP. SMB is on by default; the others you switch on in Settings. See [Access files from other devices](/docs/user/file-access/).
 - **Users and groups.** Every user is a real account on the box. Rights are given to users and groups; a user gets the union of all of them. Administrators can do everything. See [Users and groups](/docs/admin/users-and-groups/).
 - **Apps.** Apps open in windows on the desktop. An app is a frontend with an optional backend in containers. Administrators install apps from a file or from a catalog in the Store; the official and the community catalog are on by default. See [Using apps](/docs/user/apps/).
 - **Backup of the configuration.** Settings, users and shared folder definitions can be saved to an encrypted file and restored after a reinstall. See [Backup and restore](/docs/admin/backup/).
 - **Network settings in the browser**, including bonds and VLANs, with a confirmation timer that rolls back a change that cuts you off. See [Network](/docs/admin/network/).
 
-The core apps are Files, Viewer, Storage, Settings, Resource Monitor, Log Center, About Pithyx and the Store.
+The core apps are Files, Viewer, Settings, Resource Monitor, Log Center, About Pithyx and the Store.
 
 ## How it is built
 

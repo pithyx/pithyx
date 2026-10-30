@@ -32,7 +32,6 @@ export function DisksSection({ app }: { app: PithyxApp }) {
     <div className={styles.storage}>
       <header className={styles.pageHeader}>
         <div>
-          <h2 className={styles.pageTitle}>{t('nav.disks')}</h2>
           <p className={styles.muted}>{t('disks.intro')}</p>
         </div>
       </header>

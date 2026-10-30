@@ -104,7 +104,7 @@ export interface InternalMethods {
     result: StorageScheduleList;
   };
   'internal.admin.storage.schedule': { params: StorageScheduleUpdate; result: StorageScheduleList };
-  'internal.admin.openApp': { params: { app: AdminApp }; result: boolean };
+  'internal.admin.openApp': { params: { app: AdminApp; page?: string }; result: boolean };
   'internal.admin.shares.list': { params: Record<string, never>; result: ShareDetails[] };
   'internal.admin.shares.grants': { params: { shareId: number }; result: ShareGrants };
   'internal.admin.shares.setGrants': {
@@ -131,8 +131,8 @@ export interface InternalMethods {
   };
 }
 
-/** Administrator apps another core app may open, for example Settings opening Storage. */
-const adminApps = [coreAppIds.storage, coreAppIds.settings, coreAppIds.store] as const;
+/** Administrator apps another core app may open, for example Settings opening the Store. */
+const adminApps = [coreAppIds.settings, coreAppIds.store] as const;
 export type AdminApp = (typeof adminApps)[number];
 
 /** Sent to the app when pools or disks changed; the app reads them again. */
@@ -552,8 +552,14 @@ export function adminStorageHost(emit: (event: string, data?: unknown) => void):
       handle: () => daemon(async () => unwrap(await api.GET('/api/storage/schedules'))),
     },
     'internal.admin.openApp': {
-      validate: (params) => isRecord(params) && adminApps.some((known) => known === params.app),
-      handle: (params) => Promise.resolve(openApp((params as { app: AdminApp }).app)),
+      validate: (params) =>
+        isRecord(params) &&
+        adminApps.some((known) => known === params.app) &&
+        (params.page === undefined || typeof params.page === 'string'),
+      handle: (params) => {
+        const { app, page } = params as { app: AdminApp; page?: string };
+        return Promise.resolve(openApp(app, { args: page === undefined ? null : { page } }));
+      },
     },
     'internal.admin.shares.list': {
       validate: isRecord,

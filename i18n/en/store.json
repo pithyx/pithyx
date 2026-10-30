@@ -192,7 +192,7 @@
     "accessSuggested": "Suggested for this app: administrators only, because it may see every user, runs as root in a container or asks for special rights.",
     "pool": "Pool for app data",
     "poolHint": "Every app keeps its data on this pool. It cannot change while an app is installed.",
-    "noPools": "There is no pool that can hold apps. Create one in Storage first.",
+    "noPools": "There is no pool that can hold apps. Create one in Settings > Storage first.",
     "loadingPools": "Loading the pools",
     "install": "Install",
     "update": "Update",

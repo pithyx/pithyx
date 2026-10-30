@@ -32,12 +32,12 @@
       "name": "Name",
       "nameHint": "Letters, digits, spaces, dots, dashes and underscores.",
       "pool": "Pool",
-      "noPools": "No pool is ready for shared folders yet. Create a pool in Storage first.",
+      "noPools": "No pool is ready for shared folders yet. Create a pool under Storage first.",
       "description": "Description (optional)",
       "preview": "Show commands",
       "dataset": "The shared folder becomes the dataset {dataset}.",
       "run": "Create shared folder",
-      "openStorage": "Create a pool in Storage…"
+      "openStorage": "Go to the pools…"
     },
     "editDialog": {
       "title": "Edit {name}",
@@ -74,7 +74,7 @@
       "title": "Delete {name}",
       "choice": "What happens with the data?",
       "keep": "Keep the data",
-      "keepDataset": "The shared folder goes away. The dataset {dataset} and its files stay and remain in Storage.",
+      "keepDataset": "The shared folder goes away. The dataset {dataset} and its files stay and remain under Storage.",
       "keepFolder": "The shared folder goes away. The files stay in the folder {path}.",
       "destroy": "Delete the data for good",
       "destroyHint": "The dataset, all its files and every snapshot are deleted. This cannot be undone.",
@@ -196,6 +196,26 @@
       "title": "Notifications",
       "description": "The email server and the box's channels for its alerts",
       "keywords": "notifications email e-mail smtp server webhook ntfy gotify push alerts channels"
+    },
+    "pools": {
+      "title": "Pools",
+      "description": "Pools on your disks, their space and health, and creating, expanding, locking and repairing them",
+      "keywords": "storage pool zfs mirror raid raidz disk space capacity encryption key lock unlock vault usb stick repair replace expand scrub"
+    },
+    "disks": {
+      "title": "Disks",
+      "description": "Every disk with its health and whether a new pool may use it",
+      "keywords": "storage disk drive hdd ssd nvme smart health temperature serial"
+    },
+    "maintenance": {
+      "title": "Health and maintenance",
+      "description": "Problems found, scrub schedules and disk self-tests",
+      "keywords": "storage health alerts scrub schedule smart self-test maintenance"
+    },
+    "storageAdvanced": {
+      "title": "Advanced storage",
+      "description": "Datasets and volumes, exporting and importing a pool",
+      "keywords": "storage advanced dataset volume quota compression export import move pool"
     }
   },
   "info": {
@@ -1093,6 +1113,9 @@
   },
   "groups": {
     "system": "System",
+    "storage": "Storage",
+    "network": "Network",
+    "services": "Services",
     "access": "Access"
   }
 }

@@ -58,9 +58,9 @@ The installer itself does not restore a backup or import pools. The network sett
 
 ## Importing the pools again
 
-A fresh system does not know your pools. Import them in the Storage app:
+A fresh system does not know your pools. Import them under Settings > **Advanced storage**:
 
-1. Open **Storage** and go to the pools.
+1. Open Settings > **Advanced storage**.
 2. Click **Import a pool…**.
 3. Click **Scan disks**. The scan reads the labels of every disk and may wake a sleeping disk. It runs only when you start it.
 4. Start with **Import read-only**: nothing is mounted and nothing changes. Check the datasets on the pool's card.

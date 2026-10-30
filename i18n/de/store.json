@@ -192,7 +192,7 @@
     "accessSuggested": "Für diese App empfohlen: nur Administratoren, weil sie alle Nutzer sehen kann, in einem Container als root läuft oder nach besonderen Rechten fragt.",
     "pool": "Pool für App-Daten",
     "poolHint": "Alle Apps speichern ihre Daten auf diesem Pool. Er lässt sich nicht ändern, solange eine App installiert ist.",
-    "noPools": "Es gibt keinen Pool, der Apps aufnehmen kann. Lege zuerst einen in Speicher an.",
+    "noPools": "Es gibt keinen Pool, der Apps aufnehmen kann. Lege zuerst einen unter Einstellungen > Speicher an.",
     "loadingPools": "Pools werden geladen",
     "install": "Installieren",
     "update": "Aktualisieren",

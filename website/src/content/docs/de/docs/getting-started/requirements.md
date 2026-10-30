@@ -40,7 +40,7 @@ Die Referenzmaschine ist ein Intel N100 oder N305 mit 8 GB Arbeitsspeicher. Der 
 - Eine Festplatte, auf der schon Daten liegen, wird mit einer Warnung angezeigt. Die Installation löscht sie.
 - Mit einer Festplatte wird das System trotzdem als Spiegel mit einem Mitglied gebaut. Die zweite Festplatte später hinzuzufügen ist in der Oberfläche noch nicht möglich.
 
-**Daten-Pools.** Nach der Installation legst du Pools in der Speicher-App an, auf anderen Festplatten als der Systemplatte.
+**Daten-Pools.** Nach der Installation legst du Pools unter Einstellungen > Pools an, auf anderen Festplatten als der Systemplatte.
 
 | Aufbau          | Mindestanzahl Festplatten |
 | --------------- | ------------------------- |

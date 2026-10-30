@@ -69,7 +69,6 @@ export function PoolsSection({ app }: { app: PithyxApp }) {
     <div className={styles.storage}>
       <header className={styles.pageHeader}>
         <div>
-          <h2 className={styles.pageTitle}>{t('nav.pools')}</h2>
           <p className={styles.muted}>{t('intro')}</p>
         </div>
         <div className={styles.buttons}>

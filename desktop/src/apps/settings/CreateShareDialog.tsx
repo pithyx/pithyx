@@ -107,7 +107,10 @@ export function CreateShareDialog({ app, onClose }: { app: PithyxApp; onClose: (
             <Button
               size="sm"
               onPress={() => {
-                void internalCall(app, 'internal.admin.openApp', { app: coreAppIds.storage });
+                void internalCall(app, 'internal.admin.openApp', {
+                  app: coreAppIds.settings,
+                  page: 'pools',
+                });
               }}
             >
               {t('shares.createDialog.openStorage')}

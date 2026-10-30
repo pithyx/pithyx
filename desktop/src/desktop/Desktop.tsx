@@ -531,7 +531,12 @@ export function Desktop({ user, entering }: { user: User; entering: boolean }) {
                     <BoxStatus
                       locale={locale}
                       onOpen={(app) => {
-                        open(app === 'storage' ? coreAppIds.storage : coreAppIds.monitor);
+                        closeStart(false);
+                        if (app === 'storage') {
+                          openApp(coreAppIds.settings, { args: { page: 'pools' } });
+                        } else {
+                          openApp(coreAppIds.monitor);
+                        }
                       }}
                     />
                   ),

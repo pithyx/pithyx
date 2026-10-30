@@ -75,7 +75,7 @@ export function OverviewPage({
           action: {
             label: t('overview.attention.openStorage'),
             onPress: () => {
-              void internalCall(app, 'internal.admin.openApp', { app: coreAppIds.storage });
+              onOpen(alert.key.startsWith('disk.') ? 'disks' : 'pools');
             },
           },
         };

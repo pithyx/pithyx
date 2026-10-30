@@ -67,7 +67,7 @@ public sealed class DesktopItemApiTests : IDisposable
 
         var items = await ListAsync();
 
-        Assert.Equal(["org.pithyx.files", "org.pithyx.storage", "org.pithyx.settings", "org.pithyx.about"], items.Select(item => item.GetProperty("app").GetString()));
+        Assert.Equal(["org.pithyx.files", "org.pithyx.settings", "org.pithyx.monitor", "org.pithyx.about"], items.Select(item => item.GetProperty("app").GetString()));
         Assert.All(items, item => Assert.Equal("shortcut", item.GetProperty("kind").GetString()));
         Assert.Equal([0, 1, 2, 3], items.Select(item => item.GetProperty("row").GetInt32()));
         Assert.All(items, item => Assert.Equal(0, item.GetProperty("column").GetInt32()));

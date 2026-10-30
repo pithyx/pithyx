@@ -7,7 +7,7 @@ sidebar:
   order: 3
 ---
 
-The Storage app (administrators only) creates and manages the ZFS pools that hold all data on the box. Pithyx never uses the system disk for a pool, shows for every disk whether it may be used, and asks you to type the disk's serial number before it wipes a disk that holds data. Changes run in the background, and **Show commands** lists the exact commands before anything runs.
+Settings (administrators only) has the group **Storage** with the pages **Pools**, **Disks**, **Health and maintenance** and **Advanced storage**. It creates and manages the ZFS pools that hold all data on the box. Pithyx never uses the system disk for a pool, shows for every disk whether it may be used, and asks you to type the disk's serial number before it wipes a disk that holds data. Changes run in the background, and **Show commands** lists the exact commands before anything runs.
 
 ## Disk verdicts
 
@@ -39,7 +39,7 @@ If a disk changed after the plan was shown, nothing is changed and you get [`sto
 
 _Step 2 of the wizard compares the layouts for the chosen disks and marks the recommended one._
 
-Open Storage and choose **Create pool…**. The wizard has four steps: **Disks**, **Layout**, **Encryption** and **Name and check**, and a fifth, **Key**, for an encrypted pool (see [Encryption](#encryption)). Disks are addressed by their `/dev/disk/by-id` names, so a pool survives a changed port or cable.
+Open Settings > **Pools** and choose **Create pool…**. The wizard has four steps: **Disks**, **Layout**, **Encryption** and **Name and check**, and a fifth, **Key**, for an encrypted pool (see [Encryption](#encryption)). Disks are addressed by their `/dev/disk/by-id` names, so a pool survives a changed port or cable.
 
 | Layout                      | Minimum disks | Notes                            |
 | --------------------------- | ------------- | -------------------------------- |
@@ -73,7 +73,7 @@ Under **Advanced**, **Datasets** > **Show datasets** lists datasets with Name, U
 
 Datasets of homes, apps and the system cannot be renamed or deleted ([`storage.dataset.managed`](/docs/reference/errors/#storage.dataset.managed)), and a dataset used by a shared folder must lose that shared folder first. Pithyx creates no volumes (block devices) yet: nothing in this version uses one, since iSCSI and virtual machines are not built. Volumes that exist on a pool show in the table and under Advanced, where you can delete them.
 
-The Storage app has no snapshot section. Snapshots reach the interface as restore points: one switch per shared folder in Settings > **Shared folders**, which takes a snapshot of the folder's dataset once a day and keeps the newest 7, and **Previous versions** in Files to get older versions back. See [Shared folders](/docs/admin/shared-folders/). Manual snapshots, holds, rolling back a dataset and other schedules are not in the interface.
+Storage has no snapshot page. Snapshots reach the interface as restore points: one switch per shared folder in Settings > **Shared folders**, which takes a snapshot of the folder's dataset once a day and keeps the newest 7, and **Previous versions** in Files to get older versions back. See [Shared folders](/docs/admin/shared-folders/). Manual snapshots, holds, rolling back a dataset and other schedules are not in the interface.
 
 ## Importing and exporting
 
@@ -90,7 +90,7 @@ A pool last used by another system shows "Used by another system". It needs **Im
 **Expand with a disk…** widens a RAID-Z group by one disk. The pool stays usable, the step is irreversible and asks for the pool name, one expansion runs at a time ([`storage.pool.expanding`](/docs/reference/errors/#storage.pool.expanding)), and data already on the pool keeps its old ratio of data to parity until it is written again.
 
 :::note
-The Storage app has no button to turn a single disk into a mirror later.
+Storage has no button to turn a single disk into a mirror later.
 :::
 
 ## Encryption

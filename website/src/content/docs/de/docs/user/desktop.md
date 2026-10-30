@@ -65,7 +65,7 @@ Standardmäßig liegt die Taskleiste am unteren Bildschirmrand. Von links nach r
 - die Schaltfläche des Pithyx-Menüs,
 - je offenem Fenster eine Schaltfläche mit Icon und Titel; die aktive ist in der Akzentfarbe unterstrichen, die anderen mit einer dünnen Linie,
 - den App-Umschalter mit der Anzahl der offenen Apps,
-- für Administratoren der Zustand der Box: der Pool, der am meisten Aufmerksamkeit braucht, die Prozessorlast und der Netzwerkverkehr; jedes öffnet Speicher oder den Ressourcenmonitor (auf Bildschirmen ab 1024 Pixeln Breite),
+- für Administratoren der Zustand der Box: der Pool, der am meisten Aufmerksamkeit braucht, die Prozessorlast und der Netzwerkverkehr; jedes öffnet Einstellungen > Pools oder den Ressourcenmonitor (auf Bildschirmen ab 1024 Pixeln Breite),
 - die Schaltfläche für Übertragungen, solange Dateien hoch- oder heruntergeladen werden,
 - die Schaltfläche für laufende Aufgaben,
 - die Benachrichtigungsglocke mit einem Zähler für ungelesene Benachrichtigungen,

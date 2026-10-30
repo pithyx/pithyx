@@ -7,24 +7,26 @@ import type { SdkAppProps } from '../sdk/CoreSdkApp';
 import { onInternal, SHARES_CHANGED, STORAGE_CHANGED } from '../sdk/internal';
 import { FooterSlot } from './footer';
 import { OverviewPage } from './OverviewPage';
-import { SETTINGS_PAGES, type SettingsPageId } from './pages';
+import { SETTINGS_GROUPS, SETTINGS_PAGES, type SettingsPageId } from './pages';
 import styles from './Settings.module.css';
 import { sharesKey } from './shares';
+import { storageKey } from '../storage/shared';
 
 type Place = SettingsPageId | 'overview';
 
 /** The page named by launch arguments such as `{ page: 'users' }`, if any. */
 function pageOf(args: unknown): SettingsPageId | null {
   const asked = (args as { page?: unknown } | null)?.page;
-  // The reverse proxy is a tab of Network and the groups one of Users since the design pass (#325).
-  const page = asked === 'reverseProxy' ? 'network' : asked === 'groups' ? 'users' : asked;
+  // The groups are a tab of Users since the design pass (#325).
+  const page = asked === 'groups' ? 'users' : asked;
   return SETTINGS_PAGES.find((entry) => entry.id === page)?.id ?? null;
 }
 
 /**
- * Settings (D394): one frame with the grouped navigation on the left (Overview; System; Access) and the page on the
- * right. The overview shows the box, what needs attention and every area as a tile. Personal settings and Storage are
- * apps of their own.
+ * Settings (D394, D402): one frame with the grouped navigation on the left (Overview, then System, Storage, Network,
+ * Services and Access) and the page on the right; everything that sets up or changes the box lives here. The overview
+ * shows the box, what needs attention and every area as a tile. Personal settings, the Log Center and the Resource
+ * Monitor are apps of their own.
  */
 export function SettingsApp({ app }: SdkAppProps) {
   const { t } = useTranslation('settings');
@@ -38,14 +40,17 @@ export function SettingsApp({ app }: SdkAppProps) {
   const page = SETTINGS_PAGES.find((entry) => entry.id === current);
   const [footer, setFooter] = useState<HTMLDivElement | null>(null);
 
-  // The desktop forwards changes of the shares and the pools (used space); this syncs every cached answer with them.
+  // The desktop forwards changes of the shares, the pools and the disks; this syncs every cached answer with them.
   useEffect(() => {
     const refresh = () => {
       void queryClient.invalidateQueries({ queryKey: sharesKey });
     };
     const stops = [
       onInternal(app, SHARES_CHANGED, refresh),
-      onInternal(app, STORAGE_CHANGED, refresh),
+      onInternal(app, STORAGE_CHANGED, () => {
+        refresh();
+        void queryClient.invalidateQueries({ queryKey: storageKey });
+      }),
     ];
     return () => {
       stops.forEach((stop) => {
@@ -77,13 +82,7 @@ export function SettingsApp({ app }: SdkAppProps) {
       id,
       label: t(`pages.${id}.title`),
       icon: <Icon size={18} stroke={1.75} aria-hidden />,
-      keywords: [
-        t(`pages.${id}.description`),
-        t(`pages.${id}.keywords`),
-        ...(id === 'network'
-          ? [t('pages.reverseProxy.title'), t('pages.reverseProxy.keywords')]
-          : []),
-      ],
+      keywords: [t(`pages.${id}.description`), t(`pages.${id}.keywords`)],
     };
   };
   const groups: NavGroup[] = [
@@ -97,7 +96,7 @@ export function SettingsApp({ app }: SdkAppProps) {
         },
       ],
     },
-    ...(['system', 'access'] as const).map((group) => ({
+    ...SETTINGS_GROUPS.map((group) => ({
       id: group,
       label: t(`groups.${group}`),
       items: SETTINGS_PAGES.filter((entry) => entry.group === group).map((entry) => item(entry.id)),

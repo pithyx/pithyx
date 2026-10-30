@@ -7,7 +7,7 @@ sidebar:
   order: 3
 ---
 
-Die App Speicher (nur für Administratoren) legt die ZFS-Pools an, die alle Daten der Box enthalten, und verwaltet sie. Pithyx nutzt die Systemplatte nie für einen Pool, zeigt für jede Platte, ob sie verwendet werden darf, und verlangt die Eingabe der Seriennummer, bevor eine Platte mit Daten gelöscht wird. Änderungen laufen im Hintergrund, und **Befehle anzeigen** listet die genauen Befehle auf, bevor etwas ausgeführt wird.
+Die Einstellungen (nur für Administratoren) haben die Gruppe **Speicher** mit den Seiten **Pools**, **Platten**, **Zustand und Wartung** und **Speicher für Fortgeschrittene**. Dort legst du die ZFS-Pools an, die alle Daten der Box enthalten, und verwaltet sie. Pithyx nutzt die Systemplatte nie für einen Pool, zeigt für jede Platte, ob sie verwendet werden darf, und verlangt die Eingabe der Seriennummer, bevor eine Platte mit Daten gelöscht wird. Änderungen laufen im Hintergrund, und **Befehle anzeigen** listet die genauen Befehle auf, bevor etwas ausgeführt wird.
 
 ## Bewertung der Platten
 
@@ -39,7 +39,7 @@ Wenn sich eine Platte geändert hat, nachdem der Plan angezeigt wurde, wird nich
 
 _Schritt 2 des Assistenten vergleicht die Aufbauten für die gewählten Platten und markiert den empfohlenen._
 
-Öffne Speicher und wähle **Pool anlegen…**. Der Assistent hat vier Schritte: **Platten**, **Aufbau**, **Verschlüsselung** und **Name und Prüfung**, und für einen verschlüsselten Pool einen fünften, **Schlüssel** (siehe [Verschlüsselung](#verschlüsselung)). Platten werden über ihre Namen unter `/dev/disk/by-id` angesprochen, sodass ein Pool einen geänderten Anschluss oder ein anderes Kabel übersteht.
+Öffne Einstellungen > **Pools** und wähle **Pool anlegen…**. Der Assistent hat vier Schritte: **Platten**, **Aufbau**, **Verschlüsselung** und **Name und Prüfung**, und für einen verschlüsselten Pool einen fünften, **Schlüssel** (siehe [Verschlüsselung](#verschlüsselung)). Platten werden über ihre Namen unter `/dev/disk/by-id` angesprochen, sodass ein Pool einen geänderten Anschluss oder ein anderes Kabel übersteht.
 
 | Aufbau                            | Mindestanzahl Platten | Hinweise                                    |
 | --------------------------------- | --------------------- | ------------------------------------------- |
@@ -73,7 +73,7 @@ Unter **Erweitert** listet **Datasets** > **Datasets anzeigen** die Datasets mit
 
 Datasets für Home-Ordner, Apps und das System lassen sich weder umbenennen noch löschen ([`storage.dataset.managed`](/de/docs/reference/errors/#storage.dataset.managed)), und ein Dataset, das ein freigegebener Ordner nutzt, muss zuerst diesen freigegebenen Ordner verlieren. Pithyx legt noch keine Volumes (Blockgeräte) an: In dieser Version nutzt keins, denn iSCSI und virtuelle Maschinen gibt es noch nicht. Vorhandene Volumes auf einem Pool erscheinen in der Tabelle und unter Erweitert, wo du sie löschen kannst.
 
-Die Speicher-App hat keinen Bereich für Snapshots. Snapshots erscheinen in der Oberfläche als Wiederherstellungspunkte: ein Schalter pro freigegebenem Ordner unter Einstellungen > **Freigegebene Ordner**, der einmal am Tag einen Snapshot des Datasets des Ordners macht und die neuesten 7 behält, und **Frühere Versionen** in Dateien, um ältere Versionen zurückzuholen. Siehe [Freigegebene Ordner](/de/docs/admin/shared-folders/). Snapshots von Hand, Festhalten, das Zurücksetzen eines Datasets und andere Zeitpläne gibt es in der Oberfläche nicht.
+Speicher hat keine Seite für Snapshots. Snapshots erscheinen in der Oberfläche als Wiederherstellungspunkte: ein Schalter pro freigegebenem Ordner unter Einstellungen > **Freigegebene Ordner**, der einmal am Tag einen Snapshot des Datasets des Ordners macht und die neuesten 7 behält, und **Frühere Versionen** in Dateien, um ältere Versionen zurückzuholen. Siehe [Freigegebene Ordner](/de/docs/admin/shared-folders/). Snapshots von Hand, Festhalten, das Zurücksetzen eines Datasets und andere Zeitpläne gibt es in der Oberfläche nicht.
 
 ## Importieren und exportieren
 
@@ -90,7 +90,7 @@ Ein Pool, der zuletzt von einem anderen System benutzt wurde, zeigt „Von einem
 **Um eine Platte erweitern…** erweitert eine RAID-Z-Gruppe um eine Platte. Der Pool bleibt nutzbar, der Schritt ist nicht umkehrbar und verlangt den Pool-Namen, es läuft immer nur eine Erweiterung ([`storage.pool.expanding`](/de/docs/reference/errors/#storage.pool.expanding)), und Daten, die schon auf dem Pool liegen, behalten ihr altes Verhältnis von Daten zu Parität, bis sie neu geschrieben werden.
 
 :::note
-Die App Speicher hat keine Schaltfläche, um eine einzelne Platte später in einen Spiegel zu verwandeln.
+Speicher hat keine Schaltfläche, um eine einzelne Platte später in einen Spiegel zu verwandeln.
 :::
 
 ## Verschlüsselung

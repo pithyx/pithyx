@@ -30,8 +30,11 @@ public sealed class DesktopItemService(SqliteConnectionFactory connections, Time
     /// <summary>The shortcuts every new user starts with, one below the other in the first column.</summary>
     public static readonly IReadOnlyList<string> DefaultShortcuts = [CoreApps.Files, CoreApps.About];
 
-    /// <summary>New administrators also get Storage and Settings, which only administrators can open.</summary>
-    public static readonly IReadOnlyList<string> DefaultAdminShortcuts = [CoreApps.Files, CoreApps.Storage, CoreApps.Settings, CoreApps.About];
+    /// <summary>
+    /// New administrators also get Settings and the Resource Monitor, which only administrators can open. Storage is a
+    /// group of Settings since D402; the desktop hides shortcuts to it that were placed before.
+    /// </summary>
+    public static readonly IReadOnlyList<string> DefaultAdminShortcuts = [CoreApps.Files, CoreApps.Settings, CoreApps.Monitor, CoreApps.About];
 
     private const string SelectColumns =
         """

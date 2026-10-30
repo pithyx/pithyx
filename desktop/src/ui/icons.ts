@@ -114,3 +114,6 @@ export { default as IconPlugConnected } from '@tabler/icons-react/dist/esm/icons
 export { default as IconCircleCheck } from '@tabler/icons-react/dist/esm/icons/IconCircleCheck.mjs';
 export { default as IconCpu } from '@tabler/icons-react/dist/esm/icons/IconCpu.mjs';
 export { default as IconLayoutSidebarRight } from '@tabler/icons-react/dist/esm/icons/IconLayoutSidebarRight.mjs';
+export { default as IconAdjustmentsHorizontal } from '@tabler/icons-react/dist/esm/icons/IconAdjustmentsHorizontal.mjs';
+export { default as IconServer } from '@tabler/icons-react/dist/esm/icons/IconServer.mjs';
+export { default as IconTool } from '@tabler/icons-react/dist/esm/icons/IconTool.mjs';

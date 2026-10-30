@@ -12,6 +12,7 @@ public static class CoreApps
 {
     public const string Files = "org.pithyx.files";
     public const string Viewer = "org.pithyx.viewer";
+    /// <summary>Storage is a group of Settings since D402; the id stays for what was stored under it (logs, grants).</summary>
     public const string Storage = "org.pithyx.storage";
     public const string Settings = "org.pithyx.settings";
     public const string Monitor = "org.pithyx.monitor";

@@ -40,7 +40,7 @@ The reference machine is an Intel N100 or N305 with 8 GB of memory. The daemon i
 - A disk that already holds data is shown with a warning. Installing erases it.
 - With one disk the system is still built as a mirror with one member. Adding the second disk later is not possible in the interface yet.
 
-**Data pools.** After the installation you create pools in the Storage app, on disks other than the system disk.
+**Data pools.** After the installation you create pools in Settings > Pools, on disks other than the system disk.
 
 | Layout       | Minimum disks      |
 | ------------ | ------------------ |

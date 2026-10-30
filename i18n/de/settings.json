@@ -32,12 +32,12 @@
       "name": "Name",
       "nameHint": "Buchstaben, Ziffern, Leerzeichen, Punkte, Bindestriche und Unterstriche.",
       "pool": "Pool",
-      "noPools": "Noch kein Pool ist für freigegebene Ordner bereit. Lege zuerst in Speicher einen Pool an.",
+      "noPools": "Noch kein Pool ist für freigegebene Ordner bereit. Lege zuerst unter Speicher einen Pool an.",
       "description": "Beschreibung (optional)",
       "preview": "Befehle anzeigen",
       "dataset": "Der freigegebene Ordner wird zum Dataset {dataset}.",
       "run": "Freigegebenen Ordner anlegen",
-      "openStorage": "Pool in Speicher anlegen…"
+      "openStorage": "Zu den Pools…"
     },
     "editDialog": {
       "title": "{name} bearbeiten",
@@ -74,7 +74,7 @@
       "title": "{name} löschen",
       "choice": "Was passiert mit den Daten?",
       "keep": "Daten behalten",
-      "keepDataset": "Der freigegebene Ordner verschwindet. Das Dataset {dataset} und seine Dateien bleiben und sind weiter in Speicher zu sehen.",
+      "keepDataset": "Der freigegebene Ordner verschwindet. Das Dataset {dataset} und seine Dateien bleiben und sind weiter unter Speicher zu sehen.",
       "keepFolder": "Der freigegebene Ordner verschwindet. Die Dateien bleiben im Ordner {path}.",
       "destroy": "Daten endgültig löschen",
       "destroyHint": "Das Dataset, alle seine Dateien und jeder Snapshot werden gelöscht. Das lässt sich nicht rückgängig machen.",
@@ -196,6 +196,26 @@
       "title": "Benachrichtigungen",
       "description": "Der E-Mail-Server und die Kanäle der Box für ihre Warnungen",
       "keywords": "benachrichtigungen e-mail email smtp server webhook ntfy gotify push warnungen kanäle"
+    },
+    "pools": {
+      "title": "Pools",
+      "description": "Pools auf deinen Platten, ihr Platz und Zustand, und sie anlegen, erweitern, sperren und reparieren",
+      "keywords": "speicher pool zfs spiegel raid raidz platte festplatte platz kapazität verschlüsselung schlüssel sperren entsperren tresor usb stick reparieren ersetzen erweitern scrub"
+    },
+    "disks": {
+      "title": "Platten",
+      "description": "Jede Platte mit ihrem Zustand und ob ein neuer Pool sie nutzen darf",
+      "keywords": "speicher platte festplatte hdd ssd nvme smart zustand temperatur seriennummer"
+    },
+    "maintenance": {
+      "title": "Zustand und Wartung",
+      "description": "Gefundene Probleme, Scrub-Zeitpläne und Selbsttests der Platten",
+      "keywords": "speicher zustand warnungen scrub zeitplan smart selbsttest wartung"
+    },
+    "storageAdvanced": {
+      "title": "Speicher für Fortgeschrittene",
+      "description": "Datasets und Volumes, einen Pool exportieren und importieren",
+      "keywords": "speicher erweitert dataset volume kontingent komprimierung exportieren importieren umziehen pool"
     }
   },
   "info": {
@@ -1093,6 +1113,9 @@
   },
   "groups": {
     "system": "System",
+    "storage": "Speicher",
+    "network": "Netzwerk",
+    "services": "Dienste",
     "access": "Zugriff"
   }
 }

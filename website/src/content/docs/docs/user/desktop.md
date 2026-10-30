@@ -65,7 +65,7 @@ By default the taskbar is at the bottom of the screen. From the left it has:
 - the Pithyx menu button,
 - one button per open window with its icon and title; the active one is underlined in the accent color, the others with a thin line,
 - the app switcher, with the number of open apps,
-- for administrators, the box's state: the pool that needs the most attention, the processor load and the network traffic; each opens Storage or the Resource Monitor (on screens of 1024 pixels and wider),
+- for administrators, the box's state: the pool that needs the most attention, the processor load and the network traffic; each opens Settings > Pools or the Resource Monitor (on screens of 1024 pixels and wider),
 - the transfers button, while files are being uploaded or downloaded,
 - the running tasks button,
 - the notifications bell, with a badge for unread notifications,

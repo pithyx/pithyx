@@ -37,9 +37,9 @@ If you lose the key and the password, the system has to be reinstalled. See [Rec
 
 _Step 3 of the pool wizard: encryption can only be chosen when the pool is created._
 
-All of your data lives on ZFS pools, and the box starts without one. Create the first pool in the Storage app, which only administrators can open:
+All of your data lives on ZFS pools, and the box starts without one. Create the first pool in Settings, which only administrators can open:
 
-1. Open the Pithyx menu and start **Storage**.
+1. Open the Pithyx menu, start **Settings** and choose **Pools** under **Storage**.
 2. Click **Create pool…**.
 3. Pick the disks, a layout, whether to encrypt, and a name. The steps are **Disks**, **Layout**, **Encryption**, **Name and check**, and **Key** for an encrypted pool.
 4. Click **Create pool**.

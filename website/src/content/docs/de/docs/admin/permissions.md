@@ -32,7 +32,7 @@ Anmeldungen über Protokolle verwenden nur das Passwort; die Zwei-Faktor-Anmeldu
 
 ## Zugriff auf Apps
 
-Dateien und Betrachter werden per Recht vergeben (neue Benutzer bekommen beide), Info steht allen offen, und Speicher, Einstellungen, Ressourcenmonitor, Protokoll-Center und Store sind nur für Administratoren. Bei Apps aus dem Store ist **Wer die App nutzen darf** entweder **Alle**, **Nur Administratoren** oder **Ausgewählte Gruppen und Nutzer**; Administratoren dürfen jede App nutzen. Pro App können Administratoren Berechtigungen ausschalten, um sie der App zu nehmen. Mehr dazu unter [Apps und der Store](/de/docs/admin/apps-and-store/).
+Dateien und Betrachter werden per Recht vergeben (neue Benutzer bekommen beide), Info steht allen offen, und Einstellungen, Ressourcenmonitor, Protokoll-Center und Store sind nur für Administratoren. Bei Apps aus dem Store ist **Wer die App nutzen darf** entweder **Alle**, **Nur Administratoren** oder **Ausgewählte Gruppen und Nutzer**; Administratoren dürfen jede App nutzen. Pro App können Administratoren Berechtigungen ausschalten, um sie der App zu nehmen. Mehr dazu unter [Apps und der Store](/de/docs/admin/apps-and-store/).
 
 ## Wann eine Änderung wirkt
 

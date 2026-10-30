@@ -157,7 +157,7 @@
       "unlock": "Wie soll der Pool entsperrt werden?",
       "vault": "Automatisch bei jedem Start, aus dem Schlüsseltresor",
       "manual": "Von Hand nach jedem Start",
-      "manualHint": "Nach jedem Start bleibt der Pool gesperrt, bis ein Administrator seinen Schlüssel in Speicher eingibt. Bis dahin sind seine freigegebenen Ordner, Home-Ordner und Apps nicht verfügbar. Das schützt die Daten auch, wenn die ganze Box gestohlen wird.",
+      "manualHint": "Nach jedem Start bleibt der Pool gesperrt, bis ein Administrator seinen Schlüssel unter Einstellungen > Speicher eingibt. Bis dahin sind seine freigegebenen Ordner, Home-Ordner und Apps nicht verfügbar. Das schützt die Daten auch, wenn die ganze Box gestohlen wird.",
       "summaryNone": "Nicht verschlüsselt.",
       "summaryVault": "Verschlüsselt; die Box entsperrt ihn bei jedem Start mit dem Schlüssel aus ihrem Schlüsseltresor.",
       "summaryManual": "Verschlüsselt; er bleibt nach jedem Start gesperrt, bis sein Schlüssel eingegeben wird."
@@ -558,7 +558,7 @@
       "title": "Pithyx-Pool-Schlüssel",
       "pool": "Pool: {pool}",
       "date": "Erstellt: {date}",
-      "hint": "Dieser Schlüssel entsperrt die Daten des Pools. Bewahre ihn sicher und getrennt von der Box auf; wer ihn und die Platten hat, kann die Daten lesen. Gib ihn in Speicher ein, um den Pool zu entsperren.",
+      "hint": "Dieser Schlüssel entsperrt die Daten des Pools. Bewahre ihn sicher und getrennt von der Box auf; wer ihn und die Platten hat, kann die Daten lesen. Gib ihn unter Einstellungen > Speicher ein, um den Pool zu entsperren.",
       "emergency": "Ohne Pithyx: Schließe auf einem beliebigen Linux mit OpenZFS 2.x alle Platten des Pools an und führe diese Befehle als root aus. Füge diesen Hex-Schlüssel ein, wenn zfs load-key danach fragt:",
       "emergencyHint": "Danach liegen die Daten des Pools unter den Einhängepunkten, die zfs list zeigt. -f ist nötig, wenn der Pool zuletzt von einem anderen System benutzt wurde."
     },
@@ -590,7 +590,7 @@
   },
   "forgetKey": {
     "title": "Schlüssel von {pool} aus dem Schlüsseltresor entfernen?",
-    "intro": "Der Pool bleibt entsperrt, bis die Box neu startet. Danach bleibt er gesperrt, bis ein Administrator seinen Schlüssel in Speicher eingibt, und bis dahin sind seine freigegebenen Ordner, Home-Ordner und Apps nicht verfügbar.",
+    "intro": "Der Pool bleibt entsperrt, bis die Box neu startet. Danach bleibt er gesperrt, bis ein Administrator seinen Schlüssel unter Einstellungen > Speicher eingibt, und bis dahin sind seine freigegebenen Ordner, Home-Ordner und Apps nicht verfügbar.",
     "warning": "Stell sicher, dass du den Schlüssel des Pools hast. Ohne ihn lassen sich die Daten des Pools nie wieder lesen.",
     "cancel": "Abbrechen",
     "submit": "Aus dem Tresor entfernen"

@@ -34,7 +34,6 @@ export function AdvancedSection({ app, onDatasets }: { app: PithyxApp; onDataset
     <div className={styles.storage}>
       <header className={styles.pageHeader}>
         <div>
-          <h2 className={styles.pageTitle}>{t('nav.advanced')}</h2>
           <p className={styles.muted}>{t('advanced.intro')}</p>
         </div>
       </header>

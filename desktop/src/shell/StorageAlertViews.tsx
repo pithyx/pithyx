@@ -21,7 +21,7 @@ export function AlertBanner({ alert }: { alert: StorageAlert }) {
       <Button
         size="sm"
         onPress={() => {
-          openApp(coreAppIds.storage, { args: alertSection(alert) });
+          openApp(coreAppIds.settings, { args: alertPage(alert) });
         }}
       >
         {t('storageAlert.open')}
@@ -30,7 +30,7 @@ export function AlertBanner({ alert }: { alert: StorageAlert }) {
   );
 }
 
-/** Where Storage opens for an alert: SMART alerts at the disks, every other one at the pools. */
-export function alertSection(alert: Pick<StorageAlert, 'key'>): { section: 'disks' | 'pools' } {
-  return { section: alert.key.startsWith('disk.') ? 'disks' : 'pools' };
+/** Where Settings opens for an alert: SMART alerts at the disks, every other one at the pools. */
+export function alertPage(alert: Pick<StorageAlert, 'key'>): { page: 'disks' | 'pools' } {
+  return { page: alert.key.startsWith('disk.') ? 'disks' : 'pools' };
 }

@@ -13,10 +13,10 @@ Apps öffnen sich in Fenstern auf dem Desktop, wie Dateien oder Einstellungen. E
 
 Öffne das Pithyx-Menü und klicke auf eine App, oder tippe einen Teil ihres Namens in das Suchfeld. Du kannst eine App auch über eine Verknüpfung auf dem Desktop öffnen oder dort eine ablegen mit **Zum Desktop hinzufügen**. Siehe [Der Desktop](/de/docs/user/desktop/).
 
-Die Apps, die zu Pithyx gehören, sind **Dateien**, **Betrachter**, **Speicher**, **Einstellungen**, **Ressourcenmonitor**, **Protokoll-Center**, **Über Pithyx** und **Store**. Du siehst nur die Apps, die du nutzen darfst:
+Die Apps, die zu Pithyx gehören, sind **Dateien**, **Betrachter**, **Einstellungen**, **Ressourcenmonitor**, **Protokoll-Center**, **Über Pithyx** und **Store**. Du siehst nur die Apps, die du nutzen darfst:
 
 - **Dateien** und **Betrachter** stehen neuen Benutzern standardmäßig zur Verfügung.
-- **Speicher**, **Einstellungen**, **Ressourcenmonitor**, **Protokoll-Center** und **Store** sind für Administratoren. Einstellungen öffnet sich mit der **Übersicht**: die Box mit Version, Hardware, Laufzeit und Updates, dann **Braucht Aufmerksamkeit** mit einer Zeile je Problem, das die Box kennt (eine Warnung eines Pools, ein Update von Pithyx oder einer App, ein Gerät, das der Box noch nicht vertraut), und dem Knopf, der zur Lösung führt, dann **Alle Einstellungen** als Kacheln. Die Navigationsspalte links listet jede Seite unter **System** und **Zugriff** und hat eine Suche, die eine Seite auch über ihren Inhalt findet, etwa `ntp`.
+- **Einstellungen**, **Ressourcenmonitor**, **Protokoll-Center** und **Store** sind für Administratoren. Einstellungen öffnet sich mit der **Übersicht**: die Box mit Version, Hardware, Laufzeit und Updates, dann **Braucht Aufmerksamkeit** mit einer Zeile je Problem, das die Box kennt (eine Warnung eines Pools, ein Update von Pithyx oder einer App, ein Gerät, das der Box noch nicht vertraut), und dem Knopf, der zur Lösung führt, dann **Alle Einstellungen** als Kacheln. Die Navigationsspalte links listet jede Seite unter **System** und **Zugriff** und hat eine Suche, die eine Seite auch über ihren Inhalt findet, etwa `ntp`.
 - **Über Pithyx** steht allen offen.
 - Apps, die ein Administrator installiert hat, erscheinen bei den Benutzern, die der Administrator gewählt hat. Frag einen Administrator, wenn dir eine App fehlt.
 
@@ -26,7 +26,7 @@ Liegen die Daten einer App auf einem Pool, der offline oder gesperrt ist, lässt
 
 Eine App entscheidet, wie viele Fenster sie haben darf:
 
-- **Ein Fenster:** Öffnest du die App erneut, kommt ihr Fenster nach vorn, statt ein zweites zu öffnen. Das gilt pro Gerät, ein anderer Browser hat also sein eigenes Fenster. Speicher, Einstellungen, Ressourcenmonitor, Protokoll-Center, Über Pithyx und der Store funktionieren so.
+- **Ein Fenster:** Öffnest du die App erneut, kommt ihr Fenster nach vorn, statt ein zweites zu öffnen. Das gilt pro Gerät, ein anderer Browser hat also sein eigenes Fenster. Einstellungen, Ressourcenmonitor, Protokoll-Center, Über Pithyx und der Store funktionieren so.
 - **Mehrere Fenster:** Jeder Klick öffnet ein neues Fenster. Dateien und Betrachter funktionieren so.
 
 Fenster kommen zurück, nachdem du die Seite neu geladen oder dich erneut angemeldet hast. Siehe [Layout pro Gerät](/de/docs/user/desktop/#layout-pro-gerät). Insgesamt kannst du 50 Fenster offen haben.

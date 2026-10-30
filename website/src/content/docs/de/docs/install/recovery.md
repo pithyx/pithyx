@@ -58,9 +58,9 @@ Der Installer selbst stellt kein Backup wieder her und importiert keine Pools. N
 
 ## Die Pools wieder importieren
 
-Ein frisches System kennt deine Pools nicht. Importiere sie in der Speicher-App:
+Ein frisches System kennt deine Pools nicht. Importiere sie unter Einstellungen > **Speicher für Fortgeschrittene**:
 
-1. Öffne **Speicher** und gehe zu den Pools.
+1. Öffne Einstellungen > **Speicher für Fortgeschrittene**.
 2. Klicke auf **Pool importieren…**.
 3. Klicke auf **Platten durchsuchen**. Die Suche liest die Labels jeder Platte und kann eine schlafende Platte aufwecken. Sie läuft nur, wenn du sie startest.
 4. Beginne mit **Schreibgeschützt importieren**: Nichts wird eingehängt und nichts ändert sich. Prüfe die Datasets auf der Karte des Pools.
