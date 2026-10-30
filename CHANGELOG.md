@@ -76,6 +76,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Fixed
 
+- Files no longer loses a folder created right after it opened: **New folder** before the folder's first page arrived left an empty list without the new folder and its name field (#350).
 - On a phone, the submenu **Appearance** of the account menu opens below its item instead of beside it, where it ran off the screen (#350).
 - Files' **Modified** column fits a date with its time instead of cutting it off, and the path's crumbs keep a target of 24 px in a narrow window (#328).
 - The text **2FA on** of a selected user in Settings > **Users and groups** keeps the text color, so it reads on the selection; the icon stays green (#328).
