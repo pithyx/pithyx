@@ -10,6 +10,7 @@ import {
   WindowStatesScene,
   type SceneContext,
 } from './DesktopScreens';
+import { appScreens } from './appScreens';
 import { FileDialogScene } from './FileDialogScene';
 import { labels } from './labels';
 import { LogoScreen } from './LogoScreen';
@@ -294,4 +295,5 @@ export const screens: ScreenDefinition[] = [
     ),
   },
   ...storageScreens,
+  ...appScreens,
 ];

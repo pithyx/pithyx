@@ -40,10 +40,14 @@
   white-space: nowrap;
 }
 
+/* The text keeps the text color, which also reads on a selected row; the icon carries the green. */
 .check {
   display: inline-flex;
   align-items: center;
   gap: var(--space-1);
+}
+
+.check > svg {
   color: var(--color-success);
 }
 

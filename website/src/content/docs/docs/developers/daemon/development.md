@@ -53,14 +53,14 @@ While a development build runs, the interactive API reference is at `http://loca
 
 ## Design gallery
 
-`pnpm design` starts a Vite server on port 5174 (all interfaces) with every screen of the desktop at `/design.html`: phone, tablet and laptop width, light and dark, with switches for accent, taskbar position and language. It is a development tool; the production build contains only `index.html`. `pnpm design:shots` renders every screen as `<screen>_<viewport>_<theme>_<lang>.png` into `tools/design-shots/out/` (`--screens login,tokens` limits the run, `--base-url` uses a running server).
+`pnpm design` starts a Vite server on port 5174 (all interfaces) with every screen of the desktop at `/design.html`: phone, tablet and laptop width, light and dark, with switches for accent, taskbar position and language. It is a development tool; the production build contains only `index.html`. `pnpm design:shots` renders every screen as `<screen>_<viewport>_<theme>_<lang>.png` into `tools/design-shots/out/` (`--screens login,tokens` limits the run, `--base-url` uses a running server). The core apps run there for real on invented sample data (`desktop/src/design/storageSample.ts` and `appSamples.ts`), and `pnpm design:docs` renders the website's screenshots from them (`tools/design-shots/docs.ts`, D405).
 
 ## Tests
 
 - **Daemon:** `dotnet test --solution daemon/Pithyx.slnx` (xUnit). The folders under `daemon/tests/Pithyx.Daemon.Tests` mirror the modules. `DaemonFactory` starts the daemon in memory with a temporary data folder, simulation on and a `FakeTimeProvider`; `CreateApiClient()` adds the CSRF header.
 - **Frontend:** `pnpm lint`, `pnpm typecheck`, `pnpm test` (Vitest).
 - **End to end:** `pnpm --filter @pithyx/e2e exec playwright install chromium`, then `pnpm build && pnpm e2e`. It starts its own daemon in simulation with a fresh database.
-- **Layout checks:** `pnpm design:test` checks every screen for overflow at phone, tablet and laptop sizes in English and German.
+- **Design checks:** `pnpm design:test` checks every screen for overflow at phone, tablet, laptop and ultrawide sizes in English and German, and for accessibility and contrast with axe in light and dark. `DESIGN_PORT` moves its server off port 5176.
 - **Shared corpora:** the manifest, Compose and catalog fixtures in `sdk/schema/fixtures/` run in both Vitest and xUnit, so the CLI and the daemon judge alike.
 
 Test parsers, decision logic, permission checks, manifest validation and state machines. Do not test getters, DTOs, pass-through controllers or single React components.

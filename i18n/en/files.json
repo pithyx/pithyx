@@ -85,16 +85,19 @@
   "bin": {
     "title": "Recycle bin of {share}",
     "empty": "Empty. Only hope remains.",
-    "never": "Kept until the bin is emptied",
+    "never": "Until emptied",
     "restore": "Restore",
     "delete": "Delete for good",
     "emptyBin": "Empty recycle bin",
     "retention": "Deleted items are kept for {days, plural, one {# day} other {# days}}.",
     "retentionForever": "Deleted items are kept until the recycle bin is emptied.",
-    "fromPath": "From {path}",
-    "deletedOn": "Deleted {date}",
-    "expiresOn": "Deleted for good: {date}",
-    "more": "Show more"
+    "more": "Show more",
+    "columns": {
+      "from": "Original location",
+      "deleted": "Deleted",
+      "by": "Deleted by",
+      "expires": "Kept until"
+    }
   },
   "job": {
     "cancel": "Cancel",

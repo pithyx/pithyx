@@ -9,8 +9,8 @@ hero:
   github: { label: GitHub, href: https://github.com/pithyx/pithyx }
 showcase:
   image: ../../assets/screenshots/desktop.de.webp
-  alt: 'Der Pithyx-Desktop im Browser: die Fenster Dateien und Speicher nebeneinander, zwei Verknüpfungen und eine Notiz auf dem Desktop und unten die Taskleiste'
-  caption: 'Der Web-Desktop mit Dateien und Speicher nebeneinander. Jede App, ob mitgeliefert oder installiert, öffnet sich in einem solchen Fenster.'
+  alt: 'Der Pithyx-Desktop im Browser: Dateien im Vordergrund, die Einstellungen auf der Seite Pools und das Protokoll-Center dahinter, links Ordner und Verknüpfungen, eine Notiz und unten die Taskleiste'
+  caption: 'Der Web-Desktop mit offenem Dateien, Einstellungen und Protokoll-Center. Jede App, ob mitgeliefert oder installiert, öffnet sich in einem solchen Fenster.'
 features:
   title: Was schon drin ist
   intro: 'Pithyx installierst du von einem USB-Stick, und der Installer läuft in deinem Browser. Danach verwaltest du Speicher, Freigaben, Benutzer, Apps und das Netzwerk im Web-Desktop.'
@@ -83,7 +83,10 @@ specs:
     - { label: 'Dateidienste', value: 'SMB 3, SFTP, WebDAV, FTP mit TLS' }
     - { label: 'Netzwerk', value: 'Kabelgebunden, IPv4 und IPv6, Bonds und VLANs' }
     - { label: 'Apps', value: 'Statische Frontends, Backends in Docker-Containern' }
-    - { label: 'Web-Desktop', value: 'HTTP auf Port 7484 (HTTPS noch nicht gebaut)' }
+    - {
+        label: 'Web-Desktop',
+        value: 'HTTPS auf Port 7484, mit der Box als eigener Zertifizierungsstelle',
+      }
     - { label: 'Sprachen', value: 'Englisch, Deutsch' }
     - { label: 'Lizenz', value: 'AGPL-3.0, npm-Pakete für App-Entwickler MIT' }
 gallery:
@@ -91,24 +94,49 @@ gallery:
   close: Schließen
   items:
     - {
+        image: '../../assets/screenshots/desktop-dark.de.webp',
+        alt: 'Der Desktop im dunklen Design mit offenem Dateien, Einstellungen und Protokoll-Center, links Desktop-Elementen und einer Notiz',
+        caption: 'Derselbe Desktop im dunklen Design. Jeder Bildschirm funktioniert hell und dunkel, mit einer Akzentfarbe deiner Wahl.',
+      }
+    - {
+        image: '../../assets/screenshots/desktop-menu.de.webp',
+        alt: 'Das Pithyx-Menü mit den Apps, gruppiert nach System, Apps und Du, Statuskacheln für Pools, System und Updates, zuletzt verwendeten Dateien und den Ordnern mit ihrem Zugriff',
+        caption: 'Das Pithyx-Menü: Apps nach Bereich, der Zustand der Box auf einen Blick, zuletzt verwendete Dateien und deine Ordner.',
+      }
+    - {
         image: '../../assets/screenshots/files.de.webp',
-        alt: 'Die App Dateien mit den Freigaben in der Seitenleiste, einem Ordner mit zwölf Urlaubsfotos in der Listenansicht und dem geöffneten Kontextmenü eines Fotos',
-        caption: 'Dateien: Freigaben, Papierkorb und frühere Versionen im Browser.',
+        alt: 'Dateien mit dem Ordnerbaum, einem Ordner mit Urlaubsfotos in der Listenansicht und dem Detailbereich des gewählten Fotos',
+        caption: 'Dateien: Freigaben, Home-Ordner, Papierkorb und frühere Versionen im Browser.',
       }
     - {
         image: '../../assets/screenshots/storage.de.webp',
-        alt: 'Die App Speicher mit einem gesunden RAID-Z1-Pool aus vier Platten, seinem belegten und freien Platz und der Liste seiner Platten',
-        caption: 'Speicher: ZFS-Pools und Platten, und die genauen Befehle siehst du, bevor etwas läuft.',
-      }
-    - {
-        image: '../../assets/screenshots/store.de.webp',
-        alt: 'Der Store auf dem Tab Installiert mit vier installierten Apps, darunter eine Chat-App und das SDK-Schaufenster',
-        caption: 'Store: Apps aus Katalogen oder aus einer Datei, mit Updates und einem Weg zurück zur vorigen Version.',
+        alt: 'Die Einstellungen auf der Seite Pools mit Übersichtskacheln für Kapazität, Belegung, Platten und den letzten Scrub, einem intakten RAID-Z1-Pool und einem beeinträchtigten Spiegel',
+        caption: 'Speicher: ZFS-Pools und Platten in den Einstellungen, und die genauen Befehle siehst du, bevor etwas läuft.',
       }
     - {
         image: '../../assets/screenshots/settings.de.webp',
-        alt: 'Die Einstellungen auf der Seite Benutzer mit vier Benutzern und den Abzeichen Administrator und Zwei-Faktor',
-        caption: 'Einstellungen: Benutzer und Gruppen, Freigaben, Dateidienste, Netzwerk und Sicherung.',
+        alt: 'Die Einstellungen auf der Seite Benutzer und Gruppen mit einer Tabelle aus vier Benutzern, ihren Gruppen, Dateidiensten und der Zwei-Faktor-Anmeldung und den Details des gewählten Benutzers',
+        caption: 'Einstellungen: alles, was die Box einrichtet, an einem Ort, von Benutzern und Freigaben bis zu Netzwerk und Sicherung.',
+      }
+    - {
+        image: '../../assets/screenshots/store.de.webp',
+        alt: 'Der Store auf Entdecken mit einer hervorgehobenen Foto-App und neuen und aktualisierten Apps als Karten',
+        caption: 'Store: Apps aus Katalogen oder aus einer Datei, mit Updates und einem Weg zurück zur vorigen Version.',
+      }
+    - {
+        image: '../../assets/screenshots/logs-center.de.webp',
+        alt: 'Das Protokoll-Center im dunklen Design mit seinen Quellen und ihren Zählern, den Stufen, Einträgen nach Tagen und den Details einer Warnung',
+        caption: 'Protokoll-Center: jedes Protokoll der Box und ihrer Apps, live, mit Filtern und den Details jedes Eintrags.',
+      }
+    - {
+        image: '../../assets/screenshots/monitor-performance.de.webp',
+        alt: 'Der Ressourcenmonitor mit CPU und ihren Kernen, Arbeitsspeicher mit dem ZFS-Cache, Netzwerk und Platten während eines Scrubs und den Temperaturen',
+        caption: 'Ressourcenmonitor: CPU, Arbeitsspeicher, Netzwerk, Platten, Temperaturen und Prozesse der letzten Stunde.',
+      }
+    - {
+        image: '../../assets/screenshots/personal-settings.de.webp',
+        alt: 'Persönliche Einstellungen mit den Seiten Konto, Anmeldung und Sicherheit, Darstellung, Sprache und Region, Benachrichtigungen, Apps und Was ich nutzen darf',
+        caption: 'Persönliche Einstellungen: Anmeldung, Darstellung, Sprache und Benachrichtigungen, für jeden Benutzer.',
       }
 ai:
   title: Für KI-Assistenten

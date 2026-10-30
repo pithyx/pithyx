@@ -74,12 +74,17 @@
   color: var(--color-info);
 }
 
+/* Crumbs shrink in a narrow window but keep a target of 24 px; the start of the path gives way first. */
 .crumb {
   display: inline-flex;
+  flex-shrink: 1;
   align-items: center;
   gap: 2px;
-  min-width: 0;
+  min-width: 24px;
+  min-height: 24px;
+  overflow: hidden;
   padding: 2px 4px;
+  white-space: nowrap;
   border: 0;
   border-radius: var(--pithyx-radius);
   background: transparent;
@@ -94,6 +99,8 @@
 }
 
 .crumb:last-child {
+  flex-shrink: 0;
+  max-width: 100%;
   color: var(--pithyx-color-text);
 }
 
@@ -191,7 +198,7 @@
 .header,
 .row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 110px 150px;
+  grid-template-columns: minmax(0, 1fr) 96px 184px;
   align-items: center;
 }
 
@@ -462,57 +469,14 @@
 }
 
 .binBar {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--pithyx-space);
   padding: var(--pithyx-space) 12px;
   border-bottom: 1px solid var(--pithyx-color-border);
 }
 
 .binNote {
-  flex: 1;
-  min-width: 12em;
   margin: 0;
   color: var(--pithyx-color-text-muted);
   font-size: 0.8125em;
-}
-
-.binList {
-  display: grid;
-  outline: none;
-  font-size: 0.875em;
-}
-
-.binRow {
-  display: grid;
-  gap: 2px;
-  padding: 6px 12px;
-  border-bottom: 1px solid var(--pithyx-color-border);
-  cursor: default;
-  outline: none;
-}
-
-.binRow[data-hovered] {
-  background: var(--pithyx-color-hover);
-}
-
-.binRow[data-selected] {
-  background: var(--pithyx-color-selected);
-}
-
-.binRow[data-focus-visible] {
-  outline: 2px solid var(--pithyx-color-focus);
-  outline-offset: -2px;
-}
-
-.binMeta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 2px 16px;
-  padding-left: calc(18px + var(--pithyx-space));
-  color: var(--pithyx-color-text-muted);
-  font-size: 0.875em;
 }
 
 .more {
@@ -574,6 +538,18 @@
 
 .sidebarToggle {
   display: none;
+}
+
+/* The view buttons drop their labels with the toolbar's (ToolbarButton); they keep their accessible names. */
+@container files (max-width: 760px) {
+  .viewLabel {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
 }
 
 @container files (max-width: 560px) {

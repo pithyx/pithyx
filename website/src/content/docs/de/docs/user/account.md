@@ -11,9 +11,9 @@ Dein Konto sind dein Benutzername und dein Passwort auf der Box. Dasselbe Passwo
 
 ## Persönliche Einstellungen
 
-![Persönliche Einstellungen mit den Gruppen Konto und Sicherheit und Desktop: Zwei-Faktor-Authentifizierung, Passkeys, Sprache, Darstellung, Akzentfarbe, Hintergrundbild, Position der Taskleiste und Desktop holen von](../../../../../assets/screenshots/personal-settings.de.webp)
+![Persönliche Einstellungen auf der Seite Konto, mit den Seiten Konto, Anmeldung und Sicherheit, Darstellung, Sprache und Region, Benachrichtigungen, Apps und Was ich nutzen darf in der Navigation](../../../../../assets/screenshots/personal-settings.de.webp)
 
-_Persönliche Einstellungen; Apps und Benachrichtigungen folgen weiter unten._
+_Persönliche Einstellungen: Jede Seite steht links in der Navigation._
 
 Alles, was du für dich selbst einstellst, steht in **Persönliche Einstellungen**: Öffne das Pithyx-Menü und klicke in seiner linken Leiste auf **Persönliche Einstellungen**, oder klicke dort auf deine Initialen und wähle **Persönliche Einstellungen**. Es ist eine App wie die anderen und steht deshalb auch im Pithyx-Menü. Seine Navigation links (mit einem Suchfeld) hat eine Seite pro Bereich; auf dem Handy ist die Navigation eine Liste, aus der du eine Seite öffnest, und **Zurück** führt wieder hin:
 

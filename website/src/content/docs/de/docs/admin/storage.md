@@ -11,9 +11,9 @@ Die Einstellungen (nur für Administratoren) haben die Gruppe **Speicher** mit d
 
 ## Bewertung der Platten
 
-![Speicher, Platten, mit der Spalte Für einen neuen Pool: zwei Systemplatten Nicht verfügbar, vier leere Platten Verfügbar und eine Platte mit Partitionen Bestätigung nötig](../../../../../assets/screenshots/storage-disks.de.webp)
+![Einstellungen, Platten, als Tabelle mit der Spalte Für einen neuen Pool: die Systemplatte und vier Platten von Pools Nicht verfügbar, eine leere Platte Verfügbar und eine Platte mit Daten Bestätigung nötig, und dem SMART-Zustand jeder Platte](../../../../../assets/screenshots/storage-disks.de.webp)
 
-_Der Reiter Platten sagt für jede Platte, ob ein neuer Pool sie verwenden darf._
+_Die Seite Platten sagt für jede Platte, ob ein neuer Pool sie verwenden darf._
 
 Die Spalte **Für einen neuen Pool** zeigt pro Platte eine von drei Bewertungen: **Verfügbar**, **Bestätigung nötig** oder **Nicht verfügbar**. Pithyx prüft die Bewertung direkt vor jedem Befehl eines Plans erneut, sodass eine Platte, die sich nach deinem Blick geändert hat, erkannt wird.
 
@@ -35,7 +35,7 @@ Wenn sich eine Platte geändert hat, nachdem der Plan angezeigt wurde, wird nich
 
 ## Einen Pool anlegen
 
-![Der Assistent Pool anlegen bei Schritt 2, Aufbau, für vier Platten mit empfohlenem RAID-Z1 und den Karten Spiegel, Spiegelpaare, RAID-Z1, RAID-Z2 und Stripe](../../../../../assets/screenshots/storage-layout.de.webp)
+![Der Assistent Pool anlegen bei Schritt 2, Aufbau, für zwei unterschiedlich große Platten mit empfohlenem Spiegel, den Karten Spiegel und Stripe und dem Hinweis, dass 4 TB ungenutzt bleiben](../../../../../assets/screenshots/storage-layout.de.webp)
 
 _Schritt 2 des Assistenten vergleicht die Aufbauten für die gewählten Platten und markiert den empfohlenen._
 

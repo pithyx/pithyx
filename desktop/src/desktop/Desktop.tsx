@@ -41,7 +41,7 @@ import { StartMenu } from '../shell/StartMenu';
 import { StartTiles } from '../shell/StartTiles';
 import { openTarget, showInFiles, showRecentInFiles } from '../items/fileTargets';
 import { Taskbar } from '../shell/Taskbar';
-import type { RunningApp, TaskbarPosition } from '../shell/types';
+import type { RunningApp } from '../shell/types';
 import { setNotificationPanelOpen } from '../shell/toasts';
 import {
   followNotifications,
@@ -70,23 +70,17 @@ type User = components['schemas']['UserInfo'];
 
 /** Where a popover opens from the status area, so it never covers the taskbar. */
 // The account menu opens from the profile in the start menu, which sits next to the taskbar.
-const POPOVER_PLACEMENT = {
-  bottom: 'top start',
-  top: 'bottom start',
-  left: 'top start',
-  right: 'top start',
-} as const;
-
-/** The account menu: who is signed in, Personal settings (D392) and the appearance, which people switch often. */
+/**
+ * The account menu: who is signed in, Personal settings (D392) and the appearance, which people switch often. It opens
+ * beside the account button in the menu's rail, so it stays attached to the Pithyx menu wherever the taskbar is.
+ */
 function UserMenu({
   trigger,
   name,
-  position,
   onPreferences,
 }: {
   trigger: ReactNode;
   name: string;
-  position: TaskbarPosition;
   onPreferences: () => void;
 }) {
   const { t } = useTranslation();
@@ -94,7 +88,7 @@ function UserMenu({
   return (
     <MenuTrigger>
       {trigger}
-      <MenuPopover placement={POPOVER_PLACEMENT[position]}>
+      <MenuPopover placement="end top">
         <Menu
           aria-label={t('start.userMenu', { name })}
           onAction={(key) => {
@@ -591,7 +585,6 @@ export function Desktop({ user, entering }: { user: User; entering: boolean }) {
                   <UserMenu
                     trigger={trigger}
                     name={name}
-                    position={taskbarPosition}
                     onPreferences={() => {
                       open(coreAppIds.preferences);
                     }}

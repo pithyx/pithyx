@@ -32,6 +32,7 @@ import {
   IconButton,
   SearchField,
   Toolbar,
+  ToolbarButton,
   ToolbarSeparator,
 } from '@pithyx/ui';
 import {
@@ -950,7 +951,9 @@ export function FilesApp({ app }: { app: PithyxApp }) {
                 ) : (
                   <IconLayoutGrid size={18} stroke={1.75} aria-hidden />
                 )}
-                {layout === 'grid' ? t('command.list') : t('command.tiles')}
+                <span className={styles.viewLabel}>
+                  {layout === 'grid' ? t('command.list') : t('command.tiles')}
+                </span>
               </Button>
               <ToggleButton
                 className={styles.detailsToggle}
@@ -958,100 +961,77 @@ export function FilesApp({ app }: { app: PithyxApp }) {
                 onChange={setDetailsOpen}
               >
                 <IconLayoutSidebarRight size={18} stroke={1.75} aria-hidden />
-                {t('details')}
+                <span className={styles.viewLabel}>{t('details')}</span>
               </ToggleButton>
             </>
           ) : undefined
         }
       >
-        <Button
-          size="sm"
+        <ToolbarButton
           variant="primary"
+          icon={<IconUpload size={18} stroke={1.75} aria-hidden />}
+          label={t('actions.upload')}
           isDisabled={view !== 'folder' || !writable}
           onPress={() => {
             upload.current?.click();
           }}
-        >
-          <IconUpload size={18} stroke={1.75} aria-hidden />
-          {t('actions.upload')}
-        </Button>
-        <Button
-          size="sm"
-          variant="quiet"
+        />
+        <ToolbarButton
+          icon={<IconFolderPlus size={18} stroke={1.75} aria-hidden />}
+          label={t('actions.newFolder')}
           isDisabled={view !== 'folder' || !writable}
           onPress={() => void createEntry('folder')}
-        >
-          <IconFolderPlus size={18} stroke={1.75} aria-hidden />
-          {t('actions.newFolder')}
-        </Button>
+        />
         <ToolbarSeparator />
-        <Button
-          size="sm"
-          variant="quiet"
+        <ToolbarButton
+          icon={<IconCopy size={18} stroke={1.75} aria-hidden />}
+          label={t('actions.copy')}
           isDisabled={view !== 'folder' || !hasSelection}
           onPress={() => {
             act('copy');
           }}
-        >
-          <IconCopy size={18} stroke={1.75} aria-hidden />
-          {t('actions.copy')}
-        </Button>
-        <Button
-          size="sm"
-          variant="quiet"
+        />
+        <ToolbarButton
+          icon={<IconScissors size={18} stroke={1.75} aria-hidden />}
+          label={t('actions.cut')}
           isDisabled={view !== 'folder' || !hasSelection || !writable}
           onPress={() => {
             act('cut');
           }}
-        >
-          <IconScissors size={18} stroke={1.75} aria-hidden />
-          {t('actions.cut')}
-        </Button>
-        <Button
-          size="sm"
-          variant="quiet"
+        />
+        <ToolbarButton
+          icon={<IconClipboard size={18} stroke={1.75} aria-hidden />}
+          label={t('actions.paste')}
           isDisabled={view !== 'folder' || !writable || clipboard === null}
           onPress={() => {
             act('paste');
           }}
-        >
-          <IconClipboard size={18} stroke={1.75} aria-hidden />
-          {t('actions.paste')}
-        </Button>
-        <Button
-          size="sm"
-          variant="quiet"
+        />
+        <ToolbarButton
+          icon={<IconPencil size={18} stroke={1.75} aria-hidden />}
+          label={t('actions.rename')}
           isDisabled={view !== 'folder' || selectedEntry() === undefined || !writable}
           onPress={() => {
             act('rename');
           }}
-        >
-          <IconPencil size={18} stroke={1.75} aria-hidden />
-          {t('actions.rename')}
-        </Button>
-        <Button
-          size="sm"
-          variant="quiet"
+        />
+        <ToolbarButton
+          icon={<IconTrash size={18} stroke={1.75} aria-hidden />}
+          label={t('command.delete')}
           isDisabled={view !== 'folder' || !hasSelection || !writable}
           onPress={() => {
             act('delete');
           }}
-        >
-          <IconTrash size={18} stroke={1.75} aria-hidden />
-          {t('command.delete')}
-        </Button>
+        />
         <ToolbarSeparator />
-        <Button
-          size="sm"
-          variant="quiet"
+        <ToolbarButton
+          icon={<IconDownload size={18} stroke={1.75} aria-hidden />}
+          label={t('actions.download')}
           isDisabled={view !== 'folder' || selectedEntry()?.kind !== 'file'}
           onPress={() => {
             act('download');
           }}
-        >
-          <IconDownload size={18} stroke={1.75} aria-hidden />
-          {t('actions.download')}
-        </Button>
+        />
       </Toolbar>
       <div className={styles.toolbar}>
         <IconButton

@@ -7,8 +7,8 @@ import { ErrorNotice } from '../../errors/ErrorNotice';
 import { useFormatLocale } from '../../i18n';
 import {
   Button,
-  cx,
   DataTable,
+  FormRow,
   FormSection,
   TextField,
   Toolbar,
@@ -99,23 +99,20 @@ function PoolCard({
   const usable = others.find((pool) => pool.name === target)?.unavailable == null;
   return (
     <FormSection title={t('homes.pool.title')}>
-      <p>
-        {overview.pool == null
-          ? t('homes.pool.none')
-          : t('homes.pool.current', { pool: overview.pool })}
-      </p>
-      <p className={styles.sectionIntro}>{t('homes.pool.explain')}</p>
+      <FormRow label={t('homes.pool.label')} hint={t('homes.pool.explain')}>
+        <p className={styles.rowValue}>{overview.pool ?? t('homes.pool.none')}</p>
+      </FormRow>
       {overview.moving != null && (
         <p className={styles.notice} role="status">
           {t('homes.pool.moving')}
         </p>
       )}
       {overview.pool != null && others.length > 0 && overview.moving == null && (
-        <div className={cx(styles.group, styles.narrow)}>
-          <label className={styles.selectField}>
-            <span className={styles.fieldLabel}>{t('homes.pool.target')}</span>
+        <FormRow label={t('homes.pool.target')}>
+          <div className={styles.rowControls}>
             <select
               className={styles.select}
+              aria-label={t('homes.pool.target')}
               value={target}
               onChange={(event) => {
                 setChosen(event.currentTarget.value);
@@ -132,8 +129,6 @@ function PoolCard({
                 </option>
               ))}
             </select>
-          </label>
-          <div className={styles.buttons}>
             <Button
               isDisabled={!usable}
               onPress={() => {
@@ -143,29 +138,30 @@ function PoolCard({
               {t('homes.pool.move')}
             </Button>
           </div>
-        </div>
+        </FormRow>
       )}
     </FormSection>
   );
 }
 
-/** A size in a text field with its unit; empty means no quota. */
+/** A size in a text field with its unit; empty means no quota. In a `FormRow` the row labels the field. */
 function SizeField({
   label,
   description,
+  inRow = false,
   value,
   onChange,
 }: {
   label: string;
   description?: string;
+  inRow?: boolean;
   value: { text: string; unit: SizeUnit };
   onChange: (value: { text: string; unit: SizeUnit }) => void;
 }) {
   const { t } = useTranslation('settings');
   return (
     <TextField
-      label={label}
-      description={description}
+      {...(inRow ? {} : { label, description })}
       value={value.text}
       inputMode="decimal"
       autoComplete="off"
@@ -209,22 +205,17 @@ function DefaultQuotaCard({ app, overview }: { app: PithyxApp; overview: HomeOve
   });
   return (
     <FormSection title={t('homes.quota.title')}>
-      <form
-        className={cx(styles.group, styles.narrow)}
-        onSubmit={(event) => {
-          event.preventDefault();
-          if (bytes !== undefined) {
-            save.mutate(bytes);
-          }
-        }}
-      >
-        <SizeField
-          label={t('homes.quota.default')}
-          description={t('homes.quota.defaultHint')}
-          value={size}
-          onChange={setSize}
-        />
-        <div className={styles.buttons}>
+      <FormRow label={t('homes.quota.default')} hint={t('homes.quota.defaultHint')}>
+        <form
+          className={styles.rowControls}
+          onSubmit={(event) => {
+            event.preventDefault();
+            if (bytes !== undefined) {
+              save.mutate(bytes);
+            }
+          }}
+        >
+          <SizeField label={t('homes.quota.default')} inRow value={size} onChange={setSize} />
           <Button
             type="submit"
             variant="primary"
@@ -236,8 +227,8 @@ function DefaultQuotaCard({ app, overview }: { app: PithyxApp; overview: HomeOve
           >
             {t('homes.save')}
           </Button>
-        </div>
-      </form>
+        </form>
+      </FormRow>
       {save.isError && <ErrorNotice error={describeProblem(save.error)} />}
     </FormSection>
   );

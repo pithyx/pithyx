@@ -943,7 +943,7 @@
     },
     "pool": {
       "title": "Pool",
-      "current": "The home folders are on {pool}.",
+      "label": "Home folders on",
       "none": "No pool can take home folders yet. The first pool with the Pithyx layout becomes the home pool.",
       "explain": "New users get their home folder here. Moving copies every home folder with its files, owners and rights to the other pool.",
       "target": "Move to",

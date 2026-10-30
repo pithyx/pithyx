@@ -11,9 +11,9 @@ Zwei Administrator-Apps zeigen, was die Box tut: das Protokoll-Center (Meldungen
 
 ## Das Protokoll-Center
 
-![Das Protokoll-Center im dunklen Design mit der Suche network, den Stufen Info, Warnung und Fehler, dem Zeitraum Letzte 24 Stunden und dem Detailbereich einer Warnung](../../../../../assets/screenshots/logs-center.de.webp)
+![Das Protokoll-Center im dunklen Design mit den Quellen, gruppiert nach System und Apps, und ihren Zählern, den Stufen mit der Zahl der Warnungen und Fehler, dem Zeitraum Letzte 24 Stunden, den Einträgen nach Tagen und dem Detailbereich einer Warnung](../../../../../assets/screenshots/logs-center.de.webp)
 
-_Das Protokoll-Center mit Suche, Filtern für Stufe und Zeitraum und den Details des gewählten Eintrags._
+_Das Protokoll-Center mit seinen Quellen, Filtern für Stufe und Zeitraum und den Details des gewählten Eintrags._
 
 Die Navigation links zeigt **Alle Quellen**, dann die Quellen unter **System** („Pithyx-Daemon“, „Audit-Protokoll“ mit den Bestätigungen und Sonderrechten von Apps, siehe [Apps und Store](/de/docs/admin/apps-and-store/#sonderrechte), „Reverse Proxy · {host}“ für das Zugriffsprotokoll eines Proxy-Hosts und die Journal-Units wie kernel, smbd, ssh, ZFS, systemd-networkd, timesyncd, Docker und smartmontools) und unter **Apps**; jede zeigt, wie viele Warnungen und Fehler sie im gewählten Zeitraum protokolliert hat. Die Werkzeugleiste filtert die Stufe (**Alle** ohne Debug, **Warnungen**, **Fehler** oder **Debug** für jede Stufe, mit ihren Zahlen) und den Zeitraum (letzte Stunde, 24 Stunden, 7 Tage, 30 Tage, gesamte Zeit) und durchsucht die Meldungen und ihre Felder (eine genaue Request-ID findet ihre Einträge auch). Das Protokoll-Center ist live: Neue Einträge erscheinen, sobald der Daemon sie schreibt, etwa einmal pro Sekunde, bis du **Anhalten** wählst; **Live** holt nach und folgt wieder. Die Einträge sind nach Tagen gruppiert; Meldung und Felder des gewählten Eintrags stehen rechts, ohne seine Request-ID. Die Statusleiste sagt, wie viele Einträge geladen sind und wie lange die Protokolle aufbewahrt werden. Seiten fassen standardmäßig 200 Einträge, höchstens 1000. **Exportieren** bietet **Als Text exportieren** (`.log`) und **Als JSON-Zeilen exportieren** (`.jsonl`), je bis zu 1 000 000 Einträge.
 
@@ -25,9 +25,9 @@ App-Meldungen kommen über das SDK an: `info`, `warn` und `error` immer, `debug`
 
 ## Der Ressourcenmonitor
 
-![Der Ressourcenmonitor, Leistung, mit CPU, Arbeitsspeicher mit dem ZFS-Cache, Netzwerk und Festplatten, eine Platte beschäftigt mit einem Scrub](../../../../../assets/screenshots/monitor-performance.de.webp)
+![Der Ressourcenmonitor, Übersicht, mit CPU und ihren Kernen, Arbeitsspeicher mit dem ZFS-Cache, Netzwerk und den Platten während eines Scrubs und den Temperaturen](../../../../../assets/screenshots/monitor-performance.de.webp)
 
-_Die Diagramme der letzten Minute, hier während eines Scrubs._
+_Die Diagramme der letzten Stunde, hier mit einem Scrub in der letzten Viertelstunde._
 
 Die Navigation des Ressourcenmonitors hat **Übersicht**, **CPU**, **Arbeitsspeicher**, **Platten**, **Netzwerk**, **Temperaturen** und **Prozesse**; die Werkzeugleiste stellt den Zeitraum der Diagramme ein (eine Minute, 10 Minuten oder eine Stunde), und die Statusleiste zeigt Laufzeit und Last. Die Übersicht zeigt CPU und Arbeitsspeicher, Netzwerk und Platten als Summe über alle Schnittstellen und Platten, die Temperaturen und die sechs Prozesse, die gerade am meisten CPU brauchen; die anderen Seiten zeigen ihren Teil, Netzwerk und Platten pro Gerät. Er misst jede Sekunde, und nur, solange jemand zuschaut, Prozesse nur, solange die Übersicht oder **Prozesse** gezeigt wird; der Verlauf wird eine Stunde lang im Arbeitsspeicher gehalten. Der Verlauf deckt also nur die Zeit ab, in der der Monitor irgendwo geöffnet war: Solange niemand zuschaut, wird nichts gemessen, und einen längeren Verlauf (einen Tag oder eine Woche) gibt es nicht.
 

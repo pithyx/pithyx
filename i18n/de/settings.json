@@ -943,7 +943,7 @@
     },
     "pool": {
       "title": "Pool",
-      "current": "Die Home-Ordner liegen auf {pool}.",
+      "label": "Home-Ordner liegen auf",
       "none": "Noch kann kein Pool Home-Ordner aufnehmen. Der erste Pool mit dem Pithyx-Layout wird zum Home-Pool.",
       "explain": "Neue Benutzer bekommen ihren Home-Ordner hier. Beim Umzug wird jeder Home-Ordner mit seinen Dateien, Eigentümern und Rechten auf den anderen Pool kopiert.",
       "target": "Umziehen nach",

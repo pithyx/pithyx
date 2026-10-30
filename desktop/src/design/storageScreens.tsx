@@ -127,6 +127,18 @@ export const storageScreens: ScreenDefinition[] = [
     render: storage('pools', wizardLayout),
   },
   {
+    id: 'storage-wizard-encryption',
+    group: 'storage',
+    title: 'Pool wizard: encryption',
+    description:
+      'Encryption with a key chosen, and how the pool unlocks: from the key vault at every start, by hand or from a USB stick.',
+    render: storage('pools', [
+      ...wizardLayout,
+      { press: 'storage:wizard.next' },
+      { check: 'storage:wizard.encryption.key' },
+    ]),
+  },
+  {
     id: 'storage-wizard-review',
     group: 'storage',
     title: 'Pool wizard: name and commands',
@@ -387,7 +399,7 @@ export const storageScreens: ScreenDefinition[] = [
     title: 'Edit a shared folder',
     description:
       'Name and description, and the rights of every user: none, read, or read and write.',
-    render: settings('shares', [{ press: 'settings:shares.edit', inside: 'Family' }]),
+    render: settings('shares', [{ press: 'Family' }, { press: 'settings:shares.edit' }]),
   },
   {
     id: 'settings-share-delete',

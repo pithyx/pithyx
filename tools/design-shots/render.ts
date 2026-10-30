@@ -11,19 +11,9 @@ import { spawn, type ChildProcess } from 'node:child_process';
 import { mkdirSync, rmSync } from 'node:fs';
 import { join, relative, resolve } from 'node:path';
 import { parseArgs } from 'node:util';
+import { contextOptions, languages, themes, viewports, type Viewport } from './matrix.ts';
 
 const repoRoot = resolve(import.meta.dirname, '..', '..');
-
-// Sizes and input types match the Playwright devices in desktop/CLAUDE.md.
-const viewports = {
-  phone: { width: 390, height: 844, touch: true },
-  tablet: { width: 820, height: 1180, touch: true },
-  laptop: { width: 1440, height: 900, touch: false },
-} as const;
-const themes = ['light', 'dark'] as const;
-const languages = ['en', 'de'] as const;
-
-type Viewport = keyof typeof viewports;
 
 interface Job {
   screen: string;
@@ -148,18 +138,11 @@ async function main() {
       mkdirSync(outDirectory, { recursive: true });
 
       const contexts = new Map<string, BrowserContext>();
-      for (const [viewport, size] of Object.entries(viewports)) {
+      for (const viewport of Object.keys(viewports) as Viewport[]) {
         for (const theme of themes) {
           contexts.set(
             `${viewport}-${theme}`,
-            await browser.newContext({
-              viewport: { width: size.width, height: size.height },
-              hasTouch: size.touch,
-              isMobile: viewport === 'phone',
-              colorScheme: theme,
-              reducedMotion: 'reduce',
-              deviceScaleFactor: 1,
-            }),
+            await browser.newContext(contextOptions(viewport, theme)),
           );
         }
       }

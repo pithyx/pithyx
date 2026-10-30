@@ -56,7 +56,7 @@ If an app does not answer for five seconds, a dialog says that the app is not re
 
 ## The taskbar
 
-![The Pithyx menu in the dark theme with the account menu of Anna Weber open: Personal settings and Appearance](../../../../assets/screenshots/desktop-account-menu.webp)
+![The Pithyx menu in the dark theme with the account menu of Alex Morgan open beside the initials: Personal settings, Appearance and Sign out](../../../../assets/screenshots/desktop-account-menu.webp)
 
 _The account menu opens when you click your initials at the top of the Pithyx menu's left bar._
 
@@ -95,9 +95,9 @@ The search field finds apps by name only; settings and files are not found there
 
 ## Desktop items and notes
 
-![The desktop with the Files and Storage windows side by side, the shortcuts Files and Settings and a sticky note at the left and the taskbar at the bottom](../../../../assets/screenshots/desktop.webp)
+![The desktop with Files in front, Settings on the Pools page and the Log Center behind it, folders and the shortcuts Files and Settings on the left, a sticky note at the top right and the taskbar at the bottom](../../../../assets/screenshots/desktop.webp)
 
-_Two shortcuts and a sticky note next to two open windows._
+_Desktop items, two shortcuts and a sticky note next to three open windows._
 
 The desktop holds shortcuts to apps, files and folders, and sticky notes. They belong to your account and appear on every device. The desktop only holds links: removing a shortcut never touches the file.
 

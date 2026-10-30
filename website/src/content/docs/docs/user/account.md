@@ -11,9 +11,9 @@ Your account is your user name and password on the box. The same password signs 
 
 ## Personal settings
 
-![Personal settings with the groups Account and security and Desktop: Two-factor authentication, Passkeys, Language, Appearance, Accent color, Wallpaper, Taskbar position and Get desktop from](../../../../assets/screenshots/personal-settings.webp)
+![Personal settings on the page Account, with the pages Account, Sign-in and security, Appearance, Language and region, Notifications, Apps and What I can use in the navigation](../../../../assets/screenshots/personal-settings.webp)
 
-_Personal settings; Apps and Notifications follow further down._
+_Personal settings: every page is in the navigation on the left._
 
 Everything you set for yourself is in **Personal settings**: open the Pithyx menu and click **Personal settings** in its left bar, or click your initials there and choose **Personal settings**. It is an app like the others, so it is also in the Pithyx menu. Its navigation on the left (with a search field) has one page per area; on a phone the navigation is a list you open a page from, and **Back** returns to it:
 

@@ -1,7 +1,8 @@
 import { defineConfig, devices } from '@playwright/test';
 
-// Layout checks for the design gallery. Starts the Vite design server; no daemon needed.
-const port = 5176;
+// Layout and accessibility checks for the design gallery. Starts the Vite design server; no daemon needed. DESIGN_PORT
+// moves it off 5176 when another server runs there.
+const port = Number(process.env.DESIGN_PORT ?? 5176);
 
 export default defineConfig({
   testDir: '.',

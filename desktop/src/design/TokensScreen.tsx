@@ -38,7 +38,7 @@ const swatches: [string, string][] = [
   ['--color-taskbar-solid', '--color-text'],
   ['--color-highlight', '--color-highlight-contrast'],
   ['--color-note', '--color-note-text'],
-  ['--color-desktop', '--color-text'],
+  ['--color-desktop', '--color-desktop-label'],
 ];
 
 const statusSwatches: [string, string][] = [

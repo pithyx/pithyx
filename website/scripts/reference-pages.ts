@@ -302,7 +302,13 @@ export const pages: ReferencePage[] = [
     id: 'toolbar',
     package: 'ui',
     exports: {
-      '@pithyx/ui': ['Toolbar', 'ToolbarProps', 'ToolbarSeparator'],
+      '@pithyx/ui': [
+        'Toolbar',
+        'ToolbarProps',
+        'ToolbarButton',
+        'ToolbarButtonProps',
+        'ToolbarSeparator',
+      ],
     },
   },
   {

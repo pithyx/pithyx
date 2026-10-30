@@ -11,9 +11,9 @@ Dateien ist die App, mit der du in den freigegebenen Ordnern arbeitest, die du n
 
 ## Freigegebene Ordner durchsuchen
 
-![Dateien mit den Freigaben und Papierkörben in der Seitenleiste, dem Ordner Photos/2026-summer in der Listenansicht und dem geöffneten Kontextmenü eines Fotos](../../../../../assets/screenshots/files.de.webp)
+![Dateien mit den Freigaben und dem Papierkorb im Ordnerbaum, dem Ordner Photos/2026-summer in der Listenansicht und dem Detailbereich des gewählten Fotos Lighthouse.jpg](../../../../../assets/screenshots/files.de.webp)
 
-_Dateien in der Listenansicht. Ein Rechtsklick auf einen Eintrag öffnet sein Kontextmenü._
+_Dateien in der Listenansicht mit den Details des gewählten Fotos. Ein Rechtsklick auf einen Eintrag öffnet sein Kontextmenü._
 
 Öffne **Dateien** im Pithyx-Menü. Die Navigationsspalte links listet zuerst deinen Home-Ordner **home** und darunter deine freigegebenen Ordner auf; Dateien öffnet sich in deinem Home. Dein Home ist privat: Nur du und die Administratoren können es öffnen. Administratoren sehen zusätzlich **homes**, das das Home jedes anderen Benutzers als Ordner auflistet, in derselben Liste oder denselben Kacheln wie jeden Ordner; ein Doppelklick öffnet eines. Die Homes selbst lassen sich dort nicht umbenennen, verschieben oder löschen, und ihr Menü bietet nur **Öffnen**. Klicke auf einen Eintrag, um ihn zu öffnen. Die Navigationsspalte ist ein Ordnerbaum: Der Pfeil vor einem Ordner zeigt oder verbirgt seine Unterordner, und die Ordner bis zu dem, in dem du bist, sind von selbst aufgeklappt, mit diesem Ordner markiert. Ein Ordner ohne Unterordner hat keinen Pfeil mehr, sobald Dateien das weiß. Elemente, die du auf einen Ordner des Baums ziehst, landen in diesem Ordner. Ein Ordner, der gerade nicht erreichbar ist (zum Beispiel weil sein Pool offline ist), zeigt **Nicht verfügbar**. Ist die Liste leer, hast du noch keine freigegebenen Ordner, und ein Administrator muss sie anlegen. Ein freigegebener Ordner, den du nur lesen darfst, hat in der Navigationsspalte ein Schloss. Darin sagt eine Leiste unter dem Pfad, dass du Dateien öffnen, kopieren und herunterladen, aber nicht ändern kannst, die Aktionen, die etwas ändern würden, sind ausgegraut, und die Statusleiste unten zeigt **Nur lesen**.
 
@@ -80,9 +80,9 @@ Zum Herunterladen wählst du **Herunterladen** oder öffnest eine Datei, die der
 
 ## Der Papierkorb
 
-![Der Papierkorb der Freigabe Photos mit zwei gelöschten Fotos, ihrem ursprünglichen Pfad und den Daten, und den Knöpfen Wiederherstellen, Endgültig löschen und Papierkorb leeren](../../../../../assets/screenshots/files-recycle-bin.de.webp)
+![Der Papierkorb der Freigabe Photos als Tabelle mit zwei gelöschten Fotos, ihrem ursprünglichen Ort, ihrer Größe, wann und von wem sie gelöscht wurden und wie lange sie bleiben, und den Knöpfen Wiederherstellen, Endgültig löschen und Papierkorb leeren](../../../../../assets/screenshots/files-recycle-bin.de.webp)
 
-_Jede Freigabe hat ihren eigenen Papierkorb mit dem Datum, an dem ein Eintrag endgültig gelöscht wird._
+_Jede Freigabe hat ihren eigenen Papierkorb, der sagt, wie lange er jeden Eintrag behält._
 
 **In den Papierkorb** (die Taste **Entf**) löscht eine Datei nicht. Sie verschiebt sie in den Papierkorb ihres freigegebenen Ordners oder deines Homes. Dateien über SMB, WebDAV oder FTP zu löschen, tut dasselbe.
 
