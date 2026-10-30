@@ -7,7 +7,6 @@
     "home": "Home",
     "actions": "Aktionen",
     "groups": "Gruppen",
-    "twoFactor": "2FA",
     "state": "Status"
   },
   "badge": {
@@ -150,8 +149,8 @@
   "search": "Benutzer suchen",
   "noMatch": "Kein Benutzer passt zur Suche.",
   "twoFactor": {
-    "on": "An",
-    "off": "Aus"
+    "on": "2FA an",
+    "off": "2FA aus"
   },
   "state": {
     "active": "Aktiv"

@@ -18,6 +18,15 @@
   display: inline-flex;
   flex-wrap: wrap;
   gap: var(--space-1);
+  max-width: 100%;
+}
+
+/* A badge in a narrow column ends with an ellipsis instead of breaking inside a word. */
+.badges > * {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .nameCell {
@@ -150,4 +159,10 @@
   background: var(--color-surface-1);
   color: var(--color-text);
   font: inherit;
+}
+
+.stateCell {
+  display: grid;
+  justify-items: start;
+  gap: 2px;
 }

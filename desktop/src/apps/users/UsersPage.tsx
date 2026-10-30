@@ -109,20 +109,6 @@ export function UsersPanel({ app }: { app: PithyxApp }) {
       ),
     },
     {
-      id: 'twoFactor',
-      label: t('column.twoFactor'),
-      width: 110,
-      cell: (user) =>
-        user.totpEnabled ? (
-          <span className={styles.check}>
-            <IconCircleCheck size={16} stroke={1.75} aria-hidden />
-            {t('twoFactor.on')}
-          </span>
-        ) : (
-          <span className={styles.muted}>{t('twoFactor.off')}</span>
-        ),
-    },
-    {
       id: 'services',
       label: t('fileServices.title'),
       muted: true,
@@ -133,13 +119,24 @@ export function UsersPanel({ app }: { app: PithyxApp }) {
     {
       id: 'state',
       label: t('column.state'),
-      width: 130,
-      cell: (user) =>
-        user.disabled ? (
-          <StatusBadge tone="neutral">{t('badge.disabled')}</StatusBadge>
-        ) : (
-          <StatusBadge tone="success">{t('state.active')}</StatusBadge>
-        ),
+      // Two-factor sign-in sits below the state, so the table keeps four columns on a phone.
+      cell: (user) => (
+        <span className={styles.stateCell}>
+          {user.disabled ? (
+            <StatusBadge tone="neutral">{t('badge.disabled')}</StatusBadge>
+          ) : (
+            <StatusBadge tone="success">{t('state.active')}</StatusBadge>
+          )}
+          {user.totpEnabled ? (
+            <span className={styles.check}>
+              <IconCircleCheck size={16} stroke={1.75} aria-hidden />
+              {t('twoFactor.on')}
+            </span>
+          ) : (
+            <span className={styles.muted}>{t('twoFactor.off')}</span>
+          )}
+        </span>
+      ),
       sortValue: (user) => (user.disabled ? 1 : 0),
     },
   ];
