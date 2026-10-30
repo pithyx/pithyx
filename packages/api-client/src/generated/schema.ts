@@ -7785,6 +7785,8 @@ export type components = {
             catalog: string;
             /** @description Its categories from the manifest (D389), empty without. */
             categories: string[];
+            /** @description Version asks for a critical right (root on the box), shown as the badge Root access before the install (D388). */
+            critical: boolean;
             /** @description Descriptions by language, if any. */
             description: null | {
                 [key: string]: string;
@@ -7809,6 +7811,11 @@ export type components = {
             name: {
                 [key: string]: string;
             };
+            /**
+             * Format: date-time
+             * @description When the catalog published Version, for the Store's new and updated apps.
+             */
+            publishedAt: string;
             /** @description The installed app is older than Version and the box can install it. */
             update: boolean;
             /** @description The newest version for this box, or the newest version when the box can run none. */

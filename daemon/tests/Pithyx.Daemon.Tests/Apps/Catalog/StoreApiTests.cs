@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Globalization;
 using System.Net;
 using System.Net.Http.Json;
 using System.Security.Cryptography;
@@ -287,6 +288,8 @@ public sealed class StoreApiTests : IDisposable
         Assert.Equal(["productivity", "office"], listed.GetProperty("categories").EnumerateArray().Select(category => category.GetString()));
         Assert.Equal(["Jotter", "memo"], listed.GetProperty("keywords").EnumerateArray().Select(keyword => keyword.GetString()));
         Assert.Equal("beta", listed.GetProperty("maturity").GetString());
+        Assert.Equal(DateTimeOffset.Parse("2026-10-08T20:00:00Z", CultureInfo.InvariantCulture), listed.GetProperty("publishedAt").GetDateTimeOffset());
+        Assert.False(listed.GetProperty("critical").GetBoolean());
         Assert.Empty((await _admin.GetFromJsonAsync<JsonElement>("/api/store/apps?q=diary", Token)).GetProperty("apps").EnumerateArray());
     }
 
@@ -297,6 +300,8 @@ public sealed class StoreApiTests : IDisposable
         const string compose = TarBuilder.BackendCompose + "    volumes: ['/var/run/docker.sock:/var/run/docker.sock']\n";
         _catalog.Publish(AppId, "1.0.0", permissions: "\"docker.socket.raw\"", compose: compose);
         await AddCatalogAsync();
+        // The Store shows the badge Root access on the app's card before anybody opens it.
+        Assert.True((await _admin.GetFromJsonAsync<JsonElement>("/api/store/apps", Token)).GetProperty("apps").EnumerateArray().Single().GetProperty("critical").GetBoolean());
         using (var staged = await _admin.PostAsync($"/api/store/catalogs/{_catalog.CatalogId}/apps/{AppId}/1.0.0/package", null, Token))
         {
             var packageId = (await staged.JsonAsync()).GetProperty("packageId").GetString();

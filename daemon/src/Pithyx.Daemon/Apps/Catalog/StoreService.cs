@@ -840,6 +840,9 @@ public sealed partial class StoreService(
                 .FirstOrDefault()
             : null;
 
+    private static DateTimeOffset PublishedAt(JsonElement entry) =>
+        DateTimeOffset.Parse(entry.GetProperty("publishedAt").GetString()!, CultureInfo.InvariantCulture);
+
     private static bool Readable(JsonElement manifest) => ManifestVersionOf(manifest) == Manifest.ManifestValidator.SupportedVersion;
 
     private static int? ManifestVersionOf(JsonElement manifest) =>
@@ -884,6 +887,7 @@ public sealed partial class StoreService(
     private StoreApp Summary(CatalogCopy copy, string appId, string version, StoreIncompatible? incompatible)
     {
         var manifest = copy.Manifests[(appId, version)];
+        var entry = copy.Entry(appId, version)!.Value;
         var installed = registry.Find(appId);
         return new StoreApp(
             copy.CatalogId,
@@ -900,7 +904,9 @@ public sealed partial class StoreService(
             Words(manifest, "categories"),
             Words(manifest, "keywords"),
             manifest.TryGetProperty("maturity", out var maturity) ? maturity.GetString() ?? "stable" : "stable",
-            incompatible);
+            incompatible,
+            PublishedAt(entry),
+            Readable(manifest) && Manifest.ElevatedRights.IsCritical(manifest));
     }
 
     /// <summary>Apps of the enabled catalogs (or one of them) whose id, name, description, author or keywords (D389) contain the query.</summary>
@@ -971,7 +977,7 @@ public sealed partial class StoreService(
                 var incompatible = Incompatibility(version.Value, copy.Manifests[(appId, version.Name)]);
                 return new StoreAppVersion(
                     version.Name,
-                    DateTimeOffset.Parse(version.Value.GetProperty("publishedAt").GetString()!, CultureInfo.InvariantCulture),
+                    PublishedAt(version.Value),
                     version.Value.GetProperty("pithyx").GetString() ?? "*",
                     incompatible is null,
                     version.Value.TryGetProperty("dataVersion", out var data) ? data.GetInt32() : null,

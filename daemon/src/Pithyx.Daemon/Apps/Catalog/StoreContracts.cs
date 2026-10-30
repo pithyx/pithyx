@@ -152,6 +152,10 @@ public sealed record StoreIncompatible(StoreIncompatibleReason Reason, string Pi
 /// <param name="Keywords">Its search words from the manifest, empty without.</param>
 /// <param name="Maturity">Its maturity: <c>stable</c> (also without the field), <c>beta</c> or <c>experimental</c>.</param>
 /// <param name="Incompatible">Set when this box can install no version of the app: why, for <paramref name="Version"/> (D393).</param>
+/// <param name="PublishedAt">When the catalog published <paramref name="Version"/>, for the Store's new and updated apps.</param>
+/// <param name="Critical">
+/// <paramref name="Version"/> asks for a critical right (root on the box), shown as the badge Root access before the install (D388).
+/// </param>
 public sealed record StoreApp(
     string Catalog,
     CatalogKind Kind,
@@ -167,7 +171,9 @@ public sealed record StoreApp(
     IReadOnlyList<string> Categories,
     IReadOnlyList<string> Keywords,
     string Maturity,
-    StoreIncompatible? Incompatible);
+    StoreIncompatible? Incompatible,
+    DateTimeOffset PublishedAt,
+    bool Critical);
 
 /// <summary>Apps of the enabled catalogs, sorted by name.</summary>
 public sealed record StoreAppList(IReadOnlyList<StoreApp> Apps);
