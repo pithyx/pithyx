@@ -18,8 +18,13 @@ async function openStorage(page: Page) {
 /** Opens a page of the Storage group; in the compact size class from the navigation the back button leads to. */
 async function openStoragePage(storage: ReturnType<typeof appWindow>, name: string) {
   const navigation = settingsNavigation(storage);
+  const back = storage.getByRole('button', { name: 'Back', exact: true });
+  // Wait for the frame to show either; a page in the compact size class hides the navigation.
+  await expect
+    .poll(async () => (await navigation.isVisible()) || (await back.isVisible()))
+    .toBe(true);
   if (!(await navigation.isVisible())) {
-    await storage.getByRole('button', { name: 'Back', exact: true }).click();
+    await back.click();
   }
   await navigation.getByRole('button', { name, exact: true }).click();
   await expect(storage.getByRole('heading', { name, level: 1 })).toBeVisible();

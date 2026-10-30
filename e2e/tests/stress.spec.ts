@@ -211,7 +211,9 @@ test('dragging a window causes no long tasks', async ({ page }) => {
   await signInAsAdmin(page);
   await openFromDesktop(page, 'Settings');
   // Settings loads the box's overview after it opens; the drag measures the window manager, not that first render.
-  await expect(appWindow(page, 'Settings').getByRole('region', { name: 'This box' })).toBeVisible();
+  await expect(
+    appWindow(page, 'Settings').getByRole('heading', { name: 'All settings', level: 2 }),
+  ).toBeVisible();
   await page.getByRole('button', { name: 'Pithyx menu' }).click();
   await page
     .getByRole('dialog', { name: 'Pithyx menu' })
