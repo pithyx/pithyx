@@ -3,7 +3,10 @@ using System.Text.Json;
 
 namespace Pithyx.Daemon.Storage;
 
-/// <summary>Parses <c>lsblk -J -b -O</c>. Only whole disks are returned; optical drives, loop and RAM devices are not.</summary>
+/// <summary>
+/// Parses <c>lsblk -J -b -O</c>. Only whole disks are returned; optical drives, loop, RAM and network block devices
+/// (<c>nbd</c>, which the kernel module creates by the dozen, empty until a client connects) are not.
+/// </summary>
 public static class LsblkParser
 {
     public static IReadOnlyList<Disk> Parse(string json) => ParseWithDevices(json).Select(entry => entry.Disk).ToList();
@@ -16,7 +19,8 @@ public static class LsblkParser
         foreach (var device in document.RootElement.GetProperty("blockdevices").EnumerateArray())
         {
             var name = Text(device, "name") ?? "";
-            if (Text(device, "type") != "disk" || name.StartsWith("zram", StringComparison.Ordinal) || name.StartsWith("ram", StringComparison.Ordinal))
+            if (Text(device, "type") != "disk" || name.StartsWith("zram", StringComparison.Ordinal) || name.StartsWith("ram", StringComparison.Ordinal)
+                || name.StartsWith("nbd", StringComparison.Ordinal))
             {
                 continue;
             }
