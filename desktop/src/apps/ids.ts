@@ -5,6 +5,7 @@
 export const coreAppIds = {
   files: 'org.pithyx.files',
   viewer: 'org.pithyx.viewer',
+  // Storage was an app until D402; the id only names what was stored before (Log Center sources of that time).
   storage: 'org.pithyx.storage',
   settings: 'org.pithyx.settings',
   monitor: 'org.pithyx.monitor',

@@ -208,7 +208,11 @@ export function LogsContent() {
   return (
     <div className={styles.logs}>
       <div className={styles.toolbar}>
-        <SearchField label={t('filter')} placeholder={t('filter')} className={styles.search} />
+        <SearchField
+          label={t('search.label')}
+          placeholder={t('search.placeholder')}
+          className={styles.search}
+        />
       </div>
       <ol className={styles.logLines} tabIndex={0} aria-label={t('list')}>
         {logLines.map(([time, level, area, message]) => (

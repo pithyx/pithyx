@@ -45,9 +45,12 @@ test('the Log Center shows the daemon and app entries, filters and explains an e
         ).entries.length,
     )
     .toBe(1);
+  // The Log Center is live: the entry arrives with the topic system/logs, without asking again.
   const list = logs.getByRole('listbox', { name: 'Log entries' });
-  await logs.getByRole('button', { name: 'Refresh' }).click();
-  await expect(list.getByRole('option').first()).toBeVisible();
+  await expect(list.getByRole('option', { name: /e2e upload retried/ })).toBeVisible();
+  await expect(
+    logs.getByRole('navigation', { name: 'Log sources' }).getByRole('button', { name: /^Files/ }),
+  ).toContainText('1');
 
   await logs.getByLabel('Search logs').fill('e2e upload');
   const entry = list.getByRole('option', { name: /e2e upload retried/ });
@@ -55,12 +58,14 @@ test('the Log Center shows the daemon and app entries, filters and explains an e
   await expect(list.getByRole('option')).toHaveCount(1);
   await entry.click();
   const details = logs.getByRole('complementary', { name: 'Entry details' });
-  await expect(details.getByText('App · Files')).toBeVisible();
+  await expect(details.getByText('Files', { exact: true })).toBeVisible();
   await expect(details.getByText('a.jpg')).toBeVisible();
 
-  await logs.getByRole('button', { name: 'Warning', exact: true }).click();
+  await logs.getByRole('button', { name: /^Errors/ }).click();
   await expect(logs.getByText('No entries match these filters.')).toBeVisible();
-  await logs.getByRole('button', { name: 'Warning', exact: true }).click();
+  await logs.getByRole('button', { name: /^Warnings/ }).click();
+  await expect(entry).toBeVisible();
+  await logs.getByRole('button', { name: 'All', exact: true }).click();
   await expect(entry).toBeVisible();
   expect(await violations(page)).toEqual([]);
 

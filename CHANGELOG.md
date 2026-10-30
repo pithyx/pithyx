@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- The Resource Monitor after the design pass (D394, #326): a navigation by part (Overview, CPU, Memory, Disks, Network, Temperatures, Processes), the time range in the toolbar, the uptime and load in the status bar, and an overview with CPU, memory, network and disks as totals, the temperatures and the top processes.
+- The Log Center after the design pass (D394, D403, #326): the sources in a navigation column grouped under System and Apps with their warnings and errors, a toolbar with the level (All, Warnings, Errors, Debug, with counts), the time range, search, **Pause** and **Live**, **Export** and **Retention**, entries grouped by day with level badges, and a status bar. The Log Center is live: new entries arrive with the topic `system/logs` without asking again. `GET /api/logs/counts` counts warnings and errors per source.
 - Settings after the design pass (D394, #325): one frame with a navigation column (**Overview**, then the pages under **System**, **Storage**, **Network**, **Services** and **Access**, with a search that also finds pages by their keywords) and an **Overview** with the box (name, version, processor, memory, how long it runs, updates), **Needs attention** (unmuted storage alerts that open the pools or disks, a Pithyx update with **Open Updates**, app updates with **Open Store**, a device that does not trust the box with **Trust this device**) and **All settings** as tiles.
 - Personal settings after the design pass (D394, #325): the same frame with a page per area (**Account**, **Sign-in and security**, **Appearance**, **Language and region**, **Notifications**, **Apps**, **What I can use**). **Appearance** shows the theme, the accent color and the wallpaper as pictures to pick and the taskbar position as radio buttons; **What I can use** lists the shared folders with the user's access, the file services, the apps and the special rights.
 - Settings is the one place that sets up the box (D402, #325): its navigation groups the pages under **System**, **Storage**, **Network**, **Services** and **Access**. Storage is no app of its own any more; **Pools**, **Disks**, **Health and maintenance** and **Advanced storage** are pages of Settings, and alerts and the pool chip of the taskbar open them. The reverse proxy is a page of its own under **Services** again. New administrators get the Resource Monitor on the desktop instead of Storage.
@@ -63,6 +65,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Fixed
 
+- The Log Center no longer shows an entry's request id (it stays searchable).
 - `Meter` of `@pithyx/ui` has the role `meter` alone; React Aria's fallback list `meter progressbar` failed the accessibility check.
 - `pithyx-release`: the menu asks whether to publish the npm packages as `latest`, so a stable version can be published from it, and `publish-sdk` refuses a stable version without `--latest` before anything runs (#314).
 - A request that does not reach the box (the connection is lost or the box restarts) says the box could not be reached and to try again; it said there was an error on the server with the details in the logs, where there is none. Apps get it as the new SDK code `sdk.box.unreachable` for calls the desktop passes on to the box (#302).

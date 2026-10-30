@@ -5714,6 +5714,51 @@
         }
       }
     },
+    "/api/logs/counts": {
+      "get": {
+        "tags": [
+          "Logs"
+        ],
+        "description": "Administrators only. Warnings and errors per source since from, from the current logs on the system disk; sources without either are left out.",
+        "operationId": "GetLogCounts",
+        "parameters": [
+          {
+            "name": "from",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/LogCount"
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/logs/export": {
       "get": {
         "tags": [
@@ -15896,6 +15941,31 @@
           "unavailable"
         ]
       },
+      "LogCount": {
+        "required": [
+          "source",
+          "warnings",
+          "errors"
+        ],
+        "type": "object",
+        "properties": {
+          "source": {
+            "type": "string",
+            "description": "The source as the Log Center lists it (`daemon`, `system/&lt;service&gt;`, `app/&lt;id&gt;`)."
+          },
+          "warnings": {
+            "type": "integer",
+            "description": "Entries of level warn.",
+            "format": "int64"
+          },
+          "errors": {
+            "type": "integer",
+            "description": "Entries of level error.",
+            "format": "int64"
+          }
+        },
+        "description": "How many warnings and errors a source logged in a time range."
+      },
       "LogEntry": {
         "required": [
           "id",
@@ -16163,6 +16233,95 @@
             "description": "Pass to `/api/auth/login/totp` within five minutes."
           }
         }
+      },
+      "LogsAdded": {
+        "required": [
+          "entries",
+          "truncated"
+        ],
+        "type": "object",
+        "properties": {
+          "entries": {
+            "type": "array",
+            "items": {
+              "required": [
+                "id",
+                "time",
+                "level",
+                "source",
+                "message",
+                "requestId",
+                "user",
+                "data",
+                "archived"
+              ],
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "integer",
+                  "description": "Stable within the current logs or the archive it comes from.",
+                  "format": "int64"
+                },
+                "time": {
+                  "type": "string",
+                  "description": "When it happened, UTC.",
+                  "format": "date-time"
+                },
+                "level": {
+                  "enum": [
+                    "debug",
+                    "info",
+                    "warn",
+                    "error"
+                  ]
+                },
+                "source": {
+                  "type": "string",
+                  "description": "`daemon`, `system/&lt;service&gt;` (for example `system/kernel`, `system/smbd`) or `app/&lt;id&gt;`."
+                },
+                "message": {
+                  "type": "string",
+                  "description": "The rendered message; secrets are masked before it is stored."
+                },
+                "requestId": {
+                  "type": [
+                    "null",
+                    "string"
+                  ],
+                  "description": "The request id (W3C trace id) of the request that caused it, if any."
+                },
+                "user": {
+                  "type": [
+                    "null",
+                    "string"
+                  ],
+                  "description": "The user an app entry was written for, if any."
+                },
+                "data": {
+                  "type": [
+                    "null",
+                    "object"
+                  ],
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "description": "Further fields (event name, error code, path, the app's own data), as text."
+                },
+                "archived": {
+                  "type": "boolean",
+                  "description": "True when the entry comes from the archive on a pool."
+                }
+              },
+              "description": "One log entry of the daemon, a system service or an app."
+            },
+            "description": "The newest entries of one write, oldest first, at most 200."
+          },
+          "truncated": {
+            "type": "boolean",
+            "description": "True when the write held more entries than the event carries; the Log Center then reloads."
+          }
+        },
+        "description": "An event of the topic `system/logs`: the entries the daemon just wrote, so an open Log Center shows them live\nwithout asking again (asking would log the request and so feed itself). The snapshot has none."
       },
       "MarkNotificationsReadRequest": {
         "type": "object",
@@ -21930,6 +22089,7 @@
           "storage/snapshots",
           "store/admin",
           "system/info",
+          "system/logs",
           "system/network",
           "system/processes",
           "system/resources",
@@ -21984,6 +22144,9 @@
           "system/info": {
             "$ref": "#/components/schemas/SystemInfo"
           },
+          "system/logs": {
+            "$ref": "#/components/schemas/LogsAdded"
+          },
           "system/network": {
             "$ref": "#/components/schemas/NetworkState"
           },
@@ -22021,6 +22184,7 @@
           "storage/snapshots",
           "store/admin",
           "system/info",
+          "system/logs",
           "system/network",
           "system/processes",
           "system/resources",
@@ -22074,6 +22238,9 @@
           },
           "system/info": {
             "$ref": "#/components/schemas/SystemInfo"
+          },
+          "system/logs": {
+            "$ref": "#/components/schemas/LogsAdded"
           },
           "system/network": {
             "$ref": "#/components/schemas/NetworkState"

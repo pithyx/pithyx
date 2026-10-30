@@ -35,7 +35,7 @@ afterEach(() => {
 
 describe('isAppAllowed', () => {
   it('gives administration apps to administrators only', () => {
-    expect(isAppAllowed(coreAppIds.storage, user)).toBe(false);
+    expect(isAppAllowed(coreAppIds.monitor, user)).toBe(false);
     expect(isAppAllowed(coreAppIds.settings, admin)).toBe(true);
     expect(isAppAllowed(coreAppIds.store, user)).toBe(false);
     expect(isAppAllowed(coreAppIds.store, admin)).toBe(true);

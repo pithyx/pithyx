@@ -25,8 +25,23 @@ function celsius(value: number, locale: string): string {
   }).format(value);
 }
 
-/** CPU, memory, network, disks and temperatures: the newest sample as text, the range as charts. */
-export function Performance({ monitor, range }: { monitor: MonitorStore; range: Range }) {
+/** The parts of the Resource Monitor's navigation that show charts. */
+export const PARTS = ['overview', 'cpu', 'memory', 'disks', 'network', 'temperatures'] as const;
+export type Part = (typeof PARTS)[number];
+
+/**
+ * CPU, memory, network, disks and temperatures: the newest sample as text, the range as charts. The overview shows
+ * CPU and memory, network and disks as totals over their devices and the temperatures; a part shows only its own.
+ */
+export function Performance({
+  monitor,
+  range,
+  part,
+}: {
+  monitor: MonitorStore;
+  range: Range;
+  part: Part;
+}) {
   const { t } = useTranslation('monitor');
   const points = useStore(monitor.store, (state) => state.points);
   const latest = useStore(monitor.store, (state) => state.latest);
@@ -55,200 +70,283 @@ export function Performance({ monitor, range }: { monitor: MonitorStore; range: 
   const cpu = series((point) => point.cpu);
   const used = series((point) => point.memoryUsed);
   const arcSeries = series((point) => point.arc);
+  const total = (
+    values: (point: Point) => Record<string, readonly [number, number]>,
+    side: 0 | 1,
+  ) => series((point) => Object.values(values(point)).reduce((sum, pair) => sum + pair[side], 0));
+  const received = latest.network.reduce((sum, device) => sum + device.receiveBytesPerSecond, 0);
+  const sent = latest.network.reduce((sum, device) => sum + device.sendBytesPerSecond, 0);
+  const read = latest.disks.reduce((sum, device) => sum + device.readBytesPerSecond, 0);
+  const written = latest.disks.reduce((sum, device) => sum + device.writeBytesPerSecond, 0);
 
+  const cpuCard = (
+    <section className={styles.card} aria-labelledby="monitor-cpu">
+      <div className={styles.cardHeader}>
+        <h2 id="monitor-cpu" className={styles.cardTitle}>
+          {t('cpu.title')}
+        </h2>
+        <span className={styles.big}>
+          {t('cpu.now', { value: percent(latest.cpu.percent, locale) })}
+        </span>
+      </div>
+      <Chart
+        main={cpu}
+        start={start}
+        end={end}
+        max={100}
+        maxLabel={percent(100, locale)}
+        label={t('cpu.chart', { range: rangeText, value: percent(latest.cpu.percent, locale) })}
+      />
+      {latest.cpu.cores.length > 1 && (
+        <ul className={styles.cores} aria-label={t('cpu.cores')}>
+          {latest.cpu.cores.map((core, index) => (
+            <li key={index} className={styles.core}>
+              <span>{t('cpu.core', { index })}</span>
+              <span className={styles.number}>{percent(core, locale)}</span>
+              <span className={styles.meter} aria-hidden="true">
+                <span className={styles.meterFill} style={{ width: `${String(core)}%` }} />
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+
+  const memoryCard = (
+    <section className={styles.card} aria-labelledby="monitor-memory">
+      <div className={styles.cardHeader}>
+        <h2 id="monitor-memory" className={styles.cardTitle}>
+          {t('memory.title')}
+        </h2>
+        <span className={styles.big}>
+          {t('memory.now', { used: bytes(memory.usedBytes), total: bytes(memory.totalBytes) })}
+        </span>
+      </div>
+      <div className={styles.stack} aria-hidden="true">
+        <span className={styles.swatchMain} style={{ width: share(memory.usedBytes) }} />
+        <span className={styles.swatchSecond} style={{ width: share(arc) }} />
+        <span className={styles.swatchCache} style={{ width: share(cache) }} />
+      </div>
+      <ul className={styles.legend} aria-label={t('memory.parts')}>
+        <li className={styles.legendItem}>
+          <span className={`${styles.swatch} ${styles.swatchMain}`} aria-hidden="true" />
+          {t('memory.used')} {bytes(memory.usedBytes)}
+        </li>
+        {memory.arcBytes !== null && (
+          <li className={styles.legendItem}>
+            <span className={`${styles.swatch} ${styles.swatchSecond}`} aria-hidden="true" />
+            {t('memory.arc')} {bytes(memory.arcBytes)}
+          </li>
+        )}
+        <li className={styles.legendItem}>
+          <span className={`${styles.swatch} ${styles.swatchCache}`} aria-hidden="true" />
+          {t('memory.cache')} {bytes(cache)}
+        </li>
+        <li className={styles.legendItem}>
+          <span className={`${styles.swatch} ${styles.swatchFree}`} aria-hidden="true" />
+          {t('memory.free')} {bytes(memory.freeBytes)}
+        </li>
+      </ul>
+      <Chart
+        main={used}
+        {...(memory.arcBytes === null ? {} : { second: arcSeries })}
+        start={start}
+        end={end}
+        max={memoryTotal}
+        maxLabel={bytes(memoryTotal)}
+        label={t('memory.chart', { range: rangeText, value: bytes(memory.usedBytes) })}
+      />
+      <p className={styles.note}>
+        {memory.swapTotalBytes === 0
+          ? t('memory.noSwap')
+          : t('memory.swap', {
+              used: bytes(memory.swapUsedBytes),
+              total: bytes(memory.swapTotalBytes),
+            })}
+      </p>
+      {memory.arcBytes !== null && <p className={styles.note}>{t('memory.arcHint')}</p>}
+    </section>
+  );
+
+  const networkCard = (
+    <section className={styles.card} aria-labelledby="monitor-network">
+      <h2 id="monitor-network" className={styles.cardTitle}>
+        {t('network.title')}
+      </h2>
+      {latest.network.length === 0 && <p className={styles.muted}>{t('network.none')}</p>}
+      {networkNames
+        .filter((name) => latest.network.some((rate) => rate.name === name))
+        .map((name) => {
+          const now = latest.network.find((candidate) => candidate.name === name);
+          const received = series((point) => point.network[name]?.[0] ?? null);
+          const sent = series((point) => point.network[name]?.[1] ?? null);
+          return (
+            <div key={name} className={styles.device}>
+              <div className={styles.deviceHeader}>
+                <h3 className={`${styles.mono} ${styles.muted}`}>{name}</h3>
+                <ul className={styles.legend}>
+                  <li className={styles.legendItem}>
+                    <span className={`${styles.swatch} ${styles.swatchMain}`} aria-hidden="true" />
+                    {t('network.receive', { value: rate(now?.receiveBytesPerSecond ?? 0) })}
+                  </li>
+                  <li className={styles.legendItem}>
+                    <span
+                      className={`${styles.swatch} ${styles.swatchSecond}`}
+                      aria-hidden="true"
+                    />
+                    {t('network.send', { value: rate(now?.sendBytesPerSecond ?? 0) })}
+                  </li>
+                </ul>
+              </div>
+              <DeviceChart
+                main={received}
+                second={sent}
+                start={start}
+                end={end}
+                maxLabel={(max) => rate(max)}
+                label={t('network.chart', {
+                  name,
+                  range: rangeText,
+                  received: rate(now?.receiveBytesPerSecond ?? 0),
+                  sent: rate(now?.sendBytesPerSecond ?? 0),
+                })}
+              />
+            </div>
+          );
+        })}
+    </section>
+  );
+
+  const disksCard = (
+    <section className={styles.card} aria-labelledby="monitor-disks">
+      <h2 id="monitor-disks" className={styles.cardTitle}>
+        {t('disks.title')}
+      </h2>
+      {latest.disks.length === 0 && <p className={styles.muted}>{t('disks.none')}</p>}
+      {diskNames
+        .filter((name) => latest.disks.some((rate) => rate.name === name))
+        .map((name) => {
+          const now = latest.disks.find((candidate) => candidate.name === name);
+          const read = series((point) => point.disks[name]?.[0] ?? null);
+          const written = series((point) => point.disks[name]?.[1] ?? null);
+          return (
+            <div key={name} className={styles.device}>
+              <div className={styles.deviceHeader}>
+                <h3 className={`${styles.mono} ${styles.muted}`}>{name}</h3>
+                <ul className={styles.legend}>
+                  <li className={styles.legendItem}>
+                    <span className={`${styles.swatch} ${styles.swatchMain}`} aria-hidden="true" />
+                    {t('disks.read', { value: rate(now?.readBytesPerSecond ?? 0) })}
+                  </li>
+                  <li className={styles.legendItem}>
+                    <span
+                      className={`${styles.swatch} ${styles.swatchSecond}`}
+                      aria-hidden="true"
+                    />
+                    {t('disks.write', { value: rate(now?.writeBytesPerSecond ?? 0) })}
+                  </li>
+                  <li className={styles.legendItem}>
+                    {t('disks.busy', { value: percent(now?.busyPercent ?? 0, locale) })}
+                  </li>
+                </ul>
+              </div>
+              <DeviceChart
+                main={read}
+                second={written}
+                start={start}
+                end={end}
+                maxLabel={(max) => rate(max)}
+                label={t('disks.chart', {
+                  name,
+                  range: rangeText,
+                  read: rate(now?.readBytesPerSecond ?? 0),
+                  written: rate(now?.writeBytesPerSecond ?? 0),
+                })}
+              />
+            </div>
+          );
+        })}
+      <p className={styles.note}>{t('disks.hint')}</p>
+    </section>
+  );
+
+  const temperatures = <Temperatures readings={latest.temperatures} locale={locale} />;
+
+  if (part !== 'overview') {
+    return (
+      <div className={styles.single}>
+        {part === 'cpu'
+          ? cpuCard
+          : part === 'memory'
+            ? memoryCard
+            : part === 'network'
+              ? networkCard
+              : part === 'disks'
+                ? disksCard
+                : temperatures}
+      </div>
+    );
+  }
   return (
     <div className={styles.grid}>
-      <section className={styles.card} aria-labelledby="monitor-cpu">
+      {cpuCard}
+      {memoryCard}
+      <section className={styles.card} aria-labelledby="monitor-network-total">
         <div className={styles.cardHeader}>
-          <h2 id="monitor-cpu" className={styles.cardTitle}>
-            {t('cpu.title')}
+          <h2 id="monitor-network-total" className={styles.cardTitle}>
+            {t('network.title')}
           </h2>
-          <span className={styles.big}>
-            {t('cpu.now', { value: percent(latest.cpu.percent, locale) })}
-          </span>
+          <span className={styles.big}>{rate(received + sent)}</span>
         </div>
-        <Chart
-          main={cpu}
-          start={start}
-          end={end}
-          max={100}
-          maxLabel={percent(100, locale)}
-          label={t('cpu.chart', { range: rangeText, value: percent(latest.cpu.percent, locale) })}
-        />
-        {latest.cpu.cores.length > 1 && (
-          <ul className={styles.cores} aria-label={t('cpu.cores')}>
-            {latest.cpu.cores.map((core, index) => (
-              <li key={index} className={styles.core}>
-                <span>{t('cpu.core', { index })}</span>
-                <span className={styles.number}>{percent(core, locale)}</span>
-                <span className={styles.meter} aria-hidden="true">
-                  <span className={styles.meterFill} style={{ width: `${String(core)}%` }} />
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-
-      <section className={styles.card} aria-labelledby="monitor-memory">
-        <div className={styles.cardHeader}>
-          <h2 id="monitor-memory" className={styles.cardTitle}>
-            {t('memory.title')}
-          </h2>
-          <span className={styles.big}>
-            {t('memory.now', { used: bytes(memory.usedBytes), total: bytes(memory.totalBytes) })}
-          </span>
-        </div>
-        <div className={styles.stack} aria-hidden="true">
-          <span className={styles.swatchMain} style={{ width: share(memory.usedBytes) }} />
-          <span className={styles.swatchSecond} style={{ width: share(arc) }} />
-          <span className={styles.swatchCache} style={{ width: share(cache) }} />
-        </div>
-        <ul className={styles.legend} aria-label={t('memory.parts')}>
-          <li className={styles.legendItem}>
-            <span className={`${styles.swatch} ${styles.swatchMain}`} aria-hidden="true" />
-            {t('memory.used')} {bytes(memory.usedBytes)}
-          </li>
-          {memory.arcBytes !== null && (
-            <li className={styles.legendItem}>
-              <span className={`${styles.swatch} ${styles.swatchSecond}`} aria-hidden="true" />
-              {t('memory.arc')} {bytes(memory.arcBytes)}
-            </li>
-          )}
-          <li className={styles.legendItem}>
-            <span className={`${styles.swatch} ${styles.swatchCache}`} aria-hidden="true" />
-            {t('memory.cache')} {bytes(cache)}
-          </li>
-          <li className={styles.legendItem}>
-            <span className={`${styles.swatch} ${styles.swatchFree}`} aria-hidden="true" />
-            {t('memory.free')} {bytes(memory.freeBytes)}
-          </li>
-        </ul>
-        <Chart
-          main={used}
-          {...(memory.arcBytes === null ? {} : { second: arcSeries })}
-          start={start}
-          end={end}
-          max={memoryTotal}
-          maxLabel={bytes(memoryTotal)}
-          label={t('memory.chart', { range: rangeText, value: bytes(memory.usedBytes) })}
-        />
         <p className={styles.note}>
-          {memory.swapTotalBytes === 0
-            ? t('memory.noSwap')
-            : t('memory.swap', {
-                used: bytes(memory.swapUsedBytes),
-                total: bytes(memory.swapTotalBytes),
-              })}
+          {t('network.total', {
+            count: latest.network.length,
+            received: rate(received),
+            sent: rate(sent),
+          })}
         </p>
-        {memory.arcBytes !== null && <p className={styles.note}>{t('memory.arcHint')}</p>}
-      </section>
-
-      <section className={styles.card} aria-labelledby="monitor-network">
-        <h2 id="monitor-network" className={styles.cardTitle}>
-          {t('network.title')}
-        </h2>
-        {latest.network.length === 0 && <p className={styles.muted}>{t('network.none')}</p>}
-        {networkNames
-          .filter((name) => latest.network.some((rate) => rate.name === name))
-          .map((name) => {
-            const now = latest.network.find((candidate) => candidate.name === name);
-            const received = series((point) => point.network[name]?.[0] ?? null);
-            const sent = series((point) => point.network[name]?.[1] ?? null);
-            return (
-              <div key={name} className={styles.device}>
-                <div className={styles.deviceHeader}>
-                  <h3 className={`${styles.mono} ${styles.muted}`}>{name}</h3>
-                  <ul className={styles.legend}>
-                    <li className={styles.legendItem}>
-                      <span
-                        className={`${styles.swatch} ${styles.swatchMain}`}
-                        aria-hidden="true"
-                      />
-                      {t('network.receive', { value: rate(now?.receiveBytesPerSecond ?? 0) })}
-                    </li>
-                    <li className={styles.legendItem}>
-                      <span
-                        className={`${styles.swatch} ${styles.swatchSecond}`}
-                        aria-hidden="true"
-                      />
-                      {t('network.send', { value: rate(now?.sendBytesPerSecond ?? 0) })}
-                    </li>
-                  </ul>
-                </div>
-                <DeviceChart
-                  main={received}
-                  second={sent}
-                  start={start}
-                  end={end}
-                  maxLabel={(max) => rate(max)}
-                  label={t('network.chart', {
-                    name,
-                    range: rangeText,
-                    received: rate(now?.receiveBytesPerSecond ?? 0),
-                    sent: rate(now?.sendBytesPerSecond ?? 0),
-                  })}
-                />
-              </div>
-            );
+        <DeviceChart
+          main={total((point) => point.network, 0)}
+          second={total((point) => point.network, 1)}
+          start={start}
+          end={end}
+          maxLabel={(max) => rate(max)}
+          label={t('network.totalChart', {
+            range: rangeText,
+            received: rate(received),
+            sent: rate(sent),
           })}
+        />
       </section>
-
-      <section className={styles.card} aria-labelledby="monitor-disks">
-        <h2 id="monitor-disks" className={styles.cardTitle}>
-          {t('disks.title')}
-        </h2>
-        {latest.disks.length === 0 && <p className={styles.muted}>{t('disks.none')}</p>}
-        {diskNames
-          .filter((name) => latest.disks.some((rate) => rate.name === name))
-          .map((name) => {
-            const now = latest.disks.find((candidate) => candidate.name === name);
-            const read = series((point) => point.disks[name]?.[0] ?? null);
-            const written = series((point) => point.disks[name]?.[1] ?? null);
-            return (
-              <div key={name} className={styles.device}>
-                <div className={styles.deviceHeader}>
-                  <h3 className={`${styles.mono} ${styles.muted}`}>{name}</h3>
-                  <ul className={styles.legend}>
-                    <li className={styles.legendItem}>
-                      <span
-                        className={`${styles.swatch} ${styles.swatchMain}`}
-                        aria-hidden="true"
-                      />
-                      {t('disks.read', { value: rate(now?.readBytesPerSecond ?? 0) })}
-                    </li>
-                    <li className={styles.legendItem}>
-                      <span
-                        className={`${styles.swatch} ${styles.swatchSecond}`}
-                        aria-hidden="true"
-                      />
-                      {t('disks.write', { value: rate(now?.writeBytesPerSecond ?? 0) })}
-                    </li>
-                    <li className={styles.legendItem}>
-                      {t('disks.busy', { value: percent(now?.busyPercent ?? 0, locale) })}
-                    </li>
-                  </ul>
-                </div>
-                <DeviceChart
-                  main={read}
-                  second={written}
-                  start={start}
-                  end={end}
-                  maxLabel={(max) => rate(max)}
-                  label={t('disks.chart', {
-                    name,
-                    range: rangeText,
-                    read: rate(now?.readBytesPerSecond ?? 0),
-                    written: rate(now?.writeBytesPerSecond ?? 0),
-                  })}
-                />
-              </div>
-            );
+      <section className={styles.card} aria-labelledby="monitor-disks-total">
+        <div className={styles.cardHeader}>
+          <h2 id="monitor-disks-total" className={styles.cardTitle}>
+            {t('disks.title')}
+          </h2>
+          <span className={styles.big}>{rate(read + written)}</span>
+        </div>
+        <p className={styles.note}>
+          {t('disks.total', {
+            count: latest.disks.length,
+            read: rate(read),
+            written: rate(written),
           })}
-        <p className={styles.note}>{t('disks.hint')}</p>
+        </p>
+        <DeviceChart
+          main={total((point) => point.disks, 0)}
+          second={total((point) => point.disks, 1)}
+          start={start}
+          end={end}
+          maxLabel={(max) => rate(max)}
+          label={t('disks.totalChart', {
+            range: rangeText,
+            read: rate(read),
+            written: rate(written),
+          })}
+        />
       </section>
-
-      <Temperatures readings={latest.temperatures} locale={locale} />
+      {temperatures}
     </div>
   );
 }

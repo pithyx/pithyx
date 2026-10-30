@@ -55,7 +55,7 @@ Client messages are `sub` and `unsub` with an id and a topic. The server answers
 | 4401       | Session ended    | show the sign-in     |
 | 4403       | Forbidden        | stop                 |
 
-Topic patterns may use `+` for one level and `#` for the rest. Permissions are checked for every snapshot and event. Topics today: `system/info`, `system/resources`, `system/processes`, `system/network`, `system/updates`, `system/ups`, `storage/disks`, `storage/pools`, `storage/alerts`, `storage/snapshots`, `shares/list`, `jobs`, `jobs/+`, `notifications`, `session/permissions`, `files/+/+`, `thumbnails/+/+`, `apps`, `apps/admin`, `apps/+/context` and `store/admin`.
+Topic patterns may use `+` for one level and `#` for the rest. Permissions are checked for every snapshot and event. Topics today: `system/info`, `system/resources`, `system/processes`, `system/network`, `system/updates`, `system/ups`, `storage/disks`, `storage/pools`, `storage/alerts`, `storage/snapshots`, `shares/list`, `jobs`, `jobs/+`, `notifications`, `session/permissions`, `files/+/+`, `thumbnails/+/+`, `apps`, `apps/admin`, `apps/+/context`, `store/admin` and `system/logs` (administrators, only an exact subscription: every write of the logs with its entries, at most 200; the snapshot has none).
 
 ## Generated client
 

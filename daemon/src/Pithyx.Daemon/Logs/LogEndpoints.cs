@@ -19,6 +19,7 @@ public static class LogEndpoints
         services.AddSingleton<LogArchive>();
         services.AddSingleton<AppLogLimiter>();
         services.AddSingleton<LogService>();
+        services.AddSingleton(_ => LogWriter.Definition);
         if (!BuildTimeDocument.IsGenerating)
         {
             services.AddHostedService<LogWriter>();
@@ -56,6 +57,14 @@ public static class LogEndpoints
             .RequireAuthorization(Policies.Admin)
             .WithName("GetLogSources")
             .WithDescription("Administrators only. Every source with entries in the current logs or the archive: daemon, system/<service>, app/<id>.");
+        logs.MapGet("/counts", async (LogService service, HttpContext context, CancellationToken cancellationToken, [FromQuery] DateTimeOffset from) =>
+            {
+                RequireAdmin(context.User);
+                return TypedResults.Ok(await service.CountsAsync(from, cancellationToken));
+            })
+            .RequireAuthorization(Policies.Admin)
+            .WithName("GetLogCounts")
+            .WithDescription("Administrators only. Warnings and errors per source since from, from the current logs on the system disk; sources without either are left out.");
         logs.MapGet("/export", async (
                 LogService service,
                 TimeProvider time,
