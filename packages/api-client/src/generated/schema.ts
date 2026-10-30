@@ -1676,6 +1676,23 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/api/logs/counts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Administrators only. Warnings and errors per source since from, from the current logs on the system disk; sources without either are left out. */
+        get: operations["GetLogCounts"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/logs/export": {
         parameters: {
             query?: never;
@@ -5527,6 +5544,21 @@ export type components = {
         LacpRate: "slow" | "fast";
         /** @enum {unknown} */
         LogArchiveState: "off" | "ready" | "unavailable";
+        /** @description How many warnings and errors a source logged in a time range. */
+        LogCount: {
+            /**
+             * Format: int64
+             * @description Entries of level error.
+             */
+            errors: number;
+            /** @description The source as the Log Center lists it (`daemon`, `system/&lt;service&gt;`, `app/&lt;id&gt;`). */
+            source: string;
+            /**
+             * Format: int64
+             * @description Entries of level warn.
+             */
+            warnings: number;
+        };
         /** @description One log entry of the daemon, a system service or an app. */
         LogEntry: {
             /** @description True when the entry comes from the archive on a pool. */
@@ -5576,6 +5608,43 @@ export type components = {
             entries: components["schemas"]["LogEntry"][];
             /** @description Pass as `cursor` for the next, older page; null when there is none. */
             nextCursor: null | string;
+        };
+        /**
+         * @description An event of the topic `system/logs`: the entries the daemon just wrote, so an open Log Center shows them live
+         *     without asking again (asking would log the request and so feed itself). The snapshot has none.
+         */
+        LogsAdded: {
+            /** @description The newest entries of one write, oldest first, at most int LogsAdded.MaxEntries. */
+            entries: {
+                /** @description True when the entry comes from the archive on a pool. */
+                archived: boolean;
+                /** @description Further fields (event name, error code, path, the app's own data), as text. */
+                data: null | {
+                    [key: string]: string;
+                };
+                /**
+                 * Format: int64
+                 * @description Stable within the current logs or the archive it comes from.
+                 */
+                id: number;
+                /** @enum {unknown} */
+                level: "debug" | "info" | "warn" | "error";
+                /** @description The rendered message; secrets are masked before it is stored. */
+                message: string;
+                /** @description The request id (W3C trace id) of the request that caused it, if any. */
+                requestId: null | string;
+                /** @description `daemon`, `system/&lt;service&gt;` (for example `system/kernel`, `system/smbd`) or `app/&lt;id&gt;`. */
+                source: string;
+                /**
+                 * Format: date-time
+                 * @description When it happened, UTC.
+                 */
+                time: string;
+                /** @description The user an app entry was written for, if any. */
+                user: null | string;
+            }[];
+            /** @description True when the write held more entries than the event carries; the Log Center then reloads. */
+            truncated: boolean;
         };
         /** @description Retention of the current logs on the system disk and of the optional archive on a pool. */
         LogSettings: {
@@ -8053,6 +8122,7 @@ export type components = {
             "storage/snapshots": components["schemas"]["SnapshotChanges"];
             "store/admin": components["schemas"]["StoreState"];
             "system/info": components["schemas"]["SystemInfo"];
+            "system/logs": components["schemas"]["LogsAdded"];
             "system/network": components["schemas"]["NetworkState"];
             "system/processes": components["schemas"]["ProcessList"];
             "system/resources": components["schemas"]["ResourceSample"];
@@ -8076,6 +8146,7 @@ export type components = {
             "storage/snapshots": components["schemas"]["SnapshotChanges"];
             "store/admin": components["schemas"]["StoreState"];
             "system/info": components["schemas"]["SystemInfo"];
+            "system/logs": components["schemas"]["LogsAdded"];
             "system/network": components["schemas"]["NetworkState"];
             "system/processes": components["schemas"]["ProcessList"];
             "system/resources": components["schemas"]["ResourceSnapshot"];
@@ -12349,6 +12420,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["LogPage"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    GetLogCounts: {
+        parameters: {
+            query: {
+                from: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LogCount"][];
                 };
             };
             /** @description Problem details with a stable error code. */

@@ -117,3 +117,5 @@ export { default as IconLayoutSidebarRight } from '@tabler/icons-react/dist/esm/
 export { default as IconAdjustmentsHorizontal } from '@tabler/icons-react/dist/esm/icons/IconAdjustmentsHorizontal.mjs';
 export { default as IconServer } from '@tabler/icons-react/dist/esm/icons/IconServer.mjs';
 export { default as IconTool } from '@tabler/icons-react/dist/esm/icons/IconTool.mjs';
+export { default as IconPlayerPause } from '@tabler/icons-react/dist/esm/icons/IconPlayerPause.mjs';
+export { default as IconPlayerPlay } from '@tabler/icons-react/dist/esm/icons/IconPlayerPlay.mjs';

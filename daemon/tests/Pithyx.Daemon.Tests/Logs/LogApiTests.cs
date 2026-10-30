@@ -1,5 +1,8 @@
 using System.Net;
 using System.Net.Http.Json;
+using System.Net.WebSockets;
+using System.Text;
+using System.Text.Json;
 using Microsoft.Extensions.DependencyInjection;
 using Pithyx.Daemon.Logs;
 using Pithyx.Daemon.Tests.Auth;
@@ -43,6 +46,81 @@ public sealed class LogApiTests : IDisposable
             }
             await Task.Delay(100, Token);
         }
+    }
+
+    [Fact]
+    public async Task CountsHaveTheWarningsAndErrorsOfEachSourceInTheRange()
+    {
+        await _admin.SetupAdminAsync();
+        var store = _factory.Services.GetRequiredService<LogStore>();
+        var now = DateTimeOffset.UtcNow;
+        store.Enqueue(new PendingLogEntry(now.AddMinutes(-5), LogLevelName.Warn, "app/files", "before the rename"));
+        store.Enqueue(new PendingLogEntry(now.AddMinutes(-4), LogLevelName.Error, "app/org.pithyx.files", "after the rename"));
+        store.Enqueue(new PendingLogEntry(now.AddMinutes(-3), LogLevelName.Error, "system/smbd", "smbd failed"));
+        store.Enqueue(new PendingLogEntry(now.AddMinutes(-3), LogLevelName.Info, "system/smbd", "smbd started"));
+        store.Enqueue(new PendingLogEntry(now.AddDays(-2), LogLevelName.Error, "system/sshd", "too old"));
+        await EntriesAsync(_admin, "source=system/smbd", 2);
+
+        var from = Uri.EscapeDataString(now.AddHours(-1).ToString("O"));
+        var counts = await _admin.GetFromJsonAsync<JsonElement>($"/api/logs/counts?from={from}", Token);
+
+        var bySource = counts.EnumerateArray().ToDictionary(
+            count => count.GetProperty("source").GetString()!,
+            count => (count.GetProperty("warnings").GetInt64(), count.GetProperty("errors").GetInt64()));
+        Assert.Equal((1L, 1L), bySource["app/org.pithyx.files"]);
+        Assert.Equal((0L, 1L), bySource["system/smbd"]);
+        Assert.False(bySource.ContainsKey("app/files"));
+        Assert.False(bySource.ContainsKey("system/sshd"));
+    }
+
+    [Fact]
+    public async Task TheTopicCarriesNewEntriesToAdministratorsOnly()
+    {
+        using var setup = await _admin.PostAsync("/api/setup", new { username = "admin", password = AuthApi.AdminPassword });
+        var cookie = setup.Headers.GetValues("Set-Cookie").Single(c => c.StartsWith("pithyx_session=", StringComparison.Ordinal)).Split(';')[0];
+        var client = _factory.Server.CreateWebSocketClient();
+        client.ConfigureRequest = request =>
+        {
+            request.Headers.Cookie = cookie;
+            request.Headers.Origin = "http://localhost";
+        };
+        using var socket = await client.ConnectAsync(new Uri("ws://localhost/ws"), Token);
+        await socket.SendAsync(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(new { type = "sub", id = "l1", topic = LogWriter.Topic })), WebSocketMessageType.Text, endOfMessage: true, Token);
+        Assert.Equal("ack", (await ReceiveAsync(socket)).GetProperty("type").GetString());
+        var snapshot = await ReceiveAsync(socket);
+        Assert.Equal(0, snapshot.GetProperty("data").GetProperty("entries").GetArrayLength());
+
+        _factory.Services.GetRequiredService<LogStore>().Enqueue(new PendingLogEntry(DateTimeOffset.UtcNow, LogLevelName.Warn, "system/smbd", "live line"));
+
+        // The daemon logs on its own as well; wait for the event with the line.
+        var waited = System.Diagnostics.Stopwatch.StartNew();
+        while (true)
+        {
+            var message = await ReceiveAsync(socket);
+            var entries = message.GetProperty("data").GetProperty("entries").EnumerateArray().ToList();
+            var line = entries.FirstOrDefault(entry => entry.GetProperty("message").GetString() == "live line");
+            if (line.ValueKind == JsonValueKind.Object)
+            {
+                Assert.Equal("event", message.GetProperty("type").GetString());
+                Assert.True(line.GetProperty("id").GetInt64() > 0);
+                Assert.Equal("warn", line.GetProperty("level").GetString());
+                break;
+            }
+            Assert.True(waited.Elapsed < TimeSpan.FromSeconds(30), "the line never came");
+        }
+
+        // Only administrators may follow it.
+        var user = new System.Security.Claims.ClaimsPrincipal(new System.Security.Claims.ClaimsIdentity([new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.Name, "rita")], "test"));
+        Assert.False(LogWriter.Definition.IsAllowed(user, LogWriter.Topic));
+    }
+
+    private static async Task<JsonElement> ReceiveAsync(WebSocket socket)
+    {
+        var buffer = new byte[1024 * 1024];
+        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(Token);
+        timeout.CancelAfter(TimeSpan.FromSeconds(30));
+        var result = await socket.ReceiveAsync(buffer, timeout.Token);
+        return JsonDocument.Parse(buffer.AsMemory(0, result.Count)).RootElement.Clone();
     }
 
     [Fact]

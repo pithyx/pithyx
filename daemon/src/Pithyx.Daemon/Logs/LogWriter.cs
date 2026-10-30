@@ -1,5 +1,7 @@
 using System.Globalization;
 using Microsoft.Data.Sqlite;
+using Pithyx.Daemon.Auth;
+using Pithyx.Daemon.Realtime;
 
 namespace Pithyx.Daemon.Logs;
 
@@ -7,11 +9,21 @@ namespace Pithyx.Daemon.Logs;
 /// Writes the queued entries in batches (at most one write a second, or one per <see cref="MaxBatch"/> entries), and
 /// keeps the current logs and the archive within their retention. Before the current logs drop entries the archive has
 /// not copied yet, the archive gets them first. Problems writing the logs go to stderr (the journal), never back into
-/// the queue.
+/// the queue. Every write goes to the topic <c>system/logs</c> while an administrator follows it.
 /// </summary>
-public sealed class LogWriter(LogStore store, LogArchive archive, LogService logs, AppLogLimiter limiter, TimeProvider time) : BackgroundService
+public sealed class LogWriter(LogStore store, LogArchive archive, LogService logs, AppLogLimiter limiter, TopicHub hub, TimeProvider time) : BackgroundService
 {
     public const int MaxBatch = 1000;
+    public const string Topic = "system/logs";
+
+    /// <summary>The new entries for an open Log Center; only an exact subscription takes them.</summary>
+    public static TopicDefinition Definition { get; } = new(
+        Topic,
+        typeof(LogsAdded),
+        typeof(LogsAdded),
+        (_, _) => ValueTask.FromResult<object>(LogsAdded.None),
+        (user, _) => user.IsInRole(SessionAuthenticationHandler.AdminRole),
+        ExactOnly: true);
     public static readonly TimeSpan FlushInterval = TimeSpan.FromSeconds(1);
     public static readonly TimeSpan MaintenanceInterval = TimeSpan.FromMinutes(10);
 
@@ -76,7 +88,11 @@ public sealed class LogWriter(LogStore store, LogArchive archive, LogService log
             }
             try
             {
-                await store.WriteAsync(batch, cancellationToken);
+                var stored = await store.WriteAsync(batch, cancellationToken);
+                if (hub.HasSubscribers(Topic))
+                {
+                    hub.Publish(Topic, new LogsAdded([.. stored.TakeLast(LogsAdded.MaxEntries)], stored.Count > LogsAdded.MaxEntries));
+                }
             }
             catch (Exception exception) when (exception is SqliteException or IOException or UnauthorizedAccessException)
             {

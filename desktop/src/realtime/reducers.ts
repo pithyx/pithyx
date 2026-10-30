@@ -75,6 +75,8 @@ export const reducers: { [K in TopicName]: Reducer<K> } = {
   'system/network': (_, event) => event,
   'system/updates': (_, event) => event,
   'system/ups': (_, event) => event,
+  // New log entries go to the Log Center as they come; the store keeps none of them.
+  'system/logs': () => ({ entries: [], truncated: false }),
   // Only a revision: listeners read the share list again when it changes.
   'shares/list': (_, event) => event,
   // Thumbnail events are handed to the Files app as they come; the store only says the topic is followed.

@@ -82,21 +82,23 @@ public sealed class LogStore : IDisposable
     }
 
     /// <summary>Writes one batch in one transaction, with the journal position of its last journal entry.</summary>
-    public async Task WriteAsync(IReadOnlyList<PendingLogEntry> batch, CancellationToken cancellationToken)
+    /// <summary>Writes a batch and returns the entries as stored, with their ids.</summary>
+    public async Task<IReadOnlyList<LogEntry>> WriteAsync(IReadOnlyList<PendingLogEntry> batch, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(batch);
         if (batch.Count == 0)
         {
-            return;
+            return [];
         }
         await using var connection = await OpenAsync(cancellationToken);
         await using var transaction = connection.BeginTransaction();
-        await LogDatabase.InsertAsync(connection, transaction, batch);
+        var stored = await LogDatabase.InsertAsync(connection, transaction, batch);
         if (batch.LastOrDefault(entry => entry.JournalCursor is not null)?.JournalCursor is { } cursor)
         {
             await LogDatabase.SetMetaAsync(connection, JournalCursorKey, cursor, transaction);
         }
         await transaction.CommitAsync(cancellationToken);
+        return stored;
     }
 
     /// <summary>Where the journal reader continues after a restart; null before the first journal entry.</summary>

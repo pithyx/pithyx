@@ -1,8 +1,29 @@
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_VIEW, describeSource, filterOf, groupSources, toggleLevel } from './filters';
-import { logQuery } from '../sdk/logs';
+import {
+  addCounts,
+  countOf,
+  DEFAULT_VIEW,
+  describeSource,
+  filterOf,
+  groupSources,
+  matches,
+} from './filters';
+import { logQuery, type LogEntry } from '../sdk/logs';
 
 const now = Date.parse('2026-09-30T12:00:00Z');
+
+const entry = (fields: Partial<LogEntry>): LogEntry => ({
+  id: 1,
+  time: '2026-09-30T11:59:00Z',
+  level: 'info',
+  source: 'daemon',
+  message: 'started',
+  requestId: null,
+  user: null,
+  data: null,
+  archived: false,
+  ...fields,
+});
 
 describe('log filters', () => {
   it('asks for the last day without debug by default', () => {
@@ -12,23 +33,24 @@ describe('log filters', () => {
     });
   });
 
-  it('leaves out what does not filter: every level, no source, all time, blank search', () => {
-    expect(
-      filterOf(
-        { levels: ['debug', 'info', 'warn', 'error'], sources: [], range: 'all', search: '  ' },
-        now,
-      ),
-    ).toEqual({});
+  it('leaves out what does not filter: debug with every level, no source, all time, blank search', () => {
+    expect(filterOf({ level: 'debug', source: null, range: 'all', search: '  ' }, now)).toEqual({});
   });
 
-  it('passes sources and the trimmed search', () => {
+  it('passes the warnings, the source and the trimmed search', () => {
     expect(
       filterOf(
-        { ...DEFAULT_VIEW, range: 'hour', sources: ['app/org.pithyx.files'], search: ' tank ' },
+        {
+          level: 'warnings',
+          range: 'hour',
+          source: 'app/org.pithyx.files',
+          search: ' tank ',
+        },
         now,
       ),
-    ).toMatchObject({
+    ).toEqual({
       from: '2026-09-30T11:00:00.000Z',
+      level: ['warn'],
       source: ['app/org.pithyx.files'],
       search: 'tank',
     });
@@ -53,19 +75,35 @@ describe('log filters', () => {
 
   it("names a core app's entries from before its org.pithyx id after the app", () => {
     expect(describeSource('app/files')).toEqual({ group: 'app', name: 'org.pithyx.files' });
-    expect(describeSource('app/org.pithyx.files')).toEqual({
-      group: 'app',
-      name: 'org.pithyx.files',
-    });
     expect(describeSource('app/com.mueller.files')).toEqual({
       group: 'app',
       name: 'com.mueller.files',
     });
   });
 
-  it('keeps at least one level and the order of levels', () => {
-    expect(toggleLevel(['error'], 'error')).toEqual(['error']);
-    expect(toggleLevel(['error'], 'debug')).toEqual(['debug', 'error']);
-    expect(toggleLevel(['info', 'warn'], 'info')).toEqual(['warn']);
+  it('decides like the daemon whether a live entry belongs in the view', () => {
+    const view = { ...DEFAULT_VIEW, source: 'app/org.pithyx.files', search: 'A.JPG' };
+    expect(
+      matches(view, entry({ source: 'app/files', level: 'warn', data: { file: 'a.jpg' } })),
+    ).toBe(true);
+    expect(matches(view, entry({ source: 'app/files', level: 'debug', message: 'a.jpg' }))).toBe(
+      false,
+    );
+    expect(matches(view, entry({ source: 'system/smbd', message: 'a.jpg' }))).toBe(false);
+    expect(matches({ ...DEFAULT_VIEW, level: 'errors' }, entry({ level: 'warn' }))).toBe(false);
+  });
+
+  it('adds the warnings and errors of live entries to their source', () => {
+    const counts = addCounts(
+      [{ source: 'app/org.pithyx.files', warnings: 1, errors: 0 }],
+      [
+        entry({ source: 'app/files', level: 'error' }),
+        entry({ source: 'system/smbd', level: 'warn' }),
+        entry({ source: 'system/smbd', level: 'info' }),
+      ],
+    );
+    expect(countOf(counts, 'app/org.pithyx.files')).toEqual({ warnings: 1, errors: 1 });
+    expect(countOf(counts, 'system/smbd')).toEqual({ warnings: 1, errors: 0 });
+    expect(countOf(counts, null)).toEqual({ warnings: 2, errors: 1 });
   });
 });

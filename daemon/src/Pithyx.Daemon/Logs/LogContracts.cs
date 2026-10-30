@@ -34,6 +34,25 @@ public sealed record LogEntry(
 /// <param name="NextCursor">Pass as <c>cursor</c> for the next, older page; null when there is none.</param>
 public sealed record LogPage(IReadOnlyList<LogEntry> Entries, string? NextCursor);
 
+/// <summary>How many warnings and errors a source logged in a time range.</summary>
+/// <param name="Source">The source as the Log Center lists it (<c>daemon</c>, <c>system/&lt;service&gt;</c>, <c>app/&lt;id&gt;</c>).</param>
+/// <param name="Warnings">Entries of level warn.</param>
+/// <param name="Errors">Entries of level error.</param>
+public sealed record LogCount(string Source, long Warnings, long Errors);
+
+/// <summary>
+/// An event of the topic <c>system/logs</c>: the entries the daemon just wrote, so an open Log Center shows them live
+/// without asking again (asking would log the request and so feed itself). The snapshot has none.
+/// </summary>
+/// <param name="Entries">The newest entries of one write, oldest first, at most 200.</param>
+/// <param name="Truncated">True when the write held more entries than the event carries; the Log Center then reloads.</param>
+public sealed record LogsAdded(IReadOnlyList<LogEntry> Entries, bool Truncated)
+{
+    public const int MaxEntries = 200;
+
+    public static LogsAdded None { get; } = new([], false);
+}
+
 /// <summary>Retention of the current logs on the system disk and of the optional archive on a pool.</summary>
 /// <param name="RetentionDays">Current logs older than this are dropped (1 to 365).</param>
 /// <param name="MaxBytes">The current logs of the system and all apps together stay below this (64 MB to 4 GB); the oldest go first.</param>
