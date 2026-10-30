@@ -181,6 +181,8 @@
 
 .navItems {
   display: grid;
+  /* The column stays as wide as the navigation; a long name ends with an ellipsis, the count stays in view. */
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--space-0);
   margin: 0;
   padding: 0;

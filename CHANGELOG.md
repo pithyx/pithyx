@@ -65,6 +65,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Fixed
 
+- A long name in a navigation column (`NavList` of `@pithyx/ui`) ends with an ellipsis instead of widening every item and hiding the counts (#341).
 - The Log Center no longer shows an entry's request id (it stays searchable).
 - `Meter` of `@pithyx/ui` has the role `meter` alone; React Aria's fallback list `meter progressbar` failed the accessibility check.
 - `pithyx-release`: the menu asks whether to publish the npm packages as `latest`, so a stable version can be published from it, and `publish-sdk` refuses a stable version without `--latest` before anything runs (#314).
