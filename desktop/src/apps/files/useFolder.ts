@@ -1,4 +1,9 @@
-import { useInfiniteQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
+import {
+  useInfiniteQuery,
+  useQueryClient,
+  type Query,
+  type QueryClient,
+} from '@tanstack/react-query';
 import type { FolderChange, FolderPage, SortKey, SortOrder, PithyxApp } from '@pithyx/sdk';
 import { useEffect, useEffectEvent } from 'react';
 import { applyChange, loadedEntries, type FolderPages } from './pages';
@@ -76,6 +81,13 @@ export function changeFolder(
   change: Omit<FolderChange, 'watch' | 'resync' | 'gone'>,
 ): void {
   const full: FolderChange = { ...change, watch: '', resync: false, gone: false };
+  // A first page still loading may have been read before this change (a folder created right after Files opened):
+  // read it again, so the change is not lost when it arrives. Invalidating would only wait for the old read.
+  const loading = {
+    queryKey: folderKey(share, path),
+    predicate: (query: Query) => query.state.data === undefined,
+  };
+  void client.cancelQueries(loading).then(() => client.refetchQueries(loading));
   for (const [key, data] of client.getQueriesData<FolderPages>({
     queryKey: folderKey(share, path),
   })) {

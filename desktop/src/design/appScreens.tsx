@@ -7,16 +7,21 @@ import { MonitorApp } from '../apps/monitor/MonitorApp';
 import { PreferencesApp } from '../apps/preferences/PreferencesApp';
 import { SettingsApp } from '../apps/settings/SettingsApp';
 import { StoreApp } from '../apps/store/StoreApp';
+import type { BackupSummary } from '../apps/sdk/backup';
 import { trustQuery } from '../security/trust';
 import {
   filesSample,
   homesAnswers,
   logsAnswers,
   monitorEvents,
+  sampleFolder,
   sampleLogEntries,
+  samplePicture,
+  sampleTrashed,
   storeAnswers,
 } from './appSamples';
 import { CoreAppScene, type ScriptStep } from './CoreAppScene';
+import { sampleNetwork, type ExtraAnswers } from './storageSample';
 import type { ScreenDefinition } from './screens';
 
 const files = (session: object, script: ScriptStep[] = []): ScreenDefinition['render'] =>
@@ -69,23 +74,81 @@ const sessionUser: components['schemas']['UserInfo'] = {
   permissions: { admin: true, apps: [], protocols: ['smb', 'sftp'], rights: [] },
 };
 
-function seedPreferences(client: QueryClient) {
-  client.setQueryData(queryKeys.session, sessionUser);
+const seedPreferences = (totpEnabled: boolean) => (client: QueryClient) => {
+  client.setQueryData(queryKeys.session, { ...sessionUser, totpEnabled });
   client.setQueryData(trustQuery.queryKey, 'trusted');
-}
+};
 
-const preferences = (script: ScriptStep[] = []): ScreenDefinition['render'] =>
+const preferences = (script: ScriptStep[] = [], totpEnabled = true): ScreenDefinition['render'] =>
   function PreferencesScreen(context) {
     return (
       <CoreAppScene
         context={context}
         app="preferences"
         Component={PreferencesApp}
-        seed={seedPreferences}
+        seed={seedPreferences(totpEnabled)}
         script={script}
       />
     );
   };
+
+const settings = (
+  page: string,
+  script: ScriptStep[] = [],
+  answers: ExtraAnswers = {},
+): ScreenDefinition['render'] =>
+  function SettingsScreen(context) {
+    return (
+      <CoreAppScene
+        context={context}
+        app="settings"
+        Component={SettingsApp}
+        launch={{ page }}
+        script={script}
+        answers={answers}
+      />
+    );
+  };
+
+const twoFactorSetup: ScriptStep[] = [
+  { press: 'desktop:preferences.pages.security' },
+  { press: 'desktop:menu.twoFactor' },
+  { press: 'auth:totpSetup.start' },
+];
+
+const checkedBackup: BackupSummary = {
+  restoreId: 'sample',
+  createdAt: '2026-09-25T18:40:00Z',
+  hostName: 'pithyx',
+  version: '1.2.0',
+  users: 4,
+  groups: 2,
+  sharedFolders: 3,
+  categories: [
+    'users',
+    'sharedFolders',
+    'storage',
+    'system',
+    'certificates',
+    'apps',
+    'reverseProxy',
+  ],
+};
+
+// A change applied a few seconds ago: the countdown starts at 55 seconds whenever the screen is opened.
+const pendingNetwork: ExtraAnswers = {
+  'internal.admin.network.get': () => ({
+    ...sampleNetwork,
+    pending: {
+      id: 'sample',
+      deadline: new Date(Date.now() + 55_500).toISOString(),
+      hostName: null,
+      interfaces: ['enp1s0'],
+      addresses: [],
+      origin: 'web',
+    },
+  }),
+};
 
 const firstWarning = sampleLogEntries[0]?.message ?? '';
 
@@ -97,7 +160,7 @@ export const appScreens: ScreenDefinition[] = [
     title: 'Files: a folder',
     description:
       'Files in a folder of holiday photos: the folder tree with the shares and the recycle bin, the toolbar with the primary action first, the sortable list and the details pane of the selected photo. Compare with f-files.',
-    render: files({ share: '2', path: '2026-summer', select: 'Lighthouse.jpg' }, [
+    render: files({ share: '2', path: sampleFolder, select: samplePicture }, [
       { press: 'files:details' },
     ]),
   },
@@ -107,7 +170,7 @@ export const appScreens: ScreenDefinition[] = [
     title: 'Files: recycle bin',
     description:
       'The recycle bin of a shared folder with two deleted photos, where they were, who deleted them and when they go for good.',
-    render: files({ share: '2', path: '', view: 'trash' }, [{ press: 'Blurry sunset.jpg' }]),
+    render: files({ share: '2', path: '', view: 'trash' }, [{ press: sampleTrashed }]),
   },
   {
     id: 'logs-center',
@@ -170,6 +233,77 @@ export const appScreens: ScreenDefinition[] = [
     title: 'Personal settings: appearance',
     description: 'Theme, accent color, wallpaper and taskbar position, which apply at once.',
     render: preferences([{ press: 'desktop:preferences.pages.appearance' }]),
+  },
+  {
+    id: 'files-conflict',
+    group: 'apps',
+    title: 'Files: names already exist',
+    description:
+      'An upload of a photo the folder already has: the dialog asks whether to skip, replace or keep both.',
+    // The folder has to be there before the upload, so the photo is selected first.
+    render: files({ share: '2', path: sampleFolder }, [
+      { press: samplePicture },
+      { upload: samplePicture },
+    ]),
+  },
+  {
+    id: 'preferences-two-factor',
+    group: 'apps',
+    title: 'Personal settings: two-factor setup',
+    description:
+      'Turning on two-factor sign-in: the QR code, the key to type by hand and the first code.',
+    render: preferences(twoFactorSetup, false),
+  },
+  {
+    id: 'preferences-recovery-codes',
+    group: 'apps',
+    title: 'Personal settings: recovery codes',
+    description:
+      'The ten recovery codes, shown once after the first code, with the button to copy them.',
+    render: preferences(
+      [
+        ...twoFactorSetup,
+        { fill: 'auth:totpSetup.code', value: '492817' },
+        { press: 'auth:totpSetup.confirm' },
+      ],
+      false,
+    ),
+  },
+  {
+    id: 'preferences-language',
+    group: 'apps',
+    title: 'Personal settings: language',
+    description: 'The language of this device: automatic, English or German.',
+    render: preferences([{ press: 'desktop:preferences.pages.language' }]),
+  },
+  {
+    id: 'settings-backup-checked',
+    group: 'apps',
+    title: 'Settings: a checked backup',
+    description:
+      'A backup file after Check backup: when and where it was made, what it holds and the parts to restore.',
+    render: settings(
+      'backup',
+      [
+        { upload: 'pithyx-2026-09-25.pithyxbackup' },
+        {
+          fill: 'settings:backup.restore.password',
+          inside: 'settings:backup.restore.title',
+          value: 'sample password',
+        },
+        { press: 'settings:backup.restore.check' },
+        { show: 'settings:backup.restore.title' },
+      ],
+      { 'internal.admin.backup.inspect': () => checkedBackup },
+    ),
+  },
+  {
+    id: 'settings-network-confirm',
+    group: 'apps',
+    title: 'Settings: confirm the network',
+    description:
+      'Right after a network change: the countdown with Keep and Undo now, and the box goes back without them.',
+    render: settings('network', [], pendingNetwork),
   },
   {
     id: 'settings-homes',

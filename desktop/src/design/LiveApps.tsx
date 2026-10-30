@@ -1,7 +1,7 @@
 import { FilesApp } from '../apps/files/FilesApp';
 import { LogsApp } from '../apps/logs/LogsApp';
 import { SettingsApp } from '../apps/settings/SettingsApp';
-import { filesSample, logsAnswers } from './appSamples';
+import { filesSample, logsAnswers, sampleFolder } from './appSamples';
 import { SampleAppHost } from './CoreAppScene';
 
 // The real core apps on sample data, as window contents of the desktop scenes.
@@ -11,7 +11,7 @@ export function LiveFiles() {
   return (
     <SampleAppHost
       Component={FilesApp}
-      options={{ files: filesSample, session: { share: '2', path: '2026-summer' } }}
+      options={{ files: filesSample, session: { share: '2', path: sampleFolder } }}
     />
   );
 }

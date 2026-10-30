@@ -135,6 +135,21 @@ export const screens: ScreenDefinition[] = [
     render: (context) => <DesktopScene context={context} windows="three" />,
   },
   {
+    id: 'desktop-window-menu',
+    group: 'desktop',
+    title: 'Window menu',
+    description:
+      'The app icon in the title bar of Files opens every window action with its shortcut, without dragging.',
+    render: (context) => (
+      <DesktopScene
+        context={context}
+        windows="three"
+        windowMenu
+        script={[{ press: 'desktop:window.menu', params: { title: '' } }]}
+      />
+    ),
+  },
+  {
     id: 'desktop-maximized',
     group: 'desktop',
     title: 'Maximized window',
@@ -197,6 +212,20 @@ export const screens: ScreenDefinition[] = [
     title: 'User menu',
     description: 'Opened from the profile at the bottom of the start menu.',
     render: (context) => <StartMenuScene context={context} search={false} userMenuOpen />,
+  },
+  {
+    id: 'user-menu-appearance',
+    group: 'overlays',
+    title: 'User menu: appearance',
+    description: 'The submenu Appearance of the user menu: like the system, light or dark.',
+    render: (context) => (
+      <StartMenuScene
+        context={context}
+        search={false}
+        userMenuOpen
+        script={[{ press: 'desktop:menu.theme' }]}
+      />
+    ),
   },
   {
     id: 'notifications',

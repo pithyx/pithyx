@@ -618,3 +618,8 @@
   flex: 1 1 10em;
   min-width: 0;
 }
+
+/* Long values without spaces, such as a certificate fingerprint, wrap anywhere instead of widening the row. */
+.breakAll {
+  overflow-wrap: anywhere;
+}

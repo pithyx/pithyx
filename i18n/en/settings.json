@@ -236,12 +236,15 @@
   "fileServices": {
     "intro": "File services let other computers open your shared folders over the network. Users sign in with their Pithyx user name and password.",
     "save": "Save",
+    "service": "Service",
+    "connect": "Connect",
     "firewall": {
       "title": "Firewall",
       "explain": "Pithyx lets other computers reach only the web interface and the file services that are switched on. Switching a service off also closes its port.",
       "privateSwitch": "Only private networks may use the file services",
       "privateExplain": "SMB, SFTP, SSH and FTP then answer only computers in private networks (10.x, 172.16 to 31.x, 192.168.x, link-local and IPv6 ULA). Leave it off if you reach the box through a router from another network or over a VPN with public addresses. The web interface stays reachable either way.",
-      "inactive": "This is a development machine: Pithyx keeps the rules but does not apply them here."
+      "inactive": "This is a development machine: Pithyx keeps the rules but does not apply them here.",
+      "reach": "Reachable from"
     },
     "rights": "Who may use which file service is set with the rights of each user or group on the Users and Groups pages. Which shared folders they offer is set per folder on the Shared folders page. A user who has not signed in on the web since file services arrived must sign in once, so the services learn the password.",
     "state": {
@@ -289,7 +292,8 @@
       "plainWarning": "At your own risk: without encryption, user names, passwords and files cross the network readable for anybody on it. Allow it only for devices that cannot use TLS, and only on a network you trust. Refusing it again ends every unencrypted session.",
       "connect": "Connect to",
       "tls": "Choose \"explicit FTP over TLS\" in your program. The box has its own certificate, so the program asks once whether to trust it; compare the fingerprint below.",
-      "fingerprint": "Certificate fingerprint (SHA-256):"
+      "fingerprint": "Certificate fingerprint (SHA-256):",
+      "plain": "Plain FTP"
     }
   },
   "network": {

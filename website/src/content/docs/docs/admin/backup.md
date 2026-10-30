@@ -37,7 +37,7 @@ Not included: files on pools, app data, logs, Docker data, sessions, jobs, notif
 
 ## Restoring
 
-![Settings, Backup and restore, after Check backup: when and where the backup was made, its contents and the parts to restore, with the button Restore](../../../../assets/screenshots/backup-checked.webp)
+![Settings, Backup and restore, after Check backup: when and where the backup was made, its contents and the parts to restore](../../../../assets/screenshots/backup-checked.webp)
 
 _Check backup shows what the file holds; nothing changes until you choose Restore._
 
