@@ -269,6 +269,11 @@
   font-weight: var(--font-weight-semibold);
 }
 
+/* A form of its own inside a FormSection (D394: controls stay narrow). */
+.narrow {
+  max-width: 30rem;
+}
+
 /* A paragraph inside a FormSection, above or instead of its rows. */
 .sectionIntro {
   margin: 0;

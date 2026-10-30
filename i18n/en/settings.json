@@ -1073,7 +1073,8 @@
     "batteryLowHint": "5 to 90; 20 by default.",
     "runtimeLow": "Runtime limit (minutes)",
     "runtimeLowHint": "1 to 60; 5 by default.",
-    "save": "Save"
+    "limitsTitle": "Limits",
+    "applyNote": "Applying saves the settings and connects to the UPS again."
   },
   "notifications": {
     "smtp": {

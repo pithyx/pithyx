@@ -1073,7 +1073,8 @@
     "batteryLowHint": "5 bis 90; standardmäßig 20.",
     "runtimeLow": "Laufzeit-Grenze (Minuten)",
     "runtimeLowHint": "1 bis 60; standardmäßig 5.",
-    "save": "Speichern"
+    "limitsTitle": "Grenzen",
+    "applyNote": "Übernehmen speichert die Einstellungen und verbindet sich neu mit der USV."
   },
   "notifications": {
     "smtp": {
