@@ -12,7 +12,10 @@ public static class CoreApps
 {
     public const string Files = "org.pithyx.files";
     public const string Viewer = "org.pithyx.viewer";
-    /// <summary>Storage is a group of Settings since D402; the id stays for what was stored under it (logs, grants).</summary>
+    /// <summary>
+    /// Storage was an app until D402 made it a group of Settings; its id only names what was stored before migration
+    /// 0022 under the short id <c>storage</c> (<see cref="LegacyIds"/>). No app has it any more.
+    /// </summary>
     public const string Storage = "org.pithyx.storage";
     public const string Settings = "org.pithyx.settings";
     public const string Monitor = "org.pithyx.monitor";
@@ -22,17 +25,17 @@ public static class CoreApps
     public const string Store = "org.pithyx.store";
 
     /// <summary>
-    /// The core apps that are given to users by a grant. The administration apps (Storage, Settings, Resource Monitor,
-    /// Log Center, Store) belong to the administrator right, and About and Personal settings are for everybody.
+    /// The core apps that are given to users by a grant. The administration apps (Settings, Resource Monitor, Log Center,
+    /// Store) belong to the administrator right, and About and Personal settings are for everybody.
     /// </summary>
     public static readonly IReadOnlyList<string> Granted = [Files, Viewer];
 
     /// <summary>The core apps that come with the administrator right.</summary>
     /// <remarks>The Store manages apps for everybody and is for administrators only (D320); users find their apps in the menu.</remarks>
-    public static readonly IReadOnlyList<string> Admin = [Storage, Settings, Monitor, Logs, Store];
+    public static readonly IReadOnlyList<string> Admin = [Settings, Monitor, Logs, Store];
 
     /// <summary>Every core app.</summary>
-    public static readonly IReadOnlyList<string> All = [Files, Viewer, Storage, Settings, Monitor, Logs, About, Store, Preferences];
+    public static readonly IReadOnlyList<string> All = [Files, Viewer, Settings, Monitor, Logs, About, Store, Preferences];
 
     // The core apps that existed before migration 0022; later ones never had a short id.
     private static readonly IReadOnlyList<string> _beforeSystemIds = [Files, Viewer, Storage, Settings, Monitor, Logs, About, Store];

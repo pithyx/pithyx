@@ -175,7 +175,7 @@ public sealed class GrantApiTests : IDisposable
         foreach (var grant in new object[]
         {
             new { resource = "right:root", level = "allow" },
-            new { resource = "app:org.pithyx.storage", level = "allow" },
+            new { resource = "app:org.pithyx.settings", level = "allow" },
             new { resource = "app:files", level = "allow" },
             new { resource = $"share:{shared}", level = "allow" },
             new { resource = "protocol:smb", level = "read" },

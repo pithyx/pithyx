@@ -123,7 +123,7 @@ public sealed class LogApiTests : IDisposable
         _factory.Services.GetRequiredService<Pithyx.Daemon.Permissions.PermissionService>().Invalidate();
         using var written = await rita.PostAsync("/api/apps/org.pithyx.files/logs", new { entries = new[] { new { level = "info", message = "hi" } } });
         Assert.Equal(HttpStatusCode.OK, written.StatusCode);
-        using var admin = await rita.PostAsync("/api/apps/org.pithyx.storage/logs", new { entries = new[] { new { level = "info", message = "hi" } } });
+        using var admin = await rita.PostAsync("/api/apps/org.pithyx.settings/logs", new { entries = new[] { new { level = "info", message = "hi" } } });
         Assert.Equal("auth.permission.denied", await admin.ErrorCodeAsync());
     }
 
