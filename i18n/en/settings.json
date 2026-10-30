@@ -1008,7 +1008,8 @@
       "explain": "The home folder goes with every file, its recycle bin and its snapshots. This cannot be undone. If it belongs to a user whose pool is gone, the user gets a new, empty home folder.",
       "confirm": "Type {folder} to confirm",
       "submit": "Delete home folder"
-    }
+    },
+    "toolbar": "Home folder actions"
   },
   "ups": {
     "intro": "With a UPS, the box shuts down cleanly on a power failure before the battery runs out: apps and file services stop and the pools are unmounted. Pithyx reads the UPS through NUT (Network UPS Tools).",

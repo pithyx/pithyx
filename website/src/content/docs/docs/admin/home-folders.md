@@ -40,7 +40,7 @@ A home on a pool that is gone (destroyed, or exported and not imported again) ca
 
 ## Quotas
 
-**Default quota** applies to every home without its own quota; leave it empty for no limit. **Quota** on a home sets the user's own: **Use the default quota**, **No limit** or **Own quota**. A quota is at least 1 MiB ([`homes.quota.invalid`](/docs/reference/errors/#homes.quota.invalid)) and counts the files and the snapshots of the home. When a home is full, writing to it fails until files are deleted and the recycle bin is emptied.
+**Default quota** applies to every home without its own quota; leave it empty for no limit. Select a home and choose **Quota** in the toolbar above the table to set the user's own: **Use the default quota**, **No limit** or **Own quota**. A quota is at least 1 MiB ([`homes.quota.invalid`](/docs/reference/errors/#homes.quota.invalid)) and counts the files and the snapshots of the home. When a home is full, writing to it fails until files are deleted and the recycle bin is emptied.
 
 ## When a user is deleted
 
@@ -50,7 +50,7 @@ Deleting a user in Settings > **Users and groups** asks what happens to the home
 - **Move its files into a shared folder**: a new folder named after the user in the shared folder you choose gets every file, then the home is deleted with its recycle bin. This runs as a job.
 - **Delete it with every file**: the home goes with its files, recycle bin and snapshots, after you typed the user name.
 
-A kept home appears on the **Home folders** page with "user deleted". **Move into shared folder** and **Delete** do the same as above later; **Delete** asks you to type the folder name. A new user with the same name never gets an old home: a home that belongs to another user id is renamed out of the way first.
+A kept home appears on the **Home folders** page with "user deleted". Select it, and **Move into shared folder** and **Delete** in the toolbar do the same as above later; **Delete** asks you to type the folder name. A new user with the same name never gets an old home: a home that belongs to another user id is renamed out of the way first.
 
 ## Limits
 

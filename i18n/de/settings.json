@@ -1008,7 +1008,8 @@
       "explain": "Der Home-Ordner wird mit allen Dateien, seinem Papierkorb und seinen Snapshots gelöscht. Das lässt sich nicht rückgängig machen. Gehört er einem Benutzer, dessen Pool fehlt, bekommt der Benutzer einen neuen, leeren Home-Ordner.",
       "confirm": "Gib {folder} zur Bestätigung ein",
       "submit": "Home-Ordner löschen"
-    }
+    },
+    "toolbar": "Aktionen für Home-Ordner"
   },
   "ups": {
     "intro": "Mit einer USV fährt die Box bei einem Stromausfall sauber herunter, bevor der Akku leer ist: Apps und Dateidienste stoppen und die Pools werden ausgehängt. Pithyx liest die USV über NUT (Network UPS Tools).",

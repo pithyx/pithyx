@@ -40,7 +40,7 @@ Ein Home auf einem Pool, der fehlt (zerstört oder exportiert und nicht wieder i
 
 ## Quotas
 
-**Standard-Quota** gilt für jedes Home ohne eigene Quota; lass das Feld leer für keine Grenze. **Quota** bei einem Home setzt die eigene des Benutzers: **Standard-Quota verwenden**, **Keine Grenze** oder **Eigene Quota**. Eine Quota ist mindestens 1 MiB groß ([`homes.quota.invalid`](/de/docs/reference/errors/#homes.quota.invalid)) und zählt die Dateien und die Snapshots des Homes. Ist ein Home voll, schlägt Schreiben fehl, bis Dateien gelöscht und der Papierkorb geleert ist.
+**Standard-Quota** gilt für jedes Home ohne eigene Quota; lass das Feld leer für keine Grenze. Wähle ein Home und in der Werkzeugleiste über der Tabelle **Quota**, um die eigene des Benutzers zu setzen: **Standard-Quota verwenden**, **Keine Grenze** oder **Eigene Quota**. Eine Quota ist mindestens 1 MiB groß ([`homes.quota.invalid`](/de/docs/reference/errors/#homes.quota.invalid)) und zählt die Dateien und die Snapshots des Homes. Ist ein Home voll, schlägt Schreiben fehl, bis Dateien gelöscht und der Papierkorb geleert ist.
 
 ## Wenn ein Benutzer gelöscht wird
 
@@ -50,7 +50,7 @@ Beim Löschen eines Benutzers unter Einstellungen > **Benutzer und Gruppen** fra
 - **Dateien in einen freigegebenen Ordner verschieben**: Ein neuer Ordner mit dem Namen des Benutzers im gewählten freigegebenen Ordner bekommt alle Dateien, danach wird das Home samt Papierkorb gelöscht. Das läuft als Job.
 - **Mit allen Dateien löschen**: Das Home wird mit seinen Dateien, seinem Papierkorb und seinen Snapshots gelöscht, nachdem du den Benutzernamen eingegeben hast.
 
-Ein behaltenes Home erscheint auf der Seite **Home-Ordner** mit „Benutzer gelöscht“. **In Freigabe verschieben** und **Löschen** tun dort später dasselbe wie oben; **Löschen** fragt nach dem Ordnernamen. Ein neuer Benutzer mit demselben Namen bekommt nie ein altes Home: Ein Home, das einer anderen Benutzer-ID gehört, wird vorher umbenannt.
+Ein behaltenes Home erscheint auf der Seite **Home-Ordner** mit „Benutzer gelöscht“. Wähle es aus, dann tun **In Freigabe verschieben** und **Löschen** in der Werkzeugleiste später dasselbe wie oben; **Löschen** fragt nach dem Ordnernamen. Ein neuer Benutzer mit demselben Namen bekommt nie ein altes Home: Ein Home, das einer anderen Benutzer-ID gehört, wird vorher umbenannt.
 
 ## Grenzen
 
