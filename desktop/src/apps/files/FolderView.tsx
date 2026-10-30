@@ -161,6 +161,15 @@ export function FolderView(props: FolderViewProps) {
     }
   }, [entries, onVisible, visibleFrom, visibleTo]);
 
+  // The entry being named is scrolled into view, so its field shows (a new folder lands where the order puts it):
+  // syncing with the virtualizer, not deriving state.
+  const renamingIndex = props.renaming === null ? -1 : names.indexOf(props.renaming);
+  useEffect(() => {
+    if (renamingIndex >= 0) {
+      virtualizer.scrollToIndex(Math.floor(renamingIndex / columns), { align: 'auto' });
+    }
+  }, [renamingIndex, columns, virtualizer]);
+
   const { onShown, folderKey } = props;
   const shownKey = useRef<string | null>(null);
   useLayoutEffect(() => {
