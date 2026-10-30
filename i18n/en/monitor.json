@@ -1,7 +1,13 @@
 {
   "views": {
-    "label": "View",
-    "performance": "Performance",
+    "label": "Resource Monitor navigation",
+    "search": "Search",
+    "overview": "Overview",
+    "cpu": "CPU",
+    "memory": "Memory",
+    "disks": "Disks",
+    "network": "Network",
+    "temperatures": "Temperatures",
     "processes": "Processes"
   },
   "summary": {
@@ -47,7 +53,9 @@
     "none": "No network interfaces found.",
     "receive": "Received {value}",
     "send": "Sent {value}",
-    "chart": "Traffic of {name} over the last {range}, now {received} received and {sent} sent"
+    "chart": "Traffic of {name} over the last {range}, now {received} received and {sent} sent",
+    "total": "{count, plural, one {# interface} other {# interfaces}} · received {received} · sent {sent}",
+    "totalChart": "Traffic of every interface over the last {range}, now {received} received and {sent} sent"
   },
   "disks": {
     "title": "Disks",
@@ -56,7 +64,9 @@
     "write": "Written {value}",
     "busy": "Busy {value}",
     "chart": "Throughput of {name} over the last {range}, now {read} read and {written} written",
-    "hint": "Read from the kernel's counters: a sleeping disk stays asleep."
+    "hint": "Read from the kernel's counters: a sleeping disk stays asleep.",
+    "total": "{count, plural, one {# disk} other {# disks}} · read {read} · written {written}",
+    "totalChart": "Throughput of every disk over the last {range}, now {read} read and {written} written"
   },
   "temperatures": {
     "title": "Temperatures",
@@ -80,5 +90,8 @@
     "empty": "No process matches the filter.",
     "loading": "Reading the processes…",
     "cpuHint": "CPU is the share of all cores together."
+  },
+  "top": {
+    "title": "Top processes"
   }
 }

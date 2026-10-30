@@ -27,9 +27,9 @@ App messages arrive through the SDK: `info`, `warn` and `error` always, `debug` 
 
 ![The Resource Monitor, Performance, with CPU, memory with the ZFS cache, network and disks, one disk busy with a scrub](../../../../assets/screenshots/monitor-performance.webp)
 
-_The Performance view of the last minute, here during a scrub._
+_The charts of the last minute, here during a scrub._
 
-The Resource Monitor has the views **Performance** and **Processes**, with time ranges of a minute, 10 minutes and an hour. It samples every second, and only while someone watches it; the history is kept in memory for one hour. So the history covers only the time the monitor was open somewhere: nothing is measured while nobody watches.
+The Resource Monitor's navigation has **Overview**, **CPU**, **Memory**, **Disks**, **Network**, **Temperatures** and **Processes**; the toolbar sets the time range of the charts (a minute, 10 minutes or an hour) and the status bar shows the uptime and the load. The overview shows CPU and memory, network and disks as totals over every interface and disk, the temperatures and the six processes that use the most CPU now; the other pages show their part, network and disks per device. It samples every second, and only while someone watches it, processes only while the overview or **Processes** is shown; the history is kept in memory for one hour. So the history covers only the time the monitor was open somewhere: nothing is measured while nobody watches, and there is no longer history (a day or a week).
 
 It shows CPU in total and per core, and memory split into Programs, ZFS cache (ARC), Page cache and Free, plus swap. The ZFS cache gives memory back as soon as programs need it. Network traffic is shown per interface, disk reads, writes and busy time per disk (from the kernel's counters, so a sleeping disk stays asleep), and temperatures from the sensors; disk temperatures are not read here. The process list shows name, PID, user, CPU (share of all cores together) and memory, with a filter. Settings > **Info Center** shows version, host name, kernel, CPU, memory and uptime.
 

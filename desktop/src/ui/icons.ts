@@ -119,3 +119,4 @@ export { default as IconServer } from '@tabler/icons-react/dist/esm/icons/IconSe
 export { default as IconTool } from '@tabler/icons-react/dist/esm/icons/IconTool.mjs';
 export { default as IconPlayerPause } from '@tabler/icons-react/dist/esm/icons/IconPlayerPause.mjs';
 export { default as IconPlayerPlay } from '@tabler/icons-react/dist/esm/icons/IconPlayerPlay.mjs';
+export { default as IconTemperature } from '@tabler/icons-react/dist/esm/icons/IconTemperature.mjs';
