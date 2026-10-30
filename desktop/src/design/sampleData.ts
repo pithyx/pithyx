@@ -2,8 +2,9 @@ import type { RecentFile } from '../apps/files/recent';
 // Sample content for the design mockups. Interface text comes from i18n; what stays here is user data (names of
 // files, folders, pools and notes) and raw values that the formatters turn into localized text.
 import {
+  IconActivity,
   IconBox,
-  IconDatabase,
+  IconBuildingStore,
   IconFileText,
   IconFileTypePdf,
   IconFileZip,
@@ -13,7 +14,7 @@ import {
   IconPhoto,
   IconSettings,
   IconTerminal2,
-  IconUsers,
+  IconUserCog,
 } from '../ui/icons';
 import type { components } from '@pithyx/api-client';
 import { coreAppIds } from '../apps/ids';
@@ -25,11 +26,12 @@ import type { AppInfo } from '../shell/types';
 
 export const appDefinitions = {
   files: { id: coreAppIds.files, icon: IconFolders, tone: 'petrol' },
-  storage: { id: coreAppIds.storage, icon: IconDatabase, tone: 'ocean' },
+  monitor: { id: coreAppIds.monitor, icon: IconActivity, tone: 'moss' },
   logs: { id: coreAppIds.logs, icon: IconListDetails, tone: 'graphite' },
-  settings: { id: coreAppIds.settings, icon: IconSettings, tone: 'indigo' },
+  settings: { id: coreAppIds.settings, icon: IconSettings, tone: 'graphite' },
+  store: { id: coreAppIds.store, icon: IconBuildingStore, tone: 'indigo' },
+  preferences: { id: coreAppIds.preferences, icon: IconUserCog, tone: 'ocean' },
   photos: { id: 'photos', icon: IconPhoto, tone: 'rose' },
-  users: { id: 'users', icon: IconUsers, tone: 'plum' },
   containers: { id: 'containers', icon: IconBox, tone: 'moss' },
   terminal: { id: 'terminal', icon: IconTerminal2, tone: 'amber' },
 } satisfies Record<string, Omit<AppInfo, 'name'>>;
@@ -54,7 +56,7 @@ export const user = { name: 'Alex Morgan', firstName: 'Alex', initials: 'AM', us
 export const hostname = 'nas-living-room';
 export const now = new Date('2026-09-26T14:32:00');
 export const recoveryKey = 'PTHX-7KQ2-MZ9P-3HT8-WB6N-R2DC-5FJX-Q8';
-export const currentFolder = 'Photos 2026';
+export const currentFolder = '2026-summer';
 
 export const noteText =
   'Replace disk 3 in tank before Friday.\nOrder: 8 TB, CMR.\n\nCall Sam about the backup box.';
@@ -67,18 +69,14 @@ export const desktopItems = [
   { name: 'network-plan.txt', item: { kind: 'file', icon: IconFileText } },
 ] as const;
 
-export const desktopShortcuts: AppId[] = ['files', 'storage'];
+export const desktopShortcuts: AppId[] = ['files', 'settings'];
 
-export const startApps: AppId[] = [
-  'files',
-  'storage',
-  'settings',
-  'users',
-  'photos',
-  'containers',
-  'logs',
-  'terminal',
-];
+/** The menu's app list by area, as the desktop groups it: System for administrators, Apps, You. */
+export const startApps = {
+  system: ['files', 'settings', 'monitor', 'logs', 'store'],
+  apps: ['photos', 'containers', 'terminal'],
+  you: ['preferences'],
+} as const satisfies Record<string, readonly AppId[]>;
 
 /** Sample state for the menu's tiles; only the fields the tiles read are filled in. */
 export const startPools = [
@@ -154,7 +152,7 @@ export function notifications(apps: Apps): NotificationItem[] {
   return [
     {
       id: 'n1',
-      app: apps.storage,
+      app: apps.settings,
       message: { code: 'storage.scrub.finished', params: { pool: 'tank', errors: 0 } },
       minutesAgo: 2,
       unread: true,
@@ -162,7 +160,7 @@ export function notifications(apps: Apps): NotificationItem[] {
     },
     {
       id: 'n2',
-      app: apps.storage,
+      app: apps.settings,
       message: { code: 'storage.disk.warm', params: { disk: 3, pool: 'tank', temperature: 52 } },
       minutesAgo: 14,
       unread: true,

@@ -32,7 +32,7 @@ import {
   MenuTrigger,
 } from '@pithyx/ui';
 import styles from './DesktopScreens.module.css';
-import { FilesContent, LogsContent, SettingsContent, StorageContent } from './SampleApps';
+import { LiveFiles, LiveLogs, LiveSettings } from './LiveApps';
 import {
   currentFolder,
   desktopItems,
@@ -77,7 +77,7 @@ function runningApps(windows: WindowSet, apps: Apps): RunningApp[] {
   if (windows === 'three') {
     return [
       { ...apps.files, state: 'focused' },
-      { ...apps.storage, state: 'open' },
+      { ...apps.settings, state: 'open' },
       { ...apps.logs, state: 'open' },
     ];
   }
@@ -105,26 +105,26 @@ function windowsFor(set: WindowSet, apps: Apps, filesTitle: string): WindowProps
         geometry: { x: 8, y: 40, width: 38, height: 50 },
         medium: 'hidden',
         layer: 1,
-        children: <LogsContent />,
+        children: <LiveLogs />,
       },
       {
-        app: apps.storage,
-        title: apps.storage.name,
+        app: apps.settings,
+        title: apps.settings.name,
         focused: false,
-        geometry: { x: 60, y: 34, width: 37, height: 58 },
+        geometry: { x: 52, y: 25, width: 46, height: 70 },
         medium: 'right',
         layer: 2,
-        children: <StorageContent />,
+        children: <LiveSettings />,
       },
       {
         app: apps.files,
         title: filesTitle,
         focused: true,
-        geometry: { x: 14, y: 5, width: 46, height: 64 },
+        geometry: { x: 7, y: 3, width: 58, height: 70 },
         medium: 'left',
         compactActive: true,
         layer: 3,
-        children: <FilesContent />,
+        children: <LiveFiles />,
       },
     ];
   }
@@ -137,7 +137,7 @@ function windowsFor(set: WindowSet, apps: Apps, filesTitle: string): WindowProps
         minimized: true,
         geometry: { x: 10, y: 10, width: 50, height: 60 },
         layer: 1,
-        children: <FilesContent />,
+        children: <LiveFiles />,
       },
       {
         app: apps.settings,
@@ -147,7 +147,7 @@ function windowsFor(set: WindowSet, apps: Apps, filesTitle: string): WindowProps
         geometry: { x: 0, y: 0, width: 100, height: 100 },
         compactActive: true,
         layer: 2,
-        children: <SettingsContent />,
+        children: <LiveSettings page="users" />,
       },
     ];
   }
@@ -296,7 +296,13 @@ export function StartMenuScene({
           position={context.taskbar}
           query={query}
           groups={[
-            { id: 'system', title: t('start.system'), apps: startApps.map((id) => apps[id]) },
+            {
+              id: 'system',
+              title: t('start.system'),
+              apps: startApps.system.map((id) => apps[id]),
+            },
+            { id: 'apps', title: t('start.apps'), apps: startApps.apps.map((id) => apps[id]) },
+            { id: 'you', title: t('start.you'), apps: startApps.you.map((id) => apps[id]) },
           ]}
           results={results}
           tiles={
@@ -385,14 +391,14 @@ export function SwitcherScene({ context }: { context: SceneContext }) {
         <AppSwitcher
           position={context.taskbar}
           cards={[
-            { id: 'files', app: apps.files, title: filesTitle, preview: <FilesContent /> },
+            { id: 'files', app: apps.files, title: filesTitle, preview: <LiveFiles /> },
             {
-              id: 'storage',
-              app: apps.storage,
-              title: apps.storage.name,
-              preview: <StorageContent />,
+              id: 'settings',
+              app: apps.settings,
+              title: apps.settings.name,
+              preview: <LiveSettings />,
             },
-            { id: 'logs', app: apps.logs, title: apps.logs.name, preview: <LogsContent /> },
+            { id: 'logs', app: apps.logs, title: apps.logs.name, preview: <LiveLogs /> },
           ]}
         />
       }
@@ -431,7 +437,7 @@ export function WindowStatesScene({
               compactActive
               layer={1}
             >
-              <FilesContent density={specimen.maximized === true ? 'compact' : 'comfortable'} />
+              <LiveFiles />
             </Window>
           </div>
           <figcaption className={styles.caption}>{captions[index]?.caption}</figcaption>
@@ -443,8 +449,8 @@ export function WindowStatesScene({
             position="bottom"
             apps={[
               { ...apps.files, state: 'focused' },
-              { ...apps.storage, state: 'open' },
-              { ...apps.settings, state: 'minimized' },
+              { ...apps.settings, state: 'open' },
+              { ...apps.logs, state: 'minimized' },
             ]}
             jobs={1}
             unread={3}

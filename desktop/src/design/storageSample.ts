@@ -17,6 +17,7 @@ import type { UpdateStatus } from '../apps/sdk/updates';
 import type { UpsStatus } from '../apps/sdk/ups';
 import type { GroupSummary, UserSummary } from '../apps/sdk/users';
 import type { FileServiceSettings } from '../apps/sdk/system';
+import { folderPage, type FilesSample } from './appSamples';
 
 const TB = 1_000_000_000_000;
 const GB = 1_000_000_000;
@@ -1171,6 +1172,12 @@ function answer(method: string, params: unknown, extra: ExtraAnswers): unknown {
       return sampleUps;
     case 'internal.admin.system.region':
       return { language: 'en', region: null };
+    case 'internal.files.thumbnails':
+      return (params as { names: string[] }).names.map((name) => ({
+        name,
+        status: 'none',
+        version: null,
+      }));
     case 'internal.admin.storage.snapshots.schedules':
       return { ...sampleSnapshotSchedules, dataset: (params as { dataset: string }).dataset };
     default:
@@ -1178,14 +1185,64 @@ function answer(method: string, params: unknown, extra: ExtraAnswers): unknown {
   }
 }
 
-/** A stand-in for the SDK app of a core app: internal calls answered from the sample, no events. */
-export function sampleApp(launch: unknown = null, extra: ExtraAnswers = {}): PithyxApp {
+/** What a gallery screen adds to the sample app beyond the internal calls. */
+export interface SampleAppOptions {
+  /** The window's saved session, which apps such as Files restore their place from. */
+  session?: unknown;
+  /** Events sent once to the app's listeners right after they subscribe, such as a monitor snapshot. */
+  events?: Record<string, unknown>;
+  /** The shares, folders and recycle bins behind `app.files` and `app.trash`. */
+  files?: FilesSample;
+}
+
+/** A stand-in for the SDK app of a core app: internal calls answered from the sample, events sent once. */
+export function sampleApp(
+  launch: unknown = null,
+  extra: ExtraAnswers = {},
+  options: SampleAppOptions = {},
+): PithyxApp {
   const format = createFormatters(() => ({ locale: i18next.language, timeZone: 'Europe/Berlin' }));
+  const files = options.files;
   const app = {
-    context: { launch: { args: launch }, locale: i18next.language, timeZone: 'Europe/Berlin' },
+    context: {
+      launch: { args: launch },
+      locale: i18next.language,
+      timeZone: 'Europe/Berlin',
+      session: options.session ?? null,
+    },
     format,
     call: (method: string, params: unknown) => Promise.resolve(answer(method, params, extra)),
-    on: () => () => undefined,
+    on: (event: string, handler: (data: unknown) => void) => {
+      const data = options.events?.[event];
+      if (data !== undefined) {
+        queueMicrotask(() => {
+          handler(data);
+        });
+      }
+      return () => undefined;
+    },
+    files: files && {
+      shares: () => Promise.resolve(files.shares),
+      list: (
+        location: { share: string },
+        path: string,
+        query: { sort?: string; order?: string } = {},
+      ) =>
+        Promise.resolve(
+          folderPage(location.share, path, query.sort ?? 'name', query.order ?? 'asc'),
+        ),
+      watch: () => Promise.resolve({ topic: '' }),
+      unwatch: () => Promise.resolve(),
+      versions: () => Promise.resolve([]),
+    },
+    trash: files && {
+      list: (location: { share: string }) =>
+        Promise.resolve(
+          files.trash[location.share] ?? { items: [], nextCursor: null, retentionDays: 30 },
+        ),
+    },
+    window: { setTitle: () => Promise.resolve() },
+    session: { save: () => Promise.resolve() },
   };
   return app as unknown as PithyxApp;
 }

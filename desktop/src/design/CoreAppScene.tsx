@@ -1,13 +1,15 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import i18next from 'i18next';
-import { useEffect, useState, type ComponentType } from 'react';
+import { useEffect, useState, type ComponentType, type CSSProperties } from 'react';
+import coreStyles from '../apps/sdk/CoreSdkApp.module.css';
+import { currentTheme } from '../apps/sandbox/theme';
 import type { SdkAppProps } from '../apps/sdk/CoreSdkApp';
 import { DesktopShell } from '../shell/DesktopShell';
 import { Taskbar } from '../shell/Taskbar';
 import { Window } from '../shell/Window';
 import type { SceneContext } from './DesktopScreens';
 import { now, useApps, type AppId } from './sampleData';
-import { sampleApp, type ExtraAnswers } from './storageSample';
+import { sampleApp, type ExtraAnswers, type SampleAppOptions } from './storageSample';
 
 /**
  * One user action the gallery performs after the app rendered, so a screen can show a dialog in a later state. Texts
@@ -126,9 +128,42 @@ function useScript(steps: readonly ScriptStep[]) {
 }
 
 /**
- * A real core app, maximized on the desktop, running on sample data. `launch` is passed as its launch arguments,
- * `script` then opens the dialog the screen shows.
+ * A real core app running on sample data, with its own query cache: `launch` is passed as its launch arguments,
+ * `options` adds files, events and a saved session, and `seed` fills the cache for apps that read the daemon
+ * directly instead of through the SDK.
  */
+export function SampleAppHost({
+  Component,
+  launch = null,
+  answers = {},
+  options = {},
+  seed,
+}: {
+  Component: ComponentType<SdkAppProps>;
+  launch?: unknown;
+  answers?: ExtraAnswers;
+  options?: SampleAppOptions;
+  seed?: (client: QueryClient) => void;
+}) {
+  const [client] = useState(() => {
+    const created = new QueryClient({
+      defaultOptions: { queries: { retry: false, staleTime: Infinity } },
+    });
+    seed?.(created);
+    return created;
+  });
+  const [app] = useState(() => sampleApp(launch, answers, options));
+  // The SDK puts the public tokens (--pithyx-*) on the app's root; the gallery does the same without a connection.
+  return (
+    <div className={coreStyles.root} style={currentTheme().tokens as CSSProperties}>
+      <QueryClientProvider client={client}>
+        <Component app={app} />
+      </QueryClientProvider>
+    </div>
+  );
+}
+
+/** A real core app, maximized on the desktop, on sample data; `script` then opens the dialog the screen shows. */
 export function CoreAppScene({
   context,
   app: appId,
@@ -137,6 +172,8 @@ export function CoreAppScene({
   launch = null,
   script = [],
   answers = {},
+  options = {},
+  seed,
 }: {
   context: SceneContext;
   app: AppId;
@@ -145,12 +182,10 @@ export function CoreAppScene({
   launch?: unknown;
   script?: readonly ScriptStep[];
   answers?: ExtraAnswers;
+  options?: SampleAppOptions;
+  seed?: (client: QueryClient) => void;
 }) {
   const apps = useApps();
-  const [client] = useState(
-    () => new QueryClient({ defaultOptions: { queries: { retry: false, staleTime: Infinity } } }),
-  );
-  const [app] = useState(() => sampleApp(launch, answers));
   const busy = useScript(script);
   const info = apps[appId];
   return (
@@ -180,9 +215,13 @@ export function CoreAppScene({
           layer={1}
           geometry={{ x: 0, y: 0, width: 100, height: 100 }}
         >
-          <QueryClientProvider client={client}>
-            <Component app={app} />
-          </QueryClientProvider>
+          <SampleAppHost
+            Component={Component}
+            launch={launch}
+            answers={answers}
+            options={options}
+            {...(seed === undefined ? {} : { seed })}
+          />
         </Window>
       </DesktopShell>
     </div>
