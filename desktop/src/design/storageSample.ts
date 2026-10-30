@@ -6,6 +6,7 @@ import i18next from 'i18next';
 import type {
   Dataset,
   Job,
+  ShareGrants,
   Pool,
   Snapshot,
   StorageDisk,
@@ -1119,6 +1120,45 @@ export const sampleUps: UpsStatus = {
   usbAvailable: true,
 };
 
+/** The rights on a shared folder: the group family may write, and what every user ends up with. */
+export const sampleShareGrants: ShareGrants = {
+  grants: [{ subjectKind: 'group', subjectId: 2, level: 'readWrite' }],
+  users: [
+    {
+      userId: 1,
+      username: 'ada',
+      displayName: 'Ada Admin',
+      administrator: true,
+      disabled: false,
+      access: 'readWrite',
+    },
+    {
+      userId: 2,
+      username: 'ben',
+      displayName: 'Ben Berger',
+      administrator: false,
+      disabled: false,
+      access: 'readWrite',
+    },
+    {
+      userId: 3,
+      username: 'carla.mueller-schmidt',
+      displayName: 'Carla Müller-Schmidt',
+      administrator: false,
+      disabled: false,
+      access: 'none',
+    },
+    {
+      userId: 4,
+      username: 'guest',
+      displayName: 'Guest',
+      administrator: false,
+      disabled: true,
+      access: 'none',
+    },
+  ],
+};
+
 /** Answers the internal calls of the Storage and Settings apps from the sample, never from a daemon. */
 function answer(method: string, params: unknown, extra: ExtraAnswers): unknown {
   const custom = extra[method];
@@ -1152,6 +1192,8 @@ function answer(method: string, params: unknown, extra: ExtraAnswers): unknown {
       return sampleShares;
     case 'internal.admin.shares.access':
       return sampleShareAccess;
+    case 'internal.admin.shares.grants':
+      return sampleShareGrants;
     case 'internal.admin.shares.plan':
       return sampleSharePlan(params as SharePlanRequest);
     case 'internal.admin.system.overview':

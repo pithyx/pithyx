@@ -31,9 +31,9 @@ Each app gets a dataset `<pool>/pithyx/apps/<id>`, mounted at `/<pool>/.pithyx/a
 
 ## Updates and rollback
 
-![The update settings with the update policy Tell administrators, the daily check time 03:00 and the channel Stable](../../../../assets/screenshots/store-update-settings.webp)
+![The page Updates with an update of Media Server and its release notes, and the update settings with the policy Tell administrators and the daily check time 03:00](../../../../assets/screenshots/store-update-settings.webp)
 
-_The update settings: what happens with new versions, when the box checks and which channel it follows._
+_The page Updates: waiting updates, what happens with new versions and when the box checks._
 
 The page **Updates** lists the newer versions the catalogs offer, what each asks for anew and whether the box installs it on its own, with **Update** for each and **Check now**. Below the list, the policy "When a catalog has a newer version" is **Install it**, **Tell administrators** (default) or **Do nothing** (the update is only listed under **Updates**). An update that asks for new permissions or special rights never installs on its own, and neither does any update of an app with root access, whatever the policy says (D388): a hijacked release of such an app could take over the box unseen. The page **Updates** marks such an app with **Root access** and installs its update with one click. The daily check time defaults to 03:00 (box time zone) plus a fixed random delay of 0 to 3600 seconds per box; **Check now** runs it at once. An app can follow its own policy in its detail. Administrators get the notifications "App updates" and "Catalog not fetched".
 

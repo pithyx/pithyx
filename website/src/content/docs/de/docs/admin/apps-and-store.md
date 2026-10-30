@@ -31,9 +31,9 @@ Jede App bekommt ein Dataset `<pool>/pithyx/apps/<id>`, eingehängt unter `/<poo
 
 ## Updates und Rollback
 
-![Die Update-Einstellungen mit der Update-Regel Administratoren benachrichtigen, der täglichen Prüfzeit 03:00 und dem Kanal Stabil](../../../../../assets/screenshots/store-update-settings.de.webp)
+![Die Seite Updates mit einem Update von Media Server und seinen Versionshinweisen und den Update-Einstellungen mit der Regel Administratoren benachrichtigen und der täglichen Prüfzeit 03:00](../../../../../assets/screenshots/store-update-settings.de.webp)
 
-_Die Update-Einstellungen: was mit neuen Versionen passiert, wann die Box prüft und welchem Kanal sie folgt._
+_Die Seite Updates: wartende Updates, was mit neuen Versionen passiert und wann die Box prüft._
 
 Die Seite **Updates** listet die neueren Versionen, die die Kataloge anbieten, was jede neu verlangt und ob die Box sie von selbst installiert, mit **Aktualisieren** für jede und **Jetzt prüfen**. Unter der Liste ist die Regel „Wenn ein Katalog eine neuere Version hat“ **Installieren**, **Administratoren benachrichtigen** (Standard) oder **Nichts tun** (das Update wird nur unter **Updates** aufgeführt). Ein Update, das neue Berechtigungen oder besondere Rechte verlangt, installiert sich nie von selbst, und auch kein Update einer App mit Root-Zugriff, egal was die Regel sagt (D388): Eine gekaperte Version einer solchen App könnte die Box unbemerkt übernehmen. Die Seite **Updates** markiert eine solche App mit **Root-Zugriff** und installiert ihr Update mit einem Klick. Die Zeit der täglichen Prüfung ist standardmäßig 03:00 (Zeitzone der Box) plus eine feste zufällige Verzögerung von 0 bis 3600 Sekunden pro Box; **Jetzt prüfen** führt sie sofort aus. Eine App kann in ihren Details einer eigenen Regel folgen. Administratoren bekommen die Benachrichtigungen „App-Updates“ und „Katalog nicht abgerufen“.
 

@@ -1,6 +1,6 @@
 import { useInfiniteQuery } from '@tanstack/react-query';
 import type { JobInfo, TrashEntry, PithyxApp } from '@pithyx/sdk';
-import { useState } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import { type Selection as AriaSelection } from 'react-aria-components';
 import { useTranslation } from 'react-i18next';
 import {
@@ -13,6 +13,9 @@ import {
 } from '@pithyx/ui';
 import { IconFile, IconFolder, IconRestore, IconTrash, IconTrashX } from '../../ui/icons';
 import styles from './FilesApp.module.css';
+
+/** Below this width in pixels the bin leaves out where an item was, who deleted it and how long it is kept. */
+const NARROW = 720;
 
 export function trashKey(share: string) {
   return ['files', share, 'trash'] as const;
@@ -62,7 +65,25 @@ export function TrashView({
     }
   }
 
-  const columns: DataTableColumn<TrashEntry>[] = [
+  // A narrow window keeps the name, the size and when it was deleted: syncing with the DOM.
+  const scroll = useRef<HTMLDivElement>(null);
+  const [width, setWidth] = useState(Infinity);
+  useLayoutEffect(() => {
+    const element = scroll.current;
+    if (element === null) {
+      return;
+    }
+    setWidth(element.clientWidth);
+    const observer = new ResizeObserver(() => {
+      setWidth(element.clientWidth);
+    });
+    observer.observe(element);
+    return () => {
+      observer.disconnect();
+    };
+  }, []);
+
+  const allColumns: DataTableColumn<TrashEntry>[] = [
     {
       id: 'name',
       label: t('columns.name'),
@@ -119,6 +140,11 @@ export function TrashView({
     },
   ];
 
+  const columns =
+    width < NARROW
+      ? allColumns.filter((column) => ['name', 'size', 'deleted'].includes(column.id))
+      : allColumns;
+
   return (
     <div className={styles.bin}>
       <Toolbar
@@ -173,7 +199,7 @@ export function TrashView({
           </>
         )}
       </Toolbar>
-      <div className={styles.scroll}>
+      <div ref={scroll} className={styles.scroll}>
         <DataTable
           aria-label={t('bin.title', { share: shareName })}
           columns={columns}

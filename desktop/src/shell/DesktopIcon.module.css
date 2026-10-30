@@ -40,6 +40,8 @@
   text-shadow: var(--shadow-desktop-label);
   line-height: 1.3;
   text-align: center;
+  /* Long words such as "Einstellungen" break at a hyphen, not anywhere. */
+  hyphens: auto;
   overflow-wrap: break-word;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;

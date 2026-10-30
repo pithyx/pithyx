@@ -56,7 +56,7 @@ Antwortet eine App fünf Sekunden lang nicht, sagt ein Dialog, dass die App nich
 
 ## Die Taskleiste
 
-![Das Pithyx-Menü im dunklen Design mit geöffnetem Kontomenü von Anna Weber: Persönliche Einstellungen und Darstellung](../../../../../assets/screenshots/desktop-account-menu.de.webp)
+![Das Pithyx-Menü im dunklen Design mit neben den Initialen geöffnetem Kontomenü von Alex Morgan: Persönliche Einstellungen, Darstellung und Abmelden](../../../../../assets/screenshots/desktop-account-menu.de.webp)
 
 _Das Kontomenü öffnet sich, wenn du oben in der linken Leiste des Pithyx-Menüs auf deine Initialen klickst._
 
@@ -95,9 +95,9 @@ Die Suche findet Apps nur nach ihrem Namen; Einstellungen und Dateien findet sie
 
 ## Desktop-Elemente und Notizen
 
-![Der Desktop mit den Fenstern Dateien und Speicher nebeneinander, links den Verknüpfungen Dateien und Einstellungen und einer Notiz und unten der Taskleiste](../../../../../assets/screenshots/desktop.de.webp)
+![Der Desktop mit Dateien im Vordergrund, den Einstellungen auf der Seite Pools und dem Protokoll-Center dahinter, links Ordnern und den Verknüpfungen Dateien und Einstellungen, oben rechts einer Notiz und unten der Taskleiste](../../../../../assets/screenshots/desktop.de.webp)
 
-_Zwei Verknüpfungen und eine Notiz neben zwei offenen Fenstern._
+_Desktop-Elemente, zwei Verknüpfungen und eine Notiz neben drei offenen Fenstern._
 
 Der Desktop enthält Verknüpfungen zu Apps, Dateien und Ordnern sowie Notizzettel. Sie gehören zu deinem Konto und erscheinen auf jedem Gerät. Der Desktop enthält nur Verweise: Eine Verknüpfung zu entfernen, ändert nie die Datei.
 

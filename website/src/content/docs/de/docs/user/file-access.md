@@ -13,7 +13,7 @@ In den folgenden Schritten ist `<box-address>` der Name oder die IP-Adresse, mit
 
 ## Welches Protokoll du nutzen solltest
 
-![Einstellungen, Dateidienste, mit SFTP aus, WebDAV an, FTP aus und den Adressen zum Verbinden, etwa sftp://pithyx und https://pithyx:7484/webdav/](../../../../../assets/screenshots/file-services.de.webp)
+![Einstellungen, Dateidienste, mit laufendem SMB und SFTP und den Adressen zum Verbinden, etwa \\\\pithyx\\ und sftp://pithyx](../../../../../assets/screenshots/file-services.de.webp)
 
 _Ein Administrator schaltet die Dateidienste unter Einstellungen > Dateidienste ein; jede Karte zeigt die Adresse dafür._
 

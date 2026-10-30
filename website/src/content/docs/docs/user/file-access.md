@@ -13,7 +13,7 @@ In the steps below, `<box-address>` is the name or IP address you use to open th
 
 ## Which protocol to use
 
-![Settings, File services, with SFTP off, WebDAV on, FTP off and the addresses to connect to, such as sftp://pithyx and https://pithyx:7484/webdav/](../../../../assets/screenshots/file-services.webp)
+![Settings, File services, with SMB and SFTP running and the addresses to connect to, such as \\\\pithyx\\ and sftp://pithyx](../../../../assets/screenshots/file-services.webp)
 
 _An administrator switches the file services on in Settings > File services; each card shows the address to use._
 

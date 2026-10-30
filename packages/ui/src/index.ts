@@ -82,11 +82,13 @@ export {
   TabPanel,
   Tabs,
   Toolbar,
+  ToolbarButton,
   ToolbarSeparator,
   type TabListProps,
   type TabPanelProps,
   type TabProps,
   type TabsProps,
+  type ToolbarButtonProps,
   type ToolbarProps,
 } from './Toolbar';
 export { Tooltip, TooltipTrigger, type TooltipProps } from './Tooltip';

@@ -27,7 +27,7 @@ Einen vorhandenen Ordner als freigegebenen Ordner einzutragen, funktioniert nur 
 
 ## Regeln für Ordner
 
-![Der Dialog Photos bearbeiten mit den Schaltern für den Netzwerkzugriff und den Rechten: die Gruppe family mit Lesen und schreiben, die Benutzer mit dem Zugriff, den sie insgesamt bekommen](../../../../../assets/screenshots/shared-folders-edit.de.webp)
+![Der Dialog Family bearbeiten mit Name und Beschreibung, den Schaltern für den Netzwerkzugriff und den Rechten der Gruppen](../../../../../assets/screenshots/shared-folders-edit.de.webp)
 
 _Der Bearbeiten-Dialog einer Freigabe: Netzwerkzugriff pro Protokoll und Rechte pro Gruppe und Benutzer._
 

@@ -23,6 +23,18 @@
   margin-left: auto;
 }
 
+/* A toolbar button's label gives way to its tooltip in a narrow app (ToolbarButton). */
+@container (max-width: 760px) {
+  .label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}
+
 .separator {
   align-self: center;
   width: 1px;

@@ -70,6 +70,23 @@ function setValue(element: HTMLInputElement | HTMLSelectElement, value: string) 
   );
 }
 
+// A row or option is pressed with the mouse, as a user would: React Aria takes a plain click() for a screen reader's,
+// which runs the row's action (opening it) instead of selecting it.
+function mousePress(element: HTMLElement) {
+  const options = {
+    bubbles: true,
+    cancelable: true,
+    button: 0,
+    pointerId: 1,
+    pointerType: 'mouse',
+  };
+  element.dispatchEvent(new PointerEvent('pointerdown', { ...options, buttons: 1 }));
+  element.dispatchEvent(new MouseEvent('mousedown', { ...options, buttons: 1 }));
+  element.dispatchEvent(new PointerEvent('pointerup', options));
+  element.dispatchEvent(new MouseEvent('mouseup', options));
+  element.dispatchEvent(new MouseEvent('click', { ...options, detail: 1 }));
+}
+
 function attempt(step: ScriptStep): boolean {
   if ('press' in step) {
     const wanted = text(step.press, step.params);
@@ -91,7 +108,11 @@ function attempt(step: ScriptStep): boolean {
     ) {
       return false;
     }
-    button.click();
+    if (button.matches('[role="row"], [role="option"]')) {
+      mousePress(button);
+    } else {
+      button.click();
+    }
     return true;
   }
   if ('check' in step) {

@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { useRef, useState, type ReactNode } from 'react';
 import {
   Separator,
   Tab as AriaTab,
@@ -11,8 +11,10 @@ import {
   type TabProps as AriaTabProps,
   type TabsProps as AriaTabsProps,
 } from 'react-aria-components';
+import { Button, type ButtonProps } from './Button';
 import { cx } from './cx';
 import styles from './Toolbar.module.css';
+import { Tooltip, TooltipTrigger } from './Tooltip';
 
 /** The props of {@link Toolbar}. */
 export interface ToolbarProps {
@@ -70,6 +72,67 @@ export function Toolbar({
  */
 export function ToolbarSeparator() {
   return <Separator orientation="vertical" className={styles.separator} />;
+}
+
+/** The props of {@link ToolbarButton}. */
+export interface ToolbarButtonProps extends Omit<ButtonProps, 'children' | 'aria-label'> {
+  /** The icon, before the label; mark it `aria-hidden`. */
+  icon: ReactNode;
+  /** The label, also the button's accessible name and its tooltip while the label is hidden. */
+  label: string;
+}
+
+/**
+ * A button of a {@link Toolbar} with an icon and a label (D394). When the nearest size container (the app, through
+ * `container-type`) is narrower than 760 px, the label is hidden and shows as a tooltip instead, so a toolbar of many
+ * actions stays on one line in a narrow window; the label stays the accessible name.
+ *
+ * @param props - The icon, the label and the props of {@link Button}; `variant` defaults to `quiet`, `size` to `sm`.
+ * @returns The button, with its tooltip while the label is hidden.
+ *
+ * @example
+ * ```tsx
+ * <ToolbarButton icon={<IconCopy size={18} aria-hidden />} label="Copy" onPress={copy} />
+ * ```
+ */
+export function ToolbarButton({
+  icon,
+  label,
+  variant = 'quiet',
+  size = 'sm',
+  onHoverStart,
+  onFocus,
+  ...props
+}: ToolbarButtonProps) {
+  const text = useRef<HTMLSpanElement>(null);
+  const [collapsed, setCollapsed] = useState(false);
+  // Whether the label is hidden right now; checked when a tooltip could open, not on every resize.
+  const check = () => {
+    setCollapsed(text.current !== null && getComputedStyle(text.current).position === 'absolute');
+  };
+  return (
+    <TooltipTrigger delay={600} closeDelay={0} isDisabled={!collapsed}>
+      <Button
+        {...props}
+        variant={variant}
+        size={size}
+        onHoverStart={(event) => {
+          check();
+          onHoverStart?.(event);
+        }}
+        onFocus={(event) => {
+          check();
+          onFocus?.(event);
+        }}
+      >
+        {icon}
+        <span ref={text} className={styles.label}>
+          {label}
+        </span>
+      </Button>
+      <Tooltip>{label}</Tooltip>
+    </TooltipTrigger>
+  );
 }
 
 /** The props of {@link Tabs}: React Aria's tabs props. */

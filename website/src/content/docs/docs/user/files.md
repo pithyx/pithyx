@@ -11,9 +11,9 @@ Files is the app for working with the shared folders you may use: open folders, 
 
 ## Browsing shared folders
 
-![Files with the shared folders and recycle bins in the sidebar, the folder Photos/2026-summer in list view and the context menu of a photo open](../../../../assets/screenshots/files.webp)
+![Files with the shares and the recycle bin in the folder tree, the folder Photos/2026-summer in list view and the details pane of the selected photo Lighthouse.jpg](../../../../assets/screenshots/files.webp)
 
-_Files in list view. Right-click an entry for its context menu._
+_Files in list view with the details of the selected photo. Right-click an entry for its context menu._
 
 Open **Files** from the Pithyx menu. The navigation column at the left lists your home folder **home** first and your shared folders under it; Files opens in your home. Your home is private: only you and the administrators can open it. Administrators also see **homes**, which lists every other user's home as a folder, in the same list or tiles as any folder; a double click opens one. The homes themselves cannot be renamed, moved or deleted there, and their menu only offers **Open**. Click an entry to open it. The navigation column is a folder tree: the arrow before a folder shows or hides its subfolders, and the folders down to the one you are in are open by themselves, with that folder marked. A folder without subfolders has no arrow once Files knows it. Items dropped on a folder of the tree go into that folder. A folder that cannot be reached right now (for example because its pool is offline) shows **Not available**. If the list is empty, you have no shared folders yet and an administrator has to create them. A shared folder you may only read has a lock in the navigation column. Inside it, a bar under the path says that you can open, copy and download files but not change them, the actions that would change something are greyed out, and the status bar at the bottom says **Read only**.
 
@@ -80,9 +80,9 @@ To download, choose **Download** or open a file that the Viewer cannot show.
 
 ## The recycle bin
 
-![The recycle bin of the shared folder Photos with two deleted photos, their original path and dates, and the buttons Restore, Delete for good and Empty recycle bin](../../../../assets/screenshots/files-recycle-bin.webp)
+![The recycle bin of the shared folder Photos as a table with two deleted photos, where they were, their size, when and by whom they were deleted and how long they are kept, and the buttons Restore, Delete for good and Empty recycle bin](../../../../assets/screenshots/files-recycle-bin.webp)
 
-_Each shared folder has its own recycle bin with the date an entry is deleted for good._
+_Each shared folder has its own recycle bin, which says how long it keeps each entry._
 
 **Move to recycle bin** (the **Del** key) does not delete a file. It moves it into the recycle bin of its shared folder, or of your home. Deleting files over SMB, WebDAV or FTP does the same.
 

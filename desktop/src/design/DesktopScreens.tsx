@@ -164,7 +164,7 @@ function UserMenu({ trigger, open }: { trigger: ReactNode; open: boolean }) {
   return (
     <MenuTrigger defaultOpen={open}>
       {trigger}
-      <MenuPopover placement="top start">
+      <MenuPopover placement="end top">
         <Menu aria-label={t('start.userMenu', { name: user.name })}>
           <MenuSection>
             <Header className={styles.menuHeader}>

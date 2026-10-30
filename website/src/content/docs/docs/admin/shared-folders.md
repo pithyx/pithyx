@@ -27,7 +27,7 @@ Registering an existing folder as a shared folder works only on development mach
 
 ## Rules for folders
 
-![The dialog Edit Photos with the network access switches and the rights: the group family with Read and write, the users with the access they end up with](../../../../assets/screenshots/shared-folders-edit.webp)
+![The dialog Edit Family with its name and description, the network access switches and the rights of the groups](../../../../assets/screenshots/shared-folders-edit.webp)
 
 _The edit dialog of a shared folder: network access per protocol and rights per group and user._
 

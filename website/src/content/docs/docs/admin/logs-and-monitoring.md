@@ -11,9 +11,9 @@ Two administrator apps show what the box is doing: the Log Center (messages from
 
 ## The Log Center
 
-![The Log Center in the dark theme with the search network, the levels Info, Warning and Error, the time range Last 24 hours and the details pane of a warning](../../../../assets/screenshots/logs-center.webp)
+![The Log Center in the dark theme with the sources grouped into System and Apps and their counts, the levels with the numbers of warnings and errors, the time range Last 24 hours, the entries grouped by day and the details pane of a warning](../../../../assets/screenshots/logs-center.webp)
 
-_The Log Center with a search, level and time filters and the details of the selected entry._
+_The Log Center with its sources, level and time filters and the details of the selected entry._
 
 The navigation on the left lists **All sources**, then the sources under **System** ("Pithyx daemon", "Audit log" with the step-ups and special rights of apps, see [Apps and Store](/docs/admin/apps-and-store/#special-rights), "Reverse proxy · {host}" for a proxy host's access log, and the journal units such as kernel, smbd, ssh, ZFS, systemd-networkd, timesyncd, Docker and smartmontools) and under **Apps**; each shows how many warnings and errors it logged in the chosen time range. The toolbar filters the level (**All** without debug, **Warnings**, **Errors**, or **Debug** for every level, with their counts) and the time range (last hour, 24 hours, 7 days, 30 days, all time), and searches the messages and their fields (an exact request id finds its entries too). The Log Center is live: new entries appear as the daemon writes them, about once a second, until you choose **Pause**; **Live** catches up and follows again. The entries are grouped by day; the chosen entry's message and fields show on the right, without its request id. The status bar says how many entries are loaded and how long the logs are kept. Pages hold 200 entries by default, at most 1000. **Export** offers **Export as text** (`.log`) and **Export as JSON lines** (`.jsonl`), up to 1 000 000 entries each.
 
@@ -25,9 +25,9 @@ App messages arrive through the SDK: `info`, `warn` and `error` always, `debug` 
 
 ## The Resource Monitor
 
-![The Resource Monitor, Performance, with CPU, memory with the ZFS cache, network and disks, one disk busy with a scrub](../../../../assets/screenshots/monitor-performance.webp)
+![The Resource Monitor, Overview, with CPU and its cores, memory with the ZFS cache, network and the disks during a scrub, and the temperatures](../../../../assets/screenshots/monitor-performance.webp)
 
-_The charts of the last minute, here during a scrub._
+_The charts of the last hour, here with a scrub in its last quarter._
 
 The Resource Monitor's navigation has **Overview**, **CPU**, **Memory**, **Disks**, **Network**, **Temperatures** and **Processes**; the toolbar sets the time range of the charts (a minute, 10 minutes or an hour) and the status bar shows the uptime and the load. The overview shows CPU and memory, network and disks as totals over every interface and disk, the temperatures and the six processes that use the most CPU now; the other pages show their part, network and disks per device. It samples every second, and only while someone watches it, processes only while the overview or **Processes** is shown; the history is kept in memory for one hour. So the history covers only the time the monitor was open somewhere: nothing is measured while nobody watches, and there is no longer history (a day or a week).
 
