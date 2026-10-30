@@ -1,5 +1,6 @@
 // Entry of the developer-only design gallery (design.html). The production build uses index.html only.
 import '../theme/index.css';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import i18next from 'i18next';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
@@ -30,12 +31,20 @@ if (screen !== undefined) {
   document.title = `${screen.title} - Pithyx design`;
 }
 
+// Screens of the shell use queries too (the password lists of the setup screen); they never reach a daemon, and an app
+// scene brings its own client with its sample data.
+const client = new QueryClient({
+  defaultOptions: { queries: { retry: false, staleTime: Infinity } },
+});
+
 createRoot(root).render(
   <StrictMode>
-    {screen === undefined ? (
-      <Gallery />
-    ) : (
-      screen.render({ taskbar, accent, locale: i18next.language })
-    )}
+    <QueryClientProvider client={client}>
+      {screen === undefined ? (
+        <Gallery />
+      ) : (
+        screen.render({ taskbar, accent, locale: i18next.language })
+      )}
+    </QueryClientProvider>
   </StrictMode>,
 );
