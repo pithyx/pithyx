@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ErrorNotice } from '../../errors/ErrorNotice';
-import { Button, Switch, TextField } from '@pithyx/ui';
+import { Button, cx, FormSection, StatusBadge, Switch, TextField } from '@pithyx/ui';
 import {
   systemCall,
   type FileServiceSettings,
@@ -27,11 +27,7 @@ export function FileServicesPage({ app }: { app: PithyxApp }) {
   });
   return (
     <div className={styles.content}>
-      <header className={styles.pageHeader}>
-        <div>
-          <p className={styles.muted}>{t('fileServices.intro')}</p>
-        </div>
-      </header>
+      <p className={styles.sectionIntro}>{t('fileServices.intro')}</p>
       {settings.isError && <ErrorNotice error={describeProblem(settings.error)} />}
       {settings.data !== undefined && <FileServicesForm app={app} saved={settings.data} />}
     </div>
@@ -61,13 +57,10 @@ function FileServicesForm({ app, saved }: { app: PithyxApp; saved: FileServiceSe
   };
 
   return (
-    <div className={styles.form}>
+    <div className={styles.content}>
       {save.isError && <ErrorNotice error={describeProblem(save.error)} />}
-      <section className={styles.card} aria-labelledby="file-services-smb">
-        <h3 id="file-services-smb" className={styles.sectionTitle}>
-          {t('fileServices.smb.title')} <State state={saved.smb} />
-        </h3>
-        <p className={styles.muted}>{t('fileServices.smb.explain')}</p>
+      <FormSection title={t('fileServices.smb.title')} end={<State state={saved.smb} />}>
+        <p className={styles.sectionIntro}>{t('fileServices.smb.explain')}</p>
         <Switch
           isSelected={saved.smbEnabled}
           isDisabled={save.isPending}
@@ -78,7 +71,7 @@ function FileServicesForm({ app, saved }: { app: PithyxApp; saved: FileServiceSe
           {t('fileServices.smb.switch')}
         </Switch>
         <form
-          className={styles.group}
+          className={cx(styles.group, styles.narrow)}
           onSubmit={(event) => {
             event.preventDefault();
             save.mutate({ workgroup });
@@ -112,12 +105,9 @@ function FileServicesForm({ app, saved }: { app: PithyxApp; saved: FileServiceSe
           <li>{t('fileServices.smb.trash')}</li>
           <li>{t('fileServices.smb.versions')}</li>
         </ul>
-      </section>
-      <section className={styles.card} aria-labelledby="file-services-sftp">
-        <h3 id="file-services-sftp" className={styles.sectionTitle}>
-          {t('fileServices.sftp.title')} <State state={saved.sftp} />
-        </h3>
-        <p className={styles.muted}>{t('fileServices.sftp.explain')}</p>
+      </FormSection>
+      <FormSection title={t('fileServices.sftp.title')} end={<State state={saved.sftp} />}>
+        <p className={styles.sectionIntro}>{t('fileServices.sftp.explain')}</p>
         <Switch
           isSelected={saved.sftpEnabled}
           isDisabled={save.isPending}
@@ -133,12 +123,9 @@ function FileServicesForm({ app, saved }: { app: PithyxApp; saved: FileServiceSe
           </li>
           <li>{t('fileServices.sftp.view')}</li>
         </ul>
-      </section>
-      <section className={styles.card} aria-labelledby="file-services-webdav">
-        <h3 id="file-services-webdav" className={styles.sectionTitle}>
-          {t('fileServices.webdav.title')}
-        </h3>
-        <p className={styles.muted}>{t('fileServices.webdav.explain')}</p>
+      </FormSection>
+      <FormSection title={t('fileServices.webdav.title')}>
+        <p className={styles.sectionIntro}>{t('fileServices.webdav.explain')}</p>
         <Switch
           isSelected={saved.webDavEnabled}
           isDisabled={save.isPending}
@@ -155,12 +142,9 @@ function FileServicesForm({ app, saved }: { app: PithyxApp; saved: FileServiceSe
           </li>
           <li>{t('fileServices.webdav.trash')}</li>
         </ul>
-      </section>
-      <section className={styles.card} aria-labelledby="file-services-ftp">
-        <h3 id="file-services-ftp" className={styles.sectionTitle}>
-          {t('fileServices.ftp.title')} <State state={saved.ftp} />
-        </h3>
-        <p className={styles.muted}>{t('fileServices.ftp.explain')}</p>
+      </FormSection>
+      <FormSection title={t('fileServices.ftp.title')} end={<State state={saved.ftp} />}>
+        <p className={styles.sectionIntro}>{t('fileServices.ftp.explain')}</p>
         <Switch
           isSelected={saved.ftpEnabled}
           isDisabled={save.isPending}
@@ -195,12 +179,9 @@ function FileServicesForm({ app, saved }: { app: PithyxApp; saved: FileServiceSe
             </li>
           )}
         </ul>
-      </section>
-      <section className={styles.card} aria-labelledby="file-services-ssh">
-        <h3 id="file-services-ssh" className={styles.sectionTitle}>
-          {t('fileServices.ssh.title')}
-        </h3>
-        <p className={styles.muted}>{t('fileServices.ssh.explain')}</p>
+      </FormSection>
+      <FormSection title={t('fileServices.ssh.title')}>
+        <p className={styles.sectionIntro}>{t('fileServices.ssh.explain')}</p>
         <Switch
           isSelected={saved.sshEnabled}
           isDisabled={save.isPending}
@@ -213,12 +194,9 @@ function FileServicesForm({ app, saved }: { app: PithyxApp; saved: FileServiceSe
         <p className={styles.notice} role="note">
           {t('fileServices.ssh.warning')}
         </p>
-      </section>
-      <section className={styles.card} aria-labelledby="file-services-firewall">
-        <h3 id="file-services-firewall" className={styles.sectionTitle}>
-          {t('fileServices.firewall.title')}
-        </h3>
-        <p className={styles.muted}>{t('fileServices.firewall.explain')}</p>
+      </FormSection>
+      <FormSection title={t('fileServices.firewall.title')}>
+        <p className={styles.sectionIntro}>{t('fileServices.firewall.explain')}</p>
         <Switch
           isSelected={saved.privateNetworksOnly}
           isDisabled={save.isPending}
@@ -234,7 +212,7 @@ function FileServicesForm({ app, saved }: { app: PithyxApp; saved: FileServiceSe
             {t('fileServices.firewall.inactive')}
           </p>
         )}
-      </section>
+      </FormSection>
       <p className={styles.notice} role="note">
         {t('fileServices.rights')}
       </p>
@@ -244,5 +222,13 @@ function FileServicesForm({ app, saved }: { app: PithyxApp; saved: FileServiceSe
 
 function State({ state }: { state: FileServiceSettings['smb'] }) {
   const { t } = useTranslation('settings');
-  return <span className={styles.badge}>{t(`fileServices.state.${state}`)}</span>;
+  const tone =
+    state === 'running'
+      ? 'success'
+      : state === 'failed'
+        ? 'danger'
+        : state === 'unavailable'
+          ? 'warning'
+          : 'neutral';
+  return <StatusBadge tone={tone}>{t(`fileServices.state.${state}`)}</StatusBadge>;
 }
