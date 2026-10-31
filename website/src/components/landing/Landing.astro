@@ -49,6 +49,8 @@ const gallery = await Promise.all(data.gallery.items.map(picture));
     template: 'splash',
     status: 'ready',
     pagefind: true,
+    // The landing page is the site itself: its tab says "Pithyx", not "Pithyx | Pithyx".
+    head: [{ tag: 'title', content: data.title }],
     editUrl: false,
     lastUpdated: false,
     prev: false,
