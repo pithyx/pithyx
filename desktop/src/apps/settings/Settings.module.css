@@ -623,3 +623,125 @@
 .breakAll {
   overflow-wrap: anywhere;
 }
+
+/* The notification matrix (D407): events by the desktop and the box's channels, the event column and the header stay
+   in view while it scrolls. */
+.matrixScroll {
+  container: matrix / inline-size;
+  max-width: 100%;
+  overflow: auto;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+}
+
+.matrix {
+  min-width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: var(--font-size-sm);
+}
+
+.matrix th,
+.matrix td {
+  padding: var(--space-1) var(--space-3);
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-surface-1);
+  text-align: start;
+}
+
+.matrix thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--color-surface-2);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+}
+
+.matrix th:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  min-width: 14rem;
+}
+
+.matrix thead th:first-child {
+  z-index: 3;
+}
+
+.matrixColumn {
+  min-width: 7rem;
+  text-align: center;
+}
+
+.matrix .matrixColumn {
+  text-align: center;
+}
+
+.matrixGroup th,
+.matrixGroup td {
+  background: var(--color-surface-2);
+  font-weight: var(--font-weight-semibold);
+}
+
+.matrixEvent {
+  font-weight: var(--font-weight-regular);
+}
+
+.matrixCell > * {
+  justify-content: center;
+}
+
+.matrix .matrixCell {
+  text-align: center;
+}
+
+/* A narrow window never scrolls sideways: each event becomes a block with its checkboxes in a row below, each named by
+   its column. */
+@container matrix (width < 640px) {
+  .matrix,
+  .matrix tbody,
+  .matrix tr {
+    display: block;
+  }
+
+  .matrix thead {
+    display: none;
+  }
+
+  .matrix tr {
+    padding: var(--space-2) var(--space-3);
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .matrix th,
+  .matrix td {
+    border-bottom: 0;
+    padding: 0;
+  }
+
+  .matrix th:first-child {
+    position: static;
+    display: block;
+    min-width: 0;
+  }
+
+  .matrix .matrixCell {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    margin-inline-end: var(--space-4);
+    text-align: start;
+  }
+
+  .matrix .matrixGroup {
+    background: var(--color-surface-2);
+  }
+
+  .matrix .matrixCell::before {
+    content: attr(data-column);
+    color: var(--color-text-muted);
+    font-size: var(--font-size-xs);
+  }
+}

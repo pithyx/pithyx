@@ -1,4 +1,4 @@
-import { IconCheck } from './icons';
+import { IconCheck, IconMinus } from './icons';
 import type { ReactNode } from 'react';
 import {
   CheckboxButton,
@@ -21,7 +21,7 @@ export interface CheckboxProps extends Omit<CheckboxFieldProps, 'className' | 'c
 }
 
 /**
- * A checkbox with its label.
+ * A checkbox with its label; `isIndeterminate` shows a dash for a group whose members are partly selected.
  *
  * @param props - React Aria's checkbox field props (`isSelected`, `onChange`, `isDisabled`) plus the label.
  * @returns The checkbox with its label.
@@ -31,7 +31,11 @@ export function Checkbox({ children, ...props }: CheckboxProps) {
     <CheckboxField {...props} className={styles.field}>
       <CheckboxButton className={styles.checkbox}>
         <span className={styles.box} aria-hidden>
-          <IconCheck size={14} stroke={3} />
+          {props.isIndeterminate === true ? (
+            <IconMinus size={14} stroke={3} />
+          ) : (
+            <IconCheck size={14} stroke={3} />
+          )}
         </span>
         {children}
       </CheckboxButton>

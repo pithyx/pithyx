@@ -993,6 +993,12 @@
       },
       "expected": "No app you may open has the notification category mentions of com.example.chat."
     },
+    "notifications.event.unknown": {
+      "params": {
+        "event": "storage.nothing"
+      },
+      "expected": "There is no notification event storage.nothing."
+    },
     "notifications.channel.failed": {
       "params": {
         "detail": "HTTP 403"

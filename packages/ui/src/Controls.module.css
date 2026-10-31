@@ -35,6 +35,7 @@
 }
 
 .checkbox[data-selected] .box,
+.checkbox[data-indeterminate] .box,
 .checkbox:has(input:checked) .box {
   border-color: var(--color-accent);
   background: var(--color-accent);

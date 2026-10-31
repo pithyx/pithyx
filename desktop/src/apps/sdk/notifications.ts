@@ -12,16 +12,27 @@ import { toPithyxError } from './daemonError';
 export type SmtpStatus = components['schemas']['SmtpStatus'];
 export type SmtpRequest = components['schemas']['SmtpRequest'];
 export type SmtpTestRequest = components['schemas']['SmtpTestRequest'];
+export type NotificationMatrix = components['schemas']['NotificationMatrix'];
+export type NotificationMatrixChange = components['schemas']['NotificationMatrixChange'];
 
 /** The query keys of Settings > Notifications. */
 export const smtpKey = ['settings', 'notifications', 'smtp'] as const;
 export const systemChannelsKey = ['settings', 'notifications', 'channels'] as const;
+export const matrixKey = ['settings', 'notifications', 'matrix'] as const;
 
 /** The notification calls of Settings, outside the public SDK; the daemon checks the administrator right on each. */
 interface NotificationMethods {
   'internal.admin.notifications.smtp': { params: Record<string, never>; result: SmtpStatus };
   'internal.admin.notifications.setSmtp': { params: SmtpRequest; result: SmtpStatus };
   'internal.admin.notifications.testSmtp': { params: SmtpTestRequest; result: null };
+  'internal.admin.notifications.matrix': {
+    params: Record<string, never>;
+    result: NotificationMatrix;
+  };
+  'internal.admin.notifications.setMatrix': {
+    params: { cells: NotificationMatrixChange[] };
+    result: NotificationMatrix;
+  };
   'internal.admin.notifications.channels': {
     params: Record<string, never>;
     result: NotificationChannelList;
@@ -80,6 +91,21 @@ export function notificationsHost(): HostExtensions {
           );
           return null;
         }),
+    },
+    'internal.admin.notifications.matrix': {
+      validate: isRecord,
+      handle: () => daemon(async () => unwrap(await api.GET('/api/system/notifications/matrix'))),
+    },
+    'internal.admin.notifications.setMatrix': {
+      validate: (value) => isRecord(value) && Array.isArray(value.cells),
+      handle: (params) =>
+        daemon(async () =>
+          unwrap(
+            await api.PUT('/api/system/notifications/matrix', {
+              body: params as { cells: NotificationMatrixChange[] },
+            }),
+          ),
+        ),
     },
     'internal.admin.notifications.channels': {
       validate: isRecord,

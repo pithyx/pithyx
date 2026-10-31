@@ -190,6 +190,7 @@ export const errorCodes = [
   'notifications.channel.invalid',
   'notifications.channel.limit_reached',
   'notifications.channel.not_found',
+  'notifications.event.unknown',
   'notifications.language.unsupported',
   'notifications.message.invalid',
   'notifications.notification.not_found',

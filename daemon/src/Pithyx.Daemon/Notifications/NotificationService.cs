@@ -136,7 +136,8 @@ public sealed partial class NotificationService : IDisposable
 
     /// <summary>
     /// Creates the same notification for every administrator but <paramref name="except"/> and hands it once to the box's
-    /// channels (D379). Returns how many administrators get it.
+    /// channels (D379). Returns how many administrators are told, also when the matrix keeps the event off their desktop
+    /// (D407), so a caller that waits for an administrator does not try again.
     /// </summary>
     public async Task<int> CreateForAdministratorsAsync(NotificationDraft draft, CancellationToken cancellationToken, long? except = null)
     {
@@ -144,14 +145,21 @@ public sealed partial class NotificationService : IDisposable
         var parameters = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(JsonSerializer.Serialize(draft.Params, _storage), _storage) ?? [];
         _outbox.Post(new PendingDelivery(null, draft.Code, parameters, draft.Tone, draft.App, _time.GetUtcNow()));
         List<long> administrators;
+        bool desktop;
         await using (var connection = await _connections.OpenAsync(cancellationToken))
         {
             // Deactivated administrators too: they read it when they are back.
             administrators = [.. (await Permissions.PermissionService.AllUsersAsync(connection, null, asIfActive: true)).Where(user => user.Permissions.IsAdmin && user.Id != except).Select(user => user.Id).Order()];
+            desktop = await ChannelService.DesktopTakesAsync(connection, draft.Code, cancellationToken);
         }
-        foreach (var administrator in administrators)
+        // The matrix may keep an event off the administrators' desktop (D407); the box's channels decide for themselves
+        // above, and the count still says who would have been told.
+        if (desktop)
         {
-            await CreateAsync(administrator, draft, cancellationToken);
+            foreach (var administrator in administrators)
+            {
+                await CreateAsync(administrator, draft, cancellationToken);
+            }
         }
         return administrators.Count;
     }

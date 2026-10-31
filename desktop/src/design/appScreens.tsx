@@ -16,6 +16,7 @@ import {
   monitorEvents,
   sampleFolder,
   sampleLogEntries,
+  sampleMatrix,
   samplePicture,
   sampleTrashed,
   storeAnswers,
@@ -304,6 +305,26 @@ export const appScreens: ScreenDefinition[] = [
     description:
       'Right after a network change: the countdown with Keep and Undo now, and the box goes back without them.',
     render: settings('network', [], pendingNetwork),
+  },
+  {
+    id: 'settings-notification-matrix',
+    group: 'apps',
+    title: 'Settings: notification events',
+    description:
+      "Every event the box reports by the administrators' desktop and the box's channels, grouped by category; a box applies at once.",
+    render: settings('notifications', [{ press: 'settings:notifications.matrix.tab' }], {
+      'internal.admin.notifications.matrix': () => sampleMatrix,
+      'internal.admin.notifications.channels': () => ({ items: [], emailAvailable: true }),
+      'internal.admin.notifications.smtp': () => ({
+        configured: false,
+        host: null,
+        port: 587,
+        security: 'startTls',
+        username: null,
+        passwordSet: false,
+        from: null,
+      }),
+    }),
   },
   {
     id: 'settings-homes',

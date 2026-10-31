@@ -29,10 +29,21 @@ Under **Test email**, **Send test email** sends a short email to the address you
 - **Kind**: **Email** with up to 10 addresses, or **Webhook** with an `http` or `https` address. The kind cannot change later.
 - **Format** of a webhook: **JSON** sends `title`, `message` and `priority` (as Gotify reads them, so a Gotify URL with `?token=...` works as it is), plus `level`, `category`, `code`, `params`, `app`, `box` and `time`. **ntfy** sends the text as the body with the headers `Title`, `Priority` (3, 4 or 5) and `Tags`; use the topic's URL, for example `https://ntfy.example.com/my-box`.
 - **Headers** of a webhook, for example `Authorization` with a token. Their values never leave the box again: the list shows only their names, and an empty value keeps the saved one.
-- **Events**: Storage, Updates, Backups, Security, Apps, System. A job's result counts for its area (a pool job for Storage, an app install for Apps).
-- **At least**: **Everything**, **Warnings and errors** or **Errors only**. Critical notifications count as errors.
+- **Events** and **At least**, for a user's own channel: Storage, Updates, Backups, Security, Apps, System, and **Everything**, **Warnings and errors** or **Errors only**. A job's result counts for its area (a pool job for Storage, an app install for Apps); critical notifications count as errors. A channel of the box has neither: what it gets is set per event in the matrix (see below).
 
 **Send test** sends a test message at once, also through a switched-off channel. The channel shows when it last sent something and, until a delivery works again, why the last one failed, with the server's own words ([`notifications.channel.failed`](/docs/reference/errors/#notifications.channel.failed)).
+
+## Which events go where
+
+Settings > **Notifications** > **Events** is a matrix of every event the box reports to its administrators, grouped by Storage, Updates, Security, Apps and System: a pool that is degraded or almost full, a failing disk, a scrub that found errors, an update that is available, installed or rolled back, repeated failed sign-ins, the UPS on battery, a certificate that was not renewed, a task of the box that failed, and more. It has one column for the administrators' **Desktop** and one per channel of the box. A checkbox applies at once; the checkbox in a group's row sets every event of the group for that column and shows a dash when only some are on.
+
+![Settings, Notifications, Events: the storage events with a checkbox each for the desktop, an email channel and a push channel](../../../../assets/screenshots/notifications-matrix.webp)
+
+_The matrix: every event by the desktop and the box's channels._
+
+- An event that is off for **Desktop** reaches no administrator's desktop, and so none of their own channels either; the box's channels still get it if their column says so.
+- Until you change a cell, the desktop gets every event, and a channel what its events and least level took before the matrix (a new channel of the box starts with Storage, Updates, Security and System from warnings up). A channel that is switched off sends nothing, whatever its column says.
+- A user's own channels and the notifications of apps are not in the matrix; they keep their events, least level and app categories.
 
 ## What a channel gets
 

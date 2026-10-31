@@ -418,7 +418,8 @@
       "title": "App notifications",
       "intro": "Switch off a kind of notification to mute it: it still lands in your list as read, but without a toast, email or webhook.",
       "none": "None of your apps sorts its notifications into kinds."
-    }
+    },
+    "matrixHint": "What this channel gets is set per event under Events."
   },
   "preferences": {
     "apps": "Apps",

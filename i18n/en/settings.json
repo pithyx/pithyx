@@ -1108,7 +1108,98 @@
       "title": "Channels of the box",
       "explain": "These channels get the system's own alerts (storage, updates, the UPS, failed sign-ins and more) once for all administrators. Every user, administrators too, can add their own channels in the user menu."
     },
-    "tabs": "Notifications of the box"
+    "tabs": "Notifications of the box",
+    "matrix": {
+      "tab": "Events",
+      "explain": "Which events of the box reach the administrators' desktop and each channel of the box. Every change applies at once. A channel that is off sends nothing, whatever it is set to here.",
+      "event": "Event",
+      "desktop": "Desktop",
+      "cell": "{event}: {column}",
+      "group": "All of {group}: {column}",
+      "channelOff": "{name} (off)",
+      "noChannels": "The box has no channels yet; add one under Channels of the box to choose here what it gets.",
+      "events": {
+        "storage": {
+          "alert": {
+            "poolFaulted": "Pool not available",
+            "poolSuspended": "Pool stopped",
+            "poolDegraded": "Pool degraded",
+            "diskMissing": "Disk of a pool not connected",
+            "dataErrors": "Damaged files in a pool",
+            "scrubErrors": "Scrub found errors",
+            "smartFailed": "Disk failing",
+            "smartWarning": "Disk shows wear",
+            "capacityCritical": "Pool almost full",
+            "capacityWarning": "Pool filling up",
+            "poolLocked": "Pool locked",
+            "poolLockedVault": "Pool not unlocked from the key vault",
+            "poolLockedUsb": "Pool waits for its USB stick",
+            "poolLockedUsbFailed": "Pool not unlocked from the USB stick",
+            "resolved": "Storage problem resolved"
+          },
+          "usb": {
+            "unlocked": "Pool unlocked from a USB stick"
+          }
+        },
+        "update": {
+          "available": "Pithyx update available",
+          "debian": {
+            "available": "Debian updates available"
+          },
+          "installed": "Pithyx update installed",
+          "rolled_back": "Update failed and rolled back",
+          "restored": "Snapshot restored",
+          "source": {
+            "changed": "Update source changed"
+          }
+        },
+        "store": {
+          "updates": {
+            "available": "App updates available"
+          },
+          "catalog": {
+            "failed": "Catalog not fetched"
+          }
+        },
+        "auth": {
+          "signin": {
+            "blocked": "Repeated failed sign-ins"
+          }
+        },
+        "apps": {
+          "elevated": {
+            "critical": "App got root access"
+          },
+          "device": {
+            "missing": "Device of an app missing"
+          }
+        },
+        "system": {
+          "mirror": {
+            "degraded": "System disk missing"
+          },
+          "ups": {
+            "on_battery": "UPS on battery",
+            "online": "Power back",
+            "shutdown": "Shutdown for the UPS",
+            "unreachable": "UPS not answering"
+          }
+        },
+        "proxy": {
+          "acme": {
+            "renewal_failed": "Certificate not renewed"
+          }
+        },
+        "jobs": {
+          "job": {
+            "succeeded": "Task of the box done",
+            "failed": "Task of the box failed",
+            "cancelled": "Task of the box cancelled",
+            "interrupted": "Task of the box interrupted"
+          }
+        }
+      }
+    }
   },
   "security": {
     "intro": "What on the box can do more than an app should.",

@@ -19,6 +19,7 @@ import { useTranslation } from 'react-i18next';
 import { ErrorNotice } from '../../errors/ErrorNotice';
 import { ChannelEditor, type ChannelClient } from '../../notifications/ChannelEditor';
 import {
+  matrixKey,
   notificationsCall,
   smtpKey,
   systemChannelsKey,
@@ -26,6 +27,7 @@ import {
   type SmtpStatus,
 } from '../sdk/notifications';
 import { describeProblem } from '../storage/shared';
+import { NotificationMatrix } from './NotificationMatrix';
 import { PageFooter } from './footer';
 import styles from './Settings.module.css';
 
@@ -38,6 +40,7 @@ const SECURITIES: readonly Security[] = ['startTls', 'tls', 'none'];
  */
 export function NotificationsPage({ app }: { app: PithyxApp }) {
   const { t } = useTranslation('settings');
+  const queryClient = useQueryClient();
   const smtp = useQuery({
     queryKey: smtpKey,
     queryFn: () => notificationsCall(app, 'internal.admin.notifications.smtp', {}),
@@ -52,16 +55,27 @@ export function NotificationsPage({ app }: { app: PithyxApp }) {
     remove: (id) => notificationsCall(app, 'internal.admin.notifications.deleteChannel', { id }),
     test: (id) => notificationsCall(app, 'internal.admin.notifications.testChannel', { id }),
   };
-  // The box's channels apply at once, the email server with the action bar: a tab each, never both on one view (D394).
+  // The events and the box's channels apply at once, the email server with the action bar: a tab each, never both on
+  // one view (D394). The matrix decides what the box's channels get (D407), so their editor leaves out the categories.
   return (
     <Tabs>
       <TabList aria-label={t('notifications.tabs')}>
+        <Tab id="events">{t('notifications.matrix.tab')}</Tab>
         <Tab id="channels">{t('notifications.system.title')}</Tab>
         <Tab id="smtp">{t('notifications.smtp.title')}</Tab>
       </TabList>
+      <TabPanel id="events" className={styles.tabPanel}>
+        <NotificationMatrix app={app} />
+      </TabPanel>
       <TabPanel id="channels" className={styles.tabPanel}>
         <p className={styles.muted}>{t('notifications.system.explain')}</p>
-        <ChannelEditor client={client} />
+        <ChannelEditor
+          client={client}
+          routedByMatrix
+          onChange={() => {
+            void queryClient.invalidateQueries({ queryKey: matrixKey });
+          }}
+        />
       </TabPanel>
       <TabPanel id="smtp" className={styles.tabPanel}>
         {smtp.isError && <ErrorNotice error={describeProblem(smtp.error)} />}

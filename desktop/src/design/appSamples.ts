@@ -6,6 +6,8 @@ import type { LogCount, LogEntry, LogStatus } from '../apps/sdk/logs';
 import type { ProcessList, ResourceSample, ResourceSnapshot } from '../apps/sdk/monitor';
 import type { AdminAppList, AppDetails, StoreAppSummary, StoreState } from '../apps/sdk/store';
 import { local } from './sampleLanguage';
+import type { NotificationMatrix } from '../apps/sdk/notifications';
+import { EVENT_CODES } from '../apps/settings/NotificationMatrix';
 import type { ExtraAnswers } from './storageSample';
 
 /** The Files side of the sample app: shares, folders by `<share>:<path>` and recycle bins by share. */
@@ -631,4 +633,50 @@ export const homesAnswers: ExtraAnswers = {
       home(14, 4, 'guest', 'Guest', 0.2 * GB),
     ],
   }),
+};
+
+// Settings > Notifications > Events: the box's two channels, an email to the administrators for warnings and errors and
+// a phone push for errors only, and every event on the desktop but finished tasks.
+const eventCategory = (code: string) =>
+  code.startsWith('storage.')
+    ? 'storage'
+    : code.startsWith('update.') || code.startsWith('store.updates.')
+      ? 'updates'
+      : code.startsWith('auth.')
+        ? 'security'
+        : code.startsWith('apps.') || code.startsWith('store.')
+          ? 'apps'
+          : 'system';
+const eventLevel = (code: string) =>
+  /Faulted|Suspended|Degraded|diskMissing|dataErrors|smartFailed|capacityCritical|Vault|UsbFailed|rolled_back|mirror|shutdown|job\.failed/.test(
+    code,
+  )
+    ? 'error'
+    : /unlocked|resolved|update\.available|installed|store\.updates|online|succeeded|cancelled/.test(
+          code,
+        )
+      ? 'info'
+      : 'warning';
+const rank = { info: 0, warning: 1, error: 2 } as const;
+
+export const sampleMatrix: NotificationMatrix = {
+  events: EVENT_CODES.map((code) => ({
+    code,
+    category: eventCategory(code),
+    level: eventLevel(code),
+  })),
+  channels: [
+    { id: 1, name: local({ en: 'Admin email', de: 'Admin-E-Mail' }), kind: 'email', enabled: true },
+    { id: 2, name: local({ en: 'Phone push', de: 'Handy-Push' }), kind: 'webhook', enabled: true },
+  ],
+  cells: EVENT_CODES.flatMap((code) => [
+    {
+      event: code,
+      channel: null,
+      enabled: code !== 'jobs.job.succeeded',
+      changed: code === 'jobs.job.succeeded',
+    },
+    { event: code, channel: 1, enabled: rank[eventLevel(code)] >= 1, changed: false },
+    { event: code, channel: 2, enabled: rank[eventLevel(code)] >= 2, changed: false },
+  ]),
 };

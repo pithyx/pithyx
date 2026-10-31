@@ -53,7 +53,17 @@ function hostOf(url: string | null): string {
  * Email and webhook channels (D379): the list with each channel's events and its last delivery, and a dialog to add or
  * change one. Used for a user's own channels and for the box's in Settings > Notifications.
  */
-export function ChannelEditor({ client }: { client: ChannelClient }) {
+export function ChannelEditor({
+  client,
+  routedByMatrix = false,
+  onChange,
+}: {
+  client: ChannelClient;
+  /** The box's channels: the notification matrix decides what they get (D407), so categories and level are left out. */
+  routedByMatrix?: boolean;
+  /** After a channel was added, changed or removed. */
+  onChange?: () => void;
+}) {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const locale = useFormatLocale();
@@ -90,13 +100,15 @@ export function ChannelEditor({ client }: { client: ChannelClient }) {
                   <span className={styles.detail}>
                     {channel.kind === 'email' ? channel.recipients.join(', ') : hostOf(channel.url)}
                   </span>
-                  <span className={styles.detail}>
-                    {channel.categories
-                      .map((category) => t(`channels.categoryNames.${category}`))
-                      .join(', ')}
-                    {' · '}
-                    {t(`channels.levels.${channel.minLevel}`)}
-                  </span>
+                  {!routedByMatrix && (
+                    <span className={styles.detail}>
+                      {channel.categories
+                        .map((category) => t(`channels.categoryNames.${category}`))
+                        .join(', ')}
+                      {' · '}
+                      {t(`channels.levels.${channel.minLevel}`)}
+                    </span>
+                  )}
                   <span className={styles.detail}>
                     {channel.lastSentAt == null
                       ? t('channels.never')
@@ -162,8 +174,10 @@ export function ChannelEditor({ client }: { client: ChannelClient }) {
           client={client}
           channel={editing === 'new' ? null : editing}
           emailAvailable={data.emailAvailable}
+          routedByMatrix={routedByMatrix}
           onClose={() => {
             setEditing(null);
+            onChange?.();
           }}
         />
       )}
@@ -173,6 +187,7 @@ export function ChannelEditor({ client }: { client: ChannelClient }) {
           channel={removing}
           onClose={() => {
             setRemoving(null);
+            onChange?.();
           }}
         />
       )}
@@ -190,11 +205,13 @@ function ChannelDialog({
   client,
   channel,
   emailAvailable,
+  routedByMatrix,
   onClose,
 }: {
   client: ChannelClient;
   channel: NotificationChannel | null;
   emailAvailable: boolean;
+  routedByMatrix: boolean;
   onClose: () => void;
 }) {
   const { t } = useTranslation();
@@ -384,40 +401,48 @@ function ChannelDialog({
             </fieldset>
           </>
         )}
-        <fieldset className={styles.choices}>
-          <legend className={styles.label}>{t('channels.categories')}</legend>
-          {CATEGORIES.map((category) => (
-            <Checkbox
-              key={category}
-              isSelected={categories.includes(category)}
-              onChange={(selected) => {
-                setCategories((current) =>
-                  selected
-                    ? CATEGORIES.filter((entry) => entry === category || current.includes(entry))
-                    : current.filter((entry) => entry !== category),
-                );
-              }}
-            >
-              {t(`channels.categoryNames.${category}`)}
-            </Checkbox>
-          ))}
-        </fieldset>
-        <label className={styles.field}>
-          <span className={styles.label}>{t('channels.minLevel')}</span>
-          <select
-            className={styles.select}
-            value={minLevel}
-            onChange={(event) => {
-              setMinLevel(event.target.value as Level);
-            }}
-          >
-            {LEVELS.map((level) => (
-              <option key={level} value={level}>
-                {t(`channels.levels.${level}`)}
-              </option>
-            ))}
-          </select>
-        </label>
+        {routedByMatrix ? (
+          <p className={styles.muted}>{t('channels.matrixHint')}</p>
+        ) : (
+          <>
+            <fieldset className={styles.choices}>
+              <legend className={styles.label}>{t('channels.categories')}</legend>
+              {CATEGORIES.map((category) => (
+                <Checkbox
+                  key={category}
+                  isSelected={categories.includes(category)}
+                  onChange={(selected) => {
+                    setCategories((current) =>
+                      selected
+                        ? CATEGORIES.filter(
+                            (entry) => entry === category || current.includes(entry),
+                          )
+                        : current.filter((entry) => entry !== category),
+                    );
+                  }}
+                >
+                  {t(`channels.categoryNames.${category}`)}
+                </Checkbox>
+              ))}
+            </fieldset>
+            <label className={styles.field}>
+              <span className={styles.label}>{t('channels.minLevel')}</span>
+              <select
+                className={styles.select}
+                value={minLevel}
+                onChange={(event) => {
+                  setMinLevel(event.target.value as Level);
+                }}
+              >
+                {LEVELS.map((level) => (
+                  <option key={level} value={level}>
+                    {t(`channels.levels.${level}`)}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </>
+        )}
         <Checkbox isSelected={enabled} onChange={setEnabled}>
           {t('channels.enabled')}
         </Checkbox>

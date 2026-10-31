@@ -105,6 +105,14 @@ public static class NotificationEndpoints
                 TypedResults.Ok(await channels.SetSmtpAsync(request, cancellationToken)))
             .WithName("SetNotificationSmtp")
             .WithDescription("Administrators only. Saves the SMTP server; an empty host removes it. A missing password keeps the saved one, an empty one removes it. Invalid fields answer 400 notifications.smtp.invalid.");
+        system.MapGet("/matrix", async Task<Ok<NotificationMatrix>> (ChannelService channels, CancellationToken cancellationToken) =>
+                TypedResults.Ok(await channels.MatrixAsync(cancellationToken)))
+            .WithName("GetNotificationMatrix")
+            .WithDescription("Administrators only. Every event the box reports to its administrators, the box's channels and, per event, whether the administrators' desktop and each channel get it (D407). A cell nobody set shows its default: the desktop gets everything, a channel what its categories and least level take.");
+        system.MapPut("/matrix", async Task<Ok<NotificationMatrix>> (NotificationMatrixRequest request, ChannelService channels, CancellationToken cancellationToken) =>
+                TypedResults.Ok(await channels.SetMatrixAsync(request, cancellationToken)))
+            .WithName("SetNotificationMatrix")
+            .WithDescription("Administrators only. Sets cells of the matrix and answers with the whole matrix; the other cells stay. An unknown event answers 400 notifications.event.unknown, a channel that is not one of the box's 404 notifications.channel.not_found.");
         system.MapPost("/smtp/test", async (SmtpTestRequest request, ChannelService channels, CancellationToken cancellationToken) =>
             {
                 await channels.TestSmtpAsync(request, cancellationToken);
