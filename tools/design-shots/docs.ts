@@ -55,6 +55,7 @@ export const shots: Shot[] = [
   { name: 'i18n-language', screen: 'preferences-language' },
   { name: 'backup-checked', screen: 'settings-backup-checked' },
   { name: 'network-confirm', screen: 'settings-network-confirm' },
+  { name: 'notifications-matrix', screen: 'settings-notification-matrix' },
   { name: 'logs-center', screen: 'logs-center', theme: 'dark' },
   { name: 'monitor-performance', screen: 'monitor-overview' },
   { name: 'store', screen: 'store-discover' },

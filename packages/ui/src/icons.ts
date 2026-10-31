@@ -3,6 +3,7 @@
 export { default as IconAlertCircle } from '@tabler/icons-react/dist/esm/icons/IconAlertCircle.mjs';
 export { default as IconAlertTriangle } from '@tabler/icons-react/dist/esm/icons/IconAlertTriangle.mjs';
 export { default as IconCheck } from '@tabler/icons-react/dist/esm/icons/IconCheck.mjs';
+export { default as IconMinus } from '@tabler/icons-react/dist/esm/icons/IconMinus.mjs';
 export { default as IconChevronDown } from '@tabler/icons-react/dist/esm/icons/IconChevronDown.mjs';
 export { default as IconChevronLeft } from '@tabler/icons-react/dist/esm/icons/IconChevronLeft.mjs';
 export { default as IconChevronRight } from '@tabler/icons-react/dist/esm/icons/IconChevronRight.mjs';

@@ -2814,6 +2814,76 @@
         }
       }
     },
+    "/api/system/notifications/matrix": {
+      "get": {
+        "tags": [
+          "Notifications"
+        ],
+        "description": "Administrators only. Every event the box reports to its administrators, the box's channels and, per event, whether the administrators' desktop and each channel get it (D407). A cell nobody set shows its default: the desktop gets everything, a channel what its categories and least level take.",
+        "operationId": "GetNotificationMatrix",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationMatrix"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Notifications"
+        ],
+        "description": "Administrators only. Sets cells of the matrix and answers with the whole matrix; the other cells stay. An unknown event answers 400 notifications.event.unknown, a channel that is not one of the box's 404 notifications.channel.not_found.",
+        "operationId": "SetNotificationMatrix",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NotificationMatrixRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationMatrix"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/system/notifications/smtp/test": {
       "post": {
         "tags": [
@@ -13734,6 +13804,7 @@
           "notifications.channel.invalid",
           "notifications.channel.limit_reached",
           "notifications.channel.not_found",
+          "notifications.event.unknown",
           "notifications.language.unsupported",
           "notifications.message.invalid",
           "notifications.notification.not_found",
@@ -17303,6 +17374,165 @@
           }
         },
         "description": "Snapshot of the `notifications` topic and answer of `GET /api/notifications`."
+      },
+      "NotificationMatrix": {
+        "required": [
+          "events",
+          "channels",
+          "cells"
+        ],
+        "type": "object",
+        "properties": {
+          "events": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NotificationMatrixEvent"
+            },
+            "description": "Every event the box reports to its administrators, in display order."
+          },
+          "channels": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NotificationMatrixChannel"
+            },
+            "description": "The box's channels."
+          },
+          "cells": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NotificationMatrixCell"
+            },
+            "description": "One cell per event and column: the desktop first, then each channel."
+          }
+        },
+        "description": "Settings &gt; Notifications, the matrix of events by the desktop and the box's channels (D407)."
+      },
+      "NotificationMatrixCell": {
+        "required": [
+          "event",
+          "channel",
+          "enabled",
+          "changed"
+        ],
+        "type": "object",
+        "properties": {
+          "event": {
+            "type": "string",
+            "description": "The event's code."
+          },
+          "channel": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "The channel's id, or null for the administrators' desktop.",
+            "format": "int64"
+          },
+          "enabled": {
+            "type": "boolean",
+            "description": "It gets the event."
+          },
+          "changed": {
+            "type": "boolean",
+            "description": "An administrator set it; otherwise it is the default (the desktop gets everything, a channel what its categories and least level take)."
+          }
+        },
+        "description": "Whether a column gets an event."
+      },
+      "NotificationMatrixChange": {
+        "required": [
+          "event",
+          "channel",
+          "enabled"
+        ],
+        "type": "object",
+        "properties": {
+          "event": {
+            "type": "string",
+            "description": "The event's code."
+          },
+          "channel": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "A channel of the box, or null for the administrators' desktop.",
+            "format": "int64"
+          },
+          "enabled": {
+            "type": "boolean",
+            "description": "Whether it gets the event."
+          }
+        },
+        "description": "A cell to set."
+      },
+      "NotificationMatrixChannel": {
+        "required": [
+          "id",
+          "name",
+          "kind",
+          "enabled"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "The channel's id.",
+            "format": "int64"
+          },
+          "name": {
+            "type": "string",
+            "description": "Its name."
+          },
+          "kind": {
+            "description": "Email or webhook.",
+            "$ref": "#/components/schemas/ChannelKind"
+          },
+          "enabled": {
+            "type": "boolean",
+            "description": "Off sends nothing, whatever its cells say."
+          }
+        },
+        "description": "A column of the notification matrix: one of the box's channels."
+      },
+      "NotificationMatrixEvent": {
+        "required": [
+          "code",
+          "category",
+          "level"
+        ],
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "The event's notification code; its texts are under `notifications.json`."
+          },
+          "category": {
+            "description": "What it is about.",
+            "$ref": "#/components/schemas/NotificationCategory"
+          },
+          "level": {
+            "description": "How serious it usually is.",
+            "$ref": "#/components/schemas/NotificationLevel"
+          }
+        },
+        "description": "A row of the notification matrix (D407)."
+      },
+      "NotificationMatrixRequest": {
+        "required": [
+          "cells"
+        ],
+        "type": "object",
+        "properties": {
+          "cells": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NotificationMatrixChange"
+            },
+            "description": "The cells to set; the others stay."
+          }
+        },
+        "description": "Body of `PUT /api/system/notifications/matrix`."
       },
       "NotificationTone": {
         "enum": [

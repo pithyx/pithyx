@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- Settings > **Notifications** > **Events**: a matrix of every event the box reports to its administrators (about 40, grouped by storage, updates, security, apps and system) by the administrators' desktop and each channel of the box; a checkbox applies at once, and the box's channels no longer have their own events and least level (`GET`/`PUT /api/system/notifications/matrix`, migration 0040, D407, #363).
 - Settings > **Notifications** > **Email server** has **Send test email**: a short email to an address you type, through the server as the form has it, saved or not (`POST /api/system/notifications/smtp/test`, #361).
 - The details pane of tables, the Log Center and Files can be dragged wider at its left edge, or with the arrow keys on its handle (`DetailsPane` in `@pithyx/ui`, D406, #357).
 - The search of the Pithyx menu finds the pages of Settings for administrators, by their name, description and keywords in the user's language; a result opens Settings on its page (D394, #346).

@@ -49,7 +49,7 @@ public static class BackupDatabase
         [BackupCategory.Users] =
         [
             "users", "recovery_codes", "passkeys", "user_appearance", "user_file_defaults", "user_startup_apps", "window_preferences", "desktop_layouts", "desktop_items",
-            "groups", "group_members", "storage_alert_mutes", "notification_channels", "user_languages",
+            "groups", "group_members", "storage_alert_mutes", "notification_channels", "notification_rules", "user_languages",
         ],
         [BackupCategory.SharedFolders] = ["shares", "file_services"],
         [BackupCategory.Storage] = ["snapshot_schedules", "storage_schedules"],

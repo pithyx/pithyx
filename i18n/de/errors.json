@@ -396,11 +396,14 @@
       "not_found": "Diese Benachrichtigung gibt es nicht mehr."
     },
     "smtp": {
-      "invalid": "Der E-Mail-Server wurde nicht gespeichert: {field, select, host {sein Name ist leer oder ungültig} port {der Port muss zwischen 1 und 65535 liegen} security {die Verschlüsselung ist unbekannt} username {der Benutzername ist zu lang} password {das Passwort ist zu lang} from {der Absender ist keine gültige E-Mail-Adresse} other {ein Wert ist ungültig}}.",
+      "invalid": "Der E-Mail-Server wurde nicht gespeichert: {field, select, host {sein Name ist leer oder ungültig} port {der Port muss zwischen 1 und 65535 liegen} security {die Verschlüsselung ist unbekannt} username {der Benutzername ist zu lang} password {das Passwort ist zu lang} from {der Absender ist keine gültige E-Mail-Adresse} to {die Adresse für den Test ist keine gültige E-Mail-Adresse} other {ein Wert ist ungültig}}.",
       "missing": "E-Mail-Kanäle brauchen einen E-Mail-Server. Ein Administrator richtet ihn unter Einstellungen > Benachrichtigungen ein."
     },
     "category": {
       "not_found": "Keine App, die du öffnen darfst, hat die Benachrichtigungskategorie {category} von {app}."
+    },
+    "event": {
+      "unknown": "Ein Benachrichtigungsereignis {event} gibt es nicht."
     }
   },
   "permissions": {

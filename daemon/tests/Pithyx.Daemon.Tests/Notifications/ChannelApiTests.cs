@@ -7,6 +7,7 @@ using System.Text.Json;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
+using Pithyx.Daemon.Localization;
 using Pithyx.Daemon.Notifications;
 using Pithyx.Daemon.Tests.Apps.Packages;
 using Pithyx.Daemon.Tests.Support;
@@ -219,6 +220,97 @@ public sealed class ChannelApiTests : IAsyncLifetime
         // Trying the server stores nothing.
         var status = await OkAsync(_admin.GetAsync("/api/system/notifications/smtp", Token));
         Assert.False(status.GetProperty("configured").GetBoolean());
+    }
+
+    [Fact]
+    public async Task TheMatrixDecidesWhatTheAdministratorsDesktopAndTheBoxsChannelsGet()
+    {
+        var channel = await OkAsync(_admin.PostAsJsonAsync("/api/system/notifications/channels", Hook(_hook.Url, ["storage"]), Token));
+        var channelId = channel.GetProperty("id").GetInt64();
+        var own = await OkAsync(_bob.PostAsJsonAsync("/api/notifications/channels", Hook(_hook.Url, ["storage"]), Token));
+
+        var matrix = await OkAsync(_admin.GetAsync("/api/system/notifications/matrix", Token));
+        Assert.Equal(NotificationEvents.All.Count, matrix.GetProperty("events").GetArrayLength());
+        Assert.Equal([channelId], matrix.GetProperty("channels").EnumerateArray().Select(column => column.GetProperty("id").GetInt64()));
+        // Defaults: the desktop gets everything, the channel what its categories and least level take.
+        Assert.Equal((true, false), Cell(matrix, "storage.alert.scrubErrors", null));
+        Assert.Equal((true, false), Cell(matrix, "storage.alert.poolDegraded", channelId));
+        Assert.Equal((false, false), Cell(matrix, "system.ups.on_battery", channelId));
+
+        using (var unknown = await _admin.PutAsJsonAsync("/api/system/notifications/matrix", new { cells = new[] { new { @event = "storage.nothing", channel = (long?)null, enabled = false } } }, Token))
+        {
+            Assert.Equal((HttpStatusCode.BadRequest, "notifications.event.unknown"), (unknown.StatusCode, await unknown.ErrorCodeAsync()));
+        }
+        using (var notTheBoxs = await _admin.PutAsJsonAsync("/api/system/notifications/matrix", new { cells = new[] { new { @event = "update.available", channel = (long?)own.GetProperty("id").GetInt64(), enabled = true } } }, Token))
+        {
+            Assert.Equal((HttpStatusCode.NotFound, "notifications.channel.not_found"), (notTheBoxs.StatusCode, await notTheBoxs.ErrorCodeAsync()));
+        }
+        using (var refused = await _bob.GetAsync("/api/system/notifications/matrix", Token))
+        {
+            Assert.Equal(HttpStatusCode.Forbidden, refused.StatusCode);
+        }
+
+        matrix = await OkAsync(_admin.PutAsJsonAsync("/api/system/notifications/matrix", new
+        {
+            cells = new object[]
+            {
+                new { @event = "storage.alert.scrubErrors", channel = (long?)null, enabled = false },
+                new { @event = "storage.alert.poolDegraded", channel = (long?)channelId, enabled = false },
+                new { @event = "system.ups.on_battery", channel = (long?)channelId, enabled = true },
+            },
+        }, Token));
+        Assert.Equal((false, true), Cell(matrix, "storage.alert.scrubErrors", null));
+        Assert.Equal((false, true), Cell(matrix, "storage.alert.poolDegraded", channelId));
+        Assert.Equal((true, true), Cell(matrix, "system.ups.on_battery", channelId));
+
+        // Off the desktop, the administrators still count as told, so a caller that waits for one does not try again.
+        Assert.True(await _notifications.CreateForAdministratorsAsync(new NotificationDraft("storage.alert.scrubErrors", new Dictionary<string, object?> { ["pool"] = "tank", ["errors"] = 2 }, NotificationTone.Warning), Token) > 0);
+        await _notifications.CreateForAdministratorsAsync(new NotificationDraft("storage.alert.poolDegraded", new Dictionary<string, object?> { ["pool"] = "tank" }, NotificationTone.Critical), Token);
+        await _notifications.CreateForAdministratorsAsync(new NotificationDraft("system.ups.on_battery", new Dictionary<string, object?> { ["charge"] = 80, ["minutes"] = 20 }, NotificationTone.Warning), Token);
+
+        // The channel: the scrub errors (its default) and the UPS (set on), not the degraded pool (set off).
+        var bodies = new List<string>();
+        while (!bodies.Any(body => body.Contains("system.ups.on_battery", StringComparison.Ordinal)))
+        {
+            bodies.Add((await _hook.NextAsync()).Body);
+        }
+        await Task.Delay(300, Token);
+        bodies.AddRange(_hook.Drain().Select(request => request.Body));
+        Assert.Contains(bodies, body => body.Contains("storage.alert.scrubErrors", StringComparison.Ordinal));
+        Assert.DoesNotContain(bodies, body => body.Contains("storage.alert.poolDegraded", StringComparison.Ordinal));
+
+        // The desktop: the degraded pool and the UPS, not the scrub errors.
+        var codes = (await OkAsync(_admin.GetAsync("/api/notifications", Token))).GetProperty("items").EnumerateArray().Select(item => item.GetProperty("code").GetString()).ToList();
+        Assert.Contains("storage.alert.poolDegraded", codes);
+        Assert.Contains("system.ups.on_battery", codes);
+        Assert.DoesNotContain("storage.alert.scrubErrors", codes);
+
+        // A deleted channel takes its cells along.
+        using (var delete = await _admin.DeleteAsync($"/api/system/notifications/channels/{channelId}", Token))
+        {
+            Assert.Equal(HttpStatusCode.NoContent, delete.StatusCode);
+        }
+        Assert.Equal(0, await _factory.ScalarAsync<long>("SELECT count(*) FROM notification_rules WHERE channel_id IS NOT NULL"));
+    }
+
+    [Fact]
+    public void EveryEventOfTheMatrixHasItsTextsInEveryLanguage()
+    {
+        foreach (var entry in NotificationEvents.All)
+        {
+            foreach (var language in MessageTexts.Languages)
+            {
+                Assert.True(MessageTexts.Format(language, $"notifications:{entry.Code}.title", new Dictionary<string, object?>()) is not null, $"{entry.Code} in {language}");
+            }
+        }
+    }
+
+    private static (bool Enabled, bool Changed) Cell(JsonElement matrix, string code, long? channel)
+    {
+        var cell = matrix.GetProperty("cells").EnumerateArray().Single(entry =>
+            entry.GetProperty("event").GetString() == code
+            && (channel is null ? entry.GetProperty("channel").ValueKind == JsonValueKind.Null : entry.GetProperty("channel").ValueKind == JsonValueKind.Number && entry.GetProperty("channel").GetInt64() == channel));
+        return (cell.GetProperty("enabled").GetBoolean(), cell.GetProperty("changed").GetBoolean());
     }
 
     /// <summary>The daemon with webhooks allowed to reach loopback, where the test listeners are.</summary>

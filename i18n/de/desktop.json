@@ -418,7 +418,8 @@
       "title": "Benachrichtigungen von Apps",
       "intro": "Schalte eine Art von Benachrichtigung aus, um sie stummzuschalten: Sie landet weiter als gelesen in deiner Liste, aber ohne Toast, E-Mail oder Webhook.",
       "none": "Keine deiner Apps sortiert ihre Benachrichtigungen nach Arten."
-    }
+    },
+    "matrixHint": "Was dieser Kanal bekommt, legst du pro Ereignis unter Ereignisse fest."
   },
   "preferences": {
     "apps": "Apps",

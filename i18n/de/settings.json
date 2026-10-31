@@ -1108,7 +1108,98 @@
       "title": "Kanäle der Box",
       "explain": "Diese Kanäle bekommen die eigenen Warnungen des Systems (Speicher, Updates, die USV, falsche Anmeldungen und mehr) einmal für alle Administratoren. Jeder Benutzer, auch Administratoren, kann im Benutzermenü eigene Kanäle hinzufügen."
     },
-    "tabs": "Benachrichtigungen der Box"
+    "tabs": "Benachrichtigungen der Box",
+    "matrix": {
+      "tab": "Ereignisse",
+      "explain": "Welche Ereignisse der Box auf dem Desktop der Administratoren und in jedem Kanal der Box ankommen. Jede Änderung gilt sofort. Ein ausgeschalteter Kanal sendet nichts, egal was hier steht.",
+      "event": "Ereignis",
+      "desktop": "Desktop",
+      "cell": "{event}: {column}",
+      "group": "Alle von {group}: {column}",
+      "channelOff": "{name} (aus)",
+      "noChannels": "Die Box hat noch keine Kanäle; leg unter Kanäle der Box einen an, um hier zu wählen, was er bekommt.",
+      "events": {
+        "storage": {
+          "alert": {
+            "poolFaulted": "Pool nicht verfügbar",
+            "poolSuspended": "Pool angehalten",
+            "poolDegraded": "Pool beeinträchtigt",
+            "diskMissing": "Platte eines Pools nicht angeschlossen",
+            "dataErrors": "Beschädigte Dateien in einem Pool",
+            "scrubErrors": "Scrub hat Fehler gefunden",
+            "smartFailed": "Platte fällt aus",
+            "smartWarning": "Platte zeigt Verschleiß",
+            "capacityCritical": "Pool fast voll",
+            "capacityWarning": "Pool wird voll",
+            "poolLocked": "Pool gesperrt",
+            "poolLockedVault": "Pool nicht aus dem Schlüsseltresor entsperrt",
+            "poolLockedUsb": "Pool wartet auf seinen USB-Stick",
+            "poolLockedUsbFailed": "Pool nicht vom USB-Stick entsperrt",
+            "resolved": "Speicherproblem behoben"
+          },
+          "usb": {
+            "unlocked": "Pool vom USB-Stick entsperrt"
+          }
+        },
+        "update": {
+          "available": "Pithyx-Update verfügbar",
+          "debian": {
+            "available": "Debian-Updates verfügbar"
+          },
+          "installed": "Pithyx-Update installiert",
+          "rolled_back": "Update fehlgeschlagen und zurückgerollt",
+          "restored": "Snapshot wiederhergestellt",
+          "source": {
+            "changed": "Update-Quelle geändert"
+          }
+        },
+        "store": {
+          "updates": {
+            "available": "App-Updates verfügbar"
+          },
+          "catalog": {
+            "failed": "Katalog nicht abgerufen"
+          }
+        },
+        "auth": {
+          "signin": {
+            "blocked": "Wiederholt fehlgeschlagene Anmeldungen"
+          }
+        },
+        "apps": {
+          "elevated": {
+            "critical": "App hat Root-Zugriff erhalten"
+          },
+          "device": {
+            "missing": "Gerät einer App fehlt"
+          }
+        },
+        "system": {
+          "mirror": {
+            "degraded": "Systemplatte fehlt"
+          },
+          "ups": {
+            "on_battery": "USV läuft auf Batterie",
+            "online": "Strom wieder da",
+            "shutdown": "Herunterfahren wegen der USV",
+            "unreachable": "USV antwortet nicht"
+          }
+        },
+        "proxy": {
+          "acme": {
+            "renewal_failed": "Zertifikat nicht erneuert"
+          }
+        },
+        "jobs": {
+          "job": {
+            "succeeded": "Aufgabe der Box erledigt",
+            "failed": "Aufgabe der Box fehlgeschlagen",
+            "cancelled": "Aufgabe der Box abgebrochen",
+            "interrupted": "Aufgabe der Box unterbrochen"
+          }
+        }
+      }
+    }
   },
   "security": {
     "intro": "Was auf der Box mehr kann, als eine App sollte.",

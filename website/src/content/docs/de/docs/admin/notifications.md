@@ -29,10 +29,21 @@ Unter **Test-E-Mail** schickt **Test-E-Mail senden** eine kurze E-Mail an die Ad
 - **Art**: **E-Mail** mit bis zu 10 Adressen oder **Webhook** mit einer `http`- oder `https`-Adresse. Die Art lässt sich später nicht ändern.
 - **Format** eines Webhooks: **JSON** sendet `title`, `message` und `priority` (so, wie Gotify sie liest, eine Gotify-URL mit `?token=...` funktioniert also direkt) sowie `level`, `category`, `code`, `params`, `app`, `box` und `time`. **ntfy** sendet den Text als Body mit den Headern `Title`, `Priority` (3, 4 oder 5) und `Tags`; nimm die URL des Themas, zum Beispiel `https://ntfy.example.com/meine-box`.
 - **Header** eines Webhooks, zum Beispiel `Authorization` mit einem Token. Ihre Werte verlassen die Box nie wieder: Die Liste zeigt nur ihre Namen, und ein leerer Wert behält den gespeicherten.
-- **Ereignisse**: Speicher, Updates, Backups, Sicherheit, Apps, System. Das Ergebnis einer Aufgabe zählt für ihren Bereich (eine Pool-Aufgabe für Speicher, eine App-Installation für Apps).
-- **Mindestens**: **Alles**, **Warnungen und Fehler** oder **Nur Fehler**. Kritische Benachrichtigungen zählen als Fehler.
+- **Ereignisse** und **Mindestens**, für einen eigenen Kanal eines Benutzers: Speicher, Updates, Backups, Sicherheit, Apps, System, und **Alles**, **Warnungen und Fehler** oder **Nur Fehler**. Das Ergebnis einer Aufgabe zählt für ihren Bereich (eine Pool-Aufgabe für Speicher, eine App-Installation für Apps); kritische Benachrichtigungen zählen als Fehler. Ein Kanal der Box hat beides nicht: Was er bekommt, legst du pro Ereignis in der Matrix fest (siehe unten).
 
 **Test senden** schickt sofort eine Testnachricht, auch über einen ausgeschalteten Kanal. Der Kanal zeigt, wann er zuletzt etwas gesendet hat, und bis wieder eine Zustellung klappt, warum die letzte fehlschlug, mit den Worten des Servers ([`notifications.channel.failed`](/de/docs/reference/errors/#notifications.channel.failed)).
+
+## Welches Ereignis wohin geht
+
+Einstellungen > **Benachrichtigungen** > **Ereignisse** ist eine Matrix aller Ereignisse, die die Box ihren Administratoren meldet, gruppiert nach Speicher, Updates, Sicherheit, Apps und System: ein beeinträchtigter oder fast voller Pool, eine ausfallende Platte, ein Scrub mit Fehlern, ein verfügbares, installiertes oder zurückgerolltes Update, wiederholt fehlgeschlagene Anmeldungen, die USV auf Batterie, ein nicht erneuertes Zertifikat, eine fehlgeschlagene Aufgabe der Box und mehr. Sie hat eine Spalte für den **Desktop** der Administratoren und eine pro Kanal der Box. Ein Kontrollkästchen gilt sofort; das Kästchen in der Zeile einer Gruppe setzt alle Ereignisse der Gruppe für diese Spalte und zeigt einen Strich, wenn nur einige an sind.
+
+![Einstellungen, Benachrichtigungen, Ereignisse: die Speicher-Ereignisse mit je einem Kontrollkästchen für den Desktop, einen E-Mail-Kanal und einen Push-Kanal](../../../../../assets/screenshots/notifications-matrix.de.webp)
+
+_Die Matrix: jedes Ereignis nach Desktop und den Kanälen der Box._
+
+- Ein Ereignis, das für **Desktop** aus ist, erreicht den Desktop keines Administrators und damit auch keinen ihrer eigenen Kanäle; die Kanäle der Box bekommen es trotzdem, wenn ihre Spalte das sagt.
+- Solange du eine Zelle nicht änderst, bekommt der Desktop jedes Ereignis und ein Kanal, was seine Ereignisse und seine Mindeststufe vor der Matrix nahmen (ein neuer Kanal der Box beginnt mit Speicher, Updates, Sicherheit und System ab Warnungen). Ein ausgeschalteter Kanal sendet nichts, egal was in seiner Spalte steht.
+- Die eigenen Kanäle der Benutzer und die Benachrichtigungen von Apps stehen nicht in der Matrix; sie behalten ihre Ereignisse, ihre Mindeststufe und ihre App-Kategorien.
 
 ## Was ein Kanal bekommt
 

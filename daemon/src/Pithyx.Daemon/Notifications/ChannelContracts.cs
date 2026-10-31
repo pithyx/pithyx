@@ -155,6 +155,42 @@ public sealed record SmtpTestRequest(
     string? Password = null,
     string? From = null);
 
+/// <summary>A row of the notification matrix (D407).</summary>
+/// <param name="Code">The event's notification code; its texts are under <c>notifications.json</c>.</param>
+/// <param name="Category">What it is about.</param>
+/// <param name="Level">How serious it usually is.</param>
+public sealed record NotificationMatrixEvent(string Code, NotificationCategory Category, NotificationLevel Level);
+
+/// <summary>A column of the notification matrix: one of the box's channels.</summary>
+/// <param name="Id">The channel's id.</param>
+/// <param name="Name">Its name.</param>
+/// <param name="Kind">Email or webhook.</param>
+/// <param name="Enabled">Off sends nothing, whatever its cells say.</param>
+public sealed record NotificationMatrixChannel(long Id, string Name, ChannelKind Kind, bool Enabled);
+
+/// <summary>Whether a column gets an event.</summary>
+/// <param name="Event">The event's code.</param>
+/// <param name="Channel">The channel's id, or null for the administrators' desktop.</param>
+/// <param name="Enabled">It gets the event.</param>
+/// <param name="Changed">An administrator set it; otherwise it is the default (the desktop gets everything, a channel what its categories and least level take).</param>
+public sealed record NotificationMatrixCell(string Event, long? Channel, bool Enabled, bool Changed);
+
+/// <summary>Settings &gt; Notifications, the matrix of events by the desktop and the box's channels (D407).</summary>
+/// <param name="Events">Every event the box reports to its administrators, in display order.</param>
+/// <param name="Channels">The box's channels.</param>
+/// <param name="Cells">One cell per event and column: the desktop first, then each channel.</param>
+public sealed record NotificationMatrix(IReadOnlyList<NotificationMatrixEvent> Events, IReadOnlyList<NotificationMatrixChannel> Channels, IReadOnlyList<NotificationMatrixCell> Cells);
+
+/// <summary>A cell to set.</summary>
+/// <param name="Event">The event's code.</param>
+/// <param name="Channel">A channel of the box, or null for the administrators' desktop.</param>
+/// <param name="Enabled">Whether it gets the event.</param>
+public sealed record NotificationMatrixChange(string Event, long? Channel, bool Enabled);
+
+/// <summary>Body of <c>PUT /api/system/notifications/matrix</c>.</summary>
+/// <param name="Cells">The cells to set; the others stay.</param>
+public sealed record NotificationMatrixRequest(IReadOnlyList<NotificationMatrixChange> Cells);
+
 /// <summary>Body of <c>PUT /api/notifications/language</c>.</summary>
 /// <param name="Language">The language the user's desktop uses, <c>en</c> or <c>de</c>.</param>
 public sealed record NotificationLanguageRequest(string Language);

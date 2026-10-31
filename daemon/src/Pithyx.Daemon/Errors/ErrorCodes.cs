@@ -898,6 +898,10 @@ public static class ErrorCodes
     [ErrorStatus(HttpStatusCode.NotFound)]
     public const string NotificationsCategoryNotFound = "notifications.category.not_found";
 
+    /// <summary>A cell of the notification matrix names an event the box does not report (D407); <c>params.event</c> names it.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string NotificationsEventUnknown = "notifications.event.unknown";
+
     /// <summary>The signed-in user has no notification with this id (it was deleted, or belongs to someone else).</summary>
     [ErrorStatus(HttpStatusCode.NotFound)]
     public const string NotificationsNotificationNotFound = "notifications.notification.not_found";

@@ -276,6 +276,88 @@ public sealed partial class ChannelService(
         return new SmtpSettings(host, request.Port, request.Security, username, password, from);
     }
 
+    /// <summary>The matrix of every event the box reports by the administrators' desktop and the box's channels (D407).</summary>
+    public async Task<NotificationMatrix> MatrixAsync(CancellationToken cancellationToken)
+    {
+        await using var connection = await connections.OpenAsync(cancellationToken);
+        var channels = (await connection.QueryAsync<ChannelRow>(new CommandDefinition(
+            $"SELECT {Columns} FROM notification_channels WHERE user_id IS NULL ORDER BY id", cancellationToken: cancellationToken))).ToList();
+        var rules = (await connection.QueryAsync<RuleRow>(new CommandDefinition(
+            "SELECT event, channel_id AS ChannelId, enabled FROM notification_rules", cancellationToken: cancellationToken)))
+            .ToDictionary(rule => (rule.Event, rule.ChannelId ?? 0), rule => rule.Enabled != 0);
+        var cells = new List<NotificationMatrixCell>();
+        foreach (var entry in NotificationEvents.All)
+        {
+            cells.Add(rules.TryGetValue((entry.Code, 0), out var desktop)
+                ? new NotificationMatrixCell(entry.Code, null, desktop, true)
+                : new NotificationMatrixCell(entry.Code, null, true, false));
+            foreach (var channel in channels)
+            {
+                cells.Add(rules.TryGetValue((entry.Code, channel.Id), out var set)
+                    ? new NotificationMatrixCell(entry.Code, channel.Id, set, true)
+                    : new NotificationMatrixCell(entry.Code, channel.Id, Default(channel, entry), false));
+            }
+        }
+        return new NotificationMatrix(
+            [.. NotificationEvents.All.Select(entry => new NotificationMatrixEvent(entry.Code, entry.Category, entry.Level))],
+            [.. channels.Select(channel => new NotificationMatrixChannel(channel.Id, channel.Name, Enum.Parse<ChannelKind>(channel.Kind, ignoreCase: true), channel.Enabled != 0))],
+            cells);
+    }
+
+    /// <summary>
+    /// Sets cells of the matrix; the others stay. A cell set to its default is stored all the same, so a later change of
+    /// the channel's categories leaves it as it is.
+    /// </summary>
+    public async Task<NotificationMatrix> SetMatrixAsync(NotificationMatrixRequest request, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        var changes = request.Cells ?? [];
+        await using (var connection = await connections.OpenAsync(cancellationToken))
+        {
+            var boxChannels = (await connection.QueryAsync<long>(new CommandDefinition(
+                "SELECT id FROM notification_channels WHERE user_id IS NULL", cancellationToken: cancellationToken))).ToHashSet();
+            foreach (var cell in changes)
+            {
+                if (cell?.Event is null || !NotificationEvents.ByCode.ContainsKey(cell.Event))
+                {
+                    throw new PithyxException(ErrorCodes.NotificationsEventUnknown, new Dictionary<string, object?> { ["event"] = cell?.Event });
+                }
+                if (cell.Channel is { } channel && !boxChannels.Contains(channel))
+                {
+                    throw new PithyxException(ErrorCodes.NotificationsChannelNotFound, new Dictionary<string, object?> { ["id"] = channel });
+                }
+            }
+            await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
+            foreach (var cell in changes)
+            {
+                await connection.ExecuteAsync(new CommandDefinition(
+                    """
+                    DELETE FROM notification_rules WHERE event = @Event AND channel_id IS @Channel;
+                    INSERT INTO notification_rules (event, channel_id, enabled) VALUES (@Event, @Channel, @enabled);
+                    """,
+                    new { cell.Event, cell.Channel, enabled = cell.Enabled ? 1 : 0 },
+                    transaction,
+                    cancellationToken: cancellationToken));
+            }
+            await transaction.CommitAsync(cancellationToken);
+        }
+        LogMatrixSaved(changes.Count);
+        return await MatrixAsync(cancellationToken);
+    }
+
+    /// <summary>Whether the administrators get this event on their desktop; true for every event the matrix does not list.</summary>
+    public static async Task<bool> DesktopTakesAsync(Microsoft.Data.Sqlite.SqliteConnection connection, string code, CancellationToken cancellationToken) =>
+        !NotificationEvents.ByCode.ContainsKey(code) || (await RulesAsync(connection, code, cancellationToken)).GetValueOrDefault(0, true);
+
+    // The set cells of one event by channel id, the desktop under 0.
+    private static async Task<Dictionary<long, bool>> RulesAsync(Microsoft.Data.Sqlite.SqliteConnection connection, string code, CancellationToken cancellationToken) =>
+        (await connection.QueryAsync<RuleRow>(new CommandDefinition(
+            "SELECT event, channel_id AS ChannelId, enabled FROM notification_rules WHERE event = @code", new { code }, cancellationToken: cancellationToken)))
+        .ToDictionary(rule => rule.ChannelId ?? 0, rule => rule.Enabled != 0);
+
+    private static bool Default(ChannelRow row, BoxEvent entry) =>
+        ChannelRules.Accepts(Categories(row), ParseLevel(row.MinLevel), entry.Category, entry.Level);
+
     /// <summary>Remembers the language the user's desktop uses for what the box writes to them.</summary>
     public async Task SetLanguageAsync(long userId, string language, CancellationToken cancellationToken)
     {
@@ -327,9 +409,16 @@ public sealed partial class ChannelService(
             _box,
             delivery.CreatedAt);
         var fingerprint = $"{delivery.Code}|{delivery.App}|{JsonSerializer.Serialize(delivery.Params)}";
+        // The box's channels follow the matrix for the events it lists (D407); everything else, and every user's own
+        // channel, follows the channel's categories and least level.
+        var matrixEvent = delivery.UserId is null ? NotificationEvents.ByCode.GetValueOrDefault(delivery.Code) : null;
+        var rules = matrixEvent is null ? [] : await RulesAsync(connection, matrixEvent.Code, cancellationToken);
         foreach (var row in rows)
         {
-            if (!ChannelRules.Accepts(Categories(row), ParseLevel(row.MinLevel), category, level))
+            var takes = matrixEvent is null
+                ? ChannelRules.Accepts(Categories(row), ParseLevel(row.MinLevel), category, level)
+                : rules.TryGetValue(row.Id, out var set) ? set : Default(row, matrixEvent);
+            if (!takes)
             {
                 continue;
             }
@@ -446,6 +535,13 @@ public sealed partial class ChannelService(
     private static PithyxException SmtpInvalid(string field) =>
         new(ErrorCodes.NotificationsSmtpInvalid, new Dictionary<string, object?> { ["field"] = field });
 
+    private sealed class RuleRow
+    {
+        public string Event { get; init; } = "";
+        public long? ChannelId { get; init; }
+        public long Enabled { get; init; }
+    }
+
     private sealed class ChannelRow
     {
         public long Id { get; init; }
@@ -463,6 +559,9 @@ public sealed partial class ChannelService(
 
     [LoggerMessage(Level = LogLevel.Information, Message = "Notification channel {ChannelId} saved (owner {Owner})")]
     private partial void LogSaved(long channelId, long? owner);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Notification matrix: {Count} cells set")]
+    private partial void LogMatrixSaved(int count);
 
     [LoggerMessage(Level = LogLevel.Information, Message = "SMTP server set to {Host}:{Port}")]
     private partial void LogSmtpSaved(string host, int port);

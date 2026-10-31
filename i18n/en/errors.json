@@ -396,11 +396,14 @@
       "not_found": "This notification no longer exists."
     },
     "smtp": {
-      "invalid": "The email server was not saved: {field, select, host {its name is empty or invalid} port {the port must be between 1 and 65535} security {the encryption is unknown} username {the user name is too long} password {the password is too long} from {the sender is not a valid email address} other {a value is invalid}}.",
+      "invalid": "The email server was not saved: {field, select, host {its name is empty or invalid} port {the port must be between 1 and 65535} security {the encryption is unknown} username {the user name is too long} password {the password is too long} from {the sender is not a valid email address} to {the address for the test is not a valid email address} other {a value is invalid}}.",
       "missing": "Email channels need an email server. An administrator sets it up in Settings > Notifications."
     },
     "category": {
       "not_found": "No app you may open has the notification category {category} of {app}."
+    },
+    "event": {
+      "unknown": "There is no notification event {event}."
     }
   },
   "permissions": {
