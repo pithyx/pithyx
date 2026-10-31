@@ -75,6 +75,11 @@ if [[ "$full" == true ]]; then
   minimum="${minimum:-$version}"
   since=/dev/null
 else
+  # A packages file of a release names its version, which is then the minimum: a file built against 1.1.0 must not
+  # offer itself to a box of 1.0.0, which lacks what changed in between.
+  if [[ -z "$minimum" && -n "$since" && "$(basename "$since")" =~ ^pithyx-(.+)-$ARCH\.packages$ ]]; then
+    minimum="${BASH_REMATCH[1]}"
+  fi
   minimum="${minimum:-1.0.0}"
   since="${since:-$repo/image/baseline/pithyx-$minimum-$ARCH.packages}"
   [[ -f "$since" ]] || die "no packages file of $minimum ($since); pass --since <file> or --full"

@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [1.2.0] - 2026-10-31
 
-Codename Vela (D408). Pithyx gets its new look (direction F of the design pass): a full-width taskbar, the Pithyx menu with its status tiles and search, and Files, Settings, the Store, the Log Center, the Resource Monitor and Personal settings in one frame with a navigation column, tables with a details pane and settings in form rows. Settings becomes the one place that sets up the box, storage included. New are pool encryption with keys on USB sticks, elevated rights for app backends with risk tiers and manifest version 2, notifications by email and webhook with a matrix of which event goes where, passkeys, the UPS, certificates from Let's Encrypt for proxy hosts and the search of Settings in the Pithyx menu. `@pithyx/sdk`, `@pithyx/ui` and `@pithyx/cli` go to 2.2.0. Like 1.0.0 and 1.1.0 it is marked beta on the stable channel. A box on 1.1.0 updates to it with one file.
+Codename Vela (D408). Pithyx gets its new look (direction F of the design pass): a full-width taskbar, the Pithyx menu with its status tiles and search, and Files, Settings, the Store, the Log Center, the Resource Monitor and Personal settings in one frame with a navigation column, tables with a details pane and settings in form rows. Settings becomes the one place that sets up the box, storage included. New are pool encryption with keys on USB sticks, elevated rights for app backends with risk tiers and manifest version 2, notifications by email and webhook with a matrix of which event goes where, passkeys, the UPS, certificates from Let's Encrypt for proxy hosts and the search of Settings in the Pithyx menu. `@pithyx/sdk`, `@pithyx/ui` and `@pithyx/cli` go to 2.2.0. Like 1.0.0 and 1.1.0 it is marked beta on the stable channel. A box on 1.0.0 or 1.1.0 updates to it with one file.
 
 ### Added
 
@@ -90,6 +90,7 @@ Codename Vela (D408). Pithyx gets its new look (direction F of the design pass):
 
 ### Fixed
 
+- `build-update.sh` (and `pithyx-release update`) takes the minimum version from the name of the packages file passed with `--since`, so a file built against 1.1.0 no longer offers itself to a box of 1.0.0, which would lack what changed in between.
 - The folder tree in Files keeps the folders open that the user went through, also after going to the recycle bin or another share (#355).
 - Settings > **Disks** no longer lists the empty network block devices (`nbd0` to `nbd15`) the kernel creates once its `nbd` module is loaded (#356).
 - Choosing a source far down the Log Center's list no longer scrolls the list back to the top (#360).
