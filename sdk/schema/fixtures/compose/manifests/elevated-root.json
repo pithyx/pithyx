@@ -1,0 +1,52 @@
+{
+  "manifestVersion": 2,
+  "id": "com.example.chat",
+  "version": "1.2.0",
+  "name": {
+    "en": "Chat"
+  },
+  "author": {
+    "name": "Example"
+  },
+  "entry": "frontend/index.html",
+  "sdk": "^1.0.0",
+  "arch": [
+    "amd64",
+    "arm64"
+  ],
+  "source": "https://github.com/example/app",
+  "permissions": {
+    "capability:NET_ADMIN": {
+      "reason": {
+        "en": "Needs capability:NET_ADMIN for its background service."
+      }
+    },
+    "device:/dev/net/tun": {
+      "reason": {
+        "en": "Needs device:/dev/net/tun for its background service."
+      }
+    }
+  },
+  "window": {
+    "instances": "single",
+    "defaultSize": {
+      "width": 900,
+      "height": 640
+    },
+    "minSize": {
+      "width": 320,
+      "height": 400
+    }
+  },
+  "backend": {
+    "compose": "backend/compose.yaml",
+    "endpoints": {
+      "api": {
+        "service": "server",
+        "port": 8080
+      }
+    },
+    "lifecycle": "onDemand",
+    "root": true
+  }
+}

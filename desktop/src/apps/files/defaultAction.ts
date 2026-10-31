@@ -54,11 +54,35 @@ export function openWithChoices(entry: FileEntry, apps: readonly InstalledApp[] 
   if (entry.kind !== 'file') {
     return [];
   }
+  const name = entry.name.toLowerCase();
+  // Apps that declare themselves the default for the type come first, then the other apps, the viewer and a download.
+  const ids = appsFor(entry, apps);
+  const preferred = new Set(apps.filter((app) => handles(app, name, true)).map((app) => app.id));
   return [
+    ...ids.filter((id) => preferred.has(id)).map((id): OpenWith => `app:${id}`),
+    ...ids.filter((id) => !preferred.has(id)).map((id): OpenWith => `app:${id}`),
     ...(viewKindOf(entry.name) === null ? [] : (['viewer'] as const)),
     'download',
-    ...appsFor(entry, apps).map((id): OpenWith => `app:${id}`),
   ];
+}
+
+/** The choice of "Open with" that a double click on the file makes now, to mark it in the list. */
+export function currentChoice(
+  entry: FileEntry,
+  apps: readonly InstalledApp[] = [],
+  choices: FileDefaults = {},
+): OpenWith | null {
+  const action = defaultAction(entry, apps, choices);
+  switch (action.kind) {
+    case 'view':
+      return 'viewer';
+    case 'download':
+      return 'download';
+    case 'app':
+      return `app:${action.id}`;
+    default:
+      return null;
+  }
 }
 
 function asAction(choice: OpenWith): DefaultAction {

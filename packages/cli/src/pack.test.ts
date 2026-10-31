@@ -176,13 +176,51 @@ describe('pithyx validate', () => {
     expect(lockTarget(readProject(copyProject('plain'), { frontend: 'build' })).kind).toBe('none');
   });
 
+  it('refuses an id in org.pithyx.* unless the official catalog packs it', async () => {
+    const root = copyProject('official');
+    const file = join(root, 'pithyx.json');
+    const manifest = JSON.parse(readFileSync(file, 'utf8')) as { id: string };
+    writeFileSync(file, JSON.stringify({ ...manifest, id: 'org.pithyx.fixture' }));
+    expect(codes(root)).toContain('error app.manifest.id_reserved');
+
+    const allowed = readProject(root, { frontend: 'build', allowReservedId: true });
+    expect(allowed.findings.filter((finding) => finding.level === 'error')).toEqual([]);
+    if (allowed.manifest === undefined) {
+      throw new Error('no manifest');
+    }
+    const target = join(scratch, packageName(allowed.manifest));
+    await pack(allowed, target);
+    expect(target.endsWith('org.pithyx.fixture-1.0.0.pithyxapp')).toBe(true);
+  });
+
   it('checks the manifest and the icon as the box does', () => {
     const root = copyProject('broken');
-    writeFileSync(join(root, 'pithyx.json'), '{"manifestVersion": 1}');
+    writeFileSync(join(root, 'pithyx.json'), '{"manifestVersion": 2}');
     writeFileSync(join(root, 'icon.svg'), '<svg xmlns="http://www.w3.org/2000/svg"/>');
     expect(new Set(codes(root))).toEqual(
       new Set(['error app.manifest.schema_violation', 'error app.icon.invalid']),
     );
+  });
+
+  it('checks the screenshots the manifest names against the build (D389)', () => {
+    const root = copyProject('screenshots');
+    const manifest = JSON.parse(readFileSync(join(root, 'pithyx.json'), 'utf8')) as Record<
+      string,
+      unknown
+    >;
+    manifest.screenshots = [{ file: 'frontend/shot.png' }, { file: 'frontend/big.png' }];
+    writeFileSync(join(root, 'pithyx.json'), JSON.stringify(manifest));
+    writeFileSync(join(root, 'build', 'big.png'), Buffer.alloc(1024 * 1024 + 1));
+    expect(
+      readProject(root, { frontend: 'build' }).findings.map((finding) => [
+        finding.code,
+        finding.params.path,
+        finding.params.reason,
+      ]),
+    ).toEqual([
+      ['app.package.layout_invalid', 'frontend/shot.png', 'missing'],
+      ['app.package.layout_invalid', 'frontend/big.png', 'too_large'],
+    ]);
   });
 
   describe('with a backend', () => {
@@ -202,6 +240,23 @@ describe('pithyx validate', () => {
 
     it('needs the images lock', () => {
       expect(codes(backendProject())).toEqual(['error cli.lock.missing']);
+    });
+
+    it('recommends a security contact for high and critical rights only (D389)', () => {
+      const root = backendProject();
+      cpSync(join(fixtures, 'compose', 'manifests', 'elevated.json'), join(root, 'pithyx.json'));
+      cpSync(
+        join(fixtures, 'compose', 'valid', 'elevated.yaml'),
+        join(root, 'backend', 'compose.yaml'),
+      );
+      expect(codes(root)).toContain('warning cli.manifest.security_missing');
+      const manifest = JSON.parse(readFileSync(join(root, 'pithyx.json'), 'utf8')) as Record<
+        string,
+        unknown
+      >;
+      manifest.security = 'https://example.com/security';
+      writeFileSync(join(root, 'pithyx.json'), JSON.stringify(manifest));
+      expect(codes(root)).not.toContain('warning cli.manifest.security_missing');
     });
 
     it('takes the Compose file and a current lock into the package', () => {

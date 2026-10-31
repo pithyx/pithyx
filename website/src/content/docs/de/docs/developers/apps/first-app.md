@@ -13,7 +13,7 @@ Diese Seite führt eine App von einem leeren Projekt zu einem installierbaren Pa
 
 Der Befehl `pithyx` hat keinen Befehl, der ein Projekt anlegt. Beginne mit einem beliebigen Frontend-Projekt (die Beispiele nutzen Vite) und lege die Dateien, die das CLI erwartet, im Projektstamm an:
 
-- `pithyx.json`, das [Manifest](/de/docs/developers/apps/manifest/). Füge `"$schema": "./node_modules/@pithyx/sdk/schema/manifest.v1.schema.json"` für die Editor-Unterstützung hinzu.
+- `pithyx.json`, das [Manifest](/de/docs/developers/apps/manifest/). Füge `"$schema": "./node_modules/@pithyx/sdk/schema/manifest.v2.schema.json"` für die Editor-Unterstützung hinzu.
 - `icon.svg`. Das CLI-Paket bringt ein `template-icon.svg` mit; `pithyx validate` warnt, solange `icon.svg` noch dieses Icon ist.
 - Das gebaute Frontend in `dist/` (den Ordner änderst du mit `--frontend <folder>`). Dein `entry` muss `frontend/<file>.html` sein; der Inhalt von `dist/` wird im Paket zu `frontend/`.
 
@@ -75,10 +75,10 @@ _Aus Datei installieren zeigt das Paket vor der Installation: den Hinweis, dass 
 
 Nur ein Administrator kann ein Paket installieren.
 
-1. Öffne den Store und den Tab **Installiert** und wähle **Aus Datei installieren**.
+1. Öffne den Store, dann **Installiert**, und wähle **Aus Datei installieren**.
 2. Wähle die `.pithyxapp`-Datei. Der Dialog **App installieren** zeigt die Version und ob es sich um eine Installation, ein Update, eine Neuinstallation oder ein Downgrade handelt, außerdem den Autor, die Dateianzahl und die Größe sowie die Warnung "Dieses Paket stammt aus einer Datei und ist nicht geprüft."
 3. Sieh dir die Berechtigungen an, die die App anfordert, die Ordner, die sie haben will, ob sie ein Backend hat, ob sie als root läuft und wer sie nutzen darf.
-4. Bei der ersten App-Installation der Box wählst du den Pool für die App-Daten; jede App legt ihre Dateien dort ab. Ohne Pool sagt der Dialog, dass du zuerst im Speicher einen anlegen sollst.
+4. Bei der ersten App-Installation der Box wählst du den Pool für die App-Daten; jede App legt ihre Dateien dort ab. Ohne Pool sagt der Dialog, dass du zuerst unter Einstellungen > Pools einen anlegen sollst.
 5. Bestätige. Die Installation läuft als Job.
 
 Nach der Installation ordnet ein Administrator die Speicheranforderungen der App freigegebenen Ordnern zu und kann Berechtigungen entziehen. Ein Update, das eine neue Berechtigung anfordert, wartet auf die Bestätigung des Administrators, und die alte Version läuft weiter. Ein Update erstellt einen Snapshot der App-Daten; ein Rollback kehrt mit den Daten zur vorherigen Version zurück. Siehe [Apps und der Store](/de/docs/admin/apps-and-store/).
@@ -93,7 +93,7 @@ curl -sS --cacert root-ca.crt -c cookies -H 'X-Pithyx-Request: 1' -H 'Content-Ty
   -d '{"username":"admin","password":"..."}' "$BOX/api/auth/login"
 curl -sS --cacert root-ca.crt -b cookies -H 'X-Pithyx-Request: 1' -H 'Content-Type: application/gzip' \
   -X PUT --data-binary @com.example.notes-1.0.0.pithyxapp "$BOX/api/apps/packages"
-# The answer is the preview: packageId, action, permissions, keptData, suggestedAccess, pool.
+# The answer is the preview: packageId, action, manifest (with its permissions), addedPermissions, keptData, suggestedAccess, pool.
 curl -sS --cacert root-ca.crt -b cookies -H 'X-Pithyx-Request: 1' -H 'Content-Type: application/json' \
   -d '{"pool":"tank","access":"everybody"}' "$BOX/api/apps/packages/<packageId>/install"
 # 202 with the job; follow it with GET /api/jobs/<id> until its state is succeeded or failed.

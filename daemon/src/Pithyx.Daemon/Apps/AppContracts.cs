@@ -54,9 +54,12 @@ public enum AppPackageAction
 /// <param name="UnpackedBytes">Their sizes together.</param>
 /// <param name="PackageBytes">The size of the package file.</param>
 /// <param name="Sha256">SHA-256 of the package file, lowercase hex.</param>
-/// <param name="SuggestedAccess">Who should use the app after an install (D304): administrators only when it asks for elevated rights, root in a container or <c>directory.read</c>, everybody otherwise. An install without access takes it.</param>
+/// <param name="SuggestedAccess">Who should use the app after an install (D304): administrators only when it asks for elevated rights, root in a container or <c>directory.read</c>, or its <c>audience</c> is <c>admins</c> (D389), everybody otherwise. An install without access takes it.</param>
 /// <param name="Catalog">The catalog the package comes from; null for an uploaded file (a sideload, unverified).</param>
 /// <param name="KeptData">For an install: an earlier installation was removed with "Keep the data", and the app gets its data and its user id again.</param>
+/// <param name="Devices">Each device of the package's elevated rights with whether it is optional and plugged in now (D387): a missing required one refuses the install with <c>app.device.missing</c>, a missing optional one is only a hint.</param>
+/// <param name="AddedElevated">Elevated rights the package asks for that the app does not hold or had revoked (D311): installing grants them, so it needs a step-up with password and TOTP.</param>
+/// <param name="RemovedElevated">Elevated rights the installed version had that the package no longer asks for.</param>
 public sealed record AppPackagePreview(
     string PackageId,
     DateTimeOffset ExpiresAt,
@@ -74,11 +77,18 @@ public sealed record AppPackagePreview(
     string Sha256,
     AppAccess SuggestedAccess,
     string? Catalog = null,
-    bool KeptData = false);
+    bool KeptData = false,
+    IReadOnlyList<string>? AddedElevated = null,
+    IReadOnlyList<string>? RemovedElevated = null,
+    IReadOnlyList<AppDeviceState>? Devices = null);
 
 /// <param name="Pool">The pool for the app data; required for the first app, and then always the app pool.</param>
 /// <param name="Access">Who may use the app after an install; an update keeps who may use it. Defaults to the preview's suggested access.</param>
-public sealed record InstallAppRequest(string? Pool = null, AppAccess? Access = null);
+/// <param name="Password">The administrator's password, for a package that asks for elevated rights it would get newly (D311); not needed while an earlier step-up of this session is valid.</param>
+/// <param name="TotpCode">A current authenticator code with the password, when two-factor sign-in is on.</param>
+/// <param name="Elevated">For a package with new elevated rights: false installs it with them revoked instead.</param>
+/// <param name="ConfirmCritical">The app's id, sent once the administrator typed the app's name in the critical step; granting a critical right needs it (D388).</param>
+public sealed record InstallAppRequest(string? Pool = null, AppAccess? Access = null, string? Password = null, string? TotpCode = null, bool? Elevated = null, string? ConfirmCritical = null);
 
 /// <param name="Enabled">False hides the app from everybody and stops serving its frontend; its data and grants stay.</param>
 public sealed record UpdateAppRequest(bool Enabled);
@@ -94,6 +104,7 @@ public sealed record UpdateAppRequest(bool Enabled);
 /// <param name="Permissions">The permissions the app holds: those of its manifest that no administrator revoked.</param>
 /// <param name="LogLevel">Whether its debug log entries reach the daemon.</param>
 /// <param name="FileHandlers">The files the app opens, for "Open with".</param>
+/// <param name="FileActions">The app's entries for the context menu of files and folders (D375).</param>
 public sealed record AppSummary(
     string Id,
     string Version,
@@ -104,12 +115,22 @@ public sealed record AppSummary(
     JsonElement Window,
     IReadOnlyList<string> Permissions,
     AppLogLevel LogLevel,
-    IReadOnlyList<AppFileHandler> FileHandlers);
+    IReadOnlyList<AppFileHandler> FileHandlers,
+    IReadOnlyList<AppFileAction> FileActions);
 
 /// <summary>The kinds of files an app opens (<c>fileHandlers</c> of its manifest).</summary>
 /// <param name="Extensions">Lowercase extensions without the dot, for example <c>png</c> or <c>tar.gz</c>.</param>
 /// <param name="IsDefault">Whether the app is the default for these files when it is the only handler.</param>
 public sealed record AppFileHandler(IReadOnlyList<string> Extensions, bool IsDefault);
+
+/// <summary>An entry of the app for the context menu of files and folders (<c>fileActions</c> of its manifest, D375).</summary>
+/// <param name="Id">Sent back to the app in <c>launch.action.id</c>.</param>
+/// <param name="Label">The menu entry by language (<c>en</c> always).</param>
+/// <param name="Extensions">Lowercase extensions of the files it applies to; empty for none.</param>
+/// <param name="Folders">Whether it applies to folders.</param>
+/// <param name="Multiple">Whether it takes several items at once.</param>
+/// <param name="Writes">Whether it writes into the folder of the selection.</param>
+public sealed record AppFileAction(string Id, IReadOnlyDictionary<string, string> Label, IReadOnlyList<string> Extensions, bool Folders, bool Multiple, bool Writes);
 
 /// <summary>The apps the subscriber may use, sorted by id: the snapshot and every event of <c>apps</c>.</summary>
 /// <param name="Apps">Enabled apps the user has a grant for; every enabled app for administrators.</param>
@@ -133,6 +154,8 @@ public sealed record AppList(IReadOnlyList<AppSummary> Apps);
 /// <param name="Catalog">The catalog it was installed or last updated from; null for a sideload.</param>
 /// <param name="UpdatePolicy">Its own update policy; null follows the box's.</param>
 /// <param name="PreviousVersion">The version before its last update, which a rollback restores with its data; null when there is none.</param>
+/// <param name="Elevated">Each elevated right of the manifest's <c>permissions</c> with its tier and whether it is granted (D311, D388).</param>
+/// <param name="Devices">Each device of the manifest's elevated rights with whether it is optional and plugged in now (D387).</param>
 public sealed record AppDetails(
     string Id,
     string Version,
@@ -150,7 +173,15 @@ public sealed record AppDetails(
     IReadOnlyList<AppStorageMapping> Storage,
     string? Catalog,
     Catalog.UpdatePolicy? UpdatePolicy,
-    string? PreviousVersion);
+    string? PreviousVersion,
+    IReadOnlyList<AppElevatedRight> Elevated,
+    IReadOnlyList<AppDeviceState> Devices);
+
+/// <summary>A device an app's backend asks for (D387).</summary>
+/// <param name="Path">The device or device class, for example <c>/dev/dri</c>.</param>
+/// <param name="Optional">The backend runs without it (<c>optional</c> on its right).</param>
+/// <param name="Present">At least one node of it is plugged in now.</param>
+public sealed record AppDeviceState(string Path, bool Optional, bool Present);
 
 /// <summary>A folder in a shared folder that an administrator mapped to one storage request of an app.</summary>
 /// <param name="StorageId">The id of the request in the manifest.</param>
@@ -190,6 +221,22 @@ public sealed record AppUserAccess(long UserId, string Username, string? Display
 /// <param name="Permission">For example <c>notifications</c>.</param>
 /// <param name="Granted">False after an administrator revoked it.</param>
 public sealed record AppPermissionState(string Permission, bool Granted);
+
+/// <param name="Right">For example <c>host.network</c> or <c>device:/dev/dri/renderD128</c>.</param>
+/// <param name="Granted">False until an administrator grants it after a step-up, and after one revoked it; the backend then runs without it.</param>
+public sealed record AppElevatedState(string Right, bool Granted);
+
+/// <summary>An elevated right of an installed app as administrators see it (D311, D388).</summary>
+/// <param name="Right">For example <c>host.network</c> or <c>device:/dev/dri</c>.</param>
+/// <param name="Granted">False until an administrator grants it, and after one revoked it; the backend then runs without it.</param>
+/// <param name="Tier">How much it can do on the box, from the compose rules: what granting it asks, and a critical right keeps the app from updating by itself.</param>
+public sealed record AppElevatedRight(string Right, bool Granted, Manifest.RiskTier Tier);
+
+/// <param name="Rights">Elevated rights of the app's manifest with whether the app keeps them; the others stay as they are.</param>
+/// <param name="Password">The administrator's password; granting a right of the tier high or critical needs a step-up (D311, D388), unless an earlier one of this session is valid.</param>
+/// <param name="TotpCode">A current authenticator code with the password, when two-factor sign-in is on.</param>
+/// <param name="ConfirmCritical">The app's id, sent once the administrator typed the app's name in the critical step; granting a critical right needs it (D388).</param>
+public sealed record AppElevatedRequest(IReadOnlyList<AppElevatedState> Rights, string? Password = null, string? TotpCode = null, string? ConfirmCritical = null);
 
 /// <summary>Every installed app for administrators: the snapshot and every event of <c>apps/admin</c>.</summary>
 /// <param name="Pool">The app pool, or null before the first install.</param>

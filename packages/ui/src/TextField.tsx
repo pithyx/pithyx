@@ -17,8 +17,8 @@ import { useUiTexts } from './UiProvider';
 
 /** The props of {@link TextField}: React Aria's text field props plus label, hints and an error. */
 export interface TextFieldProps extends Omit<AriaTextFieldProps, 'className' | 'children'> {
-  /** The visible label, also the accessible name. */
-  label: ReactNode;
+  /** The visible label, also the accessible name. Leave it out only inside a `FormRow`, which names the field. */
+  label?: ReactNode;
   /** A hint below the input, announced with it. */
   description?: ReactNode;
   /** The text shown while the field is invalid (`isInvalid` or a failed `validate`). */
@@ -61,7 +61,7 @@ export function TextField({
 }: TextFieldProps) {
   return (
     <AriaTextField {...props} className={cx(styles.field, className)}>
-      <Label className={styles.label}>{label}</Label>
+      {label !== undefined && <Label className={styles.label}>{label}</Label>}
       <div className={styles.frame}>
         <Input
           className={cx(styles.input, inputClassName)}

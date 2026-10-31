@@ -11,11 +11,13 @@ Files is the app for working with the shared folders you may use: open folders, 
 
 ## Browsing shared folders
 
-![Files with the shared folders and recycle bins in the sidebar, the folder Photos/2026-summer in list view and the context menu of a photo open](../../../../assets/screenshots/files.webp)
+![Files with the shares and the recycle bin in the folder tree, the folder Photos/2026-summer in list view and the details pane of the selected photo Lighthouse.jpg](../../../../assets/screenshots/files.webp)
 
-_Files in list view. Right-click an entry for its context menu._
+_Files in list view with the details of the selected photo. Right-click an entry for its context menu._
 
-Open **Files** from the Pithyx menu. The sidebar lists your home folder **home** first and your shared folders under it, under **Shares**; Files opens in your home. Your home is private: only you and the administrators can open it. Administrators also see **homes**, which lists every other user's home as a folder, in the same list or tiles as any folder; a double click opens one. The homes themselves cannot be renamed, moved or deleted there, and their menu only offers **Open**. Click an entry to open it. A folder that cannot be reached right now (for example because its pool is offline) shows **Not available**. If the list is empty, you have no shared folders yet and an administrator has to create them. A shared folder marked **Read only** lets you look and download, but not change anything.
+Open **Files** from the Pithyx menu. The navigation column at the left lists your home folder **home** first and your shared folders under it; Files opens in your home. Your home is private: only you and the administrators can open it. Administrators also see **homes**, which lists every other user's home as a folder, in the same list or tiles as any folder; a double click opens one. The homes themselves cannot be renamed, moved or deleted there, and their menu only offers **Open**. Click an entry to open it. The navigation column is a folder tree: the arrow before a folder shows or hides its subfolders, and the folders down to the one you are in are open by themselves, with that folder marked. A folder without subfolders has no arrow once Files knows it. Items dropped on a folder of the tree go into that folder. A folder that cannot be reached right now (for example because its pool is offline) shows **Not available**. If the list is empty, you have no shared folders yet and an administrator has to create them. A shared folder you may only read has a lock in the navigation column. Inside it, a bar under the path says that you can open, copy and download files but not change them, the actions that would change something are greyed out, and the status bar at the bottom says **Read only**.
+
+Above the list are two bars. The command bar has **Upload**, **New folder**, **Copy**, **Cut**, **Paste**, **Rename**, **Delete** and **Download**, each for the selected items, and at its end **List** or **Tiles** to switch the view and **Details**, which shows a pane at the right with a preview, the size and the date of the selected item and its **Download** and **Previous versions** buttons. The address bar under it has back, forward, up, the path of the open folder (click a part to go there) and **Refresh**. At its end, **Search in** with the folder's name keeps only the items of the open folder whose name contains what you type, ignoring case; subfolders are not searched. The status bar then counts the matches, and **Select all** (Ctrl+A) selects only what the search shows. Going to another folder clears the search.
 
 To move around:
 
@@ -28,9 +30,9 @@ To move around:
 
 The status line shows how many items the folder holds, or how many you selected. Long folders load in pages as you scroll. The window remembers its folder and view for the next time.
 
-Opening a file depends on its type: pictures, PDFs, text, audio and video open in the Viewer; other files download. An installed app that is the only one to declare itself the default for a file type opens it instead. To choose, right-click and pick **Open with…**, then **Viewer**, **Download** or an installed app that declares it opens this file type. Tick **Always open .x files this way** before you choose, and every file of that type opens this way from then on, on every device you sign in to. Your choices are in the account menu under **Default apps**, where **Forget** goes back to the usual way. A choice of an app that was removed is ignored. Names that start with `.pithyx-upload-` and the folder `.pithyx-trash` are internal and not shown.
+Opening a file depends on its type: pictures, PDFs, text, audio and video open in the Viewer; other files download. An installed app that is the only one to declare itself the default for a file type opens it instead. To choose, right-click and pick **Open with…**, then an installed app that declares it opens this file type, **Viewer** or **Download**; apps that declare themselves the default for the type come first, and **Default** marks what a double click does now. Tick **Always open .x files this way** before you choose, and every file of that type opens this way from then on, on every device you sign in to. Your choices are in **Personal settings** under **Default apps**, where **Forget** goes back to the usual way. A choice of an app that was removed is ignored. Names that start with `.pithyx-upload-` and the folder `.pithyx-trash` are internal and not shown.
 
-Right-click an item for its menu: **Open**, **Download**, **Open with…**, **Copy**, **Cut**, **Rename**, **Previous versions**, **Move to recycle bin** and **Delete permanently**. Right-click an empty spot for **New folder**, **Upload**, **Paste** (after you copied or cut something) and **Select all**. Actions that change something appear only when you may write to the shared folder.
+Right-click an item for its menu: **Open**, **Download**, **Open with…**, **Add to desktop**, **Copy**, **Cut**, **Rename**, **Previous versions**, **Move to recycle bin** and **Delete permanently**. Right-click an empty spot for **New folder**, **New file**, **Upload**, **Paste** (after you copied or cut something) and **Select all**. Actions that change something appear only when you may write to the shared folder. Installed apps can add their own entries for the files they handle, for example **Extract here** on an archive; they appear when every selected item fits and work with your rights.
 
 ### Previous versions
 
@@ -41,7 +43,7 @@ Restore points live on the same disks as the files. They do not replace a backup
 ## Uploading
 
 1. Open the folder you want the files in.
-2. Click **Upload** and pick files, or drag files from your computer into the window. Drop them on a folder, a part of the path above the list or a share in the sidebar to put them there.
+2. Click **Upload** and pick files, or drag files from your computer into the window. Drop them on a folder, a part of the path above the list or a share in the navigation column to put them there.
 3. Watch the progress in the transfers button on the taskbar. It shows the speed and the time left, and has a button to cancel a transfer.
 
 Things to know:
@@ -60,9 +62,10 @@ Things to know:
 _The dialog when names already exist in the target folder._
 
 - **Copy and paste:** select items, press **Ctrl+C** (or **Cmd+C**), open the target folder and press **Ctrl+V**. **Ctrl+X** cuts instead of copies.
-- **Drag and drop:** dragging items onto another folder, a part of the path above the list or a share in the sidebar moves them there (a share you may only read takes nothing). Hold **Ctrl** or **Alt** while dropping to copy.
+- **Drag and drop:** dragging items onto another folder, a part of the path above the list or a share in the navigation column moves them there (a share you may only read takes nothing). Hold **Ctrl** or **Alt** while dropping to copy.
 - **Rename:** press **F2** or choose **Rename**. A name must not be empty, must not contain `/` and may be at most 255 bytes long.
 - **New folder:** choose **New folder**, then type its name.
+- **New file:** right-click an empty spot and choose **New file**, then type its name with the extension, for example `conf.toml`. The file starts empty; double-click it to open it with its default app.
 
 Copying and moving run in the background with progress and a cancel button. One request handles up to 1000 selected items. Symbolic links are not copied. A folder cannot be copied or moved into itself.
 
@@ -77,13 +80,13 @@ To download, choose **Download** or open a file that the Viewer cannot show.
 
 ## The recycle bin
 
-![The recycle bin of the shared folder Photos with two deleted photos, their original path and dates, and the buttons Restore, Delete for good and Empty recycle bin](../../../../assets/screenshots/files-recycle-bin.webp)
+![The recycle bin of the shared folder Photos as a table with two deleted photos, where they were, their size, when and by whom they were deleted and how long they are kept, and the buttons Restore, Delete for good and Empty recycle bin](../../../../assets/screenshots/files-recycle-bin.webp)
 
-_Each shared folder has its own recycle bin with the date an entry is deleted for good._
+_Each shared folder has its own recycle bin, which says how long it keeps each entry._
 
 **Move to recycle bin** (the **Del** key) does not delete a file. It moves it into the recycle bin of its shared folder, or of your home. Deleting files over SMB, WebDAV or FTP does the same.
 
-To see a bin, click **Recycle bin** in the sidebar and choose the shared folder. Each entry shows where it came from and when it was deleted. With **Restore** you get it back in its original folder; missing parent folders are created. **Delete for good** removes single items. **Empty recycle bin** removes everything in the bin of that folder. Both ask first, and you need write access.
+To see a bin, open the shared folder or your home and click **Recycle bin** at the bottom of the navigation column; it shows the bin of the place you are in. Each entry shows where it came from and when it was deleted. With **Restore** you get it back in its original folder; missing parent folders are created. **Delete for good** removes single items. **Empty recycle bin** removes everything in the bin of that folder. Both ask first, and you need write access.
 
 Files stay in the bin for 30 days by default, then the box deletes them. The bin shows the period in use as a note at the top. Only an administrator can change this period.
 

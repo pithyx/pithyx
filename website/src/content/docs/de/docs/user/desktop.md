@@ -23,7 +23,7 @@ Du brauchst das Recht **Am Desktop anmelden**. Ist dein Konto deaktiviert oder f
 
 Nach fünf falschen Versuchen für denselben Benutzernamen von derselben Adresse innerhalb von fünf Minuten pausiert die Anmeldung für kurze Zeit und sagt dir, wie viele Sekunden du warten musst.
 
-Zum Abmelden öffnest du das Pithyx-Menü und klickst unten neben dem Ein/Aus-Knopf auf **Abmelden**.
+Zum Abmelden öffnest du das Pithyx-Menü und klickst in der schmalen Leiste an seinem linken Rand auf **Abmelden**, über dem Ein/Aus-Knopf.
 
 Passwort vergessen? Klicke auf der Anmeldeseite auf **Passwort vergessen?**. Pithyx kann ein Passwort nicht per E-Mail zurücksetzen: Bitte einen Administrator, ein neues zu setzen. Administratoren können den Wiederherstellungsschlüssel nutzen. Siehe [Wiederherstellen und neu installieren](/de/docs/install/recovery/).
 
@@ -48,7 +48,7 @@ Auf einem breiten Bildschirm:
 - Ziehe ein Fenster an den linken oder rechten Rand, damit es die halbe Breite füllt, oder an den oberen Rand, um es zu maximieren. Auf sehr breiten Bildschirmen (2400 Pixel oder mehr) ergeben die Ränder Drittel.
 - Ziehe ein maximiertes oder angedocktes Fenster vom Rand weg, um seine freie Größe zurückzubekommen.
 - Die Titelleiste hat die Schaltflächen **Minimieren**, **Maximieren** (oder **Wiederherstellen**) und **Schließen**.
-- Klicke auf das App-Symbol links in der Titelleiste, um das Fenstermenü zu öffnen: **Wiederherstellen**, **Verschieben**, **Größe ändern**, **Minimieren**, **Maximieren**, **Links andocken**, **Rechts andocken** und **Schließen**. Bei **Verschieben** und **Größe ändern** kannst du die Pfeiltasten benutzen (16 Pixel pro Druck, mit Umschalt 1 Pixel), mit **Enter** bestätigen und mit **Esc** abbrechen.
+- Klicke auf das App-Symbol links in der Titelleiste oder mit der rechten Maustaste auf die Titelleiste, um das Fenstermenü zu öffnen: **Wiederherstellen**, **Verschieben**, **Größe ändern**, **Minimieren**, **Maximieren**, **Links andocken**, **Rechts andocken** und **Schließen**. Bei **Verschieben** und **Größe ändern** kannst du die Pfeiltasten benutzen (16 Pixel pro Druck, mit Umschalt 1 Pixel), mit **Enter** bestätigen und mit **Esc** abbrechen.
 
 Neue Fenster öffnen sich leicht versetzt zueinander. Du kannst höchstens 50 Fenster gleichzeitig offen haben. Darüber hinaus tut das Öffnen einer weiteren App nichts.
 
@@ -56,15 +56,16 @@ Antwortet eine App fünf Sekunden lang nicht, sagt ein Dialog, dass die App nich
 
 ## Die Taskleiste
 
-![Das Pithyx-Menü im dunklen Design mit geöffnetem Kontomenü von Anna Weber: Zwei-Faktor-Authentifizierung, Sprache, Darstellung, Akzentfarbe, Hintergrundbild, Desktop holen von und Position der Taskleiste](../../../../../assets/screenshots/desktop-account-menu.de.webp)
+![Das Pithyx-Menü im dunklen Design mit neben den Initialen geöffnetem Kontomenü von Alex Morgan: Persönliche Einstellungen, Darstellung und Abmelden](../../../../../assets/screenshots/desktop-account-menu.de.webp)
 
-_Das Kontomenü öffnet sich, wenn du unten im Pithyx-Menü auf deinen Namen klickst._
+_Das Kontomenü öffnet sich, wenn du oben in der linken Leiste des Pithyx-Menüs auf deine Initialen klickst._
 
 Standardmäßig liegt die Taskleiste am unteren Bildschirmrand. Von links nach rechts hat sie:
 
 - die Schaltfläche des Pithyx-Menüs,
-- eine Schaltfläche pro laufender App,
+- je offenem Fenster eine Schaltfläche mit Icon und Titel; die aktive ist in der Akzentfarbe unterstrichen, die anderen mit einer dünnen Linie,
 - den App-Umschalter mit der Anzahl der offenen Apps,
+- für Administratoren der Zustand der Box: der Pool, der am meisten Aufmerksamkeit braucht, die Prozessorlast und der Netzwerkverkehr; jedes öffnet Einstellungen > Pools oder den Ressourcenmonitor (auf Bildschirmen ab 1024 Pixeln Breite),
 - die Schaltfläche für Übertragungen, solange Dateien hoch- oder heruntergeladen werden,
 - die Schaltfläche für laufende Aufgaben,
 - die Benachrichtigungsglocke mit einem Zähler für ungelesene Benachrichtigungen,
@@ -74,43 +75,47 @@ Laufen mehr Apps, als Platz haben, werden ihre Schaltflächen schmaler und lasse
 
 Klicke auf eine laufende App, um sie nach vorn zu holen. Klicke noch einmal auf die aktive App, um sie zu minimieren. Klicke mit der rechten Maustaste auf eine laufende App (oder drücke darauf **Umschalt+F10**) für **Minimieren** oder **Wiederherstellen**, **Zum Desktop hinzufügen** und **Schließen**.
 
-Um die Taskleiste zu verschieben, öffne das Pithyx-Menü, klicke auf deinen Namen, wähle **Position der Taskleiste** und dann **Unten**, **Oben**, **Links** oder **Rechts**. Auf Handys bleibt die Taskleiste immer unten und der Eintrag fehlt.
+Um die Taskleiste zu verschieben, öffne **Persönliche Einstellungen** (in der linken Leiste des Pithyx-Menüs), gehe zu **Darstellung**, wähle bei **Position der Taskleiste** **Unten**, **Oben**, **Links** oder **Rechts**. Auf Handys bleibt die Taskleiste immer unten und die Zeile fehlt.
 
-**Das Pithyx-Menü** öffnest du mit der Schaltfläche links in der Taskleiste oder indem du die Windows- oder Befehlstaste (Command) drückst und loslässt. Es listet deine Apps auf und hat ein Suchfeld. Die Suche findet Apps nur nach ihrem Namen; Einstellungen und Dateien findet sie dort nicht, und die Liste der zuletzt benutzten Dateien bleibt leer. Dein Kontomenü (klicke auf deinen Namen) enthält:
+**Das Pithyx-Menü** öffnet sich über der Taskleiste, angesetzt an die Schaltfläche links in ihr, oder wenn du die Windows- oder Befehlstaste (Command) drückst und loslässt. Es hat drei Teile:
 
-- **Zwei-Faktor-Authentifizierung**
-- **Sprache**
-- **Darstellung**, **Akzentfarbe** und **Hintergrundbild**
+- eine schmale Leiste links: deine Initialen (das Kontomenü), dein persönlicher Ordner und unten **Persönliche Einstellungen**, **Abmelden** und, mit dem Recht, **Ein/Aus**,
+- die App-Liste mit einem Suchfeld, gruppiert in **System** (nur für Administratoren: die Apps, die mit Pithyx kommen), **Apps** und **Du**,
+- Kacheln: Administratoren sehen den Zustand jedes Pools, das System (Prozessor und Arbeitsspeicher) und die Updates, jede öffnet ihre App; alle sehen **Deine Ordner**, den persönlichen Ordner und die freigegebenen Ordner mit dem Zugriff, den sie haben, jeder öffnet sich in Dateien.
+
+Die Suche findet Apps nach ihrem Namen, und Administratoren finden auch die Seiten der Einstellungen nach ihrem Namen oder nach dem, was sie einstellen („Quota“, „Zeitzone“); ein Treffer öffnet die Einstellungen auf dieser Seite. Dateien findet sie dort nicht. Dein Kontomenü (klicke auf deine Initialen) enthält **Persönliche Einstellungen** und **Darstellung**. In Persönliche Einstellungen ([Dein Konto](/de/docs/user/account/#persönliche-einstellungen)) findest du außerdem:
+
 - **Standard-Apps**: die Dateitypen, die sich in Dateien immer auf eine Art öffnen sollen, jeweils mit **Vergessen** ([Dateien](/de/docs/user/files/))
 - **Beim Anmelden öffnen**: hake bis zu 10 Apps an, die sich bei jeder Anmeldung öffnen, auf jedem Gerät, in der Reihenfolge, in der du sie angehakt hast. Ein Neuladen der Seite bringt nur deine Fenster zurück, und eine App, die schon offen ist, öffnet sich nicht doppelt. Eine App kann als **Von der App empfohlen** markiert sein; angehakt wird sie nie für dich.
-- **Desktop holen von**
-- **Position der Taskleiste** (nicht auf Handys)
+- **Benachrichtigungskanäle**: deine Benachrichtigungen per E-Mail oder an einen Push-Dienst wie ntfy oder Gotify senden ([Konto](/de/docs/user/account/#benachrichtigungen-per-e-mail-oder-push))
 
-Unten im Pithyx-Menü, neben deinem Namen, stehen der Knopf **Abmelden** und, für Administratoren und Benutzer mit dem Recht **Neu starten und herunterfahren**, der Knopf **Ein/Aus** mit **Neu starten** und **Herunterfahren**. Beides meldet alle Benutzer ab und beendet Dateiübertragungen.
+**Ein/Aus** (für Administratoren und Benutzer mit dem Recht **Neu starten und herunterfahren**) hat **Neu starten** und **Herunterfahren**. Beides meldet alle Benutzer ab und beendet Dateiübertragungen.
 
 **Benachrichtigungen.** Die Glocke öffnet ein Fenster mit **Laufende Aufgaben** und **Neueste** Benachrichtigungen. Nutze **Verwerfen**, **Stummschalten** oder **Alle löschen**. Drücke **Esc**, um das Fenster zu schließen.
 
 ## Desktop-Elemente und Notizen
 
-![Der Desktop mit den Fenstern Dateien und Speicher nebeneinander, links den Verknüpfungen Dateien und Einstellungen und einer Notiz und unten der Taskleiste](../../../../../assets/screenshots/desktop.de.webp)
+![Der Desktop mit Dateien im Vordergrund, den Einstellungen auf der Seite Pools und dem Protokoll-Center dahinter, links Ordnern und den Verknüpfungen Dateien und Einstellungen, oben rechts einer Notiz und unten der Taskleiste](../../../../../assets/screenshots/desktop.de.webp)
 
-_Zwei Verknüpfungen und eine Notiz neben zwei offenen Fenstern._
+_Desktop-Elemente, zwei Verknüpfungen und eine Notiz neben drei offenen Fenstern._
 
-Der Desktop enthält Verknüpfungen zu Apps und Notizzettel. Sie gehören zu deinem Konto und erscheinen auf jedem Gerät.
+Der Desktop enthält Verknüpfungen zu Apps, Dateien und Ordnern sowie Notizzettel. Sie gehören zu deinem Konto und erscheinen auf jedem Gerät. Der Desktop enthält nur Verweise: Eine Verknüpfung zu entfernen, ändert nie die Datei.
 
 - Um eine Verknüpfung hinzuzufügen, klicke mit der rechten Maustaste auf eine freie Stelle und wähle **Neue Verknüpfung**, dann eine App. Oder klicke in der Taskleiste mit der rechten Maustaste auf eine laufende App und wähle **Zum Desktop hinzufügen**.
+- Um eine Datei oder einen Ordner auf den Desktop zu legen, klicke in Dateien mit der rechten Maustaste darauf und wähle **Zum Desktop hinzufügen**, oder ziehe sie aus Dateien auf den Desktop. Die Verknüpfung öffnet sie wie ein Doppelklick in Dateien; ihr Menü bietet zusätzlich **Öffnen mit …**, **In Dateien zeigen** (Dateien öffnet ihren Ordner mit ihr ausgewählt) und nach einem Umbenennen **Ursprünglichen Namen verwenden**. Sie folgt dem Umbenennen und Verschieben in Dateien, Apps, WebDAV und FTP. Eine Änderung über SMB oder SFTP, eine gelöschte Datei oder ein freigegebener Ordner, den du nicht mehr lesen darfst, lässt die Verknüpfung ausgegraut mit einem unterbrochenen Link zurück, und ihr Menü bietet nur noch **Vom Desktop entfernen**.
 - Um eine Notiz hinzuzufügen, klicke mit der rechten Maustaste auf eine freie Stelle und wähle **Neue Notiz**. Eine Notiz fasst bis zu 4000 Zeichen und speichert sich kurz nach dem Tippen selbst.
 - Öffne eine Verknüpfung mit einem Doppelklick (auf einem Touchscreen mit einem einfachen Tippen), oder wähle sie aus und drücke **Enter**.
 - Klicke mit der rechten Maustaste auf eine Verknüpfung für **Öffnen**, **Umbenennen**, **Verschieben** und **Vom Desktop entfernen**. **F2** benennt um, **Entf** entfernt.
 - Ziehe Symbole, um sie zu verschieben. Ziehe auf einer freien Stelle, um mehrere auszuwählen. Halte **Strg** oder **Umschalt** gedrückt, um zu einer Auswahl hinzuzufügen.
 - Auf einem Touchscreen hältst du etwa eine halbe Sekunde gedrückt, um das Menü zu öffnen.
+- Ist ein Menü offen, öffnet ein Rechtsklick auf etwas anderes stattdessen dessen Menü. Der Desktop zeigt nie das eigene Menü des Browsers, außer in Textfeldern wie dem Text einer Notiz.
 - Um eine Notiz zu löschen, klicke auf **Notiz entfernen**. Bei einer Notiz mit Text kommt vorher die Frage **Diese Notiz löschen?**. Der Text wird auf allen deinen Geräten gelöscht.
 
 Der Desktop fasst höchstens 200 Elemente. Symbole rasten an einem Raster ein. Auf kleinen Bildschirmen fließen sie in Reihen wie auf dem Home-Bildschirm eines Handys.
 
 ## Tastenkürzel
 
-Diese Fenster-Tastenkürzel funktionieren überall auf dem Desktop, außer während du in ein Textfeld tippst:
+Diese Fenster-Tastenkürzel funktionieren überall auf dem Desktop, außer während du in ein Textfeld tippst, und außer im Fenster einer App aus dem Store oder aus einer Datei: Eine solche App behält ihre Tasten für sich, klicke also zuerst auf ihre Titelleiste.
 
 | Tasten                                  | Aktion                                                                               |
 | --------------------------------------- | ------------------------------------------------------------------------------------ |
@@ -133,7 +138,7 @@ Die Box merkt sich deine Fenster für jeden Browser, den du benutzt: welche Apps
 - Gespeicherte Layouts laufen 90 Tage nach dem letzten Speichern ab.
 - Ein Fenster einer App, die entfernt wurde oder die du nicht mehr benutzen darfst, wird übersprungen. Eine Benachrichtigung sagt dir, wie viele es waren.
 - Deine Desktop-Elemente, Akzentfarbe und Hintergrundbild sind auf allen Geräten gleich. Das Theme und die Sprache gehören zum Gerät.
-- Um die Anordnung eines anderen Geräts zu übernehmen, öffne dein Kontomenü, klicke auf **Desktop holen von** und wähle das Gerät. Gibt es keines, steht in der Liste **Keine anderen Geräte**. Der Desktop folgt dir nicht von selbst zwischen Geräten.
+- Um die Anordnung eines anderen Geräts zu übernehmen, öffne **Persönliche Einstellungen**, klicke auf **Desktop holen von** und wähle das Gerät. Gibt es keines, steht in der Liste **Keine anderen Geräte**. Der Desktop folgt dir nicht von selbst zwischen Geräten.
 
 ## Handys und Tablets
 

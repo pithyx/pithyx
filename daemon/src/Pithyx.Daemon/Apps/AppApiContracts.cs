@@ -131,7 +131,8 @@ public sealed record AppStorageInfo(string Id, AppStorageState State, Shares.Sha
 /// <param name="Endpoints">The endpoint names of the manifest, sorted.</param>
 /// <param name="Reason">
 /// Why a backend that is not running cannot start, which makes it <c>unavailable</c> (D360): <c>storage</c> (a required
-/// storage request is not mapped) or <c>pool</c> (the app pool is locked or missing); null otherwise.
+/// storage request is not mapped), <c>pool</c> (the app pool is locked or missing) or <c>device</c> (a required device is
+/// not plugged in, D387); null otherwise.
 /// </param>
 public sealed record AppBackendInfo(string Status, IReadOnlyList<string> Endpoints, string? Reason = null);
 

@@ -1,5 +1,5 @@
 import { expect, test } from './fixtures';
-import { admin, openAccountMenu } from './session';
+import { admin, choosePersonalSetting } from './session';
 
 test.use({ reducedMotion: 'no-preference' });
 
@@ -33,15 +33,11 @@ test('the taskbar takes no presses while it slides in and slides in only once', 
   await expect(taskbar).toHaveCSS('pointer-events', 'auto');
   await expect.poll(() => taskbar.evaluate((element) => element.getAnimations().length)).toBe(0);
 
-  await openAccountMenu(page);
-  await page.getByRole('menuitem', { name: 'Taskbar position' }).click();
-  await page.getByRole('menuitemradio', { name: 'Left' }).click();
+  await choosePersonalSetting(page, 'Taskbar position', 'Left');
   // Moving the taskbar later does not play the entrance again.
   expect(await taskbar.evaluate((element) => element.getAnimations().length)).toBe(0);
   await expect(taskbar).toHaveCSS('pointer-events', 'auto');
 
-  await openAccountMenu(page);
-  await page.getByRole('menuitem', { name: 'Taskbar position' }).click();
-  await page.getByRole('menuitemradio', { name: 'Bottom' }).click();
+  await choosePersonalSetting(page, 'Taskbar position', 'Bottom');
   expect(logouts).toEqual([]);
 });

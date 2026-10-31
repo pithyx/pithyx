@@ -39,7 +39,7 @@ public sealed record CheckedPackage(string Id, long UserId, DateTimeOffset Expir
 
     public string Version => Manifest.GetProperty("version").GetString()!;
 
-    public IReadOnlyList<string> Permissions => [.. Manifest.GetProperty("permissions").EnumerateArray().Select(permission => permission.GetString()!)];
+    public IReadOnlyList<string> Permissions => ElevatedRights.PermissionsOf(Manifest);
 }
 
 /// <summary>
@@ -167,6 +167,12 @@ public sealed class AppPackages
             throw validation.Issues[0].ToException();
         }
         var manifest = validation.Manifest!.Value;
+        var architectures = manifest.GetProperty("arch").EnumerateArray().Select(architecture => architecture.GetString()!).ToList();
+        if (Docker.ImagesLock.HostArchitecture is { } host && !architectures.Contains(host))
+        {
+            // The one refusal of D388 that is no policy: the app's code cannot run on this processor.
+            throw new PithyxException(ErrorCodes.AppArchUnsupported, new Dictionary<string, object?> { ["arch"] = host, ["supported"] = string.Join(", ", architectures) });
+        }
         if (origin is not null
             && (manifest.GetProperty("id").GetString() != origin.AppId
                 || manifest.GetProperty("version").GetString() != origin.Version
@@ -175,7 +181,9 @@ public sealed class AppPackages
             throw HashMismatch($"apps/{origin.AppId}/{origin.Version}/{PackageLayout.ManifestFile}");
         }
         var compose = manifest.TryGetProperty("backend", out var backend) ? backend.GetProperty("compose").GetString() : null;
-        var layout = PackageLayout.Check(paths, manifest.GetProperty("entry").GetString()!, compose);
+        var screenshots = manifest.TryGetProperty("screenshots", out var shots) ? shots.EnumerateArray().Select(shot => shot.GetProperty("file").GetString()!).ToList() : [];
+        var sizes = package.Files.ToDictionary(file => file.Path, file => file.Size, StringComparer.Ordinal);
+        var layout = PackageLayout.Check(paths, manifest.GetProperty("entry").GetString()!, compose, screenshots, path => sizes[path]);
         if (layout.Count > 0)
         {
             throw layout[0].ToException();

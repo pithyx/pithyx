@@ -17,7 +17,7 @@ namespace Pithyx.Daemon.Apps;
 /// subscribe, and only to the concrete topic (a wildcard never takes it), so nobody learns which apps are installed.
 /// When a user loses an app, its events stop and the app leaves the user's topic <c>apps</c>, which closes its windows.
 /// </summary>
-public sealed class AppContexts(AppRegistry registry, PermissionService permissions, PoolInventory pools, SqliteConnectionFactory connections, Proxy.AppBackends backends)
+public sealed class AppContexts(AppRegistry registry, PermissionService permissions, PoolInventory pools, SqliteConnectionFactory connections, Proxy.AppBackends backends, Docker.AppDevices devices)
 {
     public const string Pattern = "apps/+/context";
 
@@ -104,6 +104,10 @@ public sealed class AppContexts(AppRegistry registry, PermissionService permissi
             if (Docker.AppBackendRuntime.UnmappedRequired(Docker.BackendApp.Of(app)).Count > 0)
             {
                 return new(Proxy.AppBackends.Unavailable, app.Endpoints, Proxy.AppBackends.ReasonStorage);
+            }
+            if (devices.MissingRequired(app).Count > 0)
+            {
+                return new(Proxy.AppBackends.Unavailable, app.Endpoints, Proxy.AppBackends.ReasonDevice);
             }
         }
         return new(status, app.Endpoints);

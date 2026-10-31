@@ -1,8 +1,9 @@
 import optimizeLocales from '@react-aria/optimize-locales-plugin';
 import babel from '@rolldown/plugin-babel';
 import react, { reactCompilerPreset } from '@vitejs/plugin-react';
-import { mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
-import { dirname, join, relative } from 'node:path';
+import { createHash } from 'node:crypto';
+import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
+import { dirname, join, relative, resolve } from 'node:path';
 import { brotliCompressSync, constants, gzipSync } from 'node:zlib';
 import { defaultClientConditions, defaultServerConditions, defineConfig, type Plugin } from 'vite';
 import { compileMessages } from './scripts/compile-messages.ts';
@@ -31,6 +32,34 @@ function cssModuleTypes(): Plugin {
       if (file.endsWith('.module.css')) {
         writeDeclaration(file);
       }
+    },
+  };
+}
+
+// The design gallery has no daemon: icons of its sample apps that the desktop loads from /api/apps/<id>/icon (the
+// Store's installed apps) come from src/design/icons/<id>.svg, only for pages of design.html.
+function designIcons(): Plugin {
+  return {
+    name: 'pithyx-design-icons',
+    apply: 'serve',
+    configureServer(server) {
+      server.middlewares.use((request, response, next) => {
+        const match = /^\/api\/apps\/([a-z0-9.-]+)\/icon(?:\?|$)/.exec(request.url ?? '');
+        const file =
+          match === null
+            ? null
+            : resolve(import.meta.dirname, 'src/design/icons', `${match[1] ?? ''}.svg`);
+        if (
+          file === null ||
+          !(request.headers.referer ?? '').includes('/design.html') ||
+          !existsSync(file)
+        ) {
+          next();
+          return;
+        }
+        response.setHeader('content-type', 'image/svg+xml');
+        response.end(readFileSync(file));
+      });
     },
   };
 }
@@ -153,6 +182,29 @@ function precompress(): Plugin {
   };
 }
 
+/**
+ * Writes the service worker (service-worker.js, D380) as sw.js with a cache name of its own for this build, made from
+ * the names of the hashed assets: a new build is a new worker, which drops the old build's cache.
+ */
+function serviceWorker(): Plugin {
+  return {
+    name: 'pithyx-service-worker',
+    apply: 'build',
+    generateBundle(_, bundle) {
+      const assets = Object.keys(bundle)
+        .filter((name) => name.startsWith('assets/'))
+        .sort();
+      const hash = createHash('sha256').update(assets.join('\n')).digest('hex').slice(0, 16);
+      const source = readFileSync(join(import.meta.dirname, 'service-worker.js'), 'utf8');
+      this.emitFile({
+        type: 'asset',
+        fileName: 'sw.js',
+        source: source.replace('__PITHYX_ASSET_CACHE__', `pithyx-assets-${hash}`),
+      });
+    },
+  };
+}
+
 // Where the bundle budgets (tools/checks/bundle-budget.ts) find the chunk graph; outside dist, which the daemon serves.
 export const bundleGraphFile = join(
   import.meta.dirname,
@@ -190,6 +242,11 @@ function bundleGraph(): Plugin {
   };
 }
 
+// The modules only apps use, never the shell: tables and virtualized lists (D400), and the app frame, toolbars, tabs,
+// form sections with selects and radios of D394 (D401). Status.tsx stays shared: the Pithyx menu shows StatusBadge.
+const appOnlyModules =
+  /[\\/](packages[\\/]ui[\\/]src[\\/](DataTable|Frame|Toolbar|Form)[.]|react-aria-components[\\/]dist[\\/]private[\\/](Table|TableLayout|Virtualizer|Tabs|Select|RadioGroup|Toolbar)\.mjs|react-stately[\\/]dist[\\/]private[\\/](layout|table|virtualizer|select|radio|tabs)[\\/]|react-aria[\\/]dist[\\/]private[\\/](table|virtualizer|select|radio|tabs|toolbar)[\\/]|@tanstack[\\/](virtual-core|react-virtual)[\\/])/;
+
 const signIn: readonly string[] = signInNamespaces;
 const desktopShell: readonly string[] = desktopNamespaces;
 
@@ -217,9 +274,11 @@ export default defineConfig({
     react(),
     babel({ presets: [reactCompilerPreset()] }),
     cssModuleTypes(),
+    serviceWorker(),
     precompress(),
     bundleGraph(),
     devCompression(),
+    designIcons(),
   ],
   define: { __PITHYX_VERSION__: JSON.stringify(pithyxVersion) },
   // Workspace packages (the SDK, @pithyx/ui) are compiled from source.
@@ -248,10 +307,15 @@ export default defineConfig({
             {
               name: 'shared',
               test: (id) =>
-                !/[\\/](sdk[\\/]src|desktop[\\/]src[\\/]apps[\\/][^\\/]+)[\\/]/.test(id),
+                !/[\\/](sdk[\\/]src|desktop[\\/]src[\\/]apps[\\/][^\\/]+)[\\/]/.test(id) &&
+                !appOnlyModules.test(id),
               minShareCount: 2,
               priority: 1,
             },
+            // Tables, virtualized lists and the app patterns of D394 are code of apps only: in the shared chunk they
+            // would count toward the desktop as soon as two apps use them (D400, D401). This group comes after the
+            // shared one, so it keeps only what the desktop itself never loads.
+            { name: 'patterns', test: appOnlyModules, minShareCount: 2, priority: 0 },
           ],
         },
       },

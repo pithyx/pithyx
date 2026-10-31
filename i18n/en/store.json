@@ -1,17 +1,42 @@
 {
-  "tabs": {
-    "label": "Store sections",
+  "nav": {
+    "label": "Store",
+    "search": "Search",
+    "discover": "Discover",
+    "all": "All apps",
+    "categories": "Categories",
+    "yours": "Your apps",
     "installed": "Installed",
-    "official": "Official",
-    "community": "Community",
-    "own": "Own",
     "updates": "Updates",
-    "updatesCount": "Updates ({count})"
+    "updatesCount": "{count, plural, one {# update} other {# updates}}",
+    "catalogs": "Catalogs"
+  },
+  "search": {
+    "label": "Search apps",
+    "placeholder": "Search apps by name, description or keyword",
+    "results": "Results for “{query}”"
+  },
+  "discover": {
+    "featured": {
+      "official": "New in the official catalog",
+      "community": "New in the community catalog",
+      "custom": "New in {name}"
+    },
+    "recent": "New and updated",
+    "noCatalogs": "No catalog is switched on, so there are no apps to show.",
+    "showCatalogs": "Show catalogs"
+  },
+  "card": {
+    "official": "Official catalog",
+    "community": "Community catalog",
+    "custom": "{name}, not verified",
+    "sideload": "Installed from a file",
+    "update": "Update"
   },
   "installed": {
     "title": "Installed apps",
     "intro": "Apps installed on this box. Everyone finds the apps they may use in their Pithyx menu.",
-    "empty": "No apps are installed yet. Install one from its package file (.pithyxapp).",
+    "empty": "No apps are installed yet.",
     "loading": "Loading the apps",
     "pool": "App data lives on the pool {pool}.",
     "installFromFile": "Install from file",
@@ -19,7 +44,8 @@
     "disabled": "Disabled",
     "busy": "In progress",
     "unavailable": "Pool not available",
-    "unverified": "Unverified"
+    "unverified": "Unverified",
+    "toolbar": "Installed apps"
   },
   "detail": {
     "back": "Installed apps",
@@ -107,7 +133,7 @@
     "policy": {
       "title": "Updates",
       "label": "When a catalog has a newer version",
-      "box": "As set in the Store's settings",
+      "box": "As set for the box under Updates",
       "hint": "An update that asks for new permissions or special rights never installs on its own."
     },
     "rollback": {
@@ -137,7 +163,11 @@
     },
     "notifications": {
       "title": "Notifications",
-      "description": "Shows notifications to the user who uses it."
+      "description": "Shows notifications to the user who uses it.",
+      "external": {
+        "title": "Email and webhooks",
+        "description": "Its notifications also reach the email and webhook channels the users set up, not only the desktop."
+      }
     },
     "directory": {
       "read": {
@@ -184,12 +214,11 @@
       "no": "Runs in the browser only, without a background service."
     },
     "root": "A container of this app runs as root. Pithyx keeps it without rights on the box itself, but install it only if you trust the developer.",
-    "elevated": "It asks for special rights: {rights}",
     "access": "Who may use it",
     "accessSuggested": "Suggested for this app: administrators only, because it may see every user, runs as root in a container or asks for special rights.",
     "pool": "Pool for app data",
     "poolHint": "Every app keeps its data on this pool. It cannot change while an app is installed.",
-    "noPools": "There is no pool that can hold apps. Create one in Storage first.",
+    "noPools": "There is no pool that can hold apps. Create one in Settings > Storage first.",
     "loadingPools": "Loading the pools",
     "install": "Install",
     "update": "Update",
@@ -203,7 +232,9 @@
     "updated": "{name} is updated.",
     "stopped": "The installation stopped.",
     "fromCatalog": "From the catalog {catalog}, checked against its signature.",
-    "fromCustomCatalog": "From the catalog {catalog}, which is not verified: only install apps from catalogs you trust."
+    "fromCustomCatalog": "From the catalog {catalog}, which is not verified: only install apps from catalogs you trust.",
+    "internet": "This app may connect to servers on the internet.",
+    "accessAudience": "Suggested for this app: administrators only, because its author made it for them."
   },
   "uninstall": {
     "title": "Uninstall {name}?",
@@ -221,26 +252,12 @@
     "stopped": "The removal stopped."
   },
   "catalog": {
-    "official": {
-      "title": "Official apps",
-      "intro": "Apps of the Pithyx project, reviewed, built and signed by the project."
-    },
-    "community": {
-      "title": "Community apps",
-      "intro": "Apps from developers outside the project. The project reviews them before they are published, but cannot vouch for them as for its own apps. You can switch this catalog off in the Store settings."
-    },
-    "own": {
-      "title": "Your catalogs",
-      "intro": "Apps of the catalogs you added. They are not verified by the Pithyx project."
-    },
-    "search": "Search apps",
-    "searchPlaceholder": "Name, description or developer",
     "loading": "Loading the apps",
-    "empty": "This catalog has no apps for this box yet.",
+    "empty": "This catalog has no apps yet.",
     "noMatch": "No app matches “{query}”.",
     "apps": "Apps",
     "newNotice": "{name} has not been fetched yet.",
-    "failedNotice": "The last fetch of {name} failed; the apps shown come from its last checked copy. The Store's settings say why.",
+    "failedNotice": "The last fetch of {name} failed; the apps shown come from its last checked copy. The page Catalogs says why.",
     "updateAvailable": "Update available",
     "installed": "Installed",
     "installedVersion": "Version {version} installed",
@@ -259,11 +276,23 @@
     "source": "Source",
     "sourceLink": "Source of this version in the catalog",
     "versions": "Versions",
-    "needs": "needs Pithyx {range}"
+    "needs": "needs Pithyx {range}",
+    "noCategoryMatch": "No app in this category matches.",
+    "incompatible": "Not compatible",
+    "incompatibleReason": {
+      "box": "This app needs Pithyx {range}; this box runs {version}. A system update may make it installable.",
+      "architecture": "This app is not built for this box's processor ({box}); it runs on {architectures}.",
+      "manifestOld": "This version was made for an older Pithyx (manifest version {manifest}), which this box no longer installs. Its developer has to publish an updated version.",
+      "manifestNew": "This version was made for a newer Pithyx (manifest version {manifest}). A system update may make it installable."
+    },
+    "versionReason": {
+      "architecture": "not for {box}",
+      "manifestOld": "older app format",
+      "manifestNew": "newer app format"
+    }
   },
   "updates": {
     "title": "Updates",
-    "intro": "Newer versions of installed apps. The Store's settings decide what the box does with them on its own.",
     "versions": "{from} to {to}",
     "newPermissions": "{count, plural, one {Asks for # new permission} other {Asks for # new permissions}}",
     "elevated": "Asks for special rights",
@@ -273,13 +302,12 @@
       "notify": "Waits for you",
       "none": "Waits for you"
     },
-    "update": "Update"
+    "update": "Update",
+    "critical": "Has root access: never updates by itself. Install the update with one click after you checked it.",
+    "toolbar": "Updates",
+    "empty": "Every installed app is up to date."
   },
   "settings": {
-    "open": "Store settings",
-    "back": "Store",
-    "title": "Store settings",
-    "save": "Save",
     "updates": {
       "title": "Updates",
       "policy": "When a catalog has a newer version",
@@ -291,16 +319,17 @@
       "policyHints": {
         "automatic": "Updates that ask for new permissions or special rights still wait for you.",
         "notify": "A notification on the desktops of administrators.",
-        "none": "Updates only appear in the tab Updates."
+        "none": "Updates only appear under Updates."
       },
       "time": "Daily check time",
-      "timeHint": "HH:MM in the box's time zone. Each box adds its own delay of up to an hour.",
+      "timeHint": "HH:MM in the box's time zone. Each box adds its own delay of up to an hour. Applies when you leave the field or press Enter.",
       "timeInvalid": "Enter a time like 03:00.",
       "next": "Next check: {time}",
       "last": "last check: {time}",
       "checkNow": "Check now",
       "checking": "Checking every catalog now.",
-      "notifications": "Administrators get desktop notifications about updates and catalogs that cannot be fetched."
+      "notifications": "Administrators get desktop notifications about updates and catalogs that cannot be fetched.",
+      "criticalHint": "Apps with root access never update by themselves, whatever this setting says."
     },
     "channel": {
       "title": "Channel",
@@ -325,7 +354,7 @@
       "verified": "Checked {time}, {count, plural, one {# app} other {# apps}}.",
       "deployKey": "Deploy key",
       "deployKeyHint": "This catalog is private: its repository must have this key as a read-only deploy key.",
-      "deployKeyNext": "Add this key to the repository as a deploy key without write access, then fetch the catalog in the Store's settings.",
+      "deployKeyNext": "Add this key to the repository as a deploy key without write access, then fetch the catalog under Catalogs.",
       "hostKey": "Server key pinned at the first connection: {key}",
       "sync": "Fetch now",
       "remove": "Remove",
@@ -334,16 +363,148 @@
       "url": "Repository URL",
       "urlHint": "https://… for a public catalog, git@host:owner/repository.git for a private one.",
       "addWarning": "Apps of your own catalogs are not checked by the Pithyx project. Add only catalogs you trust.",
-      "added": "The catalog is being fetched."
+      "added": "The catalog is being fetched.",
+      "toolbar": "Catalogs",
+      "intro": "A catalog is a Git repository with apps. The box fetches the catalogs that are switched on once a day and checks the signature of the project's two."
     },
     "community": {
       "title": "Use the community catalog?",
       "warning": "Community apps come from developers outside the Pithyx project. The project reviews them before they are published, but cannot vouch for them as for its own apps.",
       "confirm": "Use it"
-    },
-    "file": {
-      "title": "Install from a file",
-      "intro": "Install an app from its package file (.pithyxapp). Such apps are not verified."
     }
+  },
+  "elevated": {
+    "section": "Special rights",
+    "warning": "These rights reach past the sandbox of the app's background service. Grant them only to apps you trust.",
+    "sectionIntro": "Rights beyond the sandbox of the app's background service. Revoking one restarts the service without it; granting a right of high risk or root access again needs your password.",
+    "hostNetwork": {
+      "title": "The box's network",
+      "risk": "Its background service uses the box's own network instead of its own: it sees every connection of the box and can offer services on any port of every network card."
+    },
+    "hostPid": {
+      "title": "The box's processes",
+      "risk": "Its background service sees every process running on the box with its command line, which can contain passwords."
+    },
+    "device": {
+      "title": "Device {path}",
+      "risk": "Its background service reads and writes this device directly, for example a graphics card or a radio stick for home automation."
+    },
+    "capability": {
+      "title": "Linux capability {name}",
+      "risk": "Root in the app's container gets the capability {name}, which lets it do things a container normally cannot, such as changing its own network. It stays separated from the box itself."
+    },
+    "unknown": "A special right this version of Pithyx does not explain.",
+    "badge": "Special rights",
+    "grantLater": "The app is installed without them; its background service runs without these rights until you grant them on its page.",
+    "stepUp": "To grant special rights, confirm with your password{twoFactor, select, true { and a code from your authenticator app} other {}}. The confirmation holds for five minutes.",
+    "stepUpHeld": "You confirmed with your password a moment ago; that holds until {time}.",
+    "password": "Your password",
+    "code": "Code from your authenticator app",
+    "grantTitle": "Grant a special right",
+    "confirm": "Grant",
+    "cancel": "Cancel",
+    "dockerSocket": {
+      "title": "Its own containers",
+      "risk": "Its background service starts and controls further containers through a filtered container service. It sees only the containers it started; they run in the app's sandbox, without the box's network, files or devices. With the internet permission it can download images."
+    },
+    "dockerSocketRaw": {
+      "title": "The whole container service",
+      "risk": "Its background service controls the box's container service without any filter. That is the same as root on the box: it can read and change every file, every app and every setting. Grant it only to an app you wrote yourself or trust completely."
+    },
+    "deviceClass": {
+      "dri": "Graphics cards (/dev/dri)",
+      "serial": "USB serial adapters (/dev/serial)",
+      "tun": "Network tunnels (/dev/net/tun)"
+    },
+    "deviceOptional": "Optional: the app also runs without it.",
+    "deviceMissing": "Not plugged in. Plug in the device and try again.",
+    "deviceMissingOptional": "Not found. The app runs without it, for example without hardware acceleration.",
+    "deviceAbsent": "Not plugged in: its background service does not start until the device is back.",
+    "deviceAbsentOptional": "Not found: the background service runs without it.",
+    "tier": {
+      "elevated": "Device access",
+      "high": "High risk",
+      "critical": "Root access"
+    },
+    "reason": "Why the app needs it: {reason}",
+    "noReason": "The app gives no reason: it was installed before apps had to name one.",
+    "hosts": "Talks to {hosts}",
+    "consent": {
+      "grant": "Grant these rights",
+      "later": "Install without them; grant them later on the app's page",
+      "elevated": "I allow the devices above",
+      "high": "I understand what the rights above let the app do",
+      "critical": "The next step asks you to confirm root access."
+    },
+    "rootBadge": "Root access",
+    "critical": {
+      "title": "{name} gets root access to the box",
+      "consequences": "With {rights} the app's background service can read and change every file of every user, change passwords and settings, and run any software on the box: the same as root. A broken or hijacked update of the app could take over the box, so Pithyx never updates it by itself.",
+      "trust": "Grant it only to an app whose source you know and whose author you trust.",
+      "typeName": "Type the app's name to confirm: {name}",
+      "pasted": "Pasting is fine, but this is not a joke: this app gets full control of the box.",
+      "continue": "Continue",
+      "back": "Back",
+      "install": "Install with root access",
+      "update": "Update with root access",
+      "grant": "Grant root access"
+    }
+  },
+  "info": {
+    "privacy": {
+      "title": "Privacy",
+      "none": "Sends nothing out of the box.",
+      "optional": "Sends data out of the box only when you switch it on.",
+      "telemetry": "Sends usage or crash data to its author.",
+      "vendorAccount": "Needs an account at a service outside the box.",
+      "unknown": "The author does not say what the app sends out of the box."
+    },
+    "source": {
+      "title": "Source",
+      "open": "Open source ({license})",
+      "public": "Source public, no license given",
+      "private": "Source not public"
+    },
+    "arch": {
+      "title": "Runs on"
+    },
+    "languages": {
+      "title": "Languages",
+      "yours": "Available in {language}",
+      "others": "Not in your language; available in {languages}"
+    },
+    "security": {
+      "title": "Security contact"
+    },
+    "categories": {
+      "title": "Categories"
+    },
+    "maturity": {
+      "beta": "Beta",
+      "experimental": "Experimental"
+    },
+    "releaseNotes": "What is new in {version}",
+    "requirements": {
+      "memory": "The app needs about {needed} MB of memory, and this box has {available} MB. It installs anyway, but may run slowly.",
+      "disk": "The app needs about {needed} MB on the app pool, and {available} MB are free. It installs anyway, but may run out of space."
+    }
+  },
+  "category": {
+    "productivity": "Productivity",
+    "office": "Office",
+    "communication": "Communication",
+    "files": "Files",
+    "backup": "Backup",
+    "photos": "Photos",
+    "media": "Media",
+    "home-automation": "Home automation",
+    "network": "Network",
+    "security": "Security",
+    "monitoring": "Monitoring",
+    "development": "Development",
+    "education": "Education",
+    "finance": "Finance",
+    "games": "Games",
+    "utilities": "Utilities"
   }
 }

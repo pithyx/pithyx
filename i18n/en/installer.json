@@ -59,7 +59,7 @@
   },
   "disks": {
     "title": "System disk",
-    "intro": "Pithyx is installed on one disk. Your data goes on other disks later, in Storage.",
+    "intro": "Pithyx is installed on one disk. Your data goes on other disks later, in Settings > Storage.",
     "first": "Disk",
     "mirror": "Mirror on two disks",
     "mirrorHint": "The system is written to both disks; the box keeps running when one of them fails.",

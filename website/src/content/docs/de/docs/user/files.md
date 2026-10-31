@@ -11,11 +11,13 @@ Dateien ist die App, mit der du in den freigegebenen Ordnern arbeitest, die du n
 
 ## Freigegebene Ordner durchsuchen
 
-![Dateien mit den Freigaben und Papierkörben in der Seitenleiste, dem Ordner Photos/2026-summer in der Listenansicht und dem geöffneten Kontextmenü eines Fotos](../../../../../assets/screenshots/files.de.webp)
+![Dateien mit den Freigaben und dem Papierkorb im Ordnerbaum, dem Ordner Photos/2026-summer in der Listenansicht und dem Detailbereich des gewählten Fotos Lighthouse.jpg](../../../../../assets/screenshots/files.de.webp)
 
-_Dateien in der Listenansicht. Ein Rechtsklick auf einen Eintrag öffnet sein Kontextmenü._
+_Dateien in der Listenansicht mit den Details des gewählten Fotos. Ein Rechtsklick auf einen Eintrag öffnet sein Kontextmenü._
 
-Öffne **Dateien** im Pithyx-Menü. Die Seitenleiste listet unter **Freigaben** zuerst deinen Home-Ordner **home** und darunter deine freigegebenen Ordner auf; Dateien öffnet sich in deinem Home. Dein Home ist privat: Nur du und die Administratoren können es öffnen. Administratoren sehen zusätzlich **homes**, das das Home jedes anderen Benutzers als Ordner auflistet, in derselben Liste oder denselben Kacheln wie jeden Ordner; ein Doppelklick öffnet eines. Die Homes selbst lassen sich dort nicht umbenennen, verschieben oder löschen, und ihr Menü bietet nur **Öffnen**. Klicke auf einen Eintrag, um ihn zu öffnen. Ein Ordner, der gerade nicht erreichbar ist (zum Beispiel weil sein Pool offline ist), zeigt **Nicht verfügbar**. Ist die Liste leer, hast du noch keine freigegebenen Ordner, und ein Administrator muss sie anlegen. Ein freigegebener Ordner mit der Markierung **Nur lesen** lässt dich ansehen und herunterladen, aber nichts ändern.
+Öffne **Dateien** im Pithyx-Menü. Die Navigationsspalte links listet zuerst deinen Home-Ordner **home** und darunter deine freigegebenen Ordner auf; Dateien öffnet sich in deinem Home. Dein Home ist privat: Nur du und die Administratoren können es öffnen. Administratoren sehen zusätzlich **homes**, das das Home jedes anderen Benutzers als Ordner auflistet, in derselben Liste oder denselben Kacheln wie jeden Ordner; ein Doppelklick öffnet eines. Die Homes selbst lassen sich dort nicht umbenennen, verschieben oder löschen, und ihr Menü bietet nur **Öffnen**. Klicke auf einen Eintrag, um ihn zu öffnen. Die Navigationsspalte ist ein Ordnerbaum: Der Pfeil vor einem Ordner zeigt oder verbirgt seine Unterordner, und die Ordner bis zu dem, in dem du bist, sind von selbst aufgeklappt, mit diesem Ordner markiert. Ein Ordner ohne Unterordner hat keinen Pfeil mehr, sobald Dateien das weiß. Elemente, die du auf einen Ordner des Baums ziehst, landen in diesem Ordner. Ein Ordner, der gerade nicht erreichbar ist (zum Beispiel weil sein Pool offline ist), zeigt **Nicht verfügbar**. Ist die Liste leer, hast du noch keine freigegebenen Ordner, und ein Administrator muss sie anlegen. Ein freigegebener Ordner, den du nur lesen darfst, hat in der Navigationsspalte ein Schloss. Darin sagt eine Leiste unter dem Pfad, dass du Dateien öffnen, kopieren und herunterladen, aber nicht ändern kannst, die Aktionen, die etwas ändern würden, sind ausgegraut, und die Statusleiste unten zeigt **Nur lesen**.
+
+Über der Liste stehen zwei Leisten. Die Befehlsleiste hat **Hochladen**, **Neuer Ordner**, **Kopieren**, **Ausschneiden**, **Einfügen**, **Umbenennen**, **Löschen** und **Herunterladen**, jeweils für die ausgewählten Elemente, und an ihrem Ende **Liste** oder **Kacheln**, um die Ansicht zu wechseln, und **Details**, das rechts einen Bereich mit einer Vorschau, der Größe und dem Datum des ausgewählten Elements und seinen Knöpfen **Herunterladen** und **Frühere Versionen** zeigt. Die Adressleiste darunter hat Zurück, Vor, Nach oben, den Pfad des offenen Ordners (klicke auf einen Teil, um dorthin zu gehen) und **Aktualisieren**. An ihrem Ende behält **In … suchen** mit dem Namen des Ordners nur die Elemente des offenen Ordners, deren Name das Eingegebene enthält, ohne auf Groß- und Kleinschreibung zu achten; Unterordner werden nicht durchsucht. Die Statusleiste zählt dann die Treffer, und **Alles auswählen** (Strg+A) wählt nur aus, was die Suche zeigt. Wechselst du in einen anderen Ordner, ist die Suche leer.
 
 So bewegst du dich:
 
@@ -28,9 +30,9 @@ So bewegst du dich:
 
 Die Statuszeile zeigt, wie viele Elemente der Ordner enthält oder wie viele du ausgewählt hast. Lange Ordner laden beim Scrollen seitenweise nach. Das Fenster merkt sich seinen Ordner und seine Ansicht für das nächste Mal.
 
-Wie sich eine Datei öffnet, hängt von ihrem Typ ab: Bilder, PDFs, Text, Audio und Video öffnen sich im Betrachter; andere Dateien werden heruntergeladen. Gibt sich genau eine installierte App als Standard für einen Dateityp an, öffnet stattdessen sie die Datei. Um selbst zu wählen, klicke mit der rechten Maustaste, wähle **Öffnen mit …** und dann **Betrachter**, **Herunterladen** oder eine installierte App, die angibt, diesen Dateityp zu öffnen. Setzt du vorher das Häkchen bei **.x-Dateien immer so öffnen**, öffnet sich jede Datei dieses Typs von da an so, auf jedem Gerät, an dem du dich anmeldest. Deine Wahl findest du im Benutzermenü unter **Standard-Apps**; **Vergessen** stellt das übliche Verhalten wieder her. Die Wahl einer App, die entfernt wurde, wird übergangen. Namen, die mit `.pithyx-upload-` beginnen, und der Ordner `.pithyx-trash` sind intern und werden nicht angezeigt.
+Wie sich eine Datei öffnet, hängt von ihrem Typ ab: Bilder, PDFs, Text, Audio und Video öffnen sich im Betrachter; andere Dateien werden heruntergeladen. Gibt sich genau eine installierte App als Standard für einen Dateityp an, öffnet stattdessen sie die Datei. Um selbst zu wählen, klicke mit der rechten Maustaste, wähle **Öffnen mit …** und dann eine installierte App, die angibt, diesen Dateityp zu öffnen, **Betrachter** oder **Herunterladen**; Apps, die sich als Standard für den Typ angeben, stehen oben, und **Standard** zeigt, was ein Doppelklick gerade tut. Setzt du vorher das Häkchen bei **.x-Dateien immer so öffnen**, öffnet sich jede Datei dieses Typs von da an so, auf jedem Gerät, an dem du dich anmeldest. Deine Wahl findest du in **Persönliche Einstellungen** unter **Standard-Apps**; **Vergessen** stellt das übliche Verhalten wieder her. Die Wahl einer App, die entfernt wurde, wird übergangen. Namen, die mit `.pithyx-upload-` beginnen, und der Ordner `.pithyx-trash` sind intern und werden nicht angezeigt.
 
-Klicke mit der rechten Maustaste auf ein Element für sein Menü: **Öffnen**, **Herunterladen**, **Öffnen mit …**, **Kopieren**, **Ausschneiden**, **Umbenennen**, **Frühere Versionen**, **In den Papierkorb** und **Endgültig löschen**. Klicke mit der rechten Maustaste auf eine freie Stelle für **Neuer Ordner**, **Hochladen**, **Einfügen** (nachdem du etwas kopiert oder ausgeschnitten hast) und **Alles auswählen**. Aktionen, die etwas ändern, erscheinen nur, wenn du im freigegebenen Ordner schreiben darfst.
+Klicke mit der rechten Maustaste auf ein Element für sein Menü: **Öffnen**, **Herunterladen**, **Öffnen mit …**, **Zum Desktop hinzufügen**, **Kopieren**, **Ausschneiden**, **Umbenennen**, **Frühere Versionen**, **In den Papierkorb** und **Endgültig löschen**. Klicke mit der rechten Maustaste auf eine freie Stelle für **Neuer Ordner**, **Neue Datei**, **Hochladen**, **Einfügen** (nachdem du etwas kopiert oder ausgeschnitten hast) und **Alles auswählen**. Aktionen, die etwas ändern, erscheinen nur, wenn du im freigegebenen Ordner schreiben darfst. Installierte Apps können eigene Einträge für die Dateien hinzufügen, mit denen sie umgehen, etwa **Hier entpacken** bei einem Archiv; sie erscheinen, wenn jedes ausgewählte Element passt, und arbeiten mit deinen Rechten.
 
 ### Frühere Versionen
 
@@ -41,7 +43,7 @@ Wiederherstellungspunkte liegen auf denselben Platten wie die Dateien. Sie erset
 ## Hochladen
 
 1. Öffne den Ordner, in den die Dateien sollen.
-2. Klicke auf **Hochladen** und wähle Dateien aus, oder ziehe Dateien von deinem Computer in das Fenster. Lass sie auf einem Ordner, einem Teil des Pfads über der Liste oder einer Freigabe in der Seitenleiste fallen, um sie dort abzulegen.
+2. Klicke auf **Hochladen** und wähle Dateien aus, oder ziehe Dateien von deinem Computer in das Fenster. Lass sie auf einem Ordner, einem Teil des Pfads über der Liste oder einer Freigabe in der Navigationsspalte fallen, um sie dort abzulegen.
 3. Verfolge den Fortschritt in der Schaltfläche für Übertragungen in der Taskleiste. Sie zeigt die Geschwindigkeit und die Restzeit und hat eine Schaltfläche, um eine Übertragung abzubrechen.
 
 Gut zu wissen:
@@ -60,9 +62,10 @@ Gut zu wissen:
 _Der Dialog, wenn es die Namen im Zielordner schon gibt._
 
 - **Kopieren und Einfügen:** Wähle Elemente aus, drücke **Strg+C** (oder **Cmd+C**), öffne den Zielordner und drücke **Strg+V**. **Strg+X** schneidet aus, statt zu kopieren.
-- **Ziehen und Ablegen:** Elemente auf einen anderen Ordner, einen Teil des Pfads über der Liste oder eine Freigabe in der Seitenleiste zu ziehen, verschiebt sie dorthin (eine Freigabe, die du nur lesen darfst, nimmt nichts an). Halte beim Ablegen **Strg** oder **Alt** gedrückt, um zu kopieren.
+- **Ziehen und Ablegen:** Elemente auf einen anderen Ordner, einen Teil des Pfads über der Liste oder eine Freigabe in der Navigationsspalte zu ziehen, verschiebt sie dorthin (eine Freigabe, die du nur lesen darfst, nimmt nichts an). Halte beim Ablegen **Strg** oder **Alt** gedrückt, um zu kopieren.
 - **Umbenennen:** Drücke **F2** oder wähle **Umbenennen**. Ein Name darf nicht leer sein, kein `/` enthalten und höchstens 255 Bytes lang sein.
 - **Neuer Ordner:** Wähle **Neuer Ordner** und tippe dann seinen Namen.
+- **Neue Datei:** Klicke mit der rechten Maustaste auf eine freie Stelle, wähle **Neue Datei** und tippe dann ihren Namen mit Endung, zum Beispiel `conf.toml`. Die Datei ist zunächst leer; ein Doppelklick öffnet sie mit ihrer Standard-App.
 
 Kopieren und Verschieben laufen im Hintergrund, mit Fortschritt und einer Abbrechen-Schaltfläche. Eine Anfrage verarbeitet bis zu 1000 ausgewählte Elemente. Symbolische Links werden nicht kopiert. Ein Ordner lässt sich nicht in sich selbst kopieren oder verschieben.
 
@@ -77,13 +80,13 @@ Zum Herunterladen wählst du **Herunterladen** oder öffnest eine Datei, die der
 
 ## Der Papierkorb
 
-![Der Papierkorb der Freigabe Photos mit zwei gelöschten Fotos, ihrem ursprünglichen Pfad und den Daten, und den Knöpfen Wiederherstellen, Endgültig löschen und Papierkorb leeren](../../../../../assets/screenshots/files-recycle-bin.de.webp)
+![Der Papierkorb der Freigabe Photos als Tabelle mit zwei gelöschten Fotos, ihrem ursprünglichen Ort, ihrer Größe, wann und von wem sie gelöscht wurden und wie lange sie bleiben, und den Knöpfen Wiederherstellen, Endgültig löschen und Papierkorb leeren](../../../../../assets/screenshots/files-recycle-bin.de.webp)
 
-_Jede Freigabe hat ihren eigenen Papierkorb mit dem Datum, an dem ein Eintrag endgültig gelöscht wird._
+_Jede Freigabe hat ihren eigenen Papierkorb, der sagt, wie lange er jeden Eintrag behält._
 
 **In den Papierkorb** (die Taste **Entf**) löscht eine Datei nicht. Sie verschiebt sie in den Papierkorb ihres freigegebenen Ordners oder deines Homes. Dateien über SMB, WebDAV oder FTP zu löschen, tut dasselbe.
 
-Um einen Papierkorb zu sehen, klicke in der Seitenleiste auf **Papierkorb** und wähle den freigegebenen Ordner. Jeder Eintrag zeigt, woher er kam und wann er gelöscht wurde. Mit **Wiederherstellen** bekommst du ihn in seinem ursprünglichen Ordner zurück; fehlende übergeordnete Ordner werden angelegt. **Endgültig löschen** entfernt einzelne Elemente. **Papierkorb leeren** entfernt alles im Papierkorb dieses Ordners. Beides fragt vorher nach, und du brauchst Schreibzugriff.
+Um einen Papierkorb zu sehen, öffne den freigegebenen Ordner oder dein Home und klicke unten in der Navigationsspalte auf **Papierkorb**; er zeigt den Papierkorb des Ortes, an dem du bist. Jeder Eintrag zeigt, woher er kam und wann er gelöscht wurde. Mit **Wiederherstellen** bekommst du ihn in seinem ursprünglichen Ordner zurück; fehlende übergeordnete Ordner werden angelegt. **Endgültig löschen** entfernt einzelne Elemente. **Papierkorb leeren** entfernt alles im Papierkorb dieses Ordners. Beides fragt vorher nach, und du brauchst Schreibzugriff.
 
 Dateien bleiben standardmäßig 30 Tage im Papierkorb, dann löscht die Box sie. Der Papierkorb zeigt den verwendeten Zeitraum als Hinweis oben an. Nur ein Administrator kann diesen Zeitraum ändern.
 

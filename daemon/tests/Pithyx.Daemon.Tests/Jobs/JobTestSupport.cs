@@ -65,6 +65,12 @@ internal static class JobTestSupport
         }
     }
 
+    public static async Task<IReadOnlyList<T>> QueryAsync<T>(this DaemonFactory factory, string sql, object? parameters = null)
+    {
+        await using var connection = await factory.Services.GetRequiredService<SqliteConnectionFactory>().OpenAsync(Token);
+        return [.. await connection.QueryAsync<T>(sql, parameters)];
+    }
+
     public static async Task<T> ScalarAsync<T>(this DaemonFactory factory, string sql, object? parameters = null)
     {
         await using var connection = await factory.Services.GetRequiredService<SqliteConnectionFactory>().OpenAsync(Token);

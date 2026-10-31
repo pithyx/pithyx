@@ -41,8 +41,15 @@ public sealed record InstalledApp(
     IReadOnlyList<AppStorageMapping> Storage,
     string? CatalogId = null,
     Catalog.UpdatePolicy? UpdatePolicy = null,
-    AppPrevious? Previous = null)
+    AppPrevious? Previous = null,
+    IReadOnlyList<AppElevatedState>? Elevated = null)
 {
+    /// <summary>The elevated rights of its manifest with whether each is granted (D311); a right without a row is not.</summary>
+    public IReadOnlyList<AppElevatedState> ElevatedRights => Elevated ?? [];
+
+    /// <summary>The elevated rights an administrator granted, which the backend runs with.</summary>
+    public IReadOnlySet<string> GrantedElevated => ElevatedRights.Where(state => state.Granted).Select(state => state.Right).ToHashSet(StringComparer.Ordinal);
+
     /// <summary>The path of the entry page below <c>/apps/&lt;id&gt;/</c> (the manifest's entry without <c>frontend/</c>).</summary>
     public string EntryPath => Manifest.GetProperty("entry").GetString()![(PackageLayout.FrontendFolder.Length + 1)..];
 
@@ -80,7 +87,7 @@ public sealed record InstalledApp(
 /// topics <c>apps</c> (the apps each user may use) and <c>apps/admin</c> read it, <see cref="AppChangePublisher"/>
 /// publishes.
 /// </summary>
-public sealed class AppRegistry(SqliteConnectionFactory connections, PermissionService permissions, PoolInventory pools, AppStorageOptions options)
+public sealed class AppRegistry(SqliteConnectionFactory connections, PermissionService permissions, PoolInventory pools, AppStorageOptions options, Docker.DeviceFs deviceFs)
 {
     public const string Topic = "apps";
     public const string AdminTopic = "apps/admin";
@@ -159,7 +166,22 @@ public sealed class AppRegistry(SqliteConnectionFactory connections, PermissionS
     public AppDetails Details(InstalledApp app)
     {
         ArgumentNullException.ThrowIfNull(app);
-        return new(app.Id, app.Version, app.Source, app.Enabled, app.Manifest, app.Permissions, app.Uid, app.Sha256, app.InstalledAt, app.UpdatedAt, IsBusy(app.Id), IsAvailable(app.Id), app.LogLevel, app.Storage, app.CatalogId, app.UpdatePolicy, app.Previous?.Version);
+        return new(app.Id, app.Version, app.Source, app.Enabled, app.Manifest, app.Permissions, app.Uid, app.Sha256, app.InstalledAt, app.UpdatedAt, IsBusy(app.Id), IsAvailable(app.Id), app.LogLevel, app.Storage, app.CatalogId, app.UpdatePolicy, app.Previous?.Version, ElevatedOf(app), DevicesOf(app.Manifest, deviceFs));
+    }
+
+    /// <summary>Every device of the manifest's elevated rights with whether it is optional and plugged in now (D387).</summary>
+    public static IReadOnlyList<AppDeviceState> DevicesOf(JsonElement manifest, Docker.DeviceFs fs)
+    {
+        var optional = Manifest.ElevatedRights.OptionalDevices(manifest);
+        return [.. Docker.DeviceNodes.Paths(Manifest.ElevatedRights.Of(manifest)).Select(path => new AppDeviceState(path, optional.Contains(path), Docker.DeviceNodes.Present(path, fs).Count > 0))];
+    }
+
+    /// <summary>Every elevated right of the manifest's <c>permissions</c>, in its order, with its tier and whether it is granted.</summary>
+    public static IReadOnlyList<AppElevatedRight> ElevatedOf(InstalledApp app)
+    {
+        ArgumentNullException.ThrowIfNull(app);
+        var granted = app.GrantedElevated;
+        return [.. Manifest.ElevatedRights.Of(app.Manifest).Select(right => new AppElevatedRight(right, granted.Contains(right), Manifest.ElevatedRights.TierOf(right)))];
     }
 
     public static AppSummary Summary(InstalledApp app)
@@ -176,8 +198,22 @@ public sealed class AppRegistry(SqliteConnectionFactory connections, PermissionS
             manifest.GetProperty("window").Clone(),
             app.Granted,
             app.LogLevel,
-            FileHandlers(manifest));
+            FileHandlers(manifest),
+            FileActions(manifest));
     }
+
+    private static List<AppFileAction> FileActions(JsonElement manifest) =>
+        manifest.TryGetProperty("fileActions", out var actions)
+            ? [.. actions.EnumerateArray().Select(action => new AppFileAction(
+                action.GetProperty("id").GetString()!,
+                Texts(action.GetProperty("label")),
+                action.TryGetProperty("extensions", out var extensions) ? [.. extensions.EnumerateArray().Select(extension => extension.GetString()!)] : [],
+                Flag(action, "folders"),
+                Flag(action, "multiple"),
+                Flag(action, "writes")))]
+            : [];
+
+    private static bool Flag(JsonElement element, string name) => element.TryGetProperty(name, out var value) && value.GetBoolean();
 
     private static List<AppFileHandler> FileHandlers(JsonElement manifest) =>
         manifest.TryGetProperty("fileHandlers", out var handlers)
@@ -241,6 +277,8 @@ public sealed class AppRegistry(SqliteConnectionFactory connections, PermissionS
         var mappings = (await connection.QueryAsync<(string AppId, string StorageId, long ShareId, string Path, string Access)>(
                 "SELECT app_id, storage_id, share_id, path, access FROM storage_mappings ORDER BY storage_id"))
             .ToLookup(row => row.AppId, StringComparer.Ordinal);
+        var elevated = (await connection.QueryAsync<(string AppId, string Right, long Granted)>("SELECT app_id, \"right\", granted FROM app_elevated ORDER BY \"right\""))
+            .ToLookup(row => row.AppId, StringComparer.Ordinal);
         var pool = await connection.ExecuteScalarAsync<string?>("SELECT value FROM settings WHERE key = @key", new { key = PoolSetting });
         var apps = new SortedDictionary<string, InstalledApp>(StringComparer.Ordinal);
         foreach (var row in rows)
@@ -262,7 +300,8 @@ public sealed class AppRegistry(SqliteConnectionFactory connections, PermissionS
                     mapping.StorageId, mapping.ShareId, mapping.Path, mapping.Access == "read" ? AppStorageAccess.Read : AppStorageAccess.ReadWrite))],
                 row.CatalogId,
                 row.UpdatePolicy is { } policy ? Enum.Parse<Catalog.UpdatePolicy>(policy, ignoreCase: true) : null,
-                row.Previous is { } previous ? JsonSerializer.Deserialize<AppPrevious>(previous, PreviousJson) : null);
+                row.Previous is { } previous ? JsonSerializer.Deserialize<AppPrevious>(previous, PreviousJson) : null,
+                [.. elevated[row.Id].Select(right => new AppElevatedState(right.Right, right.Granted == 1))]);
         }
         return (apps, pool);
     }
@@ -296,11 +335,12 @@ public sealed class AppRegistry(SqliteConnectionFactory connections, PermissionS
 /// Publishes <c>apps</c>, <c>apps/admin</c> and every app's <c>apps/&lt;id&gt;/context</c> when the registry, the rights
 /// or the pools change.
 /// </summary>
-public sealed class AppChangePublisher(TopicHub hub, AppRegistry registry, AppContexts contexts, PermissionService permissions, PoolInventory pools, Proxy.AppBackends backends) : IHostedService
+public sealed class AppChangePublisher(TopicHub hub, AppRegistry registry, AppContexts contexts, PermissionService permissions, PoolInventory pools, Proxy.AppBackends backends, Docker.AppDevices devices) : IHostedService
 {
     public Task StartAsync(CancellationToken cancellationToken)
     {
         registry.Changed += Publish;
+        devices.Changed += Publish;
         permissions.Changed += Publish;
         pools.Changed += Publish;
         backends.Changed += PublishContext;
@@ -310,6 +350,7 @@ public sealed class AppChangePublisher(TopicHub hub, AppRegistry registry, AppCo
     public Task StopAsync(CancellationToken cancellationToken)
     {
         registry.Changed -= Publish;
+        devices.Changed -= Publish;
         permissions.Changed -= Publish;
         pools.Changed -= Publish;
         backends.Changed -= PublishContext;

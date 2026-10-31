@@ -1,0 +1,132 @@
+{
+  "$schema": "./node_modules/@pithyx/sdk/schema/manifest.v2.schema.json",
+  "manifestVersion": 2,
+  "id": "com.mueller.chat",
+  "version": "1.2.0",
+  "name": {
+    "en": "Chat",
+    "de": "Chat"
+  },
+  "description": {
+    "en": "Team chat on your box.",
+    "de": "Team-Chat auf deiner Box."
+  },
+  "author": {
+    "name": "Jan Mueller",
+    "url": "https://mueller.com"
+  },
+  "license": "MIT",
+  "homepage": "https://github.com/janmueller/pithyx-chat",
+  "entry": "frontend/index.html",
+  "sdk": "^1.0.0",
+  "arch": [
+    "amd64",
+    "arm64"
+  ],
+  "source": "https://github.com/janmueller/pithyx-chat",
+  "permissions": {
+    "notifications": {
+      "reason": {
+        "en": "Tells you about new messages."
+      }
+    },
+    "directory.read": {
+      "reason": {
+        "en": "Lists the users to share with."
+      }
+    },
+    "network.internet": {
+      "reason": {
+        "en": "Fetches updates from the internet."
+      }
+    },
+    "files.read": {
+      "reason": {
+        "en": "Opens the files you choose."
+      }
+    },
+    "host.network": {
+      "reason": {
+        "en": "Needs host.network for its background service."
+      }
+    },
+    "device:/dev/net/tun": {
+      "reason": {
+        "en": "Needs device:/dev/net/tun for its background service."
+      }
+    },
+    "device:/dev/dri/renderD128": {
+      "reason": {
+        "en": "Needs device:/dev/dri/renderD128 for its background service."
+      }
+    },
+    "host.pid": {
+      "reason": {
+        "en": "Needs host.pid for its background service."
+      }
+    }
+  },
+  "window": {
+    "instances": "single",
+    "defaultSize": {
+      "width": 900,
+      "height": 640
+    },
+    "minSize": {
+      "width": 320,
+      "height": 400
+    }
+  },
+  "storage": [
+    {
+      "id": "attachments",
+      "name": {
+        "en": "Chat attachments",
+        "de": "Chat-Anhänge"
+      },
+      "access": "readWrite",
+      "required": false,
+      "services": [
+        "server"
+      ]
+    }
+  ],
+  "fileHandlers": [
+    {
+      "extensions": [
+        "chatlog"
+      ],
+      "mimeTypes": [
+        "application/x-chatlog"
+      ]
+    }
+  ],
+  "backend": {
+    "compose": "backend/compose.yaml",
+    "endpoints": {
+      "api": {
+        "service": "server",
+        "port": 8080
+      },
+      "metrics": {
+        "service": "server",
+        "port": 9090
+      }
+    },
+    "lifecycle": "onDemand",
+    "idleTimeout": 600,
+    "root": true,
+    "health": {
+      "endpoint": "api",
+      "path": "/healthz"
+    },
+    "schedules": [
+      {
+        "id": "cleanup",
+        "cron": "0 3 * * *",
+        "endpoint": "api",
+        "path": "/jobs/cleanup"
+      }
+    ]
+  }
+}

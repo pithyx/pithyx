@@ -18,7 +18,7 @@
     ["maintainers.json"],
     ["LICENSE", "LICENSE.md", "LICENSE.txt"]
   ],
-  "manifestFields": ["license", "pithyx"],
+  "manifestFields": ["license", "pithyx", "privacy"],
   "text": {
     "names": [
       ".dockerignore",

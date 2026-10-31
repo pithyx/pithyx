@@ -1,0 +1,8 @@
+BEGIN LIST VAR rack
+VAR rack battery.charge "41.0"
+VAR rack battery.runtime "612"
+VAR rack device.mfr "Example \"Power\""
+VAR rack device.model "Rack 1500"
+VAR rack ups.load "38"
+VAR rack ups.status "OB DISCHRG"
+END LIST VAR rack

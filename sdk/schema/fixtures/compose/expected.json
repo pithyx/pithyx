@@ -15,6 +15,15 @@
       }
     }
   ],
+  "backup-volume-missing.yaml": [
+    {
+      "code": "app.compose.reference_unknown",
+      "params": {
+        "path": "/backend/backup/exclude/0",
+        "name": "cache"
+      }
+    }
+  ],
   "bom.yaml": [
     {
       "code": "app.compose.yaml_invalid",
@@ -141,6 +150,29 @@
       }
     }
   ],
+  "device-blocked.yaml": [
+    {
+      "code": "app.elevated.unsupported",
+      "params": {
+        "right": "device:/dev/sda",
+        "path": "/services/server/devices/0"
+      }
+    },
+    {
+      "code": "app.elevated.unsupported",
+      "params": {
+        "right": "device:/dev/mem",
+        "path": "/services/server/devices/1"
+      }
+    },
+    {
+      "code": "app.compose.right_missing",
+      "params": {
+        "path": "/services/server/devices/2",
+        "right": "device:/dev/ttyUSB0"
+      }
+    }
+  ],
   "devices-format.yaml": [
     {
       "code": "app.compose.value_invalid",
@@ -172,19 +204,28 @@
       }
     }
   ],
+  "docker-socket-both.yaml": [
+    {
+      "code": "app.compose.right_unused",
+      "params": {
+        "path": "/permissions/docker.socket",
+        "right": "docker.socket"
+      }
+    }
+  ],
   "docker-socket.yaml": [
     {
-      "code": "app.elevated.unsupported",
+      "code": "app.compose.right_missing",
       "params": {
-        "right": "docker.socket",
-        "path": "/services/server/volumes/0"
+        "path": "/services/server/volumes/0",
+        "right": "docker.socket"
       }
     },
     {
-      "code": "app.elevated.unsupported",
+      "code": "app.compose.right_missing",
       "params": {
-        "right": "docker.socket",
-        "path": "/services/server/volumes/1"
+        "path": "/services/server/volumes/1",
+        "right": "docker.socket"
       }
     }
   ],
@@ -816,33 +857,56 @@
       }
     }
   ],
-  "right-unsupported.yaml": [
+  "right-missing.yaml": [
     {
-      "code": "app.elevated.unsupported",
+      "code": "app.compose.right_missing",
       "params": {
         "path": "/services/server/cap_add/0",
         "right": "capability:NET_ADMIN"
       }
     },
     {
-      "code": "app.elevated.unsupported",
+      "code": "app.compose.right_missing",
       "params": {
         "path": "/services/server/devices/0",
         "right": "device:/dev/dri/renderD128"
       }
     },
     {
-      "code": "app.elevated.unsupported",
+      "code": "app.compose.right_missing",
       "params": {
         "path": "/services/server/pid",
         "right": "host.pid"
       }
     },
     {
-      "code": "app.elevated.unsupported",
+      "code": "app.compose.right_missing",
       "params": {
         "path": "/services/discovery/network_mode",
         "right": "host.network"
+      }
+    }
+  ],
+  "right-unused.yaml": [
+    {
+      "code": "app.compose.right_unused",
+      "params": {
+        "path": "/permissions/host.network",
+        "right": "host.network"
+      }
+    },
+    {
+      "code": "app.compose.right_unused",
+      "params": {
+        "path": "/permissions/host.pid",
+        "right": "host.pid"
+      }
+    },
+    {
+      "code": "app.compose.right_unused",
+      "params": {
+        "path": "/permissions/device:~1dev~1ttyUSB0",
+        "right": "device:/dev/ttyUSB0"
       }
     }
   ],

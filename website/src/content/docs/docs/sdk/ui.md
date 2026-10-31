@@ -46,15 +46,48 @@ For your own CSS next to the components, use the same tokens of `tokens.css` (`-
 
 - Buttons: `Button` (with `ButtonVariant`) and `IconButton`.
 - Fields: `TextField`, `PasswordField`, `SearchField` and `OtpField`.
-- Controls: `Checkbox`, `Switch`, `ProgressBar` and `Badge`.
+- Controls: `Checkbox`, `Switch`, `ProgressBar`, `Badge`, `RadioGroup` with `Radio`, and `Select`.
 - Overlays: `Dialog`, `Menu`, `MenuItem`, `MenuTrigger`, `MenuPopover`, `MenuSeparator`, `ContextMenuPopover`, `Tooltip` and `TooltipTrigger`.
 - Helpers: `UiProvider`, `useDeliberatePress`, `cx` and `uiTexts`.
 
-There is no select or list box component yet. For a choice from a list use a native `<select>` styled with the tokens (`min-height: var(--control-height)`, `border: 1px solid var(--color-border)`, `border-radius: var(--radius-sm)`, `background: var(--color-surface-1)`, `color: var(--color-text)`), or a list of `Button variant="quiet"` for choices that open something.
+Use `RadioGroup` for two to four choices and `Select` (with `options` of `id` and `label`) beyond that.
 
 `Checkbox` and `Switch` take their label as children (`<Checkbox isSelected={done} onChange={setDone}>Done</Checkbox>`), `ProgressBar` as `label`.
 
 The [API reference](/docs/reference/sdk/) has a page per component, generated from its TSDoc (for example [Button](/docs/reference/sdk/ui/button/) and [Dialog](/docs/reference/sdk/ui/dialog/)), and every token with its value on [tokens](/docs/reference/sdk/ui/tokens/).
+
+## Patterns
+
+The patterns build whole views after the [design guidelines](/docs/developers/apps/design/). They adapt to the width of their container, not the screen, so they also work in a narrow app window.
+
+- `AppFrame`: the frame of an app with more than one view. A `navigation` column on the left, then the page `title`, an optional `toolbar`, the content, an optional `footer` (fixed below the scrolling content) and `statusBar`. Below 600 px the navigation becomes a list page: choosing an item opens the page, and a **Back** button leads back. `scroll="content"` keeps the title and toolbar fixed for a table that scrolls on its own.
+- `NavList`: the navigation column. `groups` of items with an `icon`, a `label` and an optional `count`, a search field that filters them (`searchable`), the current item from `selectedId` with an accent bar, announced as the current page.
+- `Toolbar`, `ToolbarButton` and `ToolbarSeparator`: the primary action first, the other actions grouped, view options and search in `end`. The arrow keys move between the controls. `variant="bar"` draws a full-width strip. A `ToolbarButton` has an `icon` and a `label`; when the app's size container is narrower than 760 px it shows only the icon and the label as a tooltip, so a toolbar with many actions stays on one line.
+- `Tabs`, `TabList`, `Tab` (with an optional `count`) and `TabPanel`: tabs below the page title, each panel with its own toolbar.
+- `DataTable`: `columns` with a `cell` renderer, a `sortValue` that makes the column sortable, `align="end"` for numbers, `muted` for secondary columns and `hideWhenNarrow` for a column the details pane repeats, left out below 600 px. Single or multiple selection (a click selects, Ctrl or Shift extend), `onRowAction` for a double click or Enter, an `emptyState`, `density="comfortable"` for two-line rows (52 px), a `details` pane on the right that the user can drag wider and `virtualized` for long lists in a container with a bounded height.
+- `DetailsPane`: the same pane for a list that is no `DataTable`, with the handle on its left edge (drag, the arrow keys, Home and End; a double click goes back to the default width). Its width is `var(--details-pane-width, <default>)` in your class; a layout that moves it below the list sets `--details-handle: none`.
+- `FormSection` and `FormRow`: a settings section with a title row and rows of a label (with an optional hint) and a control. A `TextField`, `Select` or `RadioGroup` inside a `FormRow` takes the row's label as its name, so leave out its own `label`.
+- `ActionBar`: **Discard** and **Apply** with one line about what applying does, for the `footer` of an `AppFrame`. Only for pages whose changes need applying.
+- `Card` and `Meter`: an object with a state: `icon`, `title`, a `badge`, a line of `facts`, an optional `meter`, and the details (children) and `actions` behind a chevron. `Meter` shows a quantity with texts above both ends; give it a `valueLabel` for screen readers.
+- `StatusBadge`: a state in words with the tone `success`, `warning`, `danger`, `info` or `neutral`.
+- `AttentionList`: **Needs attention** on an overview, one row per problem with the one action that fixes it. It renders nothing while there is no problem.
+- `SummaryTiles` and `SummaryTile`: at most four figures at the top of an overview.
+
+```tsx
+<AppFrame
+  navigation={
+    <NavList aria-label="Settings" groups={groups} selectedId={page} onSelect={setPage} />
+  }
+  title="Network"
+  footer={<ActionBar message="Applies to every device." onApply={apply} onDiscard={reset} />}
+>
+  <FormSection title="IPv4">
+    <FormRow label="IP address">
+      <TextField value={address} onChange={setAddress} />
+    </FormRow>
+  </FormSection>
+</AppFrame>
+```
 
 ## Icons
 

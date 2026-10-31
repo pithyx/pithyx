@@ -44,3 +44,59 @@ Rules for `desktop/`. The root `CLAUDE.md` applies as well.
 - Layouts never contain permissions. Every access is checked live. On restore, skip windows whose app, path or permission no longer exists.
 - Layouts carry a schema version. Saves are debounced and go over REST (`PUT /api/desktop/layout`) with the layout's version as `If-Match`; only the visible, focused tab saves.
 - App data in a layout is capped at 16 KB.
+
+## Design (D394)
+
+Direction F of the design pass (#227): structured and calm, laid out like a classic desktop, with Pithyx's own colors, type, logo and radii. These rules bind every screen of the desktop and the core apps and the patterns of `@pithyx/ui`; third-party apps get them as guidance (`/docs/developers/apps/design/`). A screen not rebuilt yet keeps its look until its wave of #227; a new screen, or one a change reworks, follows them.
+
+### Shell
+
+- Taskbar: full width, at the bottom unless the user moved it. From the start: the Pithyx button, one button per open window with icon and title (the focused one underlined in the accent), pinned apps as icons; at the end the status area, notifications, clock with date.
+- The status area follows the user's rights: administrators see the box (pool state, CPU, network) as small chips that open the matching app; other users see only what is theirs (uploads, their jobs).
+- Pithyx menu: attached to the taskbar at the Pithyx button, never floating in the middle of the screen. A narrow rail (account, home, pictures, personal settings, sign out, power only with the right), a searchable app list grouped by area (System only for administrators, Apps, You), and a tile area: administrators get status tiles (pools, system, updates), other users "For you" (unread, due), then recent files and the user's folders with their access level. Search finds apps, files and settings.
+- Desktop: icons in a column from the top left, white labels with a text shadow on the wallpaper (never a label background that looks selected), sticky notes. No status widgets for users who are not administrators.
+- Windows: title bar with app icon, title and the caption buttons on the right; focus shows through the title and the shadow, not a colored border.
+
+### App frame
+
+- An app with more than one view uses one frame: a navigation column on the left (220 to 270 px: a search field on top, groups under small uppercase headings, items with icon and name, the active item with a background and a 3 px accent bar, counts as small badges) and a content area with the page title, optional tabs, the toolbar, the content and an optional status bar at the bottom.
+- An app with one view (Viewer, Editor) has no navigation column and keeps the toolbar.
+- In the compact size class the navigation becomes a list page the user drills into (with a back button), never a drawer over the content.
+
+### Toolbar
+
+- The primary action first as the one filled accent button of the view, then the other actions as buttons with icon and label, grouped by separators; view options and the details toggle at the end; search at the end or in the address bar.
+- Buttons have labels. Icon-only buttons only where the width runs out, always with a tooltip and an accessible name.
+
+### Lists and tables
+
+- Items with more than two attributes are a table: a header row with column separators and sortable headings, rows of 28 to 30 px on fine pointers (44 px on coarse), rows with two lines about 52 px with room above and below (D406), secondary columns muted, numbers right-aligned with tabular figures, states as badges.
+- The selected row uses the selection color with an accent outline; hover uses the hover surface.
+- Details of the selected item go into a details pane on the right (250 to 300 px by default, its left edge drags it wider, `DetailsPane`, D406), switched from the toolbar, not into a dialog.
+- Groups inside a list (by day, by type) get a small bold muted heading. An empty list says in one sentence what is missing and offers the primary action.
+
+### Forms and settings
+
+- A settings page is made of sections: a bordered card with a title row, the label on the left (about 200 px, with a hint line below), the control on the right (at most 360 px); in a section wider than 900 px the control sits at the right edge and the label takes the room between (D406); one column in the compact size class.
+- A page whose changes need applying has a fixed action bar at the bottom (**Discard**, **Apply**, one line about what applying does); settings that apply at once (toggles, appearance) have none. Never both kinds on one page.
+- Radio buttons for two to four choices, a select beyond that; a toggle only for on and off that applies at once.
+
+### Cards, state and attention
+
+- Objects with a state (pools, interfaces, apps) are cards: icon, name, a state badge, one line of facts, a meter where a quantity fits, and a chevron that expands the details and the object's actions.
+- State badges name the state in words, never by color alone: success green, warning orange, error red, neutral grey.
+- An overview page starts with at most four summary tiles, then **Needs attention** (one row per problem with the one action that leads to the fix), then the rest. Problems go there instead of scattered banners.
+
+### Rights
+
+- The UI follows the user's rights. What a user can never do is not shown (the System group, the box status, power without the right). What the current place forbids is shown disabled, and the reason is said once for the place (an info bar), not per button.
+- A read-only place says so once: the info bar, a lock in the navigation, **Read only** in the status bar.
+- Never let a user find out about a missing right through an error after a click when the UI could know it before.
+
+### Look
+
+- Tokens only: no raw colors, sizes, radii or shadows in components. Radii 4 to 6 px for controls, cards and windows; menus attached to an edge have square corners on that edge.
+- Calm surfaces: neutral backgrounds; the accent only for the primary action, selection, the active navigation item and focus; amber only for the brand and for attention. App icons are tinted tiles (one hue per app: light tile with dark glyph, dark tile with light glyph in the dark theme).
+- No translucent or blurred surfaces except over the wallpaper; content stays opaque.
+- Every screen works and is checked in light and dark.
+- The direction borrows the structure of a classic desktop, never its look: no copied icons, glyphs, colored ad tiles or sounds, and no product of another company is named (root `CLAUDE.md`).

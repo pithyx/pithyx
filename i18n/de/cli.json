@@ -20,7 +20,8 @@
       "minimize": "Minimieren",
       "starting": "{name} wird gestartet ...",
       "storage": "{name} kann erst starten, wenn ein Administrator im Store einen Ordner dafür wählt.",
-      "pool": "{name} kann nicht starten, weil sein Pool gesperrt ist oder fehlt."
+      "pool": "{name} kann nicht starten, weil sein Pool gesperrt ist oder fehlt.",
+      "device": "{name} kann erst starten, wenn ein Gerät eingesteckt ist, das es braucht."
     },
     "events": {
       "invalidJson": "Die Daten von {event} sind kein gültiges JSON.",

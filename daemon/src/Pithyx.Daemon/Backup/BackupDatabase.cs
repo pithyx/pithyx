@@ -48,14 +48,14 @@ public static class BackupDatabase
     {
         [BackupCategory.Users] =
         [
-            "users", "recovery_codes", "user_appearance", "user_file_defaults", "user_startup_apps", "window_preferences", "desktop_layouts", "desktop_items",
-            "groups", "group_members", "storage_alert_mutes",
+            "users", "recovery_codes", "passkeys", "user_appearance", "user_file_defaults", "user_startup_apps", "window_preferences", "desktop_layouts", "desktop_items",
+            "groups", "group_members", "storage_alert_mutes", "notification_channels", "notification_rules", "user_languages",
         ],
         [BackupCategory.SharedFolders] = ["shares", "file_services"],
         [BackupCategory.Storage] = ["snapshot_schedules", "storage_schedules"],
         [BackupCategory.System] = ["system_region"],
         [BackupCategory.Certificates] = ["tls_issued"],
-        [BackupCategory.Apps] = ["apps", "app_permissions", "storage_mappings", "app_storage", "catalogs"],
+        [BackupCategory.Apps] = ["apps", "app_permissions", "app_elevated", "storage_mappings", "app_storage", "catalogs"],
         [BackupCategory.ReverseProxy] = ["proxy_hosts", "proxy_redirects", "proxy_streams"],
     }.ToFrozenDictionary();
 
@@ -63,11 +63,11 @@ public static class BackupDatabase
     public static readonly FrozenDictionary<BackupCategory, string[]> SettingKeys = new Dictionary<BackupCategory, string[]>
     {
         [BackupCategory.Users] = [Auth.AuthService.RecoveryKeySetting],
-        [BackupCategory.System] = [Logs.LogService.SettingsKey],
+        [BackupCategory.System] = [Logs.LogService.SettingsKey, Ups.UpsService.SettingsKey, Notifications.ChannelService.SmtpSettingsKey],
         [BackupCategory.SharedFolders] = [Users.Homes.PoolSetting, Users.Homes.QuotaSetting],
         [BackupCategory.Certificates] = [Tls.BoxCertificates.ExtraNamesSetting],
         [BackupCategory.Apps] = [Apps.AppRegistry.PoolSetting, .. Apps.Catalog.StoreService.BackupSettings],
-        [BackupCategory.ReverseProxy] = [ReverseProxy.ProxyService.UnknownHostsSetting, ReverseProxy.ProxyService.SignInAddressSetting],
+        [BackupCategory.ReverseProxy] = [ReverseProxy.ProxyService.UnknownHostsSetting, ReverseProxy.ProxyService.SignInAddressSetting, ReverseProxy.AcmeService.SettingsKey],
     }.ToFrozenDictionary();
 
     /// <summary>Tables a restore handles on their own: rights are rebuilt, allocations merged, settings go by key.</summary>
@@ -75,12 +75,13 @@ public static class BackupDatabase
 
     /// <summary>
     /// Runtime state: emptied in the backup's copy and never restored. The network settings belong here too (D337): a
-    /// restore would change the network without the confirmation timer, and another box has other card names.
+    /// restore would change the network without the confirmation timer, and another box has other card names. So do the
+    /// muted notification categories (D390): they tie users to apps, which a restore of one category alone would break.
     /// </summary>
     public static readonly FrozenSet<string> NotBackedUp = new[]
     {
         "sessions", "jobs", "notifications", "storage_alert_notices", "storage_schedule_runs", "trash_items",
-        "network_config", "network_pending", "system_updates", "proxy_sessions",
+        "network_config", "network_pending", "system_updates", "proxy_sessions", "proxy_acme", "audit_log", "notification_mutes",
     }.ToFrozenSet();
 
     /// <summary>Copies the live database to <paramref name="path"/> without its runtime state.</summary>

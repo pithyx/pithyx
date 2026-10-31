@@ -6,6 +6,8 @@ dbus udev kmod grub-efi-amd64 efibootmgr gdisk dosfstools mdadm btrfs-progs squa
 intel-microcode amd64-microcode firmware-linux-free firmware-realtek
 # What the daemon needs (D296, D338).
 zfsutils-linux samba openssh-server smartmontools acl
+# UPS (D377): the NUT server and driver for a UPS on USB, and upsmon for the shutdown hook; off until Settings > UPS.
+nut-server nut-client
 # Administration over SSH: the administrator of the installation is in the group sudo.
 sudo htop curl wget
 # App backends (D309): Debian's Docker, disabled until the daemon starts it for a backend app, and nftables for the

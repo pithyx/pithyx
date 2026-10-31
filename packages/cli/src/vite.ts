@@ -33,10 +33,17 @@ export interface PithyxPluginOptions extends BackendOptions {
   project?: string;
   /** Runs `pithyx validate` after `vite build` and fails the build on an error; default true. */
   validate?: boolean;
+  /**
+   * Accepts an app id in `org.pithyx.*` (`--allow-reserved-id`), for the apps of the official catalog; a box refuses
+   * it in a package from a file. Default false.
+   */
+  allowReservedId?: boolean;
 }
 
-function readManifest(project: string): AppManifest {
-  const validation = validateManifest(readFileSync(join(project, MANIFEST_FILE)));
+function readManifest(project: string, allowReservedId: boolean): AppManifest {
+  const validation = validateManifest(readFileSync(join(project, MANIFEST_FILE)), {
+    allowReservedId,
+  });
   if (validation.manifest === undefined) {
     throw new Error(
       `${MANIFEST_FILE} is not valid:\n${validation.issues.map((issue) => `  ${describe(issue)}`).join('\n')}`,
@@ -60,7 +67,7 @@ export default function pithyx(options: PithyxPluginOptions = {}): Plugin {
     config(user, env) {
       project = resolve(options.project ?? user.root ?? process.cwd());
       if (env.command === 'serve') {
-        const manifest = readManifest(project);
+        const manifest = readManifest(project, options.allowReservedId === true);
         return { base: `/apps/${manifest.id}/`, html: { cspNonce: scriptNonce } };
       }
       return user.base === undefined ? { base: './' } : {};
@@ -69,7 +76,7 @@ export default function pithyx(options: PithyxPluginOptions = {}): Plugin {
       config = resolved;
     },
     async configureServer(server) {
-      const manifest = readManifest(project);
+      const manifest = readManifest(project, options.allowReservedId === true);
       const backend = await devBackend(project, manifest, options);
       const dev = createDevServer({
         manifest,
@@ -103,6 +110,7 @@ export default function pithyx(options: PithyxPluginOptions = {}): Plugin {
       const result = readProject(project, {
         frontend: relative(project, outDir),
         allowUnbuiltBackend: true,
+        allowReservedId: options.allowReservedId === true,
       });
       for (const finding of result.findings) {
         const line = `${finding.level} ${finding.code}: ${describe(finding)}`;

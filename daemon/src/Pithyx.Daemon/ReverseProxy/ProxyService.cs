@@ -67,6 +67,7 @@ public sealed partial class ProxyService(
     NetworkHost host,
     WebTransport transport,
     TlsOptions tlsOptions,
+    AcmeRuntime acme,
     PasswordHasher hasher,
     TimeProvider time,
     ILogger<ProxyService> logger) : BackgroundService
@@ -121,14 +122,15 @@ public sealed partial class ProxyService(
     {
         ArgumentNullException.ThrowIfNull(listening);
         var (hosts, redirects, streams, unknown, signIn) = await ReadAsync(cancellationToken);
+        var acmeRows = await AcmeRowsAsync(cancellationToken);
         var state = _state;
         return new ProxySettings(
             transport.ProxyPlainPort,
             transport.ProxyTlsPort,
             unknown,
             signIn,
-            [.. hosts.Select(config => ToHost(config, state.Certificates.GetValueOrDefault(ProxyState.KeyOf(new HostRoute(config)))))],
-            [.. redirects.Select(config => ToRedirect(config, state.Certificates.GetValueOrDefault(ProxyState.KeyOf(new RedirectRoute(config)))))],
+            [.. hosts.Select(config => ToHost(config, state.Certificates.GetValueOrDefault(ProxyState.KeyOf(new HostRoute(config))), AcmeStatus(config.Certificate, FileName(isHost: true, config.Id), config.Domains, acmeRows)))],
+            [.. redirects.Select(config => ToRedirect(config, state.Certificates.GetValueOrDefault(ProxyState.KeyOf(new RedirectRoute(config))), AcmeStatus(config.Certificate, FileName(isHost: false, config.Id), config.Domains, acmeRows)))],
             [.. streams.Select(config => ToStream(config, listening(config.Id)))]);
     }
 
@@ -198,6 +200,7 @@ public sealed partial class ProxyService(
                 basicAuth.Add(new BasicAuthEntry(user.Username, user.Password is { } password ? await hasher.HashAsync(password, cancellationToken) : stored[user.Username]));
             }
             await EnsureAccountsAsync(users, groups, cancellationToken);
+            await CheckAcmeAsync(request.Certificate, domains, cancellationToken);
             var pending = CheckCertificate(request.Certificate, domains, request.CertificatePem, request.PrivateKeyPem, id is { } known ? FileName(isHost: true, known) : null);
 
             var now = Format(time.GetUtcNow());
@@ -213,7 +216,7 @@ public sealed partial class ProxyService(
                 targetOnBox = target.OnBox,
                 websockets = request.WebSockets,
                 http2 = request.Http2,
-                certificate = request.Certificate == ProxyCertificateSource.Custom ? "custom" : "box",
+                certificate = SourceName(request.Certificate),
                 forceHttps = request.ForceHttps,
                 hsts = request.Hsts,
                 forwardedHeaders = request.ForwardedHeaders,
@@ -265,6 +268,7 @@ public sealed partial class ProxyService(
                         parameters) == 1 ? id.Value : throw HostNotFound(id.Value);
             }
             WriteCertificate(pending, FileName(isHost: true, saved), request.Certificate);
+            await ForgetAcmeAsync(request.Certificate, FileName(isHost: true, saved), cancellationToken);
             await LoadLockedAsync(cancellationToken);
             LogHostSaved(saved, domains, target.Host, target.Port);
             return saved;
@@ -288,6 +292,7 @@ public sealed partial class ProxyService(
                 }
             }
             DeleteCertificate(FileName(isHost: true, id));
+            await ForgetAcmeAsync(ProxyCertificateSource.Box, FileName(isHost: true, id), cancellationToken);
             await LoadLockedAsync(cancellationToken);
             LogHostDeleted(id);
         }
@@ -313,6 +318,7 @@ public sealed partial class ProxyService(
                 throw RedirectNotFound(current);
             }
             EnsureFree(domains, redirects.Where(entry => entry.Id != id).SelectMany(entry => entry.Domains).Concat(hosts.SelectMany(entry => entry.Domains)));
+            await CheckAcmeAsync(request.Certificate, domains, cancellationToken);
             var pending = CheckCertificate(request.Certificate, domains, request.CertificatePem, request.PrivateKeyPem, id is { } known ? FileName(isHost: false, known) : null);
             var parameters = new
             {
@@ -322,7 +328,7 @@ public sealed partial class ProxyService(
                 target,
                 status,
                 preservePath = request.PreservePath,
-                certificate = request.Certificate == ProxyCertificateSource.Custom ? "custom" : "box",
+                certificate = SourceName(request.Certificate),
                 now = Format(time.GetUtcNow()),
             };
             long saved;
@@ -345,6 +351,7 @@ public sealed partial class ProxyService(
                         parameters) == 1 ? id.Value : throw RedirectNotFound(id.Value);
             }
             WriteCertificate(pending, FileName(isHost: false, saved), request.Certificate);
+            await ForgetAcmeAsync(request.Certificate, FileName(isHost: false, saved), cancellationToken);
             await LoadLockedAsync(cancellationToken);
             LogRedirectSaved(saved, domains, target);
             return saved;
@@ -368,6 +375,7 @@ public sealed partial class ProxyService(
                 }
             }
             DeleteCertificate(FileName(isHost: false, id));
+            await ForgetAcmeAsync(ProxyCertificateSource.Box, FileName(isHost: false, id), cancellationToken);
             await LoadLockedAsync(cancellationToken);
         }
         finally
@@ -610,9 +618,9 @@ public sealed partial class ProxyService(
     // memory while its domains, its HTTP/2 setting and the intermediate stay and it is not due.
     private PresentedCertificate? Certificate(IReadOnlyList<string> domains, bool isHost, long id, ProxyCertificateSource source, bool http2, Dictionary<string, PresentedCertificate> issued)
     {
-        if (source == ProxyCertificateSource.Custom)
+        if (source is ProxyCertificateSource.Custom or ProxyCertificateSource.Acme)
         {
-            var file = FileName(isHost, id);
+            var file = source == ProxyCertificateSource.Acme ? AcmeFile(FileName(isHost, id)) : FileName(isHost, id);
             try
             {
                 var chain = BoxCertificates.ParseCustom(File.ReadAllText(PathOf(file + ".pem")), File.ReadAllText(PathOf(file + ".key")), time.GetUtcNow());
@@ -620,7 +628,11 @@ public sealed partial class ProxyService(
             }
             catch (Exception exception) when (exception is PithyxException or IOException)
             {
-                LogCertificateUnusable(file);
+                // An ACME host has no certificate until the authority issued one; meanwhile it presents the box's own.
+                if (source == ProxyCertificateSource.Custom || File.Exists(PathOf(file + ".pem")))
+                {
+                    LogCertificateUnusable(file);
+                }
                 return null;
             }
         }
@@ -651,6 +663,10 @@ public sealed partial class ProxyService(
     // An uploaded certificate is checked before anything is stored; it must cover every domain of the host.
     private (string Certificate, string Key)? CheckCertificate(ProxyCertificateSource source, IReadOnlyList<string> domains, string? certificatePem, string? privateKeyPem, string? existingFile)
     {
+        if (source == ProxyCertificateSource.Acme)
+        {
+            return null;
+        }
         if (source == ProxyCertificateSource.Box)
         {
             if (domains.FirstOrDefault(domain => !certificates.Permits(domain)) is { } outside)
@@ -709,7 +725,7 @@ public sealed partial class ProxyService(
 
     private void WriteCertificate((string Certificate, string Key)? pending, string file, ProxyCertificateSource source)
     {
-        if (source == ProxyCertificateSource.Box)
+        if (source != ProxyCertificateSource.Custom)
         {
             DeleteCertificate(file);
             return;
@@ -860,20 +876,133 @@ public sealed partial class ProxyService(
         return (hosts, redirects, streams, unknown, settings.GetValueOrDefault(SignInAddressSetting));
     }
 
-    private static ProxyHost ToHost(ProxyHostConfig config, PresentedCertificate? presented) => new(
+    private static ProxyHost ToHost(ProxyHostConfig config, PresentedCertificate? presented, AcmeCertificateStatus? acmeStatus) => new(
         config.Id, config.Domains, config.Enabled, config.Target, config.WebSockets, config.Http2, config.Certificate,
         presented is null ? null : BoxCertificates.Info(presented.Certificate),
         config.ForceHttps, config.Hsts, config.ForwardedHeaders, config.PreserveHost, config.HostHeader,
         config.RequestHeaders, config.ResponseHeaders, config.MaxBodyMegabytes, config.ConnectTimeoutSeconds, config.ResponseTimeoutSeconds,
         config.AllowAddresses, config.DenyAddresses, [.. config.BasicAuth.Select(entry => entry.Username)], config.SignIn, config.AccessLog,
-        ProxyValidator.LogSource(config.Domains), config.CreatedAt, config.UpdatedAt);
+        ProxyValidator.LogSource(config.Domains), config.CreatedAt, config.UpdatedAt, acmeStatus);
 
-    private static ProxyRedirect ToRedirect(ProxyRedirectConfig config, PresentedCertificate? presented) => new(
+    private static ProxyRedirect ToRedirect(ProxyRedirectConfig config, PresentedCertificate? presented, AcmeCertificateStatus? acmeStatus) => new(
         config.Id, config.Domains, config.Enabled, config.Target, config.Status, config.PreservePath, config.Certificate,
-        presented is null ? null : BoxCertificates.Info(presented.Certificate), config.CreatedAt, config.UpdatedAt);
+        presented is null ? null : BoxCertificates.Info(presented.Certificate), config.CreatedAt, config.UpdatedAt, acmeStatus);
 
     private static ProxyStream ToStream(ProxyStreamConfig config, bool listening) => new(
         config.Id, config.Name, config.Enabled, config.Port, config.Tcp, config.Udp, config.TargetHost, config.TargetPort, listening, config.CreatedAt, config.UpdatedAt);
+
+    /// <summary>The ACME routes: their file name (<c>proxy-host-&lt;id&gt;</c>), domains and whether they answer.</summary>
+    public async Task<IReadOnlyList<AcmeRoute>> AcmeRoutesAsync(CancellationToken cancellationToken)
+    {
+        var (hosts, redirects, _, _, _) = await ReadAsync(cancellationToken);
+        return
+        [
+            .. hosts.Where(config => config.Certificate == ProxyCertificateSource.Acme).Select(config => new AcmeRoute(FileName(isHost: true, config.Id), config.Domains, config.Enabled)),
+            .. redirects.Where(config => config.Certificate == ProxyCertificateSource.Acme).Select(config => new AcmeRoute(FileName(isHost: false, config.Id), config.Domains, config.Enabled)),
+        ];
+    }
+
+    /// <summary>The path of an ACME certificate file of a route, <c>.pem</c> or <c>.key</c>.</summary>
+    public string AcmePath(string route, string extension) => PathOf(AcmeFile(route) + extension);
+
+    /// <summary>The file name of a route of the given kind and number, which also names it in <c>proxy_acme</c>.</summary>
+    public static string RouteName(bool isHost, long id) => FileName(isHost, id);
+
+    private static string AcmeFile(string file) => file + "-acme";
+
+    // A host may use the authority only after its terms were agreed and while port 80 answers its checks.
+    private async Task CheckAcmeAsync(ProxyCertificateSource source, IReadOnlyList<string> domains, CancellationToken cancellationToken)
+    {
+        if (source != ProxyCertificateSource.Acme)
+        {
+            return;
+        }
+        AcmeRules.CheckDomains(domains);
+        if (transport.ProxyPlainPort is null)
+        {
+            throw new PithyxException(ErrorCodes.ProxyAcmePortUnavailable);
+        }
+        await using var connection = await connections.OpenAsync(cancellationToken);
+        var json = await connection.ExecuteScalarAsync<string?>("SELECT value FROM settings WHERE key = @key", new { key = AcmeService.SettingsKey });
+        if (json is null || JsonSerializer.Deserialize<AcmeSettings>(json, _json)?.TermsAgreed is null)
+        {
+            throw new PithyxException(ErrorCodes.ProxyAcmeTermsRequired);
+        }
+    }
+
+    // A route that no longer uses the authority drops its certificate and state; one that does is looked at now.
+    private async Task ForgetAcmeAsync(ProxyCertificateSource source, string file, CancellationToken cancellationToken)
+    {
+        if (source == ProxyCertificateSource.Acme)
+        {
+            acme.Wake();
+            return;
+        }
+        File.Delete(PathOf(AcmeFile(file) + ".pem"));
+        File.Delete(PathOf(AcmeFile(file) + ".key"));
+        await using var connection = await connections.OpenAsync(cancellationToken);
+        await connection.ExecuteAsync("DELETE FROM proxy_acme WHERE route = @file", new { file });
+    }
+
+    private async Task<Dictionary<string, AcmeRow>> AcmeRowsAsync(CancellationToken cancellationToken)
+    {
+        await using var connection = await connections.OpenAsync(cancellationToken);
+        return (await connection.QueryAsync<AcmeRow>("SELECT * FROM proxy_acme")).ToDictionary(row => row.route, StringComparer.Ordinal);
+    }
+
+    private AcmeCertificateStatus? AcmeStatus(ProxyCertificateSource source, string file, IReadOnlyList<string> domains, Dictionary<string, AcmeRow> rows)
+    {
+        if (source != ProxyCertificateSource.Acme)
+        {
+            return null;
+        }
+        var row = rows.GetValueOrDefault(file);
+        var (notBefore, notAfter) = AcmeDates(file);
+        var ordered = row is null ? null : Json<List<string>>(row.domains);
+        var attempted = row is null ? (DateTimeOffset?)null : Parse(row.attempted_at);
+        var retry = AcmeRules.NextAttempt(domains, ordered ?? (notAfter is null ? null : domains), notBefore, notAfter, attempted, (int)(row?.failures ?? 0));
+        return new AcmeCertificateStatus(
+            row?.status ?? (notAfter is null ? "pending" : "valid"),
+            notAfter,
+            attempted,
+            retry == DateTimeOffset.MinValue ? time.GetUtcNow() : retry,
+            acme.IsRunning(file),
+            row?.error_code,
+            row?.error_params is { } parameters ? JsonSerializer.Deserialize<Dictionary<string, object?>>(parameters, _json) : null);
+    }
+
+    /// <summary>The validity of a route's ACME certificate file, if it has one.</summary>
+    public (DateTimeOffset? NotBefore, DateTimeOffset? NotAfter) AcmeDates(string file)
+    {
+        var path = PathOf(AcmeFile(file) + ".pem");
+        if (!File.Exists(path))
+        {
+            return (null, null);
+        }
+        try
+        {
+            using var certificate = X509Certificate2.CreateFromPem(File.ReadAllText(path));
+            return (new DateTimeOffset(certificate.NotBefore.ToUniversalTime()), new DateTimeOffset(certificate.NotAfter.ToUniversalTime()));
+        }
+        catch (System.Security.Cryptography.CryptographicException)
+        {
+            return (null, null);
+        }
+    }
+
+    private static string SourceName(ProxyCertificateSource source) => source switch
+    {
+        ProxyCertificateSource.Custom => "custom",
+        ProxyCertificateSource.Acme => "acme",
+        _ => "box",
+    };
+
+    private static ProxyCertificateSource ParseSource(string name) => name switch
+    {
+        "custom" => ProxyCertificateSource.Custom,
+        "acme" => ProxyCertificateSource.Acme,
+        _ => ProxyCertificateSource.Box,
+    };
 
     private static string Name(ProxyTargetTls tls) => tls switch
     {
@@ -940,7 +1069,7 @@ public sealed partial class ProxyService(
             }, target_on_box == 1),
             websockets == 1,
             http2 == 1,
-            certificate == "custom" ? ProxyCertificateSource.Custom : ProxyCertificateSource.Box,
+            ParseSource(certificate),
             force_https == 1,
             hsts == 1,
             forwarded_headers == 1,
@@ -974,7 +1103,7 @@ public sealed partial class ProxyService(
 
         public ProxyRedirectConfig ToConfig() => new(
             id, Json<List<string>>(domains), enabled == 1, target, (int)status, preserve_path == 1,
-            certificate == "custom" ? ProxyCertificateSource.Custom : ProxyCertificateSource.Box, Parse(created_at), Parse(updated_at));
+            ParseSource(certificate), Parse(created_at), Parse(updated_at));
     }
 
     private sealed class StreamRow
@@ -992,6 +1121,18 @@ public sealed partial class ProxyService(
 
         public ProxyStreamConfig ToConfig() => new(
             id, name, enabled == 1, (int)port, tcp == 1, udp == 1, target_host, (int)target_port, Parse(created_at), Parse(updated_at));
+    }
+
+    private sealed class AcmeRow
+    {
+        public string route { get; set; } = "";
+        public string domains { get; set; } = "";
+        public string status { get; set; } = "";
+        public string? not_after { get; set; }
+        public string attempted_at { get; set; } = "";
+        public long failures { get; set; }
+        public string? error_code { get; set; }
+        public string? error_params { get; set; }
     }
 #pragma warning restore CA1812, IDE1006
 

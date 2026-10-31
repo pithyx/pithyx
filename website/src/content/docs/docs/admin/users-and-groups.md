@@ -7,7 +7,7 @@ sidebar:
   order: 5
 ---
 
-Administrators manage accounts in Settings > **Users** and Settings > **Groups**. Every Pithyx user is also a Linux account with an own user id, so files they create belong to them. Passwords have at least 8 characters, and only an administrator can set a new password for another user.
+Administrators manage accounts in Settings > **Users and groups**, with a tab each for **Users** and **Groups**. Each tab has a toolbar: the primary action (**Create user**, **Create group**) first, then the actions on the selected row (**Edit**, **Rights**, and for users **New password**, **Deactivate** or **Activate** and **Delete**); a double click on a row edits it. The users table shows the name, groups, second factor, file services and state, and the selected user's details on the right: groups, user id, home, file services and special rights, with **Edit rights**. **Search users** filters the table by name. Every Pithyx user is also a Linux account with an own user id, so files they create belong to them. Passwords have at least 8 characters, and only an administrator can set a new password for another user.
 
 ## Creating a user
 
@@ -20,11 +20,11 @@ Choose **Create user** and fill in:
 
 User ids come from 20000 to 29999 and are never given out again. Group ids come from 30000 to 39999. The shell is `/usr/sbin/nologin` unless the user has the SSH login right and SSH logins are switched on. A new user can sign in to the desktop, use SMB, and use the apps Files and Viewer; you can change this in the rights dialog.
 
-The password is also set for the Linux and Samba accounts. A user who does not have one yet is marked "Not ready for SMB and SFTP yet: the user signs in once on the web, or you set a new password." Badges in the list: Administrator, Two-factor, Deactivated.
+The password is also set for the Linux and Samba accounts. A user who does not have one yet is marked "Not ready for SMB and SFTP yet: the user signs in once on the web, or you set a new password." The table marks administrators with a badge in the groups column and shows **Active** or **Deactivated** as the state.
 
 ## Groups
 
-Choose **Create group** in Settings > **Groups**. A group has a name (same rules as user names, and it may not start with `pithyx-`), a **Description (optional)** of up to 200 characters, and members. Rights given to a group apply to all its members. Deleting a group keeps its members; files keep the group id, and it is never given to another group. The built-in group users contains every user and cannot be renamed, deleted or given members by hand ([`users.group.builtin`](/docs/reference/errors/#users.group.builtin)).
+Choose **Create group** on the tab **Groups** of Settings > **Users and groups**. A group has a name (same rules as user names, and it may not start with `pithyx-`), a **Description (optional)** of up to 200 characters, and members. Rights given to a group apply to all its members. Deleting a group keeps its members; files keep the group id, and it is never given to another group. The built-in group users contains every user and cannot be renamed, deleted or given members by hand ([`users.group.builtin`](/docs/reference/errors/#users.group.builtin)).
 
 ## Special rights
 

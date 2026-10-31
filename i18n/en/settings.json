@@ -32,12 +32,12 @@
       "name": "Name",
       "nameHint": "Letters, digits, spaces, dots, dashes and underscores.",
       "pool": "Pool",
-      "noPools": "No pool is ready for shared folders yet. Create a pool in Storage first.",
+      "noPools": "No pool is ready for shared folders yet. Create a pool under Storage first.",
       "description": "Description (optional)",
       "preview": "Show commands",
       "dataset": "The shared folder becomes the dataset {dataset}.",
       "run": "Create shared folder",
-      "openStorage": "Create a pool in Storage…"
+      "openStorage": "Go to the pools…"
     },
     "editDialog": {
       "title": "Edit {name}",
@@ -45,7 +45,7 @@
       "name": "Name",
       "description": "Description",
       "datasetKept": "Renaming changes only the name users see; the dataset keeps its name.",
-      "save": "Save",
+      "atOnce": "Every change here applies at once: a name or description when you leave its field or press Enter.",
       "saved": "Saved.",
       "rights": "Rights",
       "rightsIntro": "Changes apply right away. A user gets the most that it or one of its groups is given; administrators can always read and change everything.",
@@ -74,7 +74,7 @@
       "title": "Delete {name}",
       "choice": "What happens with the data?",
       "keep": "Keep the data",
-      "keepDataset": "The shared folder goes away. The dataset {dataset} and its files stay and remain in Storage.",
+      "keepDataset": "The shared folder goes away. The dataset {dataset} and its files stay and remain under Storage.",
       "keepFolder": "The shared folder goes away. The files stay in the folder {path}.",
       "destroy": "Delete the data for good",
       "destroyHint": "The dataset, all its files and every snapshot are deleted. This cannot be undone.",
@@ -84,14 +84,42 @@
       "nothingRuns": "No command runs. {location} and its files stay.",
       "gone": "These are deleted for good:",
       "run": "Delete shared folder"
-    }
+    },
+    "toolbar": "Shared folder actions"
   },
   "overview": {
     "title": "Settings",
     "search": "Search settings",
     "noMatch": "No settings match your search.",
     "all": "All settings",
-    "navigation": "Settings navigation"
+    "navigation": "Settings navigation",
+    "allSettings": "All settings",
+    "box": {
+      "label": "This box",
+      "version": "Pithyx {version}",
+      "runningFor": "Running for",
+      "updates": "Updates",
+      "upToDate": "Up to date",
+      "updateReady": "Pithyx {version} is ready"
+    },
+    "attention": {
+      "openStorage": "Open Storage",
+      "update": {
+        "title": "Pithyx {version} is ready to install",
+        "description": "Install it under Updates; the box restarts once.",
+        "action": "Open Updates"
+      },
+      "apps": {
+        "title": "{count, plural, one {An update for # app is ready} other {Updates for # apps are ready}}",
+        "action": "Open Store"
+      },
+      "trust": {
+        "title": "This device does not trust the box yet",
+        "description": "Trust it once to turn on passkeys and stop the warnings of the browser.",
+        "action": "Trust this device"
+      }
+    },
+    "page": "Overview"
   },
   "categories": {
     "system": "System",
@@ -117,7 +145,7 @@
     "reverseProxy": {
       "title": "Reverse proxy",
       "description": "Your own domains on ports 443 and 80, redirects and forwarded ports",
-      "keywords": "reverse proxy domain host name vhost https tls sni certificate redirect forward port stream tcp udp websocket basic auth sign-in hsts"
+      "keywords": "reverse proxy domain host name vhost https tls sni certificate redirect forward port stream tcp udp websocket basic auth sign-in hsts lets encrypt acme"
     },
     "regional": {
       "title": "Regional settings",
@@ -140,24 +168,54 @@
       "keywords": "smb samba sftp ssh network drive protocol firewall"
     },
     "users": {
-      "title": "Users",
-      "description": "Accounts, passwords and administrators",
-      "keywords": "user account password administrator login people"
+      "title": "Users and groups",
+      "description": "Accounts, passwords, groups and their rights",
+      "keywords": "user account password administrator login people group team members rights permissions"
     },
     "updates": {
       "title": "Updates",
       "description": "Pithyx and Debian updates, the update channel, rollback to a snapshot, the update source",
       "keywords": "update upgrade version release channel beta stable debian security rollback snapshot restore source fork key"
     },
+    "ups": {
+      "title": "UPS",
+      "description": "Shut down cleanly on a power failure with a UPS on USB or in the network",
+      "keywords": "ups usv uninterruptible power supply battery power failure outage shutdown nut network ups tools usb"
+    },
     "backup": {
       "title": "Backup and restore",
       "description": "Save the configuration of this box and restore it",
       "keywords": "backup restore configuration export import save recover reinstall system disk"
     },
-    "groups": {
-      "title": "Groups",
-      "description": "Groups, their members and rights",
-      "keywords": "group team members rights permissions"
+    "security": {
+      "title": "Security",
+      "description": "Apps with root access to the box, and revoking it",
+      "keywords": "security root access special rights apps docker container socket revoke trust"
+    },
+    "notifications": {
+      "title": "Notifications",
+      "description": "The email server and the box's channels for its alerts",
+      "keywords": "notifications email e-mail smtp server webhook ntfy gotify push alerts channels"
+    },
+    "pools": {
+      "title": "Pools",
+      "description": "Pools on your disks, their space and health, and creating, expanding, locking and repairing them",
+      "keywords": "storage pool zfs mirror raid raidz disk space capacity encryption key lock unlock vault usb stick repair replace expand scrub"
+    },
+    "disks": {
+      "title": "Disks",
+      "description": "Every disk with its health and whether a new pool may use it",
+      "keywords": "storage disk drive hdd ssd nvme smart health temperature serial"
+    },
+    "maintenance": {
+      "title": "Health and maintenance",
+      "description": "Problems found, scrub schedules and disk self-tests",
+      "keywords": "storage health alerts scrub schedule smart self-test maintenance"
+    },
+    "storageAdvanced": {
+      "title": "Advanced storage",
+      "description": "Datasets and volumes, exporting and importing a pool",
+      "keywords": "storage advanced dataset volume quota compression export import move pool"
     }
   },
   "info": {
@@ -172,17 +230,20 @@
     "memory": "Memory",
     "uptime": "Running for",
     "unknown": "Not reported",
-    "uptimeValue": "{days, plural, =0 {} one {# day, } other {# days, }}{hours, plural, one {# hour} other {# hours}}, {minutes, plural, one {# minute} other {# minutes}}"
+    "uptimeValue": "{days, plural, =0 {} one {# day, } other {# days, }}{hours, plural, one {# hour} other {# hours}}, {minutes, plural, one {# minute} other {# minutes}}",
+    "section": "This box"
   },
   "fileServices": {
     "intro": "File services let other computers open your shared folders over the network. Users sign in with their Pithyx user name and password.",
-    "save": "Save",
+    "service": "Service",
+    "connect": "Connect",
     "firewall": {
       "title": "Firewall",
       "explain": "Pithyx lets other computers reach only the web interface and the file services that are switched on. Switching a service off also closes its port.",
       "privateSwitch": "Only private networks may use the file services",
       "privateExplain": "SMB, SFTP, SSH and FTP then answer only computers in private networks (10.x, 172.16 to 31.x, 192.168.x, link-local and IPv6 ULA). Leave it off if you reach the box through a router from another network or over a VPN with public addresses. The web interface stays reachable either way.",
-      "inactive": "This is a development machine: Pithyx keeps the rules but does not apply them here."
+      "inactive": "This is a development machine: Pithyx keeps the rules but does not apply them here.",
+      "reach": "Reachable from"
     },
     "rights": "Who may use which file service is set with the rights of each user or group on the Users and Groups pages. Which shared folders they offer is set per folder on the Shared folders page. A user who has not signed in on the web since file services arrived must sign in once, so the services learn the password.",
     "state": {
@@ -196,7 +257,7 @@
       "explain": "Network drives for Windows, macOS and Linux. Only encrypted, signed connections of current systems (SMB 3) are accepted.",
       "switch": "Offer shared folders over SMB",
       "workgroup": "Workgroup",
-      "workgroupHint": "Up to 15 letters, digits, dots, dashes and underscores. Most networks use WORKGROUP.",
+      "workgroupHint": "Up to 15 letters, digits, dots, dashes and underscores. Most networks use WORKGROUP. Applies when you leave the field or press Enter.",
       "windows": "Windows: in File Explorer, enter",
       "mac": "macOS and Linux: connect to the server",
       "trash": "Files deleted over SMB go to the shared folder's recycle bin, where Files can restore them.",
@@ -230,7 +291,8 @@
       "plainWarning": "At your own risk: without encryption, user names, passwords and files cross the network readable for anybody on it. Allow it only for devices that cannot use TLS, and only on a network you trust. Refusing it again ends every unencrypted session.",
       "connect": "Connect to",
       "tls": "Choose \"explicit FTP over TLS\" in your program. The box has its own certificate, so the program asks once whether to trust it; compare the fingerprint below.",
-      "fingerprint": "Certificate fingerprint (SHA-256):"
+      "fingerprint": "Certificate fingerprint (SHA-256):",
+      "plain": "Plain FTP"
     }
   },
   "network": {
@@ -351,7 +413,13 @@
       "connectionWarning": "This browser reaches the box through {name}, which changes. The page may stop answering; open the new address or wait 60 seconds for the old settings to come back.",
       "addresses": "The box will also answer at:",
       "confirm": "Apply"
-    }
+    },
+    "tabs": {
+      "interfaces": "Interfaces",
+      "names": "Host name and name servers",
+      "proxy": "Reverse proxy"
+    },
+    "applyNote": "Changes apply together. If the box cannot be reached afterwards, it goes back to the old settings after 60 seconds."
   },
   "certificates": {
     "intro": "The box speaks HTTPS on port 7484; ports 80 and 443 send every visitor there, unless a host of the reverse proxy has the name. It is its own certificate authority: install its root once on a device, and the device trusts the box and every certificate the box issues.",
@@ -380,35 +448,7 @@
     },
     "trust": {
       "title": "Trust this box",
-      "explain": "Download the root certificate and install it on every device that uses the box. Afterwards the browser shows no warning, reloads come from its cache and FTPS clients accept the box.",
-      "download": "Download root certificate",
-      "compare": "Before you trust the file on a device, compare its fingerprint with the one above.",
-      "devices": {
-        "windows": {
-          "name": "Windows:",
-          "steps": "Open the file, choose Install Certificate, Local Machine, then the store Trusted Root Certification Authorities."
-        },
-        "macos": {
-          "name": "macOS:",
-          "steps": "Open the file in Keychain Access (keychain System), open the certificate and set Trust to Always Trust."
-        },
-        "ios": {
-          "name": "iPhone and iPad:",
-          "steps": "Open the file in Safari and install the profile under Settings, General, VPN and Device Management, then switch it on under Settings, General, About, Certificate Trust Settings."
-        },
-        "android": {
-          "name": "Android:",
-          "steps": "Settings, Security, Encryption and credentials, Install a certificate, CA certificate, then pick the file."
-        },
-        "linux": {
-          "name": "Linux:",
-          "steps": "Copy the file to /usr/local/share/ca-certificates/ and run sudo update-ca-certificates; browsers with their own store need the step below."
-        },
-        "firefox": {
-          "name": "Firefox:",
-          "steps": "Settings, Privacy and Security, Certificates, View Certificates, Authorities, Import, and trust it to identify websites."
-        }
-      }
+      "compare": "Before you trust the file on a device, compare its fingerprint with the one above."
     },
     "authority": {
       "title": "Certificate authority",
@@ -497,6 +537,27 @@
       "signInAddress": "Sign-in address",
       "signInAddressHint": "Where hosts with the Pithyx sign-in send visitors, such as https://nas.home.arpa:7484. Leave it empty to use the requested name on port 7484."
     },
+    "acme": {
+      "title": "Let's Encrypt",
+      "explain": "Hosts with a certificate from Let's Encrypt get it over port 80 (HTTP-01) and renew it 30 days before it ends. Let's Encrypt is a free certificate authority on the internet; the box only talks to it for these hosts.",
+      "terms": "Terms of service",
+      "agree": "I agree to the terms of service of the authority",
+      "agreed": "The terms of service are agreed.",
+      "unreachable": "The authority does not answer just now. Check the box's internet connection.",
+      "email": "Email address (optional)",
+      "emailHint": "The authority may write to it about the account.",
+      "directory": "ACME directory",
+      "directoryHint": "Let's Encrypt unless you use another ACME authority; another one needs a new agreement.",
+      "save": "Save",
+      "status": {
+        "pending": "Waiting for the first certificate",
+        "valid": "Valid until {date}",
+        "failed": "The last request failed",
+        "running": "Requesting the certificate",
+        "retry": "Next try: {date}"
+      },
+      "renew": "Renew now"
+    },
     "badges": {
       "disabled": "Off",
       "signIn": "Pithyx sign-in",
@@ -569,8 +630,10 @@
       "label": "Certificate",
       "box": "From the box's certificate authority",
       "custom": "Upload my own",
+      "acme": "From Let's Encrypt",
       "boxHint": "The box makes a certificate for the domains. They must lie in its authority's scope (Settings > Certificates); devices that trust the box's root accept it.",
       "customHint": "A certificate with its chain and unencrypted private key in PEM that covers every domain, for example for a public domain.",
+      "acmeHint": "The box gets a free certificate for public domains and renews it by itself. Each domain must point at the box, and port 80 must reach it from the internet. Agree to the terms in the Let's Encrypt section first.",
       "stored": "A certificate is uploaded. Choose new files only to replace it."
     },
     "tls": {
@@ -642,15 +705,13 @@
     }
   },
   "regional": {
-    "intro": "Language, formats and time of the box. Everyone can still choose their own language in the user menu.",
+    "intro": "Language, formats and time of the box. Everyone can still choose their own language in Personal settings.",
     "languageTitle": "Language and formats",
     "language": "System language",
     "languageHint": "The sign-in page uses it, and so does everyone whose browser asks for a language Pithyx does not have.",
     "formats": "Formats",
     "formatsLanguage": "Like the language",
     "formatsHint": "How dates, times and numbers look for everyone, for example 31.12.2026 or 12/31/2026.",
-    "preview": "Example: {preview}",
-    "saveLanguage": "Save language and formats",
     "timeTitle": "Date and time",
     "now": "Time on the box",
     "sync": "Clock",
@@ -659,8 +720,9 @@
     "zone": "Time zone",
     "servers": "Time servers",
     "serversHint": "Host names or addresses, separated by spaces. Leave empty for the default servers.",
-    "saveTime": "Save time settings",
-    "saved": "Saved."
+    "saved": "Saved.",
+    "example": "Example",
+    "applyNote": "Applies to the sign-in page and to everyone who has not chosen their own language or formats."
   },
   "restorePoints": {
     "explain": "What are restore points?",
@@ -884,7 +946,7 @@
     },
     "pool": {
       "title": "Pool",
-      "current": "The home folders are on {pool}.",
+      "label": "Home folders on",
       "none": "No pool can take home folders yet. The first pool with the Pithyx layout becomes the home pool.",
       "explain": "New users get their home folder here. Moving copies every home folder with its files, owners and rights to the other pool.",
       "target": "Move to",
@@ -949,6 +1011,212 @@
       "explain": "The home folder goes with every file, its recycle bin and its snapshots. This cannot be undone. If it belongs to a user whose pool is gone, the user gets a new, empty home folder.",
       "confirm": "Type {folder} to confirm",
       "submit": "Delete home folder"
+    },
+    "toolbar": "Home folder actions"
+  },
+  "ups": {
+    "intro": "With a UPS, the box shuts down cleanly on a power failure before the battery runs out: apps and file services stop and the pools are unmounted. Pithyx reads the UPS through NUT (Network UPS Tools).",
+    "stateTitle": "State",
+    "settingsTitle": "UPS",
+    "connection": {
+      "off": "Off",
+      "connecting": "Connecting",
+      "connected": "Connected",
+      "unreachable": "Unreachable"
+    },
+    "power": "Power",
+    "powerState": {
+      "unknown": "Unknown",
+      "online": "Line power",
+      "onBattery": "On battery"
+    },
+    "onBatterySince": "On battery since {time}",
+    "charge": "Battery",
+    "runtime": "Runtime left",
+    "minutes": "{count, plural, one {# minute} other {# minutes}}",
+    "load": "Load",
+    "model": "Model",
+    "problem": {
+      "refused": "No NUT server answers at this address and port.",
+      "timeout": "The NUT server does not answer in time.",
+      "unknown_ups": "The NUT server has no UPS of this name.",
+      "driver_not_connected": "No UPS was found. Check the USB cable, or whether the NUT server sees its UPS.",
+      "data_stale": "The UPS stopped sending data.",
+      "access_denied": "The NUT server refused the user or the password.",
+      "protocol": "The NUT server answered with an error."
+    },
+    "shutdown": {
+      "forced": "The box shuts down: the UPS's NUT server shuts every system down.",
+      "low_battery": "The box shuts down: the UPS says its battery is low.",
+      "charge": "The box shuts down: the battery reached the charge limit.",
+      "runtime": "The box shuts down: the battery reached the runtime limit.",
+      "lost": "The box shuts down: the UPS ran on battery and stopped answering."
+    },
+    "mode": "UPS",
+    "modes": {
+      "off": "No UPS",
+      "usb": "UPS on USB",
+      "network": "UPS of another NUT server"
+    },
+    "modeHint": {
+      "off": "The box does not watch a UPS.",
+      "usb": "Connect the UPS with its USB cable. The box finds it by itself, and after a shutdown the UPS cuts its power, so the box starts again once the power is back (if its firmware is set to start on power).",
+      "network": "Another machine (a NAS, a router or a server with NUT) has the UPS. The box signs in as a secondary, so that machine waits for the box before it cuts the power."
+    },
+    "host": "NUT server",
+    "hostHint": "Host name or address of the machine with the UPS.",
+    "port": "Port",
+    "name": "UPS name",
+    "nameHint": "The UPS's name on that server, as in its ups.conf.",
+    "username": "User",
+    "usernameHint": "A user of that server's upsd.users with \"upsmon secondary\"; empty reads the UPS without signing in.",
+    "password": "Password",
+    "passwordKept": "A password is saved; leave the field empty to keep it.",
+    "limits": "On battery the box shuts down once one of these limits is reached, or when the UPS says its battery is low.",
+    "batteryLow": "Battery limit (percent)",
+    "batteryLowHint": "5 to 90; 20 by default.",
+    "runtimeLow": "Runtime limit (minutes)",
+    "runtimeLowHint": "1 to 60; 5 by default.",
+    "limitsTitle": "Limits",
+    "applyNote": "Applying saves the settings and connects to the UPS again."
+  },
+  "notifications": {
+    "smtp": {
+      "title": "Email server",
+      "explain": "The box sends emails through this SMTP server, for its own channels and for those of the users.",
+      "host": "Server",
+      "hostHint": "The name or address of the SMTP server. Leave it empty to remove the server.",
+      "port": "Port",
+      "security": "Encryption",
+      "securities": {
+        "tls": "TLS (usually port 465)",
+        "startTls": "STARTTLS (usually port 587)",
+        "none": "None, only in the local network"
+      },
+      "username": "User name (optional)",
+      "password": "Password",
+      "passwordSet": "A password is saved. Type a new one only to replace it.",
+      "from": "Sender address",
+      "applyNote": "Apply saves the server; the test below tries it first.",
+      "testTitle": "Test email",
+      "testTo": "Send to",
+      "testToHint": "The test uses the server as it is above, saved or not.",
+      "testSend": "Send test email",
+      "testSent": "Sent to {address}. If it does not arrive, look in the spam folder too."
+    },
+    "system": {
+      "title": "Channels of the box",
+      "explain": "These channels get the system's own alerts (storage, updates, the UPS, failed sign-ins and more) once for all administrators. Every user, administrators too, can add their own channels in the user menu."
+    },
+    "tabs": "Notifications of the box",
+    "matrix": {
+      "tab": "Events",
+      "explain": "Which events of the box reach the administrators' desktop and each channel of the box. Every change applies at once. A channel that is off sends nothing, whatever it is set to here.",
+      "event": "Event",
+      "desktop": "Desktop",
+      "cell": "{event}: {column}",
+      "group": "All of {group}: {column}",
+      "channelOff": "{name} (off)",
+      "noChannels": "The box has no channels yet; add one under Channels of the box to choose here what it gets.",
+      "events": {
+        "storage": {
+          "alert": {
+            "poolFaulted": "Pool not available",
+            "poolSuspended": "Pool stopped",
+            "poolDegraded": "Pool degraded",
+            "diskMissing": "Disk of a pool not connected",
+            "dataErrors": "Damaged files in a pool",
+            "scrubErrors": "Scrub found errors",
+            "smartFailed": "Disk failing",
+            "smartWarning": "Disk shows wear",
+            "capacityCritical": "Pool almost full",
+            "capacityWarning": "Pool filling up",
+            "poolLocked": "Pool locked",
+            "poolLockedVault": "Pool not unlocked from the key vault",
+            "poolLockedUsb": "Pool waits for its USB stick",
+            "poolLockedUsbFailed": "Pool not unlocked from the USB stick",
+            "resolved": "Storage problem resolved"
+          },
+          "usb": {
+            "unlocked": "Pool unlocked from a USB stick"
+          }
+        },
+        "update": {
+          "available": "Pithyx update available",
+          "debian": {
+            "available": "Debian updates available"
+          },
+          "installed": "Pithyx update installed",
+          "rolled_back": "Update failed and rolled back",
+          "restored": "Snapshot restored",
+          "source": {
+            "changed": "Update source changed"
+          }
+        },
+        "store": {
+          "updates": {
+            "available": "App updates available"
+          },
+          "catalog": {
+            "failed": "Catalog not fetched"
+          }
+        },
+        "auth": {
+          "signin": {
+            "blocked": "Repeated failed sign-ins"
+          }
+        },
+        "apps": {
+          "elevated": {
+            "critical": "App got root access"
+          },
+          "device": {
+            "missing": "Device of an app missing"
+          }
+        },
+        "system": {
+          "mirror": {
+            "degraded": "System disk missing"
+          },
+          "ups": {
+            "on_battery": "UPS on battery",
+            "online": "Power back",
+            "shutdown": "Shutdown for the UPS",
+            "unreachable": "UPS not answering"
+          }
+        },
+        "proxy": {
+          "acme": {
+            "renewal_failed": "Certificate not renewed"
+          }
+        },
+        "jobs": {
+          "job": {
+            "succeeded": "Task of the box done",
+            "failed": "Task of the box failed",
+            "cancelled": "Task of the box cancelled",
+            "interrupted": "Task of the box interrupted"
+          }
+        }
+      }
     }
+  },
+  "security": {
+    "intro": "What on the box can do more than an app should.",
+    "root": {
+      "title": "Apps with root access",
+      "intro": "These apps hold a right that is root on the box, such as the unfiltered container service: they can read and change every file and setting. They never update by themselves. Revoking the right restarts the app's background service without it.",
+      "none": "No app has root access.",
+      "badge": "Root access",
+      "rights": "Rights: {rights}",
+      "revoke": "Revoke root access"
+    }
+  },
+  "groups": {
+    "system": "System",
+    "storage": "Storage",
+    "network": "Network",
+    "services": "Services",
+    "access": "Access"
   }
 }

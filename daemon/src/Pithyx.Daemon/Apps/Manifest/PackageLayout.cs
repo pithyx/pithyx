@@ -8,7 +8,8 @@ namespace Pithyx.Daemon.Apps.Manifest;
 /// LICENSE and checksums), the entry under <c>frontend/</c>, and files under <c>backend/</c> only with a backend, whose
 /// Compose file must be there. Paths are relative, with <c>/</c> as the separator, and use ASCII letters, digits and
 /// <c>._~@+-</c> only, so no two names can mean the same file on any file system; the list holds the regular files of
-/// the package only. <c>frontend/api</c> and <c>frontend/api-*</c> are reserved: their URLs belong to the backend (D303).
+/// the package only. <c>frontend/api</c> and <c>frontend/api-*</c> are reserved: their URLs belong to the backend (D303). The manifest's
+/// screenshots must be files of the package of at most <see cref="MaxScreenshotBytes"/> each (D389).
 /// </summary>
 public static partial class PackageLayout
 {
@@ -20,9 +21,13 @@ public static partial class PackageLayout
     public const int MaxPathLength = 512;
     public const int MaxSegmentLength = 255;
     public const int MaxDepth = 32;
+    public const long MaxScreenshotBytes = 1024 * 1024;
 
-    /// <summary>Checks the file paths of a package against the manifest's <paramref name="entry"/> and <paramref name="compose"/> file.</summary>
-    public static IReadOnlyList<ValidationIssue> Check(IEnumerable<string> paths, string entry, string? compose)
+    /// <summary>
+    /// Checks the file paths of a package against the manifest's <paramref name="entry"/>, <paramref name="compose"/>
+    /// file and <paramref name="screenshots"/>, whose sizes <paramref name="sizeOf"/> gives.
+    /// </summary>
+    public static IReadOnlyList<ValidationIssue> Check(IEnumerable<string> paths, string entry, string? compose, IReadOnlyCollection<string>? screenshots = null, Func<string, long>? sizeOf = null)
     {
         var issues = new List<ValidationIssue>();
         var seen = new HashSet<string>(StringComparer.Ordinal);
@@ -65,6 +70,17 @@ public static partial class PackageLayout
             if (required is not null && !seen.Contains(required))
             {
                 issues.Add(Issue(required, "missing"));
+            }
+        }
+        foreach (var screenshot in (screenshots ?? []).Distinct(StringComparer.Ordinal))
+        {
+            if (!seen.Contains(screenshot))
+            {
+                issues.Add(Issue(screenshot, "missing"));
+            }
+            else if (sizeOf is not null && sizeOf(screenshot) > MaxScreenshotBytes)
+            {
+                issues.Add(Issue(screenshot, "too_large"));
             }
         }
         return issues;

@@ -13,10 +13,10 @@ Apps open in windows on the desktop, like Files or Settings. Some apps come with
 
 Open the Pithyx menu and click an app, or type part of its name into the search field. You can also open an app from a shortcut on the desktop, or put one there with **Add to desktop**. See [The desktop](/docs/user/desktop/).
 
-The apps that come with Pithyx are **Files**, **Viewer**, **Storage**, **Settings**, **Resource Monitor**, **Log Center**, **About Pithyx** and **Store**. You only see the apps you may use:
+The apps that come with Pithyx are **Files**, **Viewer**, **Settings**, **Resource Monitor**, **Log Center**, **About Pithyx** and **Store**. You only see the apps you may use:
 
 - **Files** and **Viewer** are available to new users by default.
-- **Storage**, **Settings**, **Resource Monitor**, **Log Center** and **Store** are for administrators.
+- **Settings**, **Resource Monitor**, **Log Center** and **Store** are for administrators. Settings opens on **Overview**: the box with its version, hardware, how long it runs and its updates, then **Needs attention** with one row per problem the box knows about (a pool alert, a Pithyx or app update, a device that does not trust the box yet) and the button that leads to the fix, then **All settings** as tiles. The navigation column on the left lists every page under **System**, **Storage**, **Network**, **Services** and **Access** and has a search that also finds a page by what it holds, such as `ntp`.
 - **About Pithyx** is open to everybody.
 - Apps an administrator installed show up for the users the administrator chose. Ask an administrator if you miss an app.
 
@@ -26,7 +26,7 @@ If an app's data is on a pool that is offline or locked, the app cannot be opene
 
 An app decides how many windows it may have:
 
-- **One window:** opening the app again brings its window forward instead of opening a second one. This holds per device, so another browser has its own window. Storage, Settings, Resource Monitor, Log Center, About Pithyx and the Store work this way.
+- **One window:** opening the app again brings its window forward instead of opening a second one. This holds per device, so another browser has its own window. Settings, Resource Monitor, Log Center, About Pithyx and the Store work this way.
 - **Several windows:** every click opens a new window. Files and Viewer work this way.
 
 Windows come back after you reload the page or sign in again. See [Layout per device](/docs/user/desktop/#layout-per-device). In total you can have 50 windows open.

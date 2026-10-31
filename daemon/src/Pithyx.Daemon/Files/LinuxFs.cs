@@ -237,6 +237,28 @@ internal static unsafe partial class LinuxFs
         }
     }
 
+    /// <summary>
+    /// The character device at <paramref name="path"/> (links followed): its group and whether everybody may read and
+    /// write it; null when nothing is there or it is something else.
+    /// </summary>
+    public static (uint Gid, bool Open)? CharacterDevice(string path)
+    {
+        ArgumentNullException.ThrowIfNull(path);
+        var bytes = Utf8(path);
+        var buffer = default(StatxBuffer);
+        fixed (byte* pointer = bytes)
+        {
+            if (StatxCall(AtFdCwd, pointer, 0, StatxBasicStats, &buffer) != 0)
+            {
+                return null;
+            }
+        }
+        const int typeMask = 0xF000;
+        const int characterDevice = 0x2000;
+        const int othersReadWrite = 0x6;
+        return (buffer.Mode & typeMask) == characterDevice ? (buffer.Gid, (buffer.Mode & othersReadWrite) == othersReadWrite) : null;
+    }
+
     /// <summary>Metadata of an entry in <paramref name="directory"/> without following a final symlink, or of the handle itself for "".</summary>
     public static FsStat Stat(SafeFileHandle directory, string name)
     {

@@ -2,7 +2,6 @@ import { IconArrowsDiagonalMinimize2, IconMinus, IconSquare, IconX } from '../ui
 import type { CSSProperties, HTMLAttributes, ReactNode, Ref } from 'react';
 import { useId } from 'react';
 import { useTranslation } from 'react-i18next';
-import { keepsBrowserMenu } from '@pithyx/sdk/host';
 import { cx, IconButton } from '@pithyx/ui';
 import { AppIcon } from './AppIcon';
 import type { AppInfo } from './types';
@@ -126,17 +125,7 @@ export function WindowFrame({
           </IconButton>
         </div>
       </header>
-      {/* A window is part of the desktop: a right-click in an app never opens the browser's menu, except in text fields. */}
-      <div
-        className={styles.content}
-        onContextMenu={(event) => {
-          if (!keepsBrowserMenu(event.target)) {
-            event.preventDefault();
-          }
-        }}
-      >
-        {children}
-      </div>
+      <div className={styles.content}>{children}</div>
       {decorations}
     </section>
   );

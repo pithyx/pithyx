@@ -1,12 +1,12 @@
 import {
   IconActivity,
   IconBuildingStore,
-  IconDatabase,
   IconFolders,
   IconInfoCircle,
   IconListDetails,
   IconSearch,
   IconSettings,
+  IconUserCog,
 } from '../ui/icons';
 import { lazy, type ComponentType, type LazyExoticComponent } from 'react';
 import type { AppGlyph, AppTone } from '../shell/types';
@@ -62,22 +62,6 @@ export const coreApps: readonly AppEntry[] = [
     ),
   },
   {
-    id: coreAppIds.storage,
-    icon: IconDatabase,
-    tone: 'ocean',
-    adminOnly: true,
-    window: {
-      instances: 'single',
-      defaultSize: { width: 1000, height: 660 },
-      minSize: { width: 340, height: 360 },
-    },
-    Component: lazy(() =>
-      Promise.all([import('./storage/StorageWindow'), loadTranslations('storage')]).then(
-        ([{ StorageWindow }]) => ({ default: StorageWindow }),
-      ),
-    ),
-  },
-  {
     id: coreAppIds.settings,
     icon: IconSettings,
     tone: 'graphite',
@@ -88,10 +72,10 @@ export const coreApps: readonly AppEntry[] = [
       minSize: { width: 340, height: 360 },
     },
     Component: lazy(() =>
-      // Settings runs plans with the Storage app's plan dialogs, and their texts; Users is one of its pages.
+      // Storage and Users are groups and pages of Settings (D402), with their own texts.
       Promise.all([
         import('./settings/SettingsWindow'),
-        loadTranslations('settings', 'storage', 'users', 'network'),
+        loadTranslations('settings', 'storage', 'users', 'network', 'security'),
       ]).then(([{ SettingsWindow }]) => ({ default: SettingsWindow })),
     ),
   },
@@ -155,6 +139,21 @@ export const coreApps: readonly AppEntry[] = [
     },
     Component: lazy(() =>
       import('./about/AboutApp').then(({ AboutApp }) => ({ default: AboutApp })),
+    ),
+  },
+  {
+    id: coreAppIds.preferences,
+    icon: IconUserCog,
+    tone: 'ocean',
+    window: {
+      instances: 'single',
+      defaultSize: { width: 640, height: 640 },
+      minSize: { width: 320, height: 360 },
+    },
+    Component: lazy(() =>
+      import('./preferences/PreferencesApp').then(({ PreferencesApp }) => ({
+        default: PreferencesApp,
+      })),
     ),
   },
   {

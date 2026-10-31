@@ -8,7 +8,7 @@ sidebar:
   order: 10
 ---
 
-Die Box spricht HTTPS auf Port 7484 mit einem Zertifikat ihrer eigenen Zertifizierungsstelle; die Ports 80 und 443 leiten dorthin um, außer für die Domains des [Reverse Proxys](/de/docs/admin/reverse-proxy/), die eigene Zertifikate vorzeigen. Installiere das Root-Zertifikat der Zertifizierungsstelle einmal auf jedem Gerät, dann vertraut der Browser der Box, lädt aus seinem Cache, und FTPS-Programme akzeptieren sie. Alles auf dieser Seite findest du unter Einstellungen > **Zertifikate** (nur Administratoren).
+Die Box spricht HTTPS auf Port 7484 mit einem Zertifikat ihrer eigenen Zertifizierungsstelle; die Ports 80 und 443 leiten dorthin um, außer für die Domains des [Reverse Proxys](/de/docs/admin/reverse-proxy/), die eigene Zertifikate vorzeigen. Installiere das Root-Zertifikat der Zertifizierungsstelle einmal auf jedem Gerät, dann vertraut der Browser der Box, lädt aus seinem Cache, Passkeys funktionieren, und FTPS-Programme akzeptieren sie. Alles auf dieser Seite findest du unter Einstellungen > **Zertifikate** (nur Administratoren).
 
 ## Warum der Browser warnt
 
@@ -16,7 +16,7 @@ Beim ersten Öffnen von `https://<box-adresse>:7484` warnt der Browser, dass die
 
 ## Der Box auf einem Gerät vertrauen
 
-Wähle unter **Dieser Box vertrauen** **Root-Zertifikat herunterladen** (die Datei `pithyx-root-ca.crt`; jeder darf sie herunterladen, auch vor der Anmeldung, unter `/api/system/tls/root-ca.crt`). Bevor du ihr vertraust, vergleiche ihren SHA-256-Fingerabdruck mit dem auf der Seite. Dann:
+Unter **Dieser Box vertrauen** sagt die Seite zuerst, ob das Gerät, an dem du sitzt, der Box vertraut. Wähle **Root-Zertifikat herunterladen** (die Datei `pithyx-root-ca.crt`; jeder darf sie herunterladen, auch vor der Anmeldung, unter `/api/system/tls/root-ca.crt`). Bevor du ihr vertraust, vergleiche ihren SHA-256-Fingerabdruck mit dem auf der Seite. Dann:
 
 - **Windows**: Öffne die Datei, wähle **Zertifikat installieren**, **Lokaler Computer** und dann den Speicher **Vertrauenswürdige Stammzertifizierungsstellen**.
 - **macOS**: Öffne die Datei in der Schlüsselbundverwaltung (Schlüsselbund **System**), öffne das Zertifikat und stelle **Vertrauen** auf **Immer vertrauen**.
@@ -24,6 +24,10 @@ Wähle unter **Dieser Box vertrauen** **Root-Zertifikat herunterladen** (die Dat
 - **Android**: Einstellungen, Sicherheit, Verschlüsselung und Anmeldedaten, Zertifikat installieren, CA-Zertifikat, dann die Datei wählen.
 - **Linux**: Kopiere die Datei nach `/usr/local/share/ca-certificates/` und führe `sudo update-ca-certificates` aus.
 - **Firefox** hat einen eigenen Speicher: Einstellungen, Datenschutz und Sicherheit, Zertifikate, Zertifikate anzeigen, Zertifizierungsstellen, Importieren, und ihm für Websites vertrauen.
+
+Starte danach den Browser neu, öffne die Box wieder über ihren Namen und wähle **Erneut prüfen**. Jeder Benutzer sieht dieselben Schritte ohne den Fingerabdruck: Nach der Anmeldung auf einem Gerät, das der Box nicht vertraut, zeigt der Desktop einen Hinweis mit **Diesem Gerät vertrauen**, und **Persönliche Einstellungen** hat die Zeile **Diesem Gerät vertrauen** ([Dein Konto](/de/docs/user/account/#der-box-auf-diesem-gerät-vertrauen)).
+
+Ob ein Gerät der Box vertraut, erkennt die Box daran, dass sich ihr Service Worker registrieren lässt: Browser verweigern Service Worker auf einer Verbindung mit Zertifikatswarnung. Sobald das Gerät der Box vertraut, läuft der Worker und behält die Dateien des Desktops der aktuellen Version im Browser, und [Passkeys](/de/docs/user/account/#passkeys) lassen sich nutzen. Über einfaches HTTP, etwa im Live-System des Installers, wird nichts geprüft und kein Hinweis gezeigt.
 
 ## Die Zertifizierungsstelle
 

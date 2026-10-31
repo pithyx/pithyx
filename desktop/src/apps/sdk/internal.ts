@@ -1,10 +1,11 @@
-import { unwrap, PithyxApiError, type components } from '@pithyx/api-client';
+import { unwrap, type components } from '@pithyx/api-client';
 import type { EventName, MethodName, PithyxApp } from '@pithyx/sdk';
-import { PithyxError, type HostExtensions } from '@pithyx/sdk/host';
+import { type HostExtensions } from '@pithyx/sdk/host';
 import { api } from '../../api/client';
 import { realtime } from '../../realtime/connection';
 import { openApp } from '../../wm/store';
 import { coreAppIds } from '../ids';
+import { daemon } from './daemonError';
 
 export type StorageDiskList = components['schemas']['StorageDiskList'];
 export type StorageDisk = components['schemas']['StorageDisk'];
@@ -39,6 +40,8 @@ export type ShareGrants = components['schemas']['ShareGrants'];
 export type SubjectGrant = components['schemas']['SubjectGrant'];
 export type ShareAccess = components['schemas']['ShareAccess'];
 export type SharePlanRequest = components['schemas']['SharePlanRequest'];
+export type NewPoolKey = components['schemas']['NewPoolKey'];
+export type UsbStick = components['schemas']['UsbStick'];
 
 /**
  * Administrative calls of the desktop's own core apps, outside the public SDK: not versioned, never served to a
@@ -66,12 +69,42 @@ export interface InternalMethods {
   'internal.admin.storage.health': { params: Record<string, never>; result: StorageHealth };
   'internal.admin.storage.mute': { params: { key: string; muted: boolean }; result: StorageHealth };
   'internal.admin.storage.scrub': { params: { pool: string; action: ScrubAction }; result: null };
+  /** A new pool key (D384); the box keeps no copy. */
+  'internal.admin.storage.newKey': { params: Record<string, never>; result: NewPoolKey };
+  /** The key from the vault again, after the password and the second factor (D384). */
+  'internal.admin.storage.revealKey': {
+    params: { pool: string; password: string; totpCode?: string };
+    result: NewPoolKey;
+  };
+  'internal.admin.storage.unlock': {
+    params: { pool: string; key?: string; keepInVault?: boolean };
+    result: null;
+  };
+  'internal.admin.storage.changeKey': {
+    params: { pool: string; key: string; keepInVault: boolean };
+    result: null;
+  };
+  'internal.admin.storage.forgetKey': { params: { pool: string }; result: null };
+  /** The USB sticks a pool key can be written to (D385). */
+  'internal.admin.storage.usbSticks': { params: Record<string, never>; result: UsbStick[] };
+  /** Writes the typed key, or the vault's after the password and the second factor, to a USB stick (D385). */
+  'internal.admin.storage.writeKeyToUsb': {
+    params: {
+      pool: string;
+      device: string;
+      key?: string;
+      password?: string;
+      totpCode?: string;
+      removeFromVault: boolean;
+    };
+    result: null;
+  };
   'internal.admin.storage.schedules': {
     params: Record<string, never>;
     result: StorageScheduleList;
   };
   'internal.admin.storage.schedule': { params: StorageScheduleUpdate; result: StorageScheduleList };
-  'internal.admin.openApp': { params: { app: AdminApp }; result: boolean };
+  'internal.admin.openApp': { params: { app: AdminApp; page?: string }; result: boolean };
   'internal.admin.shares.list': { params: Record<string, never>; result: ShareDetails[] };
   'internal.admin.shares.grants': { params: { shareId: number }; result: ShareGrants };
   'internal.admin.shares.setGrants': {
@@ -98,8 +131,8 @@ export interface InternalMethods {
   };
 }
 
-/** Administrator apps another core app may open, for example Settings opening Storage. */
-const adminApps = [coreAppIds.storage, coreAppIds.settings] as const;
+/** Administrator apps another core app may open, for example Settings opening the Store. */
+const adminApps = [coreAppIds.settings, coreAppIds.store] as const;
 export type AdminApp = (typeof adminApps)[number];
 
 /** Sent to the app when pools or disks changed; the app reads them again. */
@@ -130,6 +163,10 @@ function isPlanRequest(value: unknown): boolean {
     optionalText(value.layout) &&
     optionalText(value.vdev) &&
     optionalText(value.encryption) &&
+    optionalText(value.encryptionKey) &&
+    (value.keepKeyInVault === undefined ||
+      value.keepKeyInVault === null ||
+      typeof value.keepKeyInVault === 'boolean') &&
     optionalText(value.confirmName) &&
     optionalText(value.poolGuid) &&
     optionalText(value.newName) &&
@@ -260,21 +297,6 @@ async function scrub(pool: string, action: ScrubAction): Promise<null> {
         : await api.DELETE('/api/storage/pools/{pool}/scrub', options),
   );
   return null;
-}
-
-async function daemon<T>(call: () => Promise<T>): Promise<T> {
-  try {
-    return await call();
-  } catch (error) {
-    throw error instanceof PithyxApiError
-      ? new PithyxError({
-          code: error.code,
-          params: error.params,
-          detail: error.message,
-          requestId: error.requestId,
-        })
-      : error;
-  }
 }
 
 /**
@@ -422,13 +444,122 @@ export function adminStorageHost(emit: (event: string, data?: unknown) => void):
           return scrub(pool, action);
         }),
     },
+    'internal.admin.storage.newKey': {
+      validate: isRecord,
+      handle: () => daemon(async () => unwrap(await api.POST('/api/storage/encryption/keys'))),
+    },
+    'internal.admin.storage.revealKey': {
+      validate: (params) =>
+        isRecord(params) &&
+        typeof params.pool === 'string' &&
+        typeof params.password === 'string' &&
+        (params.totpCode === undefined || typeof params.totpCode === 'string'),
+      handle: (params) =>
+        daemon(async () => {
+          const { pool, password, totpCode } =
+            params as InternalMethods['internal.admin.storage.revealKey']['params'];
+          return unwrap(
+            await api.POST('/api/storage/pools/{pool}/key/reveal', {
+              params: { path: { pool } },
+              body: { password, totpCode: totpCode ?? null },
+            }),
+          );
+        }),
+    },
+    'internal.admin.storage.unlock': {
+      validate: (params) =>
+        isRecord(params) &&
+        typeof params.pool === 'string' &&
+        (params.key === undefined || typeof params.key === 'string') &&
+        (params.keepInVault === undefined || typeof params.keepInVault === 'boolean'),
+      handle: (params) =>
+        daemon(async () => {
+          const { pool, key, keepInVault } =
+            params as InternalMethods['internal.admin.storage.unlock']['params'];
+          unwrap(
+            await api.POST('/api/storage/pools/{pool}/unlock', {
+              params: { path: { pool } },
+              body: { key: key ?? null, keepInVault: keepInVault ?? false },
+            }),
+          );
+          return null;
+        }),
+    },
+    'internal.admin.storage.changeKey': {
+      validate: (params) =>
+        isRecord(params) &&
+        typeof params.pool === 'string' &&
+        typeof params.key === 'string' &&
+        typeof params.keepInVault === 'boolean',
+      handle: (params) =>
+        daemon(async () => {
+          const { pool, key, keepInVault } =
+            params as InternalMethods['internal.admin.storage.changeKey']['params'];
+          unwrap(
+            await api.POST('/api/storage/pools/{pool}/key', {
+              params: { path: { pool } },
+              body: { key, keepInVault },
+            }),
+          );
+          return null;
+        }),
+    },
+    'internal.admin.storage.forgetKey': {
+      validate: (params) => isRecord(params) && typeof params.pool === 'string',
+      handle: (params) =>
+        daemon(async () => {
+          const { pool } = params as InternalMethods['internal.admin.storage.forgetKey']['params'];
+          unwrap(
+            await api.DELETE('/api/storage/pools/{pool}/key/vault', { params: { path: { pool } } }),
+          );
+          return null;
+        }),
+    },
+    'internal.admin.storage.usbSticks': {
+      validate: isRecord,
+      handle: () => daemon(async () => unwrap(await api.GET('/api/storage/usb-sticks')).sticks),
+    },
+    'internal.admin.storage.writeKeyToUsb': {
+      validate: (params) =>
+        isRecord(params) &&
+        typeof params.pool === 'string' &&
+        typeof params.device === 'string' &&
+        (params.key === undefined || typeof params.key === 'string') &&
+        (params.password === undefined || typeof params.password === 'string') &&
+        (params.totpCode === undefined || typeof params.totpCode === 'string') &&
+        typeof params.removeFromVault === 'boolean',
+      handle: (params) =>
+        daemon(async () => {
+          const { pool, device, key, password, totpCode, removeFromVault } =
+            params as InternalMethods['internal.admin.storage.writeKeyToUsb']['params'];
+          unwrap(
+            await api.POST('/api/storage/pools/{pool}/key/usb', {
+              params: { path: { pool } },
+              body: {
+                device,
+                key: key ?? null,
+                password: password ?? null,
+                totpCode: totpCode ?? null,
+                removeFromVault,
+              },
+            }),
+          );
+          return null;
+        }),
+    },
     'internal.admin.storage.schedules': {
       validate: isRecord,
       handle: () => daemon(async () => unwrap(await api.GET('/api/storage/schedules'))),
     },
     'internal.admin.openApp': {
-      validate: (params) => isRecord(params) && adminApps.some((known) => known === params.app),
-      handle: (params) => Promise.resolve(openApp((params as { app: AdminApp }).app)),
+      validate: (params) =>
+        isRecord(params) &&
+        adminApps.some((known) => known === params.app) &&
+        (params.page === undefined || typeof params.page === 'string'),
+      handle: (params) => {
+        const { app, page } = params as { app: AdminApp; page?: string };
+        return Promise.resolve(openApp(app, { args: page === undefined ? null : { page } }));
+      },
     },
     'internal.admin.shares.list': {
       validate: isRecord,

@@ -9,7 +9,7 @@ namespace Pithyx.Daemon.Files;
 /// Files in shares. Every call resolves the share and the caller's access first, and every path is opened below the
 /// share root by the kernel (<see cref="LinuxFs.OpenBeneath"/>), so no path, symlink or rename race leads outside it.
 /// </summary>
-public sealed class FileService(ShareService shares, FolderCache cache, TimeProvider time, FileOwners owners, Storage.StorageUsage? usage = null)
+public sealed class FileService(ShareService shares, FolderCache cache, TimeProvider time, FileOwners owners, Storage.StorageUsage? usage = null, Layouts.DesktopFileLinks? links = null)
 {
     public const int DefaultPageSize = 100;
     public const int MaxPageSize = 1000;
@@ -28,10 +28,12 @@ public sealed class FileService(ShareService shares, FolderCache cache, TimeProv
         int? limit,
         string? cursor,
         CancellationToken cancellationToken,
-        string within = "")
+        string within = "",
+        string? query = null)
     {
         var share = await shares.ResolveAsync(user, shareId, write: false, cancellationToken);
         var normalized = FsPath.Normalize(path);
+        var filter = string.IsNullOrWhiteSpace(query) ? null : query.Trim();
         var inShare = FsPath.Join(within, normalized);
         var size = Math.Clamp(limit ?? DefaultPageSize, 1, MaxPageSize);
         using var root = OpenRoot(share, within);
@@ -44,8 +46,14 @@ public sealed class FileService(ShareService shares, FolderCache cache, TimeProv
         string? lastKey = null;
         long lastValue = 0;
         var more = false;
-        foreach (var (name, key, value) in Ordered(snapshot, folder, sort, order, after, afterValue, size + 1))
+        // A filtered page may have to walk the whole order to fill up; the order is lazy, so it stops once the page is full.
+        var walk = filter is null ? size + 1 : snapshot.Count;
+        foreach (var (name, key, value) in Ordered(snapshot, folder, sort, order, after, afterValue, walk))
         {
+            if (filter is not null && !name.Contains(filter, StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
             if (entries.Count == size)
             {
                 more = true;
@@ -61,7 +69,8 @@ public sealed class FileService(ShareService shares, FolderCache cache, TimeProv
         }
         var next = more && lastKey is not null ? FolderCursor.Encode(sort, order, lastKey, lastValue) : null;
         cache.Register(share.Id, share.Path, snapshot.FolderId, inShare);
-        return new FolderPage(normalized, snapshot.FolderId, snapshot.Count, entries, next, TopicOf(share.Id, snapshot.FolderId));
+        var total = filter is null ? snapshot.Count : snapshot.Entries.Count(entry => entry.Name.Contains(filter, StringComparison.OrdinalIgnoreCase));
+        return new FolderPage(normalized, snapshot.FolderId, total, entries, next, TopicOf(share.Id, snapshot.FolderId));
     }
 
     public async Task<FileEntry> StatAsync(ClaimsPrincipal user, long shareId, string? path, CancellationToken cancellationToken, string within = "")
@@ -203,6 +212,11 @@ public sealed class FileService(ShareService shares, FolderCache cache, TimeProv
         if (target != name)
         {
             Rename(folder, name, folder, target, replace: false);
+            if (links is not null)
+            {
+                var prefix = FsPath.Normalize(within);
+                await links.MovedAsync(shareId, FsPath.Join(prefix, normalized), shareId, FsPath.Join(prefix, FsPath.Join(parent, target)), CancellationToken.None);
+            }
         }
         return ToEntry(target, Stat(folder, target));
     }

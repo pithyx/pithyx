@@ -1,0 +1,296 @@
+.frame {
+  height: 100%;
+}
+
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  max-width: 48rem;
+}
+
+.section {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-2);
+}
+
+.sectionTitle {
+  margin: 0;
+  color: var(--color-text);
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
+}
+
+.note {
+  margin: calc(-1 * var(--space-2)) 0 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+
+.empty {
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+
+/* Rows that open a dialog or a menu, in one bordered card. */
+.rows {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  background: var(--color-surface-1);
+  list-style: none;
+}
+
+.rows > li + li {
+  border-top: 1px solid var(--color-border);
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  min-height: 3.5rem;
+  padding: var(--space-2) var(--space-3);
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.row[data-hovered],
+.row[data-pressed] {
+  background: var(--color-surface-hover);
+}
+
+.row[data-focus-visible] {
+  outline: 2px solid var(--color-focus);
+  outline-offset: -2px;
+}
+
+.icon {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: var(--radius-sm);
+  background: var(--color-accent-subtle);
+  color: var(--color-accent);
+}
+
+.text {
+  display: grid;
+  flex: 1;
+  gap: 2px;
+  min-width: 0;
+}
+
+.label {
+  font-weight: var(--font-weight-medium);
+}
+
+.description {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+
+.value {
+  color: var(--color-text);
+  font-weight: var(--font-weight-medium);
+}
+
+.value::after {
+  content: ' · ';
+  color: var(--color-text-muted);
+  font-weight: normal;
+}
+
+.chevron {
+  flex: none;
+  color: var(--color-text-muted);
+}
+
+/* The account: initials, name, login name and role. */
+.profile {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.avatar {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: 3rem;
+  height: 3rem;
+  border-radius: var(--radius-full);
+  background: var(--color-accent-subtle);
+  color: var(--color-accent);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+}
+
+.profileText {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.profileName {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+}
+
+.profileFacts {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+
+/* Theme and wallpaper as pictures to pick, the chosen one outlined in the accent. */
+.pictures {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: var(--space-3);
+  max-width: 40rem;
+}
+
+.pictureCard {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  background: var(--color-surface-1);
+  cursor: pointer;
+}
+
+.pictureCard[data-hovered] {
+  background: var(--color-surface-hover);
+}
+
+.pictureCard[data-selected] {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 1px var(--color-accent);
+}
+
+.pictureCard[data-focus-visible] {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.pictureLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--font-size-sm);
+}
+
+.themePreview,
+.wallpaperPreview {
+  position: relative;
+  display: block;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border-radius: var(--radius-sm);
+}
+
+/* Each preview resolves the tokens in its own scheme, so it shows that theme whatever the current one is. */
+.themePreview {
+  background: linear-gradient(160deg, var(--petrol-400), var(--petrol-700));
+}
+
+.themePreview[data-preview='light'] {
+  color-scheme: light;
+}
+
+.themePreview[data-preview='dark'] {
+  color-scheme: dark;
+  background: linear-gradient(160deg, var(--petrol-900), var(--neutral-1000));
+}
+
+.themeWindow {
+  position: absolute;
+  inset: 18% 22% 22% 12%;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xs);
+  background: var(--color-surface-1);
+}
+
+.themePreview::after {
+  content: '';
+  position: absolute;
+  inset: auto 0 0;
+  height: 12%;
+  background: var(--color-surface-1);
+}
+
+.themePreview[data-preview='system'] .themeWindow {
+  background: linear-gradient(90deg, var(--neutral-0) 50%, var(--neutral-900) 50%);
+}
+
+.themePreview[data-preview='system']::after {
+  background: linear-gradient(90deg, var(--neutral-50) 50%, var(--neutral-1000) 50%);
+}
+
+.accents {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.accent {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 2px solid transparent;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+}
+
+.accent[data-selected] {
+  border-color: var(--color-text);
+}
+
+.accent[data-focus-visible] {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.visuallyHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.accentSwatch {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-full);
+  background: var(--color-accent);
+}
+
+@media (pointer: coarse) {
+  .accent {
+    width: 44px;
+    height: 44px;
+  }
+
+  .accentSwatch {
+    width: 34px;
+    height: 34px;
+  }
+}

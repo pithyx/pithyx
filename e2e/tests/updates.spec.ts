@@ -2,7 +2,7 @@ import { copyFileSync, mkdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { expect, test } from './fixtures';
-import { appWindow, openFromStart, signInAsAdmin } from './session';
+import { appWindow, openFromStart, openSettingsPage, signInAsAdmin } from './session';
 
 // Settings > Updates against the simulated box (D338): the channel and the file are the corpus of tools/release, signed
 // with its beta test key, which simulation trusts. An install walks through its steps and succeeds without a restart.
@@ -25,8 +25,8 @@ test('the page checks the channel, refuses an untrusted file, installs a verifie
   await signInAsAdmin(page);
   await openFromStart(page, 'Settings');
   const settings = appWindow(page, 'Settings');
-  await settings.getByRole('button', { name: /^Updates/ }).click();
-  await expect(settings.getByRole('heading', { name: 'Updates', level: 2 })).toBeVisible();
+  await openSettingsPage(settings, 'Updates');
+  await expect(settings.getByRole('heading', { name: 'Updates', level: 1 })).toBeVisible();
   const channel = settings.getByRole('combobox', { name: 'Channel' });
   await channel.selectOption('stable');
   const uploadInput = settings
@@ -45,6 +45,8 @@ test('the page checks the channel, refuses an untrusted file, installs a verifie
 
   publishBetaChannel();
   await channel.selectOption('beta');
+  // The box saved the channel (the overview shows it); Check now waits for that save by itself (#268).
+  await expect(settings.locator('dd', { hasText: /^Beta$/ })).toBeVisible();
   await settings.getByRole('button', { name: 'Check now' }).click();
   await expect(settings.getByText('Pithyx 0.2.0-beta.3 is available')).toBeVisible();
 
@@ -91,7 +93,7 @@ test('the page shows the update source and saves a checked source file for the r
   await signInAsAdmin(page);
   await openFromStart(page, 'Settings');
   const settings = appWindow(page, 'Settings');
-  await settings.getByRole('button', { name: /^Updates/ }).click();
+  await openSettingsPage(settings, 'Updates');
   const source = settings.getByRole('region', { name: 'Update source' });
   await expect(source.getByText('Pithyx (the project)')).toBeVisible();
   const input = source.locator('input[type="file"]');

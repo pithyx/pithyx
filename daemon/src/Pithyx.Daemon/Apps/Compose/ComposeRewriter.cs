@@ -22,13 +22,32 @@ public sealed record StorageMapping(string HostPath, bool ReadOnly, int? Gid);
 /// (<c>px-i&lt;n&gt;</c>), which the services named in the manifest's <c>backend.network</c> (all without it) join as well; the
 /// box's firewall decides where it leads (D358). Null keeps the backend without a way out.
 /// </param>
+/// <param name="Elevated">
+/// The elevated rights an administrator granted (D311). A Compose key whose right is not among them is left out: a
+/// service without <c>host.network</c> joins the app's network instead, devices and capabilities without their right are
+/// dropped.
+/// </param>
+/// <param name="Devices">
+/// The nodes present now for each granted device path of the file (D387): a class such as <c>/dev/dri</c> stands for every
+/// node found, each added with its group; an empty list (an optional device that is missing) leaves the entry out.
+/// </param>
+/// <param name="DockerSocket">
+/// The app's socket of the daemon's Docker proxy (D387), mounted where the file mounts the Docker socket; null when the app
+/// holds neither <c>docker.socket</c> nor <c>docker.socket.raw</c>, which leaves the mount out.
+/// </param>
 public sealed record ComposeHost(
     int Uid,
     string AppDirectory,
     string BridgeName,
     IReadOnlyDictionary<string, string> ImageIds,
     IReadOnlyDictionary<string, StorageMapping> Storage,
-    string? InternetBridgeName = null);
+    string? InternetBridgeName = null,
+    IReadOnlySet<string>? Elevated = null,
+    IReadOnlyDictionary<string, IReadOnlyList<Docker.DeviceNode>>? Devices = null,
+    string? DockerSocket = null)
+{
+    public bool Holds(string right) => Elevated?.Contains(right) == true;
+}
 
 /// <summary>
 /// Turns a Compose file that <see cref="ComposeValidator"/> accepted into the file the box runs (D310), as JSON (which
@@ -85,7 +104,7 @@ public static class ComposeRewriter
                 writer.WritePropertyName(name);
                 var goesOut = outside is null || outside.Contains(name);
                 attached |= Service(writer, name, (ComposeMap)node, appId, version, root, goesOut, storage, host);
-                leaves |= goesOut && ((ComposeMap)node).Get("network_mode") is null;
+                leaves |= goesOut && !HostNetwork((ComposeMap)node, host);
             }
             writer.WriteEndObject();
             if (attached)
@@ -145,6 +164,9 @@ public static class ComposeRewriter
         return requests;
     }
 
+    /// <summary>Whether the service runs in the host's network: it asks for it and holds <c>host.network</c>.</summary>
+    private static bool HostNetwork(ComposeMap service, ComposeHost host) => service.Get("network_mode") is not null && host.Holds("host.network");
+
     /// <summary>Writes one service; returns whether it joins the app's network.</summary>
     private static bool Service(
         Utf8JsonWriter writer,
@@ -158,6 +180,9 @@ public static class ComposeRewriter
         ComposeHost host)
     {
         var groups = new SortedSet<int>();
+        // Docker refuses the host's network and processes inside the box's user namespace, and a device's group exists
+        // only on the host, so such a service runs in the host's; without root (D311) its user is the app's uid there too.
+        var hostNamespace = false;
         writer.WriteStartObject();
         foreach (var (key, value) in service.Entries)
         {
@@ -177,6 +202,46 @@ public static class ComposeRewriter
                     break;
                 case "cap_drop" when !root:
                     break;
+                case "network_mode" or "pid":
+                    if (host.Holds(key == "pid" ? "host.pid" : "host.network"))
+                    {
+                        hostNamespace = true;
+                        writer.WritePropertyName(key);
+                        Node(writer, value);
+                    }
+                    break;
+                case "devices":
+                    var devices = ((ComposeSequence)value).Items.Select(item => ((ComposeScalar)item).Value)
+                        .Where(device => host.Holds(Manifest.ManifestValidator.DevicePrefix + device.Split(':')[0]))
+                        .ToList();
+                    var entries = devices.SelectMany(device => DeviceEntries(device, host, groups)).ToList();
+                    if (entries.Count > 0)
+                    {
+                        hostNamespace |= devices.Any(device => Manifest.ManifestValidator.NeedsHostNamespace(Manifest.ManifestValidator.DevicePrefix + device.Split(':')[0]));
+                        writer.WritePropertyName("devices");
+                        writer.WriteStartArray();
+                        foreach (var entry in entries)
+                        {
+                            writer.WriteStringValue(entry);
+                        }
+                        writer.WriteEndArray();
+                    }
+                    break;
+                case "cap_add":
+                    var capabilities = ((ComposeSequence)value).Items.Select(item => ((ComposeScalar)item).Value)
+                        .Where(capability => host.Holds(Manifest.ManifestValidator.CapabilityPrefix + capability))
+                        .ToList();
+                    if (capabilities.Count > 0)
+                    {
+                        writer.WritePropertyName("cap_add");
+                        writer.WriteStartArray();
+                        foreach (var capability in capabilities)
+                        {
+                            writer.WriteStringValue(capability);
+                        }
+                        writer.WriteEndArray();
+                    }
+                    break;
                 case "cpus":
                     writer.WriteNumber("cpus", double.Parse(((ComposeScalar)value).Value, CultureInfo.InvariantCulture));
                     break;
@@ -189,6 +254,10 @@ public static class ComposeRewriter
 
         writer.WriteString("pull_policy", "never");
         writer.WriteString("user", root ? "0:0" : $"{host.Uid}:{host.Uid}");
+        if (hostNamespace)
+        {
+            writer.WriteString("userns_mode", "host");
+        }
         if (groups.Count > 0)
         {
             writer.WritePropertyName("group_add");
@@ -199,7 +268,7 @@ public static class ComposeRewriter
             }
             writer.WriteEndArray();
         }
-        var attached = service.Get("network_mode") is null;
+        var attached = !HostNetwork(service, host);
         if (attached)
         {
             writer.WritePropertyName("networks");
@@ -250,6 +319,34 @@ public static class ComposeRewriter
         return attached;
     }
 
+    /// <summary>
+    /// One device entry of the file as the nodes present now (D387): each node keeps the entry's permissions, a node in the
+    /// class folder keeps its place below the container path, a link target (a serial adapter) its own path.
+    /// </summary>
+    private static IEnumerable<string> DeviceEntries(string device, ComposeHost host, SortedSet<int> groups)
+    {
+        var parts = device.Split(':');
+        var path = parts[0];
+        var container = parts.Length > 1 ? parts[1] : path;
+        var permissions = parts.Length > 2 ? parts[2] : "rw";
+        if (host.Devices?.GetValueOrDefault(path) is not { } nodes)
+        {
+            yield return device;
+            yield break;
+        }
+        foreach (var node in nodes)
+        {
+            if (node.Gid is { } gid and > 0)
+            {
+                groups.Add(gid);
+            }
+            var target = node.Path == path ? container
+                : node.Path.StartsWith(path + "/", StringComparison.Ordinal) ? container + node.Path[path.Length..]
+                : node.Path;
+            yield return $"{node.Path}:{target}:{permissions}";
+        }
+    }
+
     /// <summary>Named volumes become bind mounts of folders the box prepared; tmpfs mounts stay as they are.</summary>
     private static void Mounts(Utf8JsonWriter writer, ComposeSequence mounts, Dictionary<string, StorageRequest> storage, SortedSet<int> groups, ComposeHost host)
     {
@@ -267,6 +364,10 @@ public static class ComposeRewriter
                     continue;
                 }
                 volume = ((ComposeScalar)map.Get("source")!).Value;
+                if (DockerSocketMount(writer, volume, ((ComposeScalar)map.Get("target")!).Value, host))
+                {
+                    continue;
+                }
                 target = ((ComposeScalar)map.Get("target")!).Value;
                 readOnly = map.Get("read_only") is ComposeScalar flag && flag.Value.Equals("true", StringComparison.OrdinalIgnoreCase);
             }
@@ -274,6 +375,10 @@ public static class ComposeRewriter
             {
                 var parts = ((ComposeScalar)mount).Value.Split(':');
                 (volume, target, readOnly) = (parts[0], parts[1], parts.Length > 2 && parts[2] == "ro");
+                if (DockerSocketMount(writer, volume, target, host))
+                {
+                    continue;
+                }
             }
 
             // An optional storage request that is not mapped is a folder of the app's dataset, so data never lands in the container.
@@ -303,6 +408,32 @@ public static class ComposeRewriter
             writer.WriteEndObject();
         }
         writer.WriteEndArray();
+    }
+
+    /// <summary>
+    /// A mount of the Docker socket (D387): the app's socket of the daemon's proxy at the same target, or nothing while the
+    /// app holds no socket right. True when the source was the Docker socket.
+    /// </summary>
+    private static bool DockerSocketMount(Utf8JsonWriter writer, string source, string target, ComposeHost host)
+    {
+        if (!ComposeValidator.Rules.DockerSockets.Contains(source))
+        {
+            return false;
+        }
+        if (host.DockerSocket is { } socket)
+        {
+            writer.WriteStartObject();
+            writer.WriteString("type", "bind");
+            writer.WriteString("source", Escape(socket));
+            writer.WriteString("target", target);
+            writer.WriteBoolean("read_only", false);
+            writer.WritePropertyName("bind");
+            writer.WriteStartObject();
+            writer.WriteBoolean("create_host_path", false);
+            writer.WriteEndObject();
+            writer.WriteEndObject();
+        }
+        return true;
     }
 
     /// <summary>The labels of the file as a mapping, in source order; a label without a value is empty.</summary>

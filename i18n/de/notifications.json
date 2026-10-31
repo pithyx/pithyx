@@ -54,11 +54,6 @@
         "body": "Platte {disk} (Seriennummer {serial}) meldet {reallocated, number} umgelagerte, {pending, number} ausstehende und {uncorrectable, number} nicht korrigierbare Sektoren und {mediaErrors, number} Medienfehler{selfTest, select, failed {; ihr letzter Selbsttest ist fehlgeschlagen} other {}}. Plane ihren Austausch.",
         "action": "Speicher öffnen"
       },
-      "resolved": {
-        "title": "Behoben: {problem}",
-        "body": "Das Speicherproblem besteht nicht mehr.",
-        "action": "Speicher öffnen"
-      },
       "poolSuspended": {
         "title": "Pool {pool} ist angehalten",
         "body": "Von {pool} fehlen zu viele Platten, deshalb hat ZFS alle Lese- und Schreibzugriffe angehalten, um die Daten zu schützen. Schließ die Platten wieder an: Pithyx setzt den Pool von selbst fort. Andere Pools laufen weiter; lösche oder melde diesen bis dahin nicht ab.",
@@ -67,6 +62,38 @@
       "diskMissing": {
         "title": "Platte {disk} von {pool} ist nicht angeschlossen",
         "body": "Platte {disk} ist aus {pool} verschwunden. Wenn sie versehentlich abgezogen wurde, schließ sie wieder an: Pithyx nimmt sie zurück in den Pool, und ZFS kopiert, was sie verpasst hat. Sonst ersetze sie.",
+        "action": "Speicher öffnen"
+      },
+      "poolLocked": {
+        "title": "Pool {pool} ist gesperrt",
+        "body": "{pool} wartet auf seinen Schlüssel. Seine freigegebenen Ordner, Home-Ordner und Apps sind nicht verfügbar, bis ein Administrator ihn unter Einstellungen > Speicher entsperrt.",
+        "action": "Speicher öffnen"
+      },
+      "poolLockedVault": {
+        "title": "Pool {pool} ließ sich nicht entsperren",
+        "body": "Der Schlüssel im Schlüsseltresor hat {pool} nicht entsperrt. Seine Daten sind unberührt, aber seine freigegebenen Ordner, Home-Ordner und Apps sind nicht verfügbar, bis ein Administrator ihn unter Einstellungen > Speicher mit dem aufbewahrten Schlüssel entsperrt.",
+        "action": "Speicher öffnen"
+      },
+      "poolLockedUsb": {
+        "title": "Pool {pool} wartet auf seinen USB-Stick",
+        "body": "Stecke den USB-Stick {stick} mit dem Schlüssel von {pool} ein oder entsperre ihn unter Einstellungen > Speicher mit dem aufbewahrten Schlüssel. Bis dahin sind seine freigegebenen Ordner, Home-Ordner und Apps nicht verfügbar.",
+        "action": "Speicher öffnen"
+      },
+      "poolLockedUsbFailed": {
+        "title": "Pool {pool} ließ sich nicht vom USB-Stick entsperren",
+        "body": "Die Schlüsseldatei auf dem USB-Stick hat {pool} nicht entsperrt: Sie enthält einen älteren Schlüssel oder ist beschädigt. Seine Daten sind unberührt. Entsperre ihn unter Einstellungen > Speicher mit dem aufbewahrten Schlüssel und schreibe den Schlüssel danach erneut auf den Stick.",
+        "action": "Speicher öffnen"
+      },
+      "resolved": {
+        "title": "Behoben: {problem}",
+        "body": "Das Speicherproblem besteht nicht mehr.",
+        "action": "Speicher öffnen"
+      }
+    },
+    "usb": {
+      "unlocked": {
+        "title": "Pool {pool} vom USB-Stick entsperrt",
+        "body": "Der Schlüssel auf {stick} hat {pool} entsperrt. Du kannst den Stick jetzt abziehen und sicher aufbewahren: {pool} bleibt entsperrt, bis die Box neu startet, und braucht dann wieder den Stick.",
         "action": "Speicher öffnen"
       }
     }
@@ -77,6 +104,18 @@
         "title": "Update verfügbar",
         "body": "{app} {version} kann installiert werden.",
         "action": "Installieren"
+      }
+    },
+    "device": {
+      "missing": {
+        "title": "Ein Gerät von {app} fehlt",
+        "body": "{app} braucht {path}, und das ist nicht eingesteckt. Ihr Hintergrunddienst läuft erst wieder, wenn das Gerät zurück ist."
+      }
+    },
+    "elevated": {
+      "critical": {
+        "title": "{app} hat jetzt Root-Zugriff",
+        "body": "{user} hat {app} das Recht {right} gegeben: Die App kann jetzt die ganze Box steuern. Wenn du das nicht erwartet hast, entziehe es unter Einstellungen > Sicherheit."
       }
     }
   },
@@ -178,6 +217,55 @@
       "degraded": {
         "title": "Eine Systemplatte fehlt",
         "body": "Der {array, select, system {System} other {Swap}}-Spiegel läuft auf {working} von {expected} Platten. Die Box läuft weiter; ersetze die Platte bald."
+      }
+    },
+    "ups": {
+      "on_battery": {
+        "title": "Die USV läuft auf Akku",
+        "body": "{charge, select, null {Der Strom ist ausgefallen.} other {Der Strom ist ausgefallen; der Akku steht bei {charge} %.}} Die Box fährt an der Grenze herunter, die in Einstellungen > USV steht."
+      },
+      "online": {
+        "title": "Der Strom ist zurück",
+        "body": "Die USV läuft wieder am Netz{charge, select, null {.} other {; der Akku steht bei {charge} %.}}"
+      },
+      "shutdown": {
+        "title": "Die Box fährt wegen der USV herunter",
+        "body": "{reason, select, forced {Der NUT-Server der USV fährt alle Systeme herunter.} low_battery {Die USV meldet einen schwachen Akku.} charge {Der Akku hat die Ladegrenze erreicht.} runtime {Der Akku hat die Laufzeitgrenze erreicht.} lost {Die USV lief auf Akku und antwortet nicht mehr.} other {Der USV geht gleich der Strom aus.}} Freigaben und Apps stoppen jetzt."
+      },
+      "unreachable": {
+        "title": "Die USV antwortet nicht",
+        "body": "{problem, select, refused {Kein NUT-Server antwortet.} timeout {Der NUT-Server antwortet nicht rechtzeitig.} unknown_ups {Der NUT-Server kennt keine USV mit diesem Namen.} driver_not_connected {Es wurde keine USV gefunden, oder ihr Treiber ist ausgefallen.} data_stale {Die USV sendet keine Daten mehr.} access_denied {Benutzer oder Passwort ist falsch.} other {Der NUT-Server hat mit einem Fehler geantwortet.}} Ohne sie kann die Box bei einem Stromausfall nicht sauber herunterfahren."
+      }
+    }
+  },
+  "auth": {
+    "signin": {
+      "blocked": {
+        "title": "Wiederholt falsche Anmeldungen",
+        "body": "{user, select, null {Jemand unter {address} hat sich in {minutes} Minuten {failures}-mal falsch angemeldet und muss warten.} other {Jemand unter {address} hat sich in {minutes} Minuten {failures}-mal falsch als {user} angemeldet und muss warten.}}"
+      }
+    }
+  },
+  "notifications": {
+    "channel": {
+      "test": {
+        "title": "Testbenachrichtigung",
+        "body": "Wenn du das liest, funktioniert der Kanal {name}."
+      },
+      "footer": "Gesendet von Pithyx auf {box}."
+    },
+    "smtp": {
+      "test": {
+        "title": "Test-E-Mail",
+        "body": "Wenn du das liest, kann die Box über {host} E-Mails senden."
+      }
+    }
+  },
+  "proxy": {
+    "acme": {
+      "renewal_failed": {
+        "title": "Zertifikat von {name} nicht erneuert",
+        "body": "Let's Encrypt hat es nicht erneuert. Einstellungen > Reverse Proxy zeigt, warum; die Box versucht es später noch einmal, und das aktuelle Zertifikat gilt bis zu seinem Ende."
       }
     }
   }

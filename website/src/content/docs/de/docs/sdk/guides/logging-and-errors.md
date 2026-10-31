@@ -22,6 +22,7 @@ import { createI18n, type I18n } from '@pithyx/sdk/i18n';
 const RETRYABLE = new Set([
   'sdk.request.timeout',
   'sdk.backend.unreachable',
+  'sdk.box.unreachable',
   'app.backend.unavailable',
   'auth.rate.limited',
 ]);
@@ -133,7 +134,7 @@ export async function loadDashboard(app: PithyxApp, show: (text: string) => void
 `PithyxError` hat `code`, `params`, `detail` und `requestId` sowie `toProblem()` für das einfache Objekt. `isProblem(value)` prüft einen beliebigen Wert auf diese Form. Codes kommen aus zwei Quellen:
 
 - **Vom Daemon**, unverändert: zum Beispiel `app.permission.denied`, `app.storage.too_large`, `fs.entry.exists`, `app.token.invalid`. Die vollständige Liste mit Texten ist die [Fehlerreferenz](/de/docs/reference/errors/).
-- **Vom SDK** für Fehler zwischen App und Desktop: [`sdk.method.unknown`](/de/docs/reference/errors/#sdk.method.unknown), [`sdk.request.invalid`](/de/docs/reference/errors/#sdk.request.invalid), [`sdk.request.timeout`](/de/docs/reference/errors/#sdk.request.timeout), [`sdk.transport.closed`](/de/docs/reference/errors/#sdk.transport.closed), [`sdk.protocol.unsupported`](/de/docs/reference/errors/#sdk.protocol.unsupported), [`sdk.transfer.cancelled`](/de/docs/reference/errors/#sdk.transfer.cancelled), [`sdk.backend.endpoint_unknown`](/de/docs/reference/errors/#sdk.backend.endpoint_unknown) und [`sdk.backend.unreachable`](/de/docs/reference/errors/#sdk.backend.unreachable). Die Liste wird als `sdkErrorCodes` exportiert.
+- **Vom SDK** für Fehler zwischen App und Desktop: [`sdk.method.unknown`](/de/docs/reference/errors/#sdk.method.unknown), [`sdk.request.invalid`](/de/docs/reference/errors/#sdk.request.invalid), [`sdk.request.timeout`](/de/docs/reference/errors/#sdk.request.timeout), [`sdk.transport.closed`](/de/docs/reference/errors/#sdk.transport.closed), [`sdk.protocol.unsupported`](/de/docs/reference/errors/#sdk.protocol.unsupported), [`sdk.transfer.cancelled`](/de/docs/reference/errors/#sdk.transfer.cancelled), [`sdk.backend.endpoint_unknown`](/de/docs/reference/errors/#sdk.backend.endpoint_unknown), [`sdk.backend.unreachable`](/de/docs/reference/errors/#sdk.backend.unreachable) und [`sdk.box.unreachable`](/de/docs/reference/errors/#sdk.box.unreachable). Die Liste wird als `sdkErrorCodes` exportiert.
 
 `app.backend.fetch` erfüllt sich bei jedem HTTP-Status. Die eigenen Fehler des Proxys (401, 503) tragen einen Problem-Body mit Code; mach daraus einen `PithyxError` wie im Beispiel. Was dein Backend zurückgibt, entscheidest du.
 
@@ -143,6 +144,7 @@ export async function loadDashboard(app: PithyxApp, show: (text: string) => void
 | ------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- | -------------------------------------------------- |
 | [`sdk.request.timeout`](/de/docs/reference/errors/#sdk.request.timeout)         | der Desktop hat nicht innerhalb von 15 Sekunden geantwortet (nicht bei Übertragungen und Dialogen) | ein paar Mal, mit wachsender Pause                 |
 | [`sdk.backend.unreachable`](/de/docs/reference/errors/#sdk.backend.unreachable) | die Anfrage hat die Box nicht erreicht                                                             | nach `connectionChange` mit `online: true`         |
+| [`sdk.box.unreachable`](/de/docs/reference/errors/#sdk.box.unreachable)         | ein Aufruf, den der Desktop an die Box weitergibt (Dateien, Einstellungen), hat sie nicht erreicht | nach `connectionChange` mit `online: true`         |
 | [`app.backend.unavailable`](/de/docs/reference/errors/#app.backend.unavailable) | das Backend wird aktualisiert, ist gescheitert oder kam nicht in 30 s hoch                         | wenn `backendStatus` `running` meldet, oder später |
 | [`auth.rate.limited`](/de/docs/reference/errors/#auth.rate.limited)             | zu viele Tokens auf einmal                                                                         | nach `params.retryAfterSeconds`                    |
 | [`app.token.invalid`](/de/docs/reference/errors/#app.token.invalid)             | Sitzung beendet oder Zugriff auf die App weg (das SDK hat schon einmal ein neues Token versucht)   | nein; der Benutzer öffnet das Fenster neu          |

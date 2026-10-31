@@ -498,7 +498,7 @@ function readTokens(): TokenFile {
     let current: TokenGroup | undefined;
     let note: string | undefined;
     let blank = true;
-    for (const line of body.split('\n')) {
+    for (const line of joinDeclarations(body.split('\n'))) {
       if (line.trim() === '') {
         blank = true;
         continue;
@@ -528,6 +528,29 @@ function readTokens(): TokenFile {
     }
   }
   return { groups: groups.filter((group) => group.tokens.length > 0), accents, overrides };
+}
+
+/** Joins a declaration that Prettier broke over several lines (a long `light-dark()`) into one line. */
+function joinDeclarations(lines: string[]): string[] {
+  const joined: string[] = [];
+  let open: string | undefined;
+  for (const line of lines) {
+    if (open !== undefined) {
+      const part = line.trim();
+      open = `${open}${open.endsWith('(') || part.startsWith(')') ? '' : ' '}${part}`;
+      if (open.endsWith(';')) {
+        joined.push(open);
+        open = undefined;
+      }
+      continue;
+    }
+    if (/^\s*--[\w-]+\s*:/.test(line) && !line.trimEnd().endsWith(';')) {
+      open = line.trimEnd();
+      continue;
+    }
+    joined.push(line);
+  }
+  return joined;
 }
 
 function tokenTable(lang: Lang, tokens: Token[]): string {

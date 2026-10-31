@@ -22,6 +22,7 @@ import { createI18n, type I18n } from '@pithyx/sdk/i18n';
 const RETRYABLE = new Set([
   'sdk.request.timeout',
   'sdk.backend.unreachable',
+  'sdk.box.unreachable',
   'app.backend.unavailable',
   'auth.rate.limited',
 ]);
@@ -133,7 +134,7 @@ export async function loadDashboard(app: PithyxApp, show: (text: string) => void
 `PithyxError` has `code`, `params`, `detail` and `requestId`, and `toProblem()` for the plain object. `isProblem(value)` tests any value for the shape. Codes come from two places:
 
 - **The daemon**, unchanged: for example `app.permission.denied`, `app.storage.too_large`, `fs.entry.exists`, `app.token.invalid`. The full list with texts is the [error reference](/docs/reference/errors/).
-- **The SDK** for failures between the app and the desktop: [`sdk.method.unknown`](/docs/reference/errors/#sdk.method.unknown), [`sdk.request.invalid`](/docs/reference/errors/#sdk.request.invalid), [`sdk.request.timeout`](/docs/reference/errors/#sdk.request.timeout), [`sdk.transport.closed`](/docs/reference/errors/#sdk.transport.closed), [`sdk.protocol.unsupported`](/docs/reference/errors/#sdk.protocol.unsupported), [`sdk.transfer.cancelled`](/docs/reference/errors/#sdk.transfer.cancelled), [`sdk.backend.endpoint_unknown`](/docs/reference/errors/#sdk.backend.endpoint_unknown) and [`sdk.backend.unreachable`](/docs/reference/errors/#sdk.backend.unreachable). The list is exported as `sdkErrorCodes`.
+- **The SDK** for failures between the app and the desktop: [`sdk.method.unknown`](/docs/reference/errors/#sdk.method.unknown), [`sdk.request.invalid`](/docs/reference/errors/#sdk.request.invalid), [`sdk.request.timeout`](/docs/reference/errors/#sdk.request.timeout), [`sdk.transport.closed`](/docs/reference/errors/#sdk.transport.closed), [`sdk.protocol.unsupported`](/docs/reference/errors/#sdk.protocol.unsupported), [`sdk.transfer.cancelled`](/docs/reference/errors/#sdk.transfer.cancelled), [`sdk.backend.endpoint_unknown`](/docs/reference/errors/#sdk.backend.endpoint_unknown), [`sdk.backend.unreachable`](/docs/reference/errors/#sdk.backend.unreachable) and [`sdk.box.unreachable`](/docs/reference/errors/#sdk.box.unreachable). The list is exported as `sdkErrorCodes`.
 
 `app.backend.fetch` resolves for every HTTP status. The proxy's own failures (401, 503) carry a problem body with a code; turn them into a `PithyxError` as the example does. What your backend returns is up to you.
 
@@ -143,6 +144,7 @@ export async function loadDashboard(app: PithyxApp, show: (text: string) => void
 | ---------------------------------------------------------------------------- | -------------------------------------------------------------------------------- | --------------------------------------------- |
 | [`sdk.request.timeout`](/docs/reference/errors/#sdk.request.timeout)         | the desktop did not answer within 15 seconds (not for transfers and dialogs)     | a few times, with a growing pause             |
 | [`sdk.backend.unreachable`](/docs/reference/errors/#sdk.backend.unreachable) | the request did not reach the box                                                | after `connectionChange` with `online: true`  |
+| [`sdk.box.unreachable`](/docs/reference/errors/#sdk.box.unreachable)         | a call the desktop passes on to the box (files, settings) did not reach it       | after `connectionChange` with `online: true`  |
 | [`app.backend.unavailable`](/docs/reference/errors/#app.backend.unavailable) | the backend is updating, failed, or did not start in 30 s                        | when `backendStatus` says `running`, or later |
 | [`auth.rate.limited`](/docs/reference/errors/#auth.rate.limited)             | too many tokens at once                                                          | after `params.retryAfterSeconds`              |
 | [`app.token.invalid`](/docs/reference/errors/#app.token.invalid)             | session ended or access to the app gone (the SDK already tried a new token once) | no; the user reopens the window               |

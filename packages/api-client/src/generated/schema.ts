@@ -464,6 +464,23 @@ export type paths = {
         patch: operations["UpdateApp"];
         trace?: never;
     };
+    "/api/apps/{appId}/elevated": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** @description Administrators only. Grants or revokes elevated rights of the app's manifest (D311); granting needs a step-up with the password and, with two-factor sign-in on, an authenticator code (auth.step_up.required otherwise), which then holds for five minutes. A running backend restarts with the rights it holds. Every change goes to the audit log. */
+        put: operations["SetAppElevatedRights"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/apps/{appId}/grants": {
         parameters: {
             query?: never;
@@ -646,7 +663,7 @@ export type paths = {
         };
         get?: never;
         put?: never;
-        /** @description Administrators only. Installs or updates the app from an uploaded package as a job and answers 202 with it. The first app needs pool, the pool for every app's data; access (everybody by default) decides who may use a newly installed app. An update takes a snapshot of the app's dataset first and returns to it when a step fails. */
+        /** @description Administrators only. Installs or updates the app from an uploaded package as a job and answers 202 with it. The first app needs pool, the pool for every app's data; access (everybody by default) decides who may use a newly installed app. An update takes a snapshot of the app's dataset first and returns to it when a step fails. A package with elevated rights the app does not hold yet needs a step-up (password and TOTP in the request, or one of this session made in the last five minutes; auth.step_up.required otherwise), or elevated false to install it with them revoked (D311). */
         post: operations["InstallAppPackage"];
         delete?: never;
         options?: never;
@@ -702,6 +719,89 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/api/auth/passkeys": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ListPasskeys"];
+        put?: never;
+        post: operations["CreatePasskey"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/passkeys/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["DeletePasskey"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/passkeys/options": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Options for a new passkey of the signed-in user, after the current password. */
+        post: operations["PasskeyCreateOptions"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/passkeys/sign-in": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Signs in with a passkey instead of the password and TOTP; the same limits on failed attempts apply. */
+        post: operations["PasskeySignIn"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/passkeys/sign-in/options": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Options for signing in with a passkey of the name the box was opened under; refused with auth.passkey.unavailable for an address. */
+        post: operations["PasskeySignInOptions"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/auth/recover": {
         parameters: {
             query?: never;
@@ -728,6 +828,24 @@ export type paths = {
         get: operations["GetSession"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/step-up": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Until when this session holds a step-up (D311), or null. */
+        get: operations["GetStepUp"];
+        put?: never;
+        /** @description Confirms the password and, with two-factor sign-in on, an authenticator code again; holds for five minutes in this session. */
+        post: operations["StepUp"];
         delete?: never;
         options?: never;
         head?: never;
@@ -856,9 +974,10 @@ export type paths = {
             path?: never;
             cookie?: never;
         };
+        /** @description The user's desktop items. A shortcut to a file or folder says in target whether its target is a file, a folder or missing (gone, moved past the daemon, or no longer readable for the user). */
         get: operations["ListDesktopItems"];
         put?: never;
-        /** @description Creates an item. The answer is 201 with the item, its URL as Location and its version as ETag. */
+        /** @description Creates an item. The answer is 201 with the item, its URL as Location and its version as ETag. A shortcut to a file or folder needs read access to it; otherwise the answer is the file error (for example fs.entry.not_found). */
         post: operations["CreateDesktopItem"];
         delete?: never;
         options?: never;
@@ -1025,7 +1144,7 @@ export type paths = {
             path?: never;
             cookie?: never;
         };
-        /** @description One page of a folder. Paths are relative to the share with / as separator; "." and ".." are refused. sort is name (natural order, ignoring case), size or modified, order asc or desc; pass nextCursor as cursor for the next page. Subscribe to topic for live changes of the folder. */
+        /** @description One page of a folder. Paths are relative to the share with / as separator; "." and ".." are refused. sort is name (natural order, ignoring case), size or modified, order asc or desc; pass nextCursor as cursor for the next page. query keeps only the entries whose name contains it, ignoring case, in this folder only; total then counts the matches. Subscribe to topic for live changes of the folder. */
         get: operations["ListFolder"];
         put?: never;
         post?: never;
@@ -1557,6 +1676,23 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/api/logs/counts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Administrators only. Warnings and errors per source since from, from the current logs on the system disk; sources without either are left out. */
+        get: operations["GetLogCounts"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/logs/export": {
         parameters: {
             query?: never;
@@ -1655,6 +1791,110 @@ export type paths = {
         put?: never;
         /** @description What a core app's SDK notify call becomes: a notification for the signed-in user with the app's plain text, stored as app.message. Only for core apps (org.pithyx.*, auth.permission.denied otherwise); third-party apps send theirs to /api/app/notifications with their token. Invalid fields answer 400 notifications.message.invalid. */
         post: operations["CreateAppNotification"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/notifications/categories": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description The kinds of notifications the apps the signed-in user may open declare in their manifest (D390), each with whether the user muted it. */
+        get: operations["ListNotificationCategories"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/notifications/categories/{app}/{category}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** @description Mutes or unmutes one kind of an app's notifications for the signed-in user (D390). A muted notification is kept as read, without a toast and without the user's channels. An app the user may not open or a category its manifest does not declare answers 404 notifications.category.not_found. */
+        put: operations["MuteNotificationCategory"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/notifications/channels": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Lists the signed-in user's own channels, which get the notifications that reach the user: email and webhook channels with what they get and how their last delivery went. Header values never leave the box. */
+        get: operations["ListNotificationChannels"];
+        put?: never;
+        /** @description Adds one of the signed-in user's own channels, which get the notifications that reach the user. An email channel needs the SMTP server (409 notifications.smtp.missing); invalid fields answer 400 notifications.channel.invalid, too many 409 notifications.channel.limit_reached. */
+        post: operations["CreateNotificationChannel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/notifications/channels/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** @description Changes one of the signed-in user's own channels, which get the notifications that reach the user; its kind stays. A header without a value keeps the value saved before. */
+        put: operations["UpdateNotificationChannel"];
+        post?: never;
+        /** @description Removes one of the signed-in user's own channels, which get the notifications that reach the user. */
+        delete: operations["DeleteNotificationChannel"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/notifications/channels/{id}/test": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Sends a test message through one of the signed-in user's own channels, which get the notifications that reach the user now, also when it is off. A failure answers 502 notifications.channel.failed with the server's words and is kept on the channel. */
+        post: operations["TestNotificationChannel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/notifications/language": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** @description The language the signed-in user's desktop uses (en or de), for the emails and webhooks the box writes to them (D379). Without it the system language applies. Others answer 400 notifications.language.unsupported. */
+        put: operations["SetNotificationLanguage"];
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -1901,6 +2141,23 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/api/storage/encryption/keys": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Administrators only. A new random pool key (D384) for an encrypted pool or a key change. The box keeps nothing: the key is used only when it comes back in the request that creates the pool or changes its key. */
+        post: operations["CreatePoolKey"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/storage/import/scan": {
         parameters: {
             query?: never;
@@ -1969,6 +2226,74 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/api/storage/pools/{pool}/key": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Administrators only. Replaces the key of an unlocked encrypted pool with a new key from POST /api/storage/encryption/keys, which the user stored first; the old key stops working at once. The key vault then holds the new key, or none. */
+        post: operations["ChangePoolKey"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/storage/pools/{pool}/key/reveal": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Administrators only. The pool's key from the key vault, for an administrator who lost the stored copy (D384). Needs the password again and, with two-factor sign-in on, a current authenticator code; failures count like failed sign-ins. Logged without the key. */
+        post: operations["RevealPoolKey"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/storage/pools/{pool}/key/usb": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Administrators only. Writes the pool's key to a USB stick as pithyx-keys/<pool GUID>.key (D385); the box then unlocks the pool whenever the stick is plugged in, and the stick may be pulled afterwards. The key is the typed one or the key vault's, which needs the password again and, with two-factor sign-in on, a current authenticator code (failures count like failed sign-ins). The key is checked against the pool first and read back from the stick. Logged without the key. */
+        post: operations["WritePoolKeyToUsb"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/storage/pools/{pool}/key/vault": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** @description Administrators only. Deletes the pool's key from the key vault on the system disk. The pool stays unlocked until the box restarts; then it waits for its key to be typed. */
+        delete: operations["RemovePoolKeyFromVault"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/storage/pools/{pool}/scrub": {
         parameters: {
             query?: never;
@@ -1998,6 +2323,23 @@ export type paths = {
         put?: never;
         /** @description Administrators only. Pauses the running scrub; starting it again resumes where it stopped. */
         post: operations["PauseScrub"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/storage/pools/{pool}/unlock": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Administrators only. Loads the key of an encrypted pool, typed or from the key vault, and mounts its datasets; its shares, homes and apps follow. Without a key it takes the vault's, and on an unlocked pool it only mounts what is missing. */
+        post: operations["UnlockPool"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2085,6 +2427,23 @@ export type paths = {
         get: operations["GetSnapshotSchedules"];
         /** @description Administrators only. Saves the given schedules of a dataset. A schedule takes pithyx-<kind>-<utc> once per UTC hour, day, week (from Monday) or month and keeps its newest keep snapshots; it never deletes other snapshots, held ones or ones dated after the current time. */
         put: operations["SetSnapshotSchedules"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/storage/usb-sticks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Administrators only. The file systems on USB sticks and other removable disks a pool key can be written to (D385): FAT, exFAT or ext, on a disk nothing has mounted and no pool uses. From memory; reads no disk. */
+        get: operations["ListUsbSticks"];
+        put?: never;
         post?: never;
         delete?: never;
         options?: never;
@@ -2400,6 +2759,112 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/api/system/notifications/channels": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Administrators only. Lists the box's channels, which get what the system tells every administrator: email and webhook channels with what they get and how their last delivery went. Header values never leave the box. */
+        get: operations["ListSystemNotificationChannels"];
+        put?: never;
+        /** @description Administrators only. Adds one of the box's channels, which get what the system tells every administrator. An email channel needs the SMTP server (409 notifications.smtp.missing); invalid fields answer 400 notifications.channel.invalid, too many 409 notifications.channel.limit_reached. */
+        post: operations["CreateSystemNotificationChannel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/system/notifications/channels/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** @description Administrators only. Changes one of the box's channels, which get what the system tells every administrator; its kind stays. A header without a value keeps the value saved before. */
+        put: operations["UpdateSystemNotificationChannel"];
+        post?: never;
+        /** @description Administrators only. Removes one of the box's channels, which get what the system tells every administrator. */
+        delete: operations["DeleteSystemNotificationChannel"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/system/notifications/channels/{id}/test": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Administrators only. Sends a test message through one of the box's channels, which get what the system tells every administrator now, also when it is off. A failure answers 502 notifications.channel.failed with the server's words and is kept on the channel. */
+        post: operations["TestSystemNotificationChannel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/system/notifications/matrix": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Administrators only. Every event the box reports to its administrators, the box's channels and, per event, whether the administrators' desktop and each channel get it (D407). A cell nobody set shows its default: the desktop gets everything, a channel what its categories and least level take. */
+        get: operations["GetNotificationMatrix"];
+        /** @description Administrators only. Sets cells of the matrix and answers with the whole matrix; the other cells stay. An unknown event answers 400 notifications.event.unknown, a channel that is not one of the box's 404 notifications.channel.not_found. */
+        put: operations["SetNotificationMatrix"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/system/notifications/smtp": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Administrators only. The SMTP server email channels send through, without its password. */
+        get: operations["GetNotificationSmtp"];
+        /** @description Administrators only. Saves the SMTP server; an empty host removes it. A missing password keeps the saved one, an empty one removes it. Invalid fields answer 400 notifications.smtp.invalid. */
+        put: operations["SetNotificationSmtp"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/system/notifications/smtp/test": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Administrators only. Sends a test email to one address through the server given in the body, saved or not; a missing password takes the saved one, and nothing is stored. Invalid fields answer 400 notifications.smtp.invalid (field to for the address), a failure 502 notifications.channel.failed with the server's words. */
+        post: operations["TestNotificationSmtp"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/system/overview": {
         parameters: {
             query?: never;
@@ -2451,6 +2916,24 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/api/system/proxy/acme": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Administrators only. The ACME authority hosts get certificates from (Let's Encrypt unless changed), the contact address, its current terms of service and whether they are agreed. */
+        get: operations["GetProxyAcme"];
+        /** @description Administrators only. Sets the ACME authority and the contact address, and agrees to the authority's current terms of service; another authority needs a new agreement. */
+        put: operations["SetProxyAcme"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/system/proxy/hosts": {
         parameters: {
             query?: never;
@@ -2481,6 +2964,23 @@ export type paths = {
         post?: never;
         /** @description Administrators only. Removes a proxy host with its uploaded certificate; its names become unknown. */
         delete: operations["DeleteProxyHost"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/system/proxy/hosts/{id}/certificate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Administrators only. Asks the ACME authority for the proxy host's certificate now, as a job, regardless of the wait after failures. Refused with proxy.acme.not_acme for a host with another certificate. */
+        post: operations["RenewProxyHostCertificate"];
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -2550,6 +3050,23 @@ export type paths = {
         post?: never;
         /** @description Administrators only. Removes a redirect host. */
         delete: operations["DeleteProxyRedirect"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/system/proxy/redirects/{id}/certificate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Administrators only. Asks the ACME authority for the redirect host's certificate now, as a job. */
+        post: operations["RenewProxyRedirectCertificate"];
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -2884,6 +3401,24 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/api/system/ups": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Administrators only. The UPS settings (without the password), what the box knows about the UPS right now and whether a UPS on USB is possible. The topic system/ups sends the same. */
+        get: operations["GetSystemUps"];
+        /** @description Administrators only. Saves the UPS settings and watches the UPS with them at once: off, a UPS on USB through the box's own NUT server, or a UPS of another NUT server. On battery the box shuts down at the charge or runtime limit, when the UPS says its battery is low or when the server's primary forces it. */
+        put: operations["SetSystemUps"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/users": {
         parameters: {
             query?: never;
@@ -2969,6 +3504,57 @@ export type components = {
              */
             type: "ack";
         };
+        /** @description Settings &gt; Reverse proxy, the certificates from an ACME authority. */
+        AcmeAccount: {
+            /** @description The authority's directory URL. */
+            directory: string;
+            /** @description The contact address, or none. */
+            email: null | string;
+            /** @description The directory could be read just now. */
+            reachable: boolean;
+            /** @description An administrator agreed to the terms; hosts may use the authority. */
+            termsAgreed: boolean;
+            /** @description The authority's current terms of service, if its directory could be read. */
+            termsOfService: null | string;
+        };
+        /** @description New ACME settings. */
+        AcmeAccountRequest: {
+            /**
+             * @description The administrator agrees to the authority's current terms of service.
+             * @default false
+             */
+            agreeToTerms: boolean;
+            /** @description An `https` directory URL, or none for Let's Encrypt. */
+            directory?: null | string;
+            /** @description A contact address, or none. */
+            email?: null | string;
+        };
+        /** @description Where the certificate of a host from the ACME authority stands. */
+        AcmeCertificateStatus: {
+            /**
+             * Format: date-time
+             * @description When the box last asked the authority.
+             */
+            attemptedAt: null | string;
+            /** @description Why the last try failed (an error code of `proxy.acme.*`). */
+            errorCode: null | string;
+            /** @description Its parameters, for example the name and the authority's own words. */
+            errorParams: null | Record<string, never>;
+            /**
+             * Format: date-time
+             * @description The end of the certificate the host presents, if it has one.
+             */
+            notAfter: null | string;
+            /**
+             * Format: date-time
+             * @description When the box asks again by itself: before the end of the certificate, or later after failures.
+             */
+            retryAt: null | string;
+            /** @description A request to the authority runs now. */
+            running: boolean;
+            /** @description `pending` before the first certificate, `valid` or `failed` after the last try. */
+            status: string;
+        };
         /**
          * @description Which certificate the web interface and FTPS present.
          * @enum {unknown}
@@ -3018,7 +3604,8 @@ export type components = {
                 endpoints: string[];
                 /**
                  * @description Why a backend that is not running cannot start, which makes it `unavailable` (D360): `storage` (a required
-                 *     storage request is not mapped) or `pool` (the app pool is locked or missing); null otherwise.
+                 *     storage request is not mapped), `pool` (the app pool is locked or missing) or `device` (a required device is
+                 *     not plugged in, D387); null otherwise.
                  */
                 reason?: null | string;
                 /** @description `stopped`, `starting`, `running`, `updating` or `unavailable` (a start failed, a container is unhealthy or ended, or it cannot start, see Reason); the proxy reaches the backend while it is `running` or `unavailable` after a health check. */
@@ -3054,6 +3641,10 @@ export type components = {
             busy: boolean;
             /** @description The catalog it was installed or last updated from; null for a sideload. */
             catalog: null | string;
+            /** @description Each device of the manifest's elevated rights with whether it is optional and plugged in now (D387). */
+            devices: components["schemas"]["AppDeviceState"][];
+            /** @description Each elevated right of the manifest's `permissions` with its tier and whether it is granted (D311, D388). */
+            elevated: components["schemas"]["AppElevatedRight"][];
             /** @description Whether users can open it. */
             enabled: boolean;
             /** @description The app id. */
@@ -3091,12 +3682,46 @@ export type components = {
             /** @description The installed version. */
             version: string;
         };
+        /** @description A device an app's backend asks for (D387). */
+        AppDeviceState: {
+            /** @description The backend runs without it (`optional` on its right). */
+            optional: boolean;
+            /** @description The device or device class, for example `/dev/dri`. */
+            path: string;
+            /** @description At least one node of it is plugged in now. */
+            present: boolean;
+        };
         /** @description How the desktop looks for the user on every device. The theme (light, dark) is a choice of each device. */
         Appearance: {
             /** @description One of the accent presets: `petrol`, `ocean`, `indigo`, `plum`, `moss`, `graphite`. */
             accent: string;
             /** @description `boxes` (the Pithyx boxes) or `plain`. */
             wallpaper: string;
+        };
+        AppElevatedRequest: {
+            /** @description The app's id, sent once the administrator typed the app's name in the critical step; granting a critical right needs it (D388). */
+            confirmCritical?: null | string;
+            /** @description The administrator's password; granting a right of the tier high or critical needs a step-up (D311, D388), unless an earlier one of this session is valid. */
+            password?: null | string;
+            /** @description Elevated rights of the app's manifest with whether the app keeps them; the others stay as they are. */
+            rights: components["schemas"]["AppElevatedState"][];
+            /** @description A current authenticator code with the password, when two-factor sign-in is on. */
+            totpCode?: null | string;
+        };
+        /** @description An elevated right of an installed app as administrators see it (D311, D388). */
+        AppElevatedRight: {
+            /** @description False until an administrator grants it, and after one revoked it; the backend then runs without it. */
+            granted: boolean;
+            /** @description For example `host.network` or `device:/dev/dri`. */
+            right: string;
+            /** @description How much it can do on the box, from the compose rules: what granting it asks, and a critical right keeps the app from updating by itself. */
+            tier: components["schemas"]["RiskTier"];
+        };
+        AppElevatedState: {
+            /** @description False until an administrator grants it after a step-up, and after one revoked it; the backend then runs without it. */
+            granted: boolean;
+            /** @description For example `host.network` or `device:/dev/dri/renderD128`. */
+            right: string;
         };
         /** @description A file or folder an app reaches, with whether the app may write it. */
         AppFileEntry: {
@@ -3223,6 +3848,23 @@ export type components = {
                 };
                 /** @description The URL of the page the desktop loads in the sandboxed window, for example `/apps/com.example.chat/index.html`. */
                 entry: string;
+                /** @description The app's entries for the context menu of files and folders (D375). */
+                fileActions: {
+                    /** @description Lowercase extensions of the files it applies to; empty for none. */
+                    extensions: string[];
+                    /** @description Whether it applies to folders. */
+                    folders: boolean;
+                    /** @description Sent back to the app in `launch.action.id`. */
+                    id: string;
+                    /** @description The menu entry by language (`en` always). */
+                    label: {
+                        [key: string]: string;
+                    };
+                    /** @description Whether it takes several items at once. */
+                    multiple: boolean;
+                    /** @description Whether it writes into the folder of the selection. */
+                    writes: boolean;
+                }[];
                 /** @description The files the app opens, for "Open with". */
                 fileHandlers: {
                     /** @description Lowercase extensions without the dot, for example `png` or `tar.gz`. */
@@ -3292,6 +3934,31 @@ export type components = {
             /** @description Plain text from the app, 1 to 40 characters. */
             label: string;
         };
+        /** @description One kind of notification an app the user may open sends (D390). */
+        AppNotificationCategory: {
+            /** @description The app's id. */
+            app: string;
+            /** @description The app's name by language. */
+            appName: {
+                [key: string]: string;
+            };
+            /** @description Its description by language, if any. */
+            description: null | {
+                [key: string]: string;
+            };
+            /** @description The category's id in the manifest. */
+            id: string;
+            /** @description The user muted it. */
+            muted: boolean;
+            /** @description Its name by language. */
+            name: {
+                [key: string]: string;
+            };
+        };
+        /** @description The notification categories of the apps the user may open, by app and in manifest order. */
+        AppNotificationCategoryList: {
+            categories: components["schemas"]["AppNotificationCategory"][];
+        };
         /** @enum {unknown} */
         AppNotificationLevel: "info" | "success" | "warning" | "error" | null;
         /** @description Body of `POST /api/notifications/app`: a notification a core app sends through the SDK. */
@@ -3310,6 +3977,8 @@ export type components = {
             actions?: null | components["schemas"]["AppNotificationAction"][];
             /** @description Plain text, at most 1000 characters. */
             body?: null | string;
+            /** @description One of the manifest's `notifications.categories` (D390); a user who muted it gets the notification as read, without a toast or channel. */
+            category?: null | string;
             /** @description Any JSON the app gets back with a click, at most 4096 characters. */
             data?: unknown;
             level?: null | components["schemas"]["AppNotificationLevel"];
@@ -3327,10 +3996,14 @@ export type components = {
         AppPackagePreview: {
             /** @description What installing it does. */
             action: components["schemas"]["AppPackageAction"];
+            /** @description Elevated rights the package asks for that the app does not hold or had revoked (D311): installing grants them, so it needs a step-up with password and TOTP. */
+            addedElevated?: null | string[];
             /** @description Permissions the package asks for that the installed version did not (all of them for an install). */
             addedPermissions: string[];
             /** @description The catalog the package comes from; null for an uploaded file (a sideload, unverified). */
             catalog?: null | string;
+            /** @description Each device of the package's elevated rights with whether it is optional and plugged in now (D387): a missing required one refuses the install with `app.device.missing`, a missing optional one is only a hint. */
+            devices?: null | components["schemas"]["AppDeviceState"][];
             /**
              * Format: date-time
              * @description When it is discarded (UTC).
@@ -3361,11 +4034,13 @@ export type components = {
             packageId: string;
             /** @description The app pool, or null before the first app is installed (the install must name one then). */
             pool: null | string;
+            /** @description Elevated rights the installed version had that the package no longer asks for. */
+            removedElevated?: null | string[];
             /** @description Permissions the installed version had that the package no longer asks for. */
             removedPermissions: string[];
             /** @description SHA-256 of the package file, lowercase hex. */
             sha256: string;
-            /** @description Who should use the app after an install (D304): administrators only when it asks for elevated rights, root in a container or `directory.read`, everybody otherwise. An install without access takes it. */
+            /** @description Who should use the app after an install (D304): administrators only when it asks for elevated rights, root in a container or `directory.read`, or its `audience` is `admins` (D389), everybody otherwise. An install without access takes it. */
             suggestedAccess: components["schemas"]["AppAccess"];
             /**
              * Format: int64
@@ -3498,10 +4173,12 @@ export type components = {
         AppUpdate: {
             /** @description Permissions the new version asks for that the installed one did not. */
             addedPermissions: string[];
-            /** @description The next check installs it on its own: the policy is automatic and nothing new is asked for. */
+            /** @description The next check installs it on its own: the policy is automatic, nothing new is asked for and the app has no critical right. */
             automatic: boolean;
             /** @description The catalog that offers it. */
             catalog: string;
+            /** @description The app has a critical right (root on the box) or the new version asks for one, so it never updates by itself whatever the policy (D388). */
+            critical: boolean;
             /** @description It asks for root in a container or elevated rights it did not have. */
             elevated: boolean;
             /** @description The app. */
@@ -3510,6 +4187,10 @@ export type components = {
             installedVersion: string;
             /** @description The app's own policy, or the box's. */
             policy: components["schemas"]["UpdatePolicy"];
+            /** @description What is new in the new version by language, from its manifest's `releaseNotes` (D389), if it has them. */
+            releaseNotes: null | {
+                [key: string]: string;
+            };
             /** @description The newest version for this box. */
             version: string;
         };
@@ -3725,6 +4406,11 @@ export type components = {
          * @enum {unknown}
          */
         CertificateKeyType: "ecdsa" | "rsa";
+        /**
+         * @description How a channel delivers: an email through the box's SMTP server, or an HTTP POST.
+         * @enum {unknown}
+         */
+        ChannelKind: "email" | "webhook";
         /** @description A message from the client: `sub` or `unsub` for a topic or pattern. */
         ClientMessage: {
             /** @description Chosen by the client; echoed in the ack, snapshots and errors that answer this message. */
@@ -3843,7 +4529,9 @@ export type components = {
             /** Format: int32 */
             security: number;
         };
-        /** @description An app shortcut or a sticky note on the desktop, shared across the user's devices. */
+        /** @enum {unknown} */
+        DesktopFileTarget: "file" | "folder" | "missing" | null;
+        /** @description An app shortcut, a shortcut to a file or folder, or a sticky note on the desktop, shared across the user's devices. */
         DesktopItem: {
             /** @description Shortcuts: the id of the app it opens. */
             app: null | string;
@@ -3859,13 +4547,21 @@ export type components = {
             id: number;
             /** @description What the item is. */
             kind: components["schemas"]["DesktopItemKind"];
-            /** @description Shortcuts: the label the user gave it, or null for the app's name in the user's language. */
+            /** @description Shortcuts and files: the label the user gave it, or null for the app's or the target's own name. */
             name: null | string;
+            /** @description Files: the target's path in the share; it follows renames and moves made through the daemon. */
+            path?: null | string;
             /**
              * Format: int32
              * @description Grid row of the item.
              */
             row: number;
+            /**
+             * Format: int64
+             * @description Files: the shared folder or home of the target.
+             */
+            share?: null | number;
+            target?: null | components["schemas"]["DesktopFileTarget"];
             /** @description Notes: the text. */
             text: null | string;
             /**
@@ -3881,7 +4577,7 @@ export type components = {
              * @description New grid column.
              */
             column?: null | number;
-            /** @description Shortcuts: the new label; an empty string goes back to the app's name. */
+            /** @description Shortcuts and files: the new label; an empty string goes back to the app's or the target's name. */
             name?: null | string;
             /**
              * Format: int32
@@ -3892,7 +4588,7 @@ export type components = {
             text?: null | string;
         };
         /** @enum {unknown} */
-        DesktopItemKind: "shortcut" | "note";
+        DesktopItemKind: "shortcut" | "note" | "file";
         DesktopState: {
             /** @description Accent color and wallpaper of the user, the same on every device. */
             appearance: components["schemas"]["Appearance"];
@@ -4097,7 +4793,7 @@ export type components = {
             }[];
         };
         /** @enum {string} */
-        ErrorCode: "app.app.busy" | "app.app.no_previous" | "app.app.not_found" | "app.backend.endpoint_unknown" | "app.backend.missing" | "app.backend.start_failed" | "app.backend.storage_unavailable" | "app.backend.unavailable" | "app.backend.unsupported" | "app.compose.key_unsupported" | "app.compose.reference_unknown" | "app.compose.right_missing" | "app.compose.right_unused" | "app.compose.storage_mismatch" | "app.compose.value_invalid" | "app.compose.yaml_invalid" | "app.docker.unavailable" | "app.elevated.unsupported" | "app.icon.invalid" | "app.image.mismatch" | "app.image.unavailable" | "app.manifest.cron_invalid" | "app.manifest.duplicate" | "app.manifest.id_invalid" | "app.manifest.id_reserved" | "app.manifest.invalid_json" | "app.manifest.pithyx_invalid" | "app.manifest.reference_unknown" | "app.manifest.schema_violation" | "app.manifest.sdk_invalid" | "app.manifest.version_unsupported" | "app.manifest.window_size_invalid" | "app.mapping.invalid" | "app.package.box_too_old" | "app.package.downgrade_unsupported" | "app.package.invalid" | "app.package.layout_invalid" | "app.package.lock_invalid" | "app.package.not_found" | "app.package.too_large" | "app.permission.denied" | "app.permission.not_requested" | "app.pool.fixed" | "app.pool.required" | "app.pool.unavailable" | "app.storage.key_invalid" | "app.storage.not_found" | "app.storage.too_large" | "app.token.invalid" | "auth.account.disabled" | "auth.challenge.expired" | "auth.credentials.invalid" | "auth.csrf.header_missing" | "auth.desktop.not_allowed" | "auth.display_name.invalid" | "auth.password.too_common" | "auth.password.too_long" | "auth.password.too_short" | "auth.permission.denied" | "auth.rate.limited" | "auth.recovery.invalid" | "auth.session.expired" | "auth.setup.already_done" | "auth.totp.already_enabled" | "auth.totp.invalid" | "auth.totp.not_enrolled" | "auth.username.invalid" | "auth.username.reserved" | "desktop.device.not_found" | "desktop.file_default.invalid" | "desktop.file_default.limit_reached" | "desktop.item.conflict" | "desktop.item.invalid" | "desktop.item.limit_reached" | "desktop.item.not_found" | "desktop.layout.conflict" | "desktop.layout.invalid" | "desktop.layout.too_large" | "desktop.note.too_long" | "desktop.startup_apps.invalid" | "fileservices.service.unavailable" | "fileservices.workgroup.invalid" | "fs.cursor.invalid" | "fs.entry.access_denied" | "fs.entry.exists" | "fs.entry.is_folder" | "fs.entry.not_folder" | "fs.entry.not_found" | "fs.folder.not_empty" | "fs.io.failed" | "fs.name.invalid" | "fs.operation.into_itself" | "fs.operation.invalid" | "fs.path.invalid" | "fs.range.not_satisfiable" | "fs.share.data_choice_required" | "fs.share.dataset_name_invalid" | "fs.share.description_invalid" | "fs.share.exists" | "fs.share.folder_dev_only" | "fs.share.invalid" | "fs.share.name_mismatch" | "fs.share.name_reserved" | "fs.share.no_dataset" | "fs.share.not_found" | "fs.share.path_taken" | "fs.share.pool_not_prepared" | "fs.share.read_only" | "fs.share.unavailable" | "fs.thumbnail.not_found" | "fs.thumbnail.too_many" | "fs.trash.retention_invalid" | "fs.upload.incomplete" | "fs.version.not_found" | "fs.volume.full" | "fs.volume.read_only" | "homes.choice.invalid" | "homes.home.in_use" | "homes.home.name_mismatch" | "homes.home.not_found" | "homes.move.running" | "homes.pool.no_space" | "homes.pool.taken" | "homes.pool.unavailable" | "homes.pool.unchanged" | "homes.quota.invalid" | "installer.check.failed" | "installer.claim.required" | "installer.claim.taken" | "installer.disk.count" | "installer.disk.unsuitable" | "installer.erase.not_confirmed" | "installer.hostname.invalid" | "installer.install.failed" | "installer.install.running" | "installer.keyboard.invalid" | "installer.reboot.not_ready" | "jobs.job.not_found" | "logs.app.invalid" | "logs.archive.pool_unavailable" | "logs.batch.too_large" | "logs.query.invalid" | "logs.settings.invalid" | "network.address.invalid" | "network.apply.failed" | "network.bond.member_invalid" | "network.bond.members_missing" | "network.bond.primary_invalid" | "network.change.empty" | "network.change.not_found" | "network.change.pending" | "network.config.unreachable" | "network.default_interface.invalid" | "network.dns.invalid" | "network.dns.too_many" | "network.firewall.failed" | "network.gateway.invalid" | "network.global.not_changeable" | "network.host_name.invalid" | "network.interface.duplicate" | "network.interface.kind_invalid" | "network.interface.name_invalid" | "network.interface.not_changeable" | "network.interface.unknown" | "network.mtu.invalid" | "network.search_domain.invalid" | "network.search_domain.too_many" | "network.vlan.duplicate" | "network.vlan.id_invalid" | "network.vlan.parent_invalid" | "notifications.message.invalid" | "notifications.notification.not_found" | "permissions.grant.invalid" | "proxy.access.denied" | "proxy.address.denied" | "proxy.address.invalid" | "proxy.auth.required" | "proxy.basic_auth.invalid" | "proxy.basic_auth.password_missing" | "proxy.certificate.missing" | "proxy.certificate.name_mismatch" | "proxy.domain.invalid" | "proxy.domain.taken" | "proxy.domains.missing" | "proxy.domains.too_many" | "proxy.header.invalid" | "proxy.headers.too_many" | "proxy.host.not_found" | "proxy.host.unknown" | "proxy.limit.out_of_range" | "proxy.loop.detected" | "proxy.redirect.not_found" | "proxy.redirect.status_invalid" | "proxy.redirect.target_invalid" | "proxy.sign_in.address_invalid" | "proxy.sign_in.group_not_found" | "proxy.sign_in.user_not_found" | "proxy.stream.name_invalid" | "proxy.stream.not_found" | "proxy.stream.port_in_use" | "proxy.stream.port_privileged" | "proxy.stream.port_reserved" | "proxy.stream.port_taken" | "proxy.stream.protocol_missing" | "proxy.target.invalid" | "proxy.target.loop" | "proxy.target.on_box" | "proxy.target.timeout" | "proxy.target.unavailable" | "proxy.ticket.target_invalid" | "proxy.websockets.disabled" | "realtime.message.invalid" | "realtime.topic.invalid" | "realtime.topic.unknown" | "realtime.upgrade.required" | "request.body.invalid" | "request.media_type.unsupported" | "request.method.not_allowed" | "request.route.not_found" | "storage.alert.not_found" | "storage.command.failed" | "storage.command.timed_out" | "storage.dataset.compression_invalid" | "storage.dataset.exists" | "storage.dataset.in_use_by_share" | "storage.dataset.limit_invalid" | "storage.dataset.managed" | "storage.dataset.name_invalid" | "storage.dataset.name_mismatch" | "storage.dataset.not_found" | "storage.dataset.property_unsupported" | "storage.dataset.protected" | "storage.dataset.quota_below_used" | "storage.dataset.record_size_invalid" | "storage.dataset.reservation_too_large" | "storage.dataset.unchanged" | "storage.disk.not_found" | "storage.disk.refused" | "storage.encryption.unavailable" | "storage.import.device_unknown" | "storage.import.force_required" | "storage.import.not_found" | "storage.import.not_importable" | "storage.import.preview_required" | "storage.plan.action_invalid" | "storage.plan.expired" | "storage.plan.not_found" | "storage.plan.stale" | "storage.pool.disk_count" | "storage.pool.disks_missing" | "storage.pool.encryption_required" | "storage.pool.expanding" | "storage.pool.layout_invalid" | "storage.pool.name_invalid" | "storage.pool.name_mismatch" | "storage.pool.name_taken" | "storage.pool.not_found" | "storage.pool.not_prepared" | "storage.pool.read_only" | "storage.pool.suspended" | "storage.schedule.invalid" | "storage.scrub.not_running" | "storage.scrub.running" | "storage.snapshot.confirmation_mismatch" | "storage.snapshot.dataset_not_found" | "storage.snapshot.exists" | "storage.snapshot.held" | "storage.snapshot.newer_exist" | "storage.snapshot.not_found" | "storage.snapshot.not_pithyx" | "storage.snapshot.schedule_invalid" | "storage.vdev.not_found" | "storage.vdev.not_raidz" | "storage.volume.size_invalid" | "storage.volume.too_large" | "storage.zfs.unavailable" | "store.app.not_found" | "store.catalog.architecture_missing" | "store.catalog.built_in" | "store.catalog.busy" | "store.catalog.data_version_decreased" | "store.catalog.exists" | "store.catalog.id_reserved" | "store.catalog.invalid_json" | "store.catalog.mismatch" | "store.catalog.not_found" | "store.catalog.rule_violation" | "store.catalog.schema_violation" | "store.catalog.sequence_old" | "store.catalog.signature_invalid" | "store.catalog.unreachable" | "store.catalog.url_invalid" | "store.catalog.version_unsupported" | "store.package.hash_mismatch" | "system.backup.category_missing" | "system.backup.invalid" | "system.backup.password_wrong" | "system.backup.restore_expired" | "system.backup.restore_failed" | "system.backup.restore_running" | "system.backup.too_large" | "system.backup.too_new" | "system.internal.unexpected" | "system.origin.forbidden" | "system.time.apply_failed" | "system.time.server_invalid" | "system.time.servers_too_many" | "system.time.zone_invalid" | "tls.custom.expired" | "tls.custom.invalid" | "tls.custom.key_mismatch" | "tls.issued.not_found" | "tls.name.invalid" | "tls.name.not_permitted" | "tls.names.missing" | "tls.names.too_many" | "tls.validity.out_of_range" | "update.apply.failed" | "update.apply.running" | "update.channel.invalid" | "update.channel.mismatch" | "update.channel.sequence_old" | "update.channel.signature_invalid" | "update.download.mismatch" | "update.file.architecture" | "update.file.channel" | "update.file.hash_mismatch" | "update.file.invalid" | "update.file.minimum" | "update.file.missing_entry" | "update.file.not_found" | "update.file.older" | "update.file.signature_invalid" | "update.file.too_large" | "update.file.unexpected_entry" | "update.none.available" | "update.rollback.unconfirmed" | "update.snapshot.not_found" | "update.source.invalid" | "update.source.unreachable" | "update.space.insufficient" | "update.system.unsupported" | "users.account.refused" | "users.gid.exhausted" | "users.group.builtin" | "users.group.description_invalid" | "users.group.exists" | "users.group.name_invalid" | "users.group.name_reserved" | "users.group.not_found" | "users.group.refused" | "users.uid.exhausted" | "users.user.exists" | "users.user.last_admin" | "users.user.not_found" | "users.user.self";
+        ErrorCode: "app.app.busy" | "app.app.no_previous" | "app.app.not_found" | "app.arch.unsupported" | "app.backend.endpoint_unknown" | "app.backend.missing" | "app.backend.start_failed" | "app.backend.storage_unavailable" | "app.backend.unavailable" | "app.backend.unsupported" | "app.compose.key_unsupported" | "app.compose.reference_unknown" | "app.compose.right_missing" | "app.compose.right_unused" | "app.compose.storage_mismatch" | "app.compose.value_invalid" | "app.compose.yaml_invalid" | "app.device.missing" | "app.device.unavailable" | "app.docker.unavailable" | "app.elevated.backend_missing" | "app.elevated.confirmation_required" | "app.elevated.root_conflict" | "app.elevated.root_required" | "app.elevated.unsupported" | "app.icon.invalid" | "app.image.mismatch" | "app.image.unavailable" | "app.manifest.cron_invalid" | "app.manifest.duplicate" | "app.manifest.id_invalid" | "app.manifest.id_reserved" | "app.manifest.invalid_json" | "app.manifest.permission_missing" | "app.manifest.pithyx_invalid" | "app.manifest.reference_unknown" | "app.manifest.schema_violation" | "app.manifest.sdk_invalid" | "app.manifest.version_unsupported" | "app.manifest.window_size_invalid" | "app.mapping.invalid" | "app.package.box_too_old" | "app.package.downgrade_unsupported" | "app.package.invalid" | "app.package.layout_invalid" | "app.package.lock_invalid" | "app.package.not_found" | "app.package.too_large" | "app.permission.denied" | "app.permission.not_requested" | "app.pool.fixed" | "app.pool.required" | "app.pool.unavailable" | "app.storage.key_invalid" | "app.storage.not_found" | "app.storage.too_large" | "app.token.invalid" | "auth.account.disabled" | "auth.challenge.expired" | "auth.credentials.invalid" | "auth.csrf.header_missing" | "auth.desktop.not_allowed" | "auth.display_name.invalid" | "auth.passkey.invalid" | "auth.passkey.limit" | "auth.passkey.name_invalid" | "auth.passkey.not_found" | "auth.passkey.unavailable" | "auth.password.too_common" | "auth.password.too_long" | "auth.password.too_short" | "auth.permission.denied" | "auth.rate.limited" | "auth.recovery.invalid" | "auth.session.expired" | "auth.setup.already_done" | "auth.step_up.required" | "auth.totp.already_enabled" | "auth.totp.invalid" | "auth.totp.not_enrolled" | "auth.username.invalid" | "auth.username.reserved" | "desktop.device.not_found" | "desktop.file_default.invalid" | "desktop.file_default.limit_reached" | "desktop.item.conflict" | "desktop.item.invalid" | "desktop.item.limit_reached" | "desktop.item.not_found" | "desktop.layout.conflict" | "desktop.layout.invalid" | "desktop.layout.too_large" | "desktop.note.too_long" | "desktop.startup_apps.invalid" | "fileservices.service.unavailable" | "fileservices.workgroup.invalid" | "fs.cursor.invalid" | "fs.entry.access_denied" | "fs.entry.exists" | "fs.entry.is_folder" | "fs.entry.not_folder" | "fs.entry.not_found" | "fs.folder.not_empty" | "fs.io.failed" | "fs.name.invalid" | "fs.operation.into_itself" | "fs.operation.invalid" | "fs.path.invalid" | "fs.range.not_satisfiable" | "fs.share.data_choice_required" | "fs.share.dataset_name_invalid" | "fs.share.description_invalid" | "fs.share.exists" | "fs.share.folder_dev_only" | "fs.share.invalid" | "fs.share.name_mismatch" | "fs.share.name_reserved" | "fs.share.no_dataset" | "fs.share.not_found" | "fs.share.path_taken" | "fs.share.pool_not_prepared" | "fs.share.read_only" | "fs.share.unavailable" | "fs.thumbnail.not_found" | "fs.thumbnail.too_many" | "fs.trash.retention_invalid" | "fs.upload.incomplete" | "fs.version.not_found" | "fs.volume.full" | "fs.volume.read_only" | "homes.choice.invalid" | "homes.home.in_use" | "homes.home.name_mismatch" | "homes.home.not_found" | "homes.move.running" | "homes.pool.no_space" | "homes.pool.taken" | "homes.pool.unavailable" | "homes.pool.unchanged" | "homes.quota.invalid" | "installer.check.failed" | "installer.claim.required" | "installer.claim.taken" | "installer.disk.count" | "installer.disk.unsuitable" | "installer.erase.not_confirmed" | "installer.hostname.invalid" | "installer.install.failed" | "installer.install.running" | "installer.keyboard.invalid" | "installer.reboot.not_ready" | "jobs.job.not_found" | "logs.app.invalid" | "logs.archive.pool_unavailable" | "logs.batch.too_large" | "logs.query.invalid" | "logs.settings.invalid" | "network.address.invalid" | "network.apply.failed" | "network.bond.member_invalid" | "network.bond.members_missing" | "network.bond.primary_invalid" | "network.change.empty" | "network.change.not_found" | "network.change.pending" | "network.config.unreachable" | "network.default_interface.invalid" | "network.dns.invalid" | "network.dns.too_many" | "network.firewall.failed" | "network.gateway.invalid" | "network.global.not_changeable" | "network.host_name.invalid" | "network.interface.duplicate" | "network.interface.kind_invalid" | "network.interface.name_invalid" | "network.interface.not_changeable" | "network.interface.unknown" | "network.mtu.invalid" | "network.search_domain.invalid" | "network.search_domain.too_many" | "network.vlan.duplicate" | "network.vlan.id_invalid" | "network.vlan.parent_invalid" | "notifications.category.not_found" | "notifications.channel.failed" | "notifications.channel.invalid" | "notifications.channel.limit_reached" | "notifications.channel.not_found" | "notifications.event.unknown" | "notifications.language.unsupported" | "notifications.message.invalid" | "notifications.notification.not_found" | "notifications.smtp.invalid" | "notifications.smtp.missing" | "permissions.grant.invalid" | "proxy.access.denied" | "proxy.acme.caa" | "proxy.acme.connection" | "proxy.acme.directory_invalid" | "proxy.acme.dns" | "proxy.acme.email_invalid" | "proxy.acme.failed" | "proxy.acme.name_not_public" | "proxy.acme.name_rejected" | "proxy.acme.not_acme" | "proxy.acme.port_unavailable" | "proxy.acme.rate_limited" | "proxy.acme.running" | "proxy.acme.terms_required" | "proxy.acme.unauthorized" | "proxy.acme.unreachable" | "proxy.acme.wildcard" | "proxy.address.denied" | "proxy.address.invalid" | "proxy.auth.required" | "proxy.basic_auth.invalid" | "proxy.basic_auth.password_missing" | "proxy.certificate.missing" | "proxy.certificate.name_mismatch" | "proxy.domain.invalid" | "proxy.domain.taken" | "proxy.domains.missing" | "proxy.domains.too_many" | "proxy.header.invalid" | "proxy.headers.too_many" | "proxy.host.not_found" | "proxy.host.unknown" | "proxy.limit.out_of_range" | "proxy.loop.detected" | "proxy.redirect.not_found" | "proxy.redirect.status_invalid" | "proxy.redirect.target_invalid" | "proxy.sign_in.address_invalid" | "proxy.sign_in.group_not_found" | "proxy.sign_in.user_not_found" | "proxy.stream.name_invalid" | "proxy.stream.not_found" | "proxy.stream.port_in_use" | "proxy.stream.port_privileged" | "proxy.stream.port_reserved" | "proxy.stream.port_taken" | "proxy.stream.protocol_missing" | "proxy.target.invalid" | "proxy.target.loop" | "proxy.target.on_box" | "proxy.target.timeout" | "proxy.target.unavailable" | "proxy.ticket.target_invalid" | "proxy.websockets.disabled" | "realtime.message.invalid" | "realtime.topic.invalid" | "realtime.topic.unknown" | "realtime.upgrade.required" | "request.body.invalid" | "request.media_type.unsupported" | "request.method.not_allowed" | "request.route.not_found" | "storage.alert.not_found" | "storage.command.failed" | "storage.command.timed_out" | "storage.dataset.compression_invalid" | "storage.dataset.exists" | "storage.dataset.in_use_by_share" | "storage.dataset.limit_invalid" | "storage.dataset.managed" | "storage.dataset.name_invalid" | "storage.dataset.name_mismatch" | "storage.dataset.not_found" | "storage.dataset.property_unsupported" | "storage.dataset.protected" | "storage.dataset.quota_below_used" | "storage.dataset.record_size_invalid" | "storage.dataset.reservation_too_large" | "storage.dataset.unchanged" | "storage.disk.not_found" | "storage.disk.refused" | "storage.encryption.key_invalid" | "storage.encryption.key_required" | "storage.encryption.key_wrong" | "storage.encryption.not_in_vault" | "storage.encryption.unavailable" | "storage.encryption.vault_failed" | "storage.import.device_unknown" | "storage.import.force_required" | "storage.import.not_found" | "storage.import.not_importable" | "storage.import.preview_required" | "storage.plan.action_invalid" | "storage.plan.expired" | "storage.plan.not_found" | "storage.plan.stale" | "storage.pool.disk_count" | "storage.pool.disks_missing" | "storage.pool.encryption_required" | "storage.pool.expanding" | "storage.pool.layout_invalid" | "storage.pool.locked" | "storage.pool.name_invalid" | "storage.pool.name_mismatch" | "storage.pool.name_taken" | "storage.pool.not_encrypted" | "storage.pool.not_found" | "storage.pool.not_locked" | "storage.pool.not_prepared" | "storage.pool.read_only" | "storage.pool.suspended" | "storage.schedule.invalid" | "storage.scrub.not_running" | "storage.scrub.running" | "storage.snapshot.confirmation_mismatch" | "storage.snapshot.dataset_not_found" | "storage.snapshot.exists" | "storage.snapshot.held" | "storage.snapshot.newer_exist" | "storage.snapshot.not_found" | "storage.snapshot.not_pithyx" | "storage.snapshot.schedule_invalid" | "storage.usb.not_found" | "storage.usb.read_only" | "storage.usb.unreadable" | "storage.usb.write_failed" | "storage.vdev.not_found" | "storage.vdev.not_raidz" | "storage.volume.size_invalid" | "storage.volume.too_large" | "storage.zfs.unavailable" | "store.app.not_found" | "store.catalog.architecture_missing" | "store.catalog.built_in" | "store.catalog.busy" | "store.catalog.data_version_decreased" | "store.catalog.exists" | "store.catalog.id_reserved" | "store.catalog.invalid_json" | "store.catalog.mismatch" | "store.catalog.not_found" | "store.catalog.rule_violation" | "store.catalog.schema_violation" | "store.catalog.sequence_old" | "store.catalog.signature_invalid" | "store.catalog.unreachable" | "store.catalog.url_invalid" | "store.catalog.version_unsupported" | "store.package.hash_mismatch" | "system.backup.category_missing" | "system.backup.invalid" | "system.backup.password_wrong" | "system.backup.restore_expired" | "system.backup.restore_failed" | "system.backup.restore_running" | "system.backup.too_large" | "system.backup.too_new" | "system.internal.unexpected" | "system.origin.forbidden" | "system.time.apply_failed" | "system.time.server_invalid" | "system.time.servers_too_many" | "system.time.zone_invalid" | "system.ups.invalid" | "system.ups.unavailable" | "tls.custom.expired" | "tls.custom.invalid" | "tls.custom.key_mismatch" | "tls.issued.not_found" | "tls.name.invalid" | "tls.name.not_permitted" | "tls.names.missing" | "tls.names.too_many" | "tls.validity.out_of_range" | "update.apply.failed" | "update.apply.running" | "update.channel.invalid" | "update.channel.mismatch" | "update.channel.sequence_old" | "update.channel.signature_invalid" | "update.download.mismatch" | "update.file.architecture" | "update.file.channel" | "update.file.hash_mismatch" | "update.file.invalid" | "update.file.minimum" | "update.file.missing_entry" | "update.file.not_found" | "update.file.older" | "update.file.signature_invalid" | "update.file.too_large" | "update.file.unexpected_entry" | "update.none.available" | "update.rollback.unconfirmed" | "update.snapshot.not_found" | "update.source.invalid" | "update.source.unreachable" | "update.space.insufficient" | "update.system.unsupported" | "users.account.refused" | "users.gid.exhausted" | "users.group.builtin" | "users.group.description_invalid" | "users.group.exists" | "users.group.name_invalid" | "users.group.name_reserved" | "users.group.not_found" | "users.group.refused" | "users.uid.exhausted" | "users.user.exists" | "users.user.last_admin" | "users.user.not_found" | "users.user.self";
         /** @description A failed client message. `id` is empty when the message could not be parsed. */
         ErrorMessage: {
             code: components["schemas"]["ErrorCode"];
@@ -4588,8 +5284,16 @@ export type components = {
         };
         InstallAppRequest: {
             access?: null | components["schemas"]["AppAccess"];
+            /** @description The app's id, sent once the administrator typed the app's name in the critical step; granting a critical right needs it (D388). */
+            confirmCritical?: null | string;
+            /** @description For a package with new elevated rights: false installs it with them revoked instead. */
+            elevated?: null | boolean;
+            /** @description The administrator's password, for a package that asks for elevated rights it would get newly (D311); not needed while an earlier step-up of this session is valid. */
+            password?: null | string;
             /** @description The pool for the app data; required for the first app, and then always the app pool. */
             pool?: null | string;
+            /** @description A current authenticator code with the password, when two-factor sign-in is on. */
+            totpCode?: null | string;
         };
         /** @description A requirement the box must meet before the installation starts. */
         InstallerCheck: {
@@ -4875,6 +5579,21 @@ export type components = {
         LacpRate: "slow" | "fast";
         /** @enum {unknown} */
         LogArchiveState: "off" | "ready" | "unavailable";
+        /** @description How many warnings and errors a source logged in a time range. */
+        LogCount: {
+            /**
+             * Format: int64
+             * @description Entries of level error.
+             */
+            errors: number;
+            /** @description The source as the Log Center lists it (`daemon`, `system/&lt;service&gt;`, `app/&lt;id&gt;`). */
+            source: string;
+            /**
+             * Format: int64
+             * @description Entries of level warn.
+             */
+            warnings: number;
+        };
         /** @description One log entry of the daemon, a system service or an app. */
         LogEntry: {
             /** @description True when the entry comes from the archive on a pool. */
@@ -4924,6 +5643,43 @@ export type components = {
             entries: components["schemas"]["LogEntry"][];
             /** @description Pass as `cursor` for the next, older page; null when there is none. */
             nextCursor: null | string;
+        };
+        /**
+         * @description An event of the topic `system/logs`: the entries the daemon just wrote, so an open Log Center shows them live
+         *     without asking again (asking would log the request and so feed itself). The snapshot has none.
+         */
+        LogsAdded: {
+            /** @description The newest entries of one write, oldest first, at most 200. */
+            entries: {
+                /** @description True when the entry comes from the archive on a pool. */
+                archived: boolean;
+                /** @description Further fields (event name, error code, path, the app's own data), as text. */
+                data: null | {
+                    [key: string]: string;
+                };
+                /**
+                 * Format: int64
+                 * @description Stable within the current logs or the archive it comes from.
+                 */
+                id: number;
+                /** @enum {unknown} */
+                level: "debug" | "info" | "warn" | "error";
+                /** @description The rendered message; secrets are masked before it is stored. */
+                message: string;
+                /** @description The request id (W3C trace id) of the request that caused it, if any. */
+                requestId: null | string;
+                /** @description `daemon`, `system/&lt;service&gt;` (for example `system/kernel`, `system/smbd`) or `app/&lt;id&gt;`. */
+                source: string;
+                /**
+                 * Format: date-time
+                 * @description When it happened, UTC.
+                 */
+                time: string;
+                /** @description The user an app entry was written for, if any. */
+                user: null | string;
+            }[];
+            /** @description True when the write held more entries than the event carries; the Log Center then reloads. */
+            truncated: boolean;
         };
         /** @description Retention of the current logs on the system disk and of the optional archive on a pool. */
         LogSettings: {
@@ -5111,7 +5867,7 @@ export type components = {
             running: boolean;
         };
         NewDesktopItem: {
-            /** @description Shortcuts: the id of the app to open. Required for shortcuts, not allowed for notes. */
+            /** @description Shortcuts: the id of the app to open. Required for shortcuts, not allowed otherwise. */
             app?: null | string;
             /**
              * Format: int32
@@ -5120,14 +5876,21 @@ export type components = {
             column: number;
             /** @description What to create. */
             kind: components["schemas"]["DesktopItemKind"];
-            /** @description Shortcuts: an own label, or null for the app's name. */
+            /** @description Shortcuts and files: an own label, or null for the app's or the target's name. */
             name?: null | string;
+            /** @description Files: the target's path in the share; the user must be able to read it. */
+            path?: null | string;
             /**
              * Format: int32
              * @description Grid row.
              */
             row: number;
-            /** @description Notes: the text, at most 4000 characters. Required for notes, not allowed for shortcuts. */
+            /**
+             * Format: int64
+             * @description Files: the shared folder or home of the target. Required for files, not allowed otherwise.
+             */
+            share?: null | number;
+            /** @description Notes: the text, at most 4000 characters. Required for notes, not allowed otherwise. */
             text?: null | string;
         };
         NewFolderRequest: {
@@ -5141,6 +5904,13 @@ export type components = {
             memberIds?: null | number[];
             /** @description Lowercase letters, digits, underscores and hyphens, starting with a letter or underscore, at most 32 characters; not a system name. */
             name: string;
+        };
+        /** @description Response of `POST /api/storage/encryption/keys` and `POST /api/storage/pools/{pool}/key/reveal`. */
+        NewPoolKey: {
+            /** @description The same key as ZFS takes it (64 hex characters), to unlock the pool with `zfs load-key` without Pithyx. */
+            hex: string;
+            /** @description The key as the user stores it and types it into Pithyx: `PXPK-` and 56 characters in groups of four. */
+            key: string;
         };
         NewShare: {
             /** @description Letters, digits, spaces, dots, dashes and underscores, 1 to 64 characters, not starting with a dot. */
@@ -5192,6 +5962,85 @@ export type components = {
             /** @description How the desktop shows it. */
             tone: components["schemas"]["NotificationTone"];
         };
+        /**
+         * @description What a notification is about, so a channel can pick its events.
+         * @enum {unknown}
+         */
+        NotificationCategory: "storage" | "updates" | "backups" | "security" | "apps" | "system";
+        /** @description Body of `PUT /api/notifications/categories/{app}/{category}`. */
+        NotificationCategoryMuteRequest: {
+            /** @description Whether the user mutes the category. */
+            muted: boolean;
+        };
+        /** @description A channel that takes notifications beyond the desktop (D379). */
+        NotificationChannel: {
+            /** @description The events it gets. */
+            categories: components["schemas"]["NotificationCategory"][];
+            /** @description Off keeps it without sending. */
+            enabled: boolean;
+            /** @description Why the last delivery failed, until one works again. */
+            errorCode: null | string;
+            /** @description Its parameters. */
+            errorParams: null | Record<string, never>;
+            format: null | components["schemas"]["WebhookFormat"];
+            /** @description The names of the headers a webhook sends; their values never leave the box. */
+            headers: string[];
+            /**
+             * Format: int64
+             * @description Stable id.
+             */
+            id: number;
+            /** @description Email or webhook. */
+            kind: components["schemas"]["ChannelKind"];
+            /**
+             * Format: date-time
+             * @description When it last delivered something.
+             */
+            lastSentAt: null | string;
+            /** @description The least serious notification it gets. */
+            minLevel: components["schemas"]["NotificationLevel"];
+            /** @description The name its owner gave it. */
+            name: string;
+            /** @description The addresses of an email channel. */
+            recipients: string[];
+            /** @description The address of a webhook. */
+            url: null | string;
+        };
+        /** @description A user's channels or those of the box. */
+        NotificationChannelList: {
+            /** @description An administrator set up the SMTP server, so email channels can send. */
+            emailAvailable: boolean;
+            /** @description The channels, oldest first. */
+            items: components["schemas"]["NotificationChannel"][];
+            /**
+             * Format: int32
+             * @description How many channels there may be.
+             */
+            max: number;
+        };
+        /** @description A new or changed channel. */
+        NotificationChannelRequest: {
+            /** @description The events it gets; at least one. */
+            categories?: null | components["schemas"]["NotificationCategory"][];
+            /**
+             * @description Defaults to on.
+             * @default true
+             */
+            enabled: boolean;
+            format?: null | components["schemas"]["WebhookFormat"];
+            /** @description For a webhook: at most 10 headers. */
+            headers?: null | components["schemas"]["WebhookHeader"][];
+            /** @description Email or webhook; it cannot change later. */
+            kind: components["schemas"]["ChannelKind"];
+            /** @description Defaults to `warning`. */
+            minLevel?: components["schemas"]["NotificationLevel"];
+            /** @description 1 to 60 characters. */
+            name: string;
+            /** @description For email: 1 to 10 addresses. */
+            recipients?: null | string[];
+            /** @description For a webhook: an `http` or `https` address, never one of the box itself. */
+            url?: null | string;
+        };
         /** @description Event of the `notifications` topic. Only the user whose notifications changed receives it. */
         NotificationEvent: {
             /**
@@ -5242,10 +6091,83 @@ export type components = {
              */
             readAt: null | string;
         };
+        /** @description Body of `PUT /api/notifications/language`. */
+        NotificationLanguageRequest: {
+            /** @description The language the user's desktop uses, `en` or `de`. */
+            language: string;
+        };
+        /**
+         * @description How serious a notification is: from its tone, critical is `error`, a warning `warning`, the rest `info`.
+         * @enum {unknown}
+         */
+        NotificationLevel: "info" | "warning" | "error";
         /** @description Snapshot of the `notifications` topic and answer of `GET /api/notifications`. */
         NotificationList: {
             /** @description The signed-in user's notifications, newest first; at most 200, none older than 30 days. */
             items: components["schemas"]["Notification"][];
+        };
+        /** @description Settings &gt; Notifications, the matrix of events by the desktop and the box's channels (D407). */
+        NotificationMatrix: {
+            /** @description One cell per event and column: the desktop first, then each channel. */
+            cells: components["schemas"]["NotificationMatrixCell"][];
+            /** @description The box's channels. */
+            channels: components["schemas"]["NotificationMatrixChannel"][];
+            /** @description Every event the box reports to its administrators, in display order. */
+            events: components["schemas"]["NotificationMatrixEvent"][];
+        };
+        /** @description Whether a column gets an event. */
+        NotificationMatrixCell: {
+            /** @description An administrator set it; otherwise it is the default (the desktop gets everything, a channel what its categories and least level take). */
+            changed: boolean;
+            /**
+             * Format: int64
+             * @description The channel's id, or null for the administrators' desktop.
+             */
+            channel: null | number;
+            /** @description It gets the event. */
+            enabled: boolean;
+            /** @description The event's code. */
+            event: string;
+        };
+        /** @description A cell to set. */
+        NotificationMatrixChange: {
+            /**
+             * Format: int64
+             * @description A channel of the box, or null for the administrators' desktop.
+             */
+            channel: null | number;
+            /** @description Whether it gets the event. */
+            enabled: boolean;
+            /** @description The event's code. */
+            event: string;
+        };
+        /** @description A column of the notification matrix: one of the box's channels. */
+        NotificationMatrixChannel: {
+            /** @description Off sends nothing, whatever its cells say. */
+            enabled: boolean;
+            /**
+             * Format: int64
+             * @description The channel's id.
+             */
+            id: number;
+            /** @description Email or webhook. */
+            kind: components["schemas"]["ChannelKind"];
+            /** @description Its name. */
+            name: string;
+        };
+        /** @description A row of the notification matrix (D407). */
+        NotificationMatrixEvent: {
+            /** @description What it is about. */
+            category: components["schemas"]["NotificationCategory"];
+            /** @description The event's notification code; its texts are under `notifications.json`. */
+            code: string;
+            /** @description How serious it usually is. */
+            level: components["schemas"]["NotificationLevel"];
+        };
+        /** @description Body of `PUT /api/system/notifications/matrix`. */
+        NotificationMatrixRequest: {
+            /** @description The cells to set; the others stay. */
+            cells: components["schemas"]["NotificationMatrixChange"][];
         };
         /**
          * @description How a notification looks: the color of its card and toast.
@@ -5268,6 +6190,51 @@ export type components = {
              * @description Size in bytes.
              */
             sizeBytes: number;
+        };
+        PasskeyCreateRequest: {
+            /** @description From the options. */
+            ceremony: string;
+            /** @description The answer of `navigator.credentials.create` as JSON (`RegistrationResponseJSON`). */
+            credential: components["schemas"]["JsonElement"];
+            /** @description 1 to 64 characters. */
+            name: string;
+        };
+        /** @description A passkey of the signed-in user (D380). */
+        PasskeyInfo: {
+            /** @description Whether the authenticator syncs it to other devices. */
+            backedUp: boolean;
+            /** @description UTC. */
+            createdAt: string;
+            /**
+             * Format: int64
+             * @description Stable id.
+             */
+            id: number;
+            /** @description UTC, or null before its first sign-in. */
+            lastUsedAt: null | string;
+            /** @description The name the user gave it, such as the device it lives on. */
+            name: string;
+            /** @description The name of the box it belongs to: it works only where the box is opened under this name. */
+            rpId: string;
+        };
+        PasskeyList: {
+            items: components["schemas"]["PasskeyInfo"][];
+        };
+        PasskeyOptions: {
+            /** @description Pass back with the authenticator's answer within five minutes; it is used once. */
+            ceremony: string;
+            /** @description The WebAuthn options as JSON (`PublicKeyCredentialCreationOptionsJSON` or `PublicKeyCredentialRequestOptionsJSON`). */
+            options: components["schemas"]["JsonElement"];
+        };
+        PasskeyOptionsRequest: {
+            /** @description The current password: a new passkey signs in without it. */
+            password: string;
+        };
+        PasskeySignInRequest: {
+            /** @description From the sign-in options. */
+            ceremony: string;
+            /** @description The answer of `navigator.credentials.get` as JSON (`AuthenticationResponseJSON`). */
+            credential: components["schemas"]["JsonElement"];
         };
         PasswordReset: {
             /** @description The new password, with the same rules as everywhere. */
@@ -5325,6 +6292,7 @@ export type components = {
              * @description Number of files with permanent errors.
              */
             dataErrors: number;
+            encryption?: null | components["schemas"]["PoolEncryption"];
             /** @description A RAID-Z expansion (OpenZFS 2.3): a disk attached to a raidz vdev, onto which ZFS spreads the existing data. */
             expansion?: null | components["schemas"]["PoolExpansion"];
             /**
@@ -5354,6 +6322,28 @@ export type components = {
             /** @description Top-level vdevs, including log, cache, special and spare devices. */
             vdevs: components["schemas"]["Vdev"][];
         };
+        PoolEncryption: {
+            /** @description True when the key vault on the system disk holds its key, so the box unlocks it at start. */
+            keyInVault: boolean;
+            /** @description True while its key is not loaded: its datasets are not mounted, and its shares, homes and apps are unavailable. */
+            locked: boolean;
+            /**
+             * @description True when the key on a USB stick unlocked it since the last start: the stick may be pulled, the pool stays unlocked until the next start.
+             * @default false
+             */
+            unlockedFromUsb: boolean;
+            /**
+             * @description True when a key file on a USB stick was tried and did not unlock the pool (an older key or damaged): the pool waits for another stick or the typed key.
+             * @default false
+             */
+            usbFailed: boolean;
+            usbKey?: null | components["schemas"]["PoolUsbKey"];
+            /**
+             * @description True when the vault's key was tried and did not unlock the pool (wrong, unreadable or damaged): the pool waits for its key to be typed.
+             * @default false
+             */
+            vaultFailed: boolean;
+        };
         /** @description A RAID-Z expansion (OpenZFS 2.3): a disk attached to a raidz vdev, onto which ZFS spreads the existing data. */
         PoolExpansion: {
             /**
@@ -5382,6 +6372,36 @@ export type components = {
             vdevGuid: null | string;
             /** @description True while it waits for a resilver to finish. */
             waitingForResilver: boolean;
+        };
+        /** @description Request of `POST /api/storage/pools/{pool}/key`. */
+        PoolKeyChange: {
+            /** @description True to keep the new key in the key vault; false removes the old one from it. */
+            keepInVault: boolean;
+            /** @description The new key from `POST /api/storage/encryption/keys`, after the user stored it. */
+            key: string;
+        };
+        /** @description Request of `POST /api/storage/pools/{pool}/key/reveal`: the signed-in administrator's credentials again. */
+        PoolKeyRevealRequest: {
+            /** @description The administrator's password. */
+            password: string;
+            /** @description A current code of the authenticator app, required when the administrator has two-factor sign-in on. */
+            totpCode?: null | string;
+        };
+        /** @description Request of `POST /api/storage/pools/{pool}/key/usb` (D385). */
+        PoolKeyUsbRequest: {
+            /** @description The stick's file system, `device` of `GET /api/storage/usb-sticks`. */
+            device: string;
+            /** @description The pool's key as typed, or null to take it from the key vault, which needs `password` again. */
+            key?: null | string;
+            /** @description Without a typed key: the administrator's password. */
+            password?: null | string;
+            /**
+             * @description Afterwards take the key out of the key vault, so the stick (or the typed key) unlocks the pool at start.
+             * @default false
+             */
+            removeFromVault: boolean;
+            /** @description Without a typed key: a current authenticator code, required when the administrator has two-factor sign-in on. */
+            totpCode?: null | string;
         };
         /** @description Snapshot and event of `storage/pools`, and response of `GET /api/storage/pools`. */
         PoolList: {
@@ -5420,6 +6440,28 @@ export type components = {
              * @description Bytes the scan covers.
              */
             toExamineBytes: number;
+        };
+        /** @description Request of `POST /api/storage/pools/{pool}/unlock`. */
+        PoolUnlockRequest: {
+            /**
+             * @description With a typed key: keep it in the key vault once it opened the pool (on an unlocked pool once it is checked), so the box unlocks the pool at start.
+             * @default false
+             */
+            keepInVault: boolean;
+            /** @description The pool's key as typed, or null to take it from the key vault. */
+            key?: null | string;
+        };
+        /** @description Where a pool's key was written to a USB stick; no secret, kept beside the key vault and never in a backup. */
+        PoolUsbKey: {
+            /** @description The stick's serial number, if it has one. */
+            serial: null | string;
+            /** @description How the stick was named then: its label, else vendor and model. */
+            stick: string;
+            /**
+             * Format: date-time
+             * @description When the key was written.
+             */
+            writtenAt: string;
         };
         /**
          * @description What the power button does.
@@ -5471,7 +6513,7 @@ export type components = {
          * @description Which certificate a host presents on 443.
          * @enum {unknown}
          */
-        ProxyCertificateSource: "box" | "custom";
+        ProxyCertificateSource: "box" | "custom" | "acme";
         /** @description A header the proxy sets; an empty value removes it. */
         ProxyHeader: {
             /** @description The header's name, letters, digits and `-`; never one the proxy controls itself. */
@@ -5483,6 +6525,8 @@ export type components = {
         ProxyHost: {
             /** @description Requests are logged. */
             accessLog: boolean;
+            /** @description Where the certificate of a host from the ACME authority stands. */
+            acme: null | components["schemas"]["AcmeCertificateStatus"];
             /** @description Only these get in, or everybody when empty. */
             allowAddresses: string[];
             /** @description The user names of the Basic Auth; passwords are never shown. */
@@ -5619,6 +6663,8 @@ export type components = {
         };
         /** @description A redirect host as Settings shows it. */
         ProxyRedirect: {
+            /** @description Where the certificate of a host from the ACME authority stands. */
+            acme: null | components["schemas"]["AcmeCertificateStatus"];
             /** @description Which certificate it presents. */
             certificate: components["schemas"]["ProxyCertificateSource"];
             /**
@@ -6183,6 +7229,11 @@ export type components = {
             /** @description The parts that were restored. */
             restored: components["schemas"]["BackupCategory"][];
         };
+        /**
+         * @description How much an elevated right can do on the box, and so how much granting it asks (D388).
+         * @enum {unknown}
+         */
+        RiskTier: "elevated" | "high" | "critical";
         RollbackRequest: {
             /** @description The snapshot to restore. */
             snapshot: string;
@@ -6457,6 +7508,71 @@ export type components = {
              */
             uncorrectableSectors: null | number;
         };
+        /** @description A new SMTP server, or none. */
+        SmtpRequest: {
+            /** @description The sender address. */
+            from?: null | string;
+            /** @description Empty removes the server. */
+            host: null | string;
+            /** @description A new password; null keeps the saved one, empty removes it. */
+            password?: null | string;
+            /**
+             * Format: int32
+             * @description 1 to 65535; defaults to 587.
+             * @default 587
+             */
+            port: number;
+            /** @description Defaults to STARTTLS. */
+            security?: components["schemas"]["SmtpSecurity"];
+            /** @description The sign-in name, or none. */
+            username?: null | string;
+        };
+        /**
+         * @description How the box talks to its SMTP server.
+         * @enum {unknown}
+         */
+        SmtpSecurity: "tls" | "startTls" | "none";
+        /** @description Settings &gt; Notifications, the SMTP server, without its password. */
+        SmtpStatus: {
+            /** @description A server is set; email channels can send. */
+            configured: boolean;
+            /** @description The sender address. */
+            from: null | string;
+            /** @description The server's name or address. */
+            host: null | string;
+            /** @description A password is saved. */
+            passwordSet: boolean;
+            /**
+             * Format: int32
+             * @description Its port.
+             */
+            port: number;
+            /** @description How the box talks to it. */
+            security: components["schemas"]["SmtpSecurity"];
+            /** @description The sign-in name, if it needs one. */
+            username: null | string;
+        };
+        /** @description Body of `POST /api/system/notifications/smtp/test`: the server as it is in the form, and where to send. */
+        SmtpTestRequest: {
+            /** @description The sender address. */
+            from?: null | string;
+            /** @description The server's name or address. */
+            host: null | string;
+            /** @description The password; null takes the saved one, empty sends without. */
+            password?: null | string;
+            /**
+             * Format: int32
+             * @description 1 to 65535; defaults to 587.
+             * @default 587
+             */
+            port: number;
+            /** @description Defaults to STARTTLS. */
+            security?: components["schemas"]["SmtpSecurity"];
+            /** @description The address that gets the test email. */
+            to: null | string;
+            /** @description The sign-in name, or none. */
+            username?: null | string;
+        };
         Snapshot: {
             /**
              * Format: date-time
@@ -6587,6 +7703,19 @@ export type components = {
             /** @description App ids in the order they open, each once, at most int StartupApps.Max. Empty opens nothing. */
             apps: string[];
         };
+        StepUpRequest: {
+            /** @description The signed-in user's password. */
+            password: string;
+            /** @description A current authenticator code, when two-factor sign-in is on. */
+            totpCode?: null | string;
+        };
+        StepUpState: {
+            /**
+             * Format: date-time
+             * @description Until when the session holds a step-up (UTC), or null.
+             */
+            until: null | string;
+        };
         /** @description A storage problem that exists now. Alerts are derived from the current state, never stored. */
         StorageAlert: {
             /** @description Message code in the `notifications` namespace (`&lt;code&gt;.title`, `.body`, `.action`). */
@@ -6665,9 +7794,9 @@ export type components = {
         };
         /**
          * @description A destructive storage action to plan. Which fields an action needs: `pool.create` Pool, Layout, DiskIds,
-         *     Encryption (and Confirmations for disks that are not empty); `pool.destroy` Pool and ConfirmName;
+         *     Encryption (with EncryptionKey and KeepKeyInVault for `key`, and Confirmations for disks that are not empty); `pool.destroy` Pool and ConfirmName;
          *     `pool.replace` Pool, Vdev and one disk in DiskIds with its serial in Confirmations; `pool.spare.add` Pool
-         *     and one disk; `pool.spare.remove`, `pool.offline` and `pool.online` Pool and Vdev;
+         *     and one disk; `pool.spare.remove` Pool and Vdev;
          *     `pool.import.readonly` PoolGuid from the import scan, NewName when the name is taken, and Force with the pool
          *     name in ConfirmName when the scan says `needsForce`; `pool.import` Pool (imported read-only), and Force with
          *     ConfirmName to force it; `pool.export` Pool; `pool.vdev.add` Pool, Layout (`single`, `mirror`,
@@ -6679,7 +7808,7 @@ export type components = {
          *     Name; `snapshot.rollback` Pool, Dataset, the snapshot's Name and the dataset's full name in ConfirmName.
          */
         StoragePlanRequest: {
-            /** @description `pool.create`, `pool.destroy`, `pool.replace`, `pool.spare.add`, `pool.spare.remove`, `pool.offline`, `pool.online`, `pool.import.readonly`, `pool.import`, `pool.export`, `pool.vdev.add`, `pool.raidz.expand`, `dataset.rename`, `dataset.set`, `dataset.destroy`, `volume.create`, `snapshot.destroy` or `snapshot.rollback`. */
+            /** @description `pool.create`, `pool.destroy`, `pool.replace`, `pool.spare.add`, `pool.spare.remove`, `pool.import.readonly`, `pool.import`, `pool.export`, `pool.vdev.add`, `pool.raidz.expand`, `dataset.rename`, `dataset.set`, `dataset.destroy`, `volume.create`, `snapshot.destroy` or `snapshot.rollback`. */
             action: string;
             /** @description New compression: `off`, `lz4`, `zle`, `zstd`, `zstd-1` to `zstd-19`, `gzip`, `gzip-1` to `gzip-9`; null leaves it. */
             compression?: null | string;
@@ -6693,10 +7822,14 @@ export type components = {
             dataset?: null | string;
             /** @description The disks to use, by id. */
             diskIds?: null | string[];
-            /** @description The answer to the encryption question of a new pool: `none`, or `key` once the key vault exists. */
+            /** @description The answer to the encryption question of a new pool: `none`, or `key` to encrypt it with EncryptionKey (D384). */
             encryption?: null | string;
+            /** @description For `encryption: key`: the new pool's key from `POST /api/storage/encryption/keys`, after the user stored it. */
+            encryptionKey?: null | string;
             /** @description For imports: import a pool that was last used by another system; needs ConfirmName. */
             force?: null | boolean;
+            /** @description For `encryption: key`: true to keep the key in the key vault on the system disk, so the box unlocks the pool at start; false to unlock it by hand after every start. */
+            keepKeyInVault?: null | boolean;
             /** @description `single`, `stripe`, `mirror`, `mirrors` (pairs), `raidz1`, `raidz2` or `raidz3`. */
             layout?: null | string;
             /** @description Name of a new volume (one path component), or the snapshot after `@` for the snapshot actions. Shared folders are created with `POST /api/shares/plans`. */
@@ -6729,7 +7862,7 @@ export type components = {
             sizeBytes?: null | number;
             /** @description True for a volume that reserves no space up front. */
             sparse?: null | boolean;
-            /** @description GUID of the device to replace, take offline, bring online or remove, or of the raidz vdev to expand. */
+            /** @description GUID of the device to replace or remove, or of the raidz vdev to expand. */
             vdev?: null | string;
         };
         StorageSchedule: {
@@ -6763,12 +7896,16 @@ export type components = {
             /** @description The pool name for scrubs; empty for self-tests. */
             target: string;
         };
-        /** @description An app of a catalog, at the newest version this box can run. */
+        /** @description An app of a catalog, at the newest version this box can run, or at its newest version when it can run none. */
         StoreApp: {
             /** @description The author's name, if the manifest has one. */
             author: null | string;
             /** @description The catalog's id. */
             catalog: string;
+            /** @description Its categories from the manifest (D389), empty without. */
+            categories: string[];
+            /** @description Version asks for a critical right (root on the box), shown as the badge Root access before the install (D388). */
+            critical: boolean;
             /** @description Descriptions by language, if any. */
             description: null | {
                 [key: string]: string;
@@ -6777,28 +7914,39 @@ export type components = {
             icon: string;
             /** @description The app id. */
             id: string;
+            /** @description Why this box cannot install a catalog version, with what the user needs to know (D393). */
+            incompatible: null | components["schemas"]["StoreIncompatible"];
             /** @description The installed version, if the app is installed. */
             installedVersion: null | string;
+            /** @description Its search words from the manifest, empty without. */
+            keywords: string[];
             /** @description The catalog's kind; custom ones are unverified. */
             kind: components["schemas"]["CatalogKind"];
             /** @description The SPDX license. */
             license: string;
+            /** @description Its maturity: `stable` (also without the field), `beta` or `experimental`. */
+            maturity: string;
             /** @description Names by language. */
             name: {
                 [key: string]: string;
             };
-            /** @description The installed app is older than Version. */
+            /**
+             * Format: date-time
+             * @description When the catalog published Version, for the Store's new and updated apps.
+             */
+            publishedAt: string;
+            /** @description The installed app is older than Version and the box can install it. */
             update: boolean;
-            /** @description The newest version for this box. */
+            /** @description The newest version for this box, or the newest version when the box can run none. */
             version: string;
         };
         /** @description The detail page of a catalog app. */
         StoreAppDetails: {
-            /** @description The app at its newest fitting version. */
+            /** @description The app at its newest fitting version, or at its newest version with why it does not fit. */
             app: components["schemas"]["StoreApp"];
             /** @description The manifest's homepage, if any. */
             homepage: null | string;
-            /** @description That version's manifest. */
+            /** @description That version's manifest; of another manifest version when `App.Incompatible` says so. */
             manifest: components["schemas"]["JsonElement"];
             /** @description URLs of its screenshots, in order. */
             screenshots: string[];
@@ -6818,8 +7966,10 @@ export type components = {
              * @description Its data version, if it declares one.
              */
             dataVersion: null | number;
-            /** @description This box can install it (its version and architecture). */
+            /** @description This box can install it (its version, architecture and manifest version). */
             fits: boolean;
+            /** @description Why this box cannot install a catalog version, with what the user needs to know (D393). */
+            incompatible: null | components["schemas"]["StoreIncompatible"];
             /** @description The range of Pithyx versions it runs on. */
             pithyx: string;
             /**
@@ -6835,6 +7985,29 @@ export type components = {
          * @enum {unknown}
          */
         StoreChannel: "stable" | "beta";
+        /** @description Why this box cannot install a catalog version, with what the user needs to know (D393). */
+        StoreIncompatible: {
+            /** @description The architectures the version is built for. */
+            architectures: string[];
+            /** @description The box's architecture. */
+            boxArchitecture: string;
+            /** @description The box's Pithyx version. */
+            boxVersion: string;
+            /**
+             * Format: int32
+             * @description The version's manifest version.
+             */
+            manifestVersion: null | number;
+            /** @description The range of Pithyx versions the version runs on. */
+            pithyx: string;
+            /** @description The reason. */
+            reason: components["schemas"]["StoreIncompatibleReason"];
+        };
+        /**
+         * @description Why this box cannot install a catalog version (D393).
+         * @enum {unknown}
+         */
+        StoreIncompatibleReason: "box" | "architecture" | "manifestOld" | "manifestNew";
         /** @description The Store's settings (D329). */
         StoreSettings: {
             /** @description The branch every catalog is read from. */
@@ -7075,10 +8248,12 @@ export type components = {
             "storage/snapshots": components["schemas"]["SnapshotChanges"];
             "store/admin": components["schemas"]["StoreState"];
             "system/info": components["schemas"]["SystemInfo"];
+            "system/logs": components["schemas"]["LogsAdded"];
             "system/network": components["schemas"]["NetworkState"];
             "system/processes": components["schemas"]["ProcessList"];
             "system/resources": components["schemas"]["ResourceSample"];
             "system/updates": components["schemas"]["UpdateStatus"];
+            "system/ups": components["schemas"]["UpsStatus"];
             "thumbnails/+/+": components["schemas"]["ThumbnailsReady"];
         };
         TopicSnapshots: {
@@ -7097,10 +8272,12 @@ export type components = {
             "storage/snapshots": components["schemas"]["SnapshotChanges"];
             "store/admin": components["schemas"]["StoreState"];
             "system/info": components["schemas"]["SystemInfo"];
+            "system/logs": components["schemas"]["LogsAdded"];
             "system/network": components["schemas"]["NetworkState"];
             "system/processes": components["schemas"]["ProcessList"];
             "system/resources": components["schemas"]["ResourceSnapshot"];
             "system/updates": components["schemas"]["UpdateStatus"];
+            "system/ups": components["schemas"]["UpsStatus"];
             "thumbnails/+/+": components["schemas"]["ThumbnailWatch"];
         };
         TotpConfirmRequest: {
@@ -7307,6 +8484,153 @@ export type components = {
             supported: boolean;
             unsupportedReason: null | string;
         };
+        /**
+         * @description Whether the box reaches its UPS.
+         * @enum {unknown}
+         */
+        UpsConnection: "off" | "connecting" | "connected" | "unreachable";
+        /**
+         * @description Where the box reads its UPS from (D377): nowhere, a UPS on USB through the box's own NUT server, or another NUT server.
+         * @enum {unknown}
+         */
+        UpsMode: "off" | "usb" | "network";
+        /**
+         * @description Where the UPS takes its power from.
+         * @enum {unknown}
+         */
+        UpsPower: "unknown" | "online" | "onBattery";
+        /** @description New UPS settings; a missing field keeps its value. */
+        UpsSettingsRequest: {
+            /**
+             * Format: int32
+             * @description The charge limit in percent, 5 to 90.
+             */
+            batteryLow?: null | number;
+            /** @description The NUT server of a network UPS (a host name or an address); required for the mode `network`. */
+            host?: null | string;
+            /** @description Off, a UPS on USB, or a UPS of another NUT server. */
+            mode: components["schemas"]["UpsMode"];
+            /** @description The UPS's name on that server: letters, digits, dot, dash and underscore, up to 64. */
+            name?: null | string;
+            /** @description A new password; an empty one removes it, a missing one keeps it. */
+            password?: null | string;
+            /**
+             * Format: int32
+             * @description Its port, 1 to 65535.
+             */
+            port?: null | number;
+            /**
+             * Format: int32
+             * @description The runtime limit in minutes, 1 to 60.
+             */
+            runtimeLow?: null | number;
+            /** @description The NUT user, empty for none; no spaces or quotes, up to 64. */
+            username?: null | string;
+        };
+        /** @description The UPS settings as administrators see them. */
+        UpsSettingsView: {
+            /**
+             * Format: int32
+             * @description On battery, the box shuts down at or below this charge in percent (5 to 90).
+             */
+            batteryLow: number;
+            /** @description Whether a password is saved; the password itself is never sent. */
+            hasPassword: boolean;
+            /** @description The NUT server of a network UPS. */
+            host: string;
+            /** @description Off, a UPS on USB, or a UPS of another NUT server. */
+            mode: components["schemas"]["UpsMode"];
+            /** @description The UPS's name on that server. */
+            name: string;
+            /**
+             * Format: int32
+             * @description Its port, 3493 unless set.
+             */
+            port: number;
+            /**
+             * Format: int32
+             * @description On battery, the box shuts down at or below this many minutes of runtime left (1 to 60).
+             */
+            runtimeLow: number;
+            /** @description The NUT user the box signs in with, empty for none. */
+            username: string;
+        };
+        /** @description What the box knows about its UPS right now. */
+        UpsState: {
+            /**
+             * Format: int32
+             * @description Battery charge in percent, if the UPS reports it.
+             */
+            charge: null | number;
+            /** @description Off, connecting, connected or unreachable; while unreachable the other values are the last ones read. */
+            connection: components["schemas"]["UpsConnection"];
+            /**
+             * Format: int32
+             * @description Load in percent of the UPS's capacity, if the UPS reports it.
+             */
+            load: null | number;
+            /** @description The UPS says its battery is low. */
+            lowBattery: boolean;
+            /** @description Manufacturer and model, if the UPS reports them. */
+            model: null | string;
+            /**
+             * Format: date-time
+             * @description When the UPS went on battery, while it is.
+             */
+            onBatterySince: null | string;
+            /** @description On line power or on battery, unknown before the first answer. */
+            power: components["schemas"]["UpsPower"];
+            /**
+             * @description Why the UPS is unreachable: `refused` (no NUT server answers), `timeout`, `unknown_ups` (the server
+             *     has no UPS of that name), `driver_not_connected` (no UPS on USB, or its driver failed), `data_stale`,
+             *     `access_denied` (user or password wrong) or `protocol`.
+             */
+            problem: null | string;
+            /**
+             * Format: int32
+             * @description Runtime left on battery in seconds, if the UPS reports it.
+             */
+            runtime: null | number;
+            /** @description Why the box shuts down, once it does: `forced` (the NUT server's primary shuts everything down), `low_battery`, `charge`, `runtime` or `lost` (the UPS was on battery and stopped answering). */
+            shutdownReason: null | string;
+        };
+        /** @description Settings &gt; UPS: the settings, the UPS's state and whether this box can drive a UPS on USB. */
+        UpsStatus: {
+            /** @description The saved settings, without the password. */
+            settings: components["schemas"]["UpsSettingsView"];
+            /** @description What the box knows about the UPS right now. */
+            state: components["schemas"]["UpsState"];
+            /** @description The NUT server is installed, so the mode `usb` works (always on an installed box). */
+            usbAvailable: boolean;
+        };
+        /** @description A file system on a USB stick or another removable disk that can carry pool keys (D385). */
+        UsbStick: {
+            /** @description The partition's device node, or the disk's when the file system covers the whole disk. */
+            device: string;
+            /** @description The disk's stable id, see string Disk.Id. */
+            diskId: string;
+            /** @description `vfat`, `exfat`, `ext2`, `ext3` or `ext4`. */
+            fileSystem: string;
+            /** @description The file system's label, if any. */
+            label: null | string;
+            /** @description The disk's model, if any. */
+            model: null | string;
+            /** @description True when the disk is write-protected: keys can be read from it, not written. */
+            readOnly: boolean;
+            /** @description The disk's serial number, if any. */
+            serial: null | string;
+            /**
+             * Format: int64
+             * @description Size of the file system's partition or disk.
+             */
+            sizeBytes: number;
+            /** @description The disk's vendor, if any. */
+            vendor: null | string;
+        };
+        /** @description Response of `GET /api/storage/usb-sticks`: the file systems a pool key can be written to. */
+        UsbStickList: {
+            sticks: components["schemas"]["UsbStick"][];
+        };
         /** @description The result of deleting a user. */
         UserDeletion: {
             /** @description A long operation of a user, such as copying files. Also the data of the `jobs/{id}` topics. */
@@ -7439,6 +8763,15 @@ export type components = {
             id: number;
             /** @description The network card or bond that carries the VLAN's tagged frames. */
             parent: string;
+        };
+        /** @enum {unknown} */
+        WebhookFormat: "json" | "ntfy" | null;
+        /** @description A header a webhook sends, for example a token. */
+        WebhookHeader: {
+            /** @description The header name. */
+            name: string;
+            /** @description Its value; in a request null keeps the value saved before under this name. */
+            value?: null | string;
         };
         /** @enum {integer} */
         WebSocketCloseCode: 1000 | 1001 | 1008 | 1009 | 4401 | 4403;
@@ -7727,6 +9060,7 @@ export interface operations {
                 limit?: number;
                 order?: string;
                 path?: string;
+                query?: string;
                 share?: string;
                 sort?: string;
                 storage?: string;
@@ -8464,6 +9798,41 @@ export interface operations {
             };
         };
     };
+    SetAppElevatedRights: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                appId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AppElevatedRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AppDetails"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
     GetAppGrants: {
         parameters: {
             query?: never;
@@ -9017,6 +10386,192 @@ export interface operations {
             };
         };
     };
+    ListPasskeys: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PasskeyList"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    CreatePasskey: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PasskeyCreateRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PasskeyInfo"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    DeletePasskey: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    PasskeyCreateOptions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PasskeyOptionsRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PasskeyOptions"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    PasskeySignIn: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PasskeySignInRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserInfo"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    PasskeySignInOptions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PasskeyOptions"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
     Recover: {
         parameters: {
             query?: never;
@@ -9066,6 +10621,68 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["UserInfo"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    GetStepUp: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StepUpState"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    StepUp: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StepUpRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StepUpState"];
                 };
             };
             /** @description Problem details with a stable error code. */
@@ -9784,6 +11401,7 @@ export interface operations {
                 limit?: number;
                 order?: string;
                 path?: string;
+                query?: string;
                 sort?: string;
             };
             header?: never;
@@ -10941,6 +12559,37 @@ export interface operations {
             };
         };
     };
+    GetLogCounts: {
+        parameters: {
+            query: {
+                from: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LogCount"][];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
     ExportLogs: {
         parameters: {
             query?: {
@@ -11172,6 +12821,257 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["Notification"];
                 };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    ListNotificationCategories: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AppNotificationCategoryList"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    MuteNotificationCategory: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                app: string;
+                category: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NotificationCategoryMuteRequest"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    ListNotificationChannels: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NotificationChannelList"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    CreateNotificationChannel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NotificationChannelRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NotificationChannel"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    UpdateNotificationChannel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NotificationChannelRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NotificationChannel"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    DeleteNotificationChannel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    TestNotificationChannel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NotificationChannel"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    SetNotificationLanguage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NotificationLanguageRequest"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Problem details with a stable error code. */
             default: {
@@ -11750,6 +13650,35 @@ export interface operations {
             };
         };
     };
+    CreatePoolKey: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NewPoolKey"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
     ScanImportablePools: {
         parameters: {
             query?: never;
@@ -11872,6 +13801,136 @@ export interface operations {
             };
         };
     };
+    ChangePoolKey: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                pool: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PoolKeyChange"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    RevealPoolKey: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                pool: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PoolKeyRevealRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NewPoolKey"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    WritePoolKeyToUsb: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                pool: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PoolKeyUsbRequest"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    RemovePoolKeyFromVault: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                pool: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
     StartScrub: {
         parameters: {
             query?: never;
@@ -11940,6 +13999,39 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    UnlockPool: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                pool: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PoolUnlockRequest"];
+            };
+        };
         responses: {
             /** @description No Content */
             204: {
@@ -12198,6 +14290,35 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SnapshotScheduleList"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    ListUsbSticks: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UsbStickList"];
                 };
             };
             /** @description Problem details with a stable error code. */
@@ -12848,6 +14969,318 @@ export interface operations {
             };
         };
     };
+    ListSystemNotificationChannels: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NotificationChannelList"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    CreateSystemNotificationChannel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NotificationChannelRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NotificationChannel"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    UpdateSystemNotificationChannel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NotificationChannelRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NotificationChannel"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    DeleteSystemNotificationChannel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    TestSystemNotificationChannel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NotificationChannel"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    GetNotificationMatrix: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NotificationMatrix"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    SetNotificationMatrix: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NotificationMatrixRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NotificationMatrix"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    GetNotificationSmtp: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SmtpStatus"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    SetNotificationSmtp: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SmtpRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SmtpStatus"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    TestNotificationSmtp: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SmtpTestRequest"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
     GetSystemOverview: {
         parameters: {
             query?: never;
@@ -12924,6 +15357,68 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ProxySettings"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    GetProxyAcme: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AcmeAccount"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    SetProxyAcme: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AcmeAccountRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AcmeAccount"];
                 };
             };
             /** @description Problem details with a stable error code. */
@@ -13023,6 +15518,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ProxySettings"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    RenewProxyHostCertificate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Job"];
                 };
             };
             /** @description Problem details with a stable error code. */
@@ -13186,6 +15712,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ProxySettings"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    RenewProxyRedirectCertificate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Job"];
                 };
             };
             /** @description Problem details with a stable error code. */
@@ -13961,6 +16518,68 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["UpdateStatus"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    GetSystemUps: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UpsStatus"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    SetSystemUps: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpsSettingsRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UpsStatus"];
                 };
             };
             /** @description Problem details with a stable error code. */

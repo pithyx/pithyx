@@ -1,11 +1,12 @@
 // Sample storage for the design gallery: a box with a healthy RAID-Z1 pool, a degraded mirror, an empty disk and one
 // with old data. The real Storage and Settings components render it through a stand-in for the SDK app, so the
 // gallery shows exactly what the apps show. Everything here is user data or raw values, never interface text.
-import { createFormatters, type PithyxApp } from '@pithyx/sdk';
+import { createFormatters, PithyxError, type PithyxApp } from '@pithyx/sdk';
 import i18next from 'i18next';
 import type {
   Dataset,
   Job,
+  ShareGrants,
   Pool,
   Snapshot,
   StorageDisk,
@@ -14,6 +15,13 @@ import type {
   Vdev,
 } from '../apps/sdk/internal';
 import type { UpdateStatus } from '../apps/sdk/updates';
+import type { UpsStatus } from '../apps/sdk/ups';
+import type { GroupSummary, UserSummary } from '../apps/sdk/users';
+import type { FileServiceSettings } from '../apps/sdk/system';
+import { folderPage, type FilesSample } from './appSamples';
+import { local } from './sampleLanguage';
+
+const guest = local({ en: 'Guest', de: 'Gast' });
 
 const TB = 1_000_000_000_000;
 const GB = 1_000_000_000;
@@ -720,7 +728,10 @@ export const sampleShares = [
   {
     id: 1,
     name: 'Family',
-    description: 'Photos, documents and the scans of the paperwork',
+    description: local({
+      en: 'Photos, documents and the scans of the paperwork',
+      de: 'Fotos, Dokumente und die eingescannten Unterlagen',
+    }),
     path: '/tank/family',
     pool: 'tank',
     dataset: 'tank/pithyx/shares/family',
@@ -734,7 +745,10 @@ export const sampleShares = [
   {
     id: 2,
     name: 'Media',
-    description: 'Films and music for the living room',
+    description: local({
+      en: 'Films and music for the living room',
+      de: 'Filme und Musik fürs Wohnzimmer',
+    }),
     path: '/tank/media',
     pool: 'tank',
     dataset: 'tank/pithyx/shares/media',
@@ -982,6 +996,181 @@ export const sampleJob: Job = {
 /** Answers for internal methods the gallery does not know yet. */
 export type ExtraAnswers = Record<string, (params: unknown) => unknown>;
 
+export const sampleUsers: UserSummary[] = [
+  {
+    id: 1,
+    username: 'ada',
+    displayName: 'Ada Admin',
+    isAdmin: true,
+    uid: 20000,
+    totpEnabled: true,
+    createdAt: '2026-09-01T08:00:00Z',
+    home: 'tank/pithyx/homes/ada',
+    disabled: false,
+    rights: ['right:admin', 'right:desktopLogin', 'right:sshLogin', 'right:power'],
+    protocols: ['protocol:smb', 'protocol:sftp', 'protocol:webdav', 'protocol:ftp'],
+    fileServicePassword: true,
+    groupIds: [1],
+  },
+  {
+    id: 2,
+    username: 'ben',
+    displayName: 'Ben Berger',
+    isAdmin: false,
+    uid: 20001,
+    totpEnabled: false,
+    createdAt: '2026-09-03T08:00:00Z',
+    home: 'tank/pithyx/homes/ben',
+    disabled: false,
+    rights: ['right:desktopLogin'],
+    protocols: ['protocol:smb', 'protocol:sftp'],
+    fileServicePassword: true,
+    groupIds: [2, 3],
+  },
+  {
+    id: 3,
+    username: 'carla.mueller-schmidt',
+    displayName: 'Carla Müller-Schmidt',
+    isAdmin: false,
+    uid: 20002,
+    totpEnabled: true,
+    createdAt: '2026-09-05T08:00:00Z',
+    home: 'tank/pithyx/homes/carla.mueller-schmidt',
+    disabled: false,
+    rights: ['right:desktopLogin'],
+    protocols: ['protocol:smb'],
+    fileServicePassword: false,
+    groupIds: [3],
+  },
+  {
+    id: 4,
+    username: 'guest',
+    displayName: guest,
+    isAdmin: false,
+    uid: 20003,
+    totpEnabled: false,
+    createdAt: '2026-09-07T08:00:00Z',
+    home: null,
+    disabled: true,
+    rights: [],
+    protocols: [],
+    fileServicePassword: false,
+    groupIds: [],
+  },
+];
+
+export const sampleGroups: GroupSummary[] = [
+  {
+    id: 1,
+    name: 'administrators',
+    description: local({ en: 'Everyone who runs the box', de: 'Alle, die die Box betreuen' }),
+    builtin: true,
+    memberIds: [1],
+    createdAt: '2026-09-01T08:00:00Z',
+  },
+  {
+    id: 2,
+    name: 'family',
+    description: local({
+      en: 'Photos and documents of the family',
+      de: 'Fotos und Dokumente der Familie',
+    }),
+    builtin: false,
+    memberIds: [2],
+    createdAt: '2026-09-02T08:00:00Z',
+  },
+  {
+    id: 3,
+    name: 'media',
+    description: '',
+    builtin: false,
+    memberIds: [2, 3],
+    createdAt: '2026-09-02T09:00:00Z',
+  },
+];
+
+export const sampleFileServices: FileServiceSettings = {
+  smbEnabled: true,
+  workgroup: 'WORKGROUP',
+  sftpEnabled: true,
+  smb: 'running',
+  sftp: 'running',
+  sshEnabled: false,
+  webDavEnabled: false,
+  ftpEnabled: true,
+  ftpPlainAllowed: false,
+  ftp: 'running',
+  ftpPort: 21,
+  ftpFingerprint: 'SHA256:4F:2A:9C:11:7B:E0:52:D8:6A:93:0C:FE:21:44:8B:3D',
+  privateNetworksOnly: true,
+  firewallActive: true,
+};
+
+export const sampleUps: UpsStatus = {
+  settings: {
+    mode: 'usb',
+    host: '',
+    port: 3493,
+    name: 'ups',
+    username: '',
+    hasPassword: false,
+    batteryLow: 20,
+    runtimeLow: 5,
+  },
+  state: {
+    connection: 'connected',
+    power: 'online',
+    lowBattery: false,
+    charge: 100,
+    runtime: 1860,
+    load: 18,
+    model: 'UPS 900VA',
+    problem: null,
+    onBatterySince: null,
+    shutdownReason: null,
+  },
+  usbAvailable: true,
+};
+
+/** The rights on a shared folder: the group family may write, and what every user ends up with. */
+export const sampleShareGrants: ShareGrants = {
+  grants: [{ subjectKind: 'group', subjectId: 2, level: 'readWrite' }],
+  users: [
+    {
+      userId: 1,
+      username: 'ada',
+      displayName: 'Ada Admin',
+      administrator: true,
+      disabled: false,
+      access: 'readWrite',
+    },
+    {
+      userId: 2,
+      username: 'ben',
+      displayName: 'Ben Berger',
+      administrator: false,
+      disabled: false,
+      access: 'readWrite',
+    },
+    {
+      userId: 3,
+      username: 'carla.mueller-schmidt',
+      displayName: 'Carla Müller-Schmidt',
+      administrator: false,
+      disabled: false,
+      access: 'none',
+    },
+    {
+      userId: 4,
+      username: 'guest',
+      displayName: guest,
+      administrator: false,
+      disabled: true,
+      access: 'none',
+    },
+  ],
+};
+
 /** Answers the internal calls of the Storage and Settings apps from the sample, never from a daemon. */
 function answer(method: string, params: unknown, extra: ExtraAnswers): unknown {
   const custom = extra[method];
@@ -1015,6 +1204,8 @@ function answer(method: string, params: unknown, extra: ExtraAnswers): unknown {
       return sampleShares;
     case 'internal.admin.shares.access':
       return sampleShareAccess;
+    case 'internal.admin.shares.grants':
+      return sampleShareGrants;
     case 'internal.admin.shares.plan':
       return sampleSharePlan(params as SharePlanRequest);
     case 'internal.admin.system.overview':
@@ -1025,8 +1216,22 @@ function answer(method: string, params: unknown, extra: ExtraAnswers): unknown {
       return sampleUpdates;
     case 'internal.admin.system.time':
       return sampleTime;
+    case 'internal.admin.users.list':
+      return sampleUsers;
+    case 'internal.admin.groups.list':
+      return sampleGroups;
+    case 'internal.admin.system.fileServices':
+      return sampleFileServices;
+    case 'internal.admin.ups.get':
+      return sampleUps;
     case 'internal.admin.system.region':
       return { language: 'en', region: null };
+    case 'internal.files.thumbnails':
+      return (params as { names: string[] }).names.map((name) => ({
+        name,
+        status: 'none',
+        version: null,
+      }));
     case 'internal.admin.storage.snapshots.schedules':
       return { ...sampleSnapshotSchedules, dataset: (params as { dataset: string }).dataset };
     default:
@@ -1034,14 +1239,75 @@ function answer(method: string, params: unknown, extra: ExtraAnswers): unknown {
   }
 }
 
-/** A stand-in for the SDK app of a core app: internal calls answered from the sample, no events. */
-export function sampleApp(launch: unknown = null, extra: ExtraAnswers = {}): PithyxApp {
+/** What a gallery screen adds to the sample app beyond the internal calls. */
+export interface SampleAppOptions {
+  /** The window's saved session, which apps such as Files restore their place from. */
+  session?: unknown;
+  /** Events sent once to the app's listeners right after they subscribe, such as a monitor snapshot. */
+  events?: Record<string, unknown>;
+  /** The shares, folders and recycle bins behind `app.files` and `app.trash`. */
+  files?: FilesSample;
+}
+
+/** A stand-in for the SDK app of a core app: internal calls answered from the sample, events sent once. */
+export function sampleApp(
+  launch: unknown = null,
+  extra: ExtraAnswers = {},
+  options: SampleAppOptions = {},
+): PithyxApp {
   const format = createFormatters(() => ({ locale: i18next.language, timeZone: 'Europe/Berlin' }));
+  const files = options.files;
   const app = {
-    context: { launch: { args: launch }, locale: i18next.language, timeZone: 'Europe/Berlin' },
+    context: {
+      launch: { args: launch },
+      locale: i18next.language,
+      timeZone: 'Europe/Berlin',
+      session: options.session ?? null,
+    },
     format,
     call: (method: string, params: unknown) => Promise.resolve(answer(method, params, extra)),
-    on: () => () => undefined,
+    on: (event: string, handler: (data: unknown) => void) => {
+      const data = options.events?.[event];
+      if (data !== undefined) {
+        queueMicrotask(() => {
+          handler(data);
+        });
+      }
+      return () => undefined;
+    },
+    files: files && {
+      shares: () => Promise.resolve(files.shares),
+      list: (
+        location: { share: string },
+        path: string,
+        query: { sort?: string; order?: string } = {},
+      ) =>
+        Promise.resolve(
+          folderPage(location.share, path, query.sort ?? 'name', query.order ?? 'asc'),
+        ),
+      watch: () => Promise.resolve({ topic: '' }),
+      unwatch: () => Promise.resolve(),
+      versions: () => Promise.resolve([]),
+      // A name the folder already has is refused as the daemon does, so Files asks what to do.
+      upload: (location: { share: string }, path: string, name: string) =>
+        (files.folders[`${location.share}:${path}`] ?? []).some((entry) => entry.name === name)
+          ? Promise.reject(
+              new PithyxError({
+                code: 'fs.entry.exists',
+                params: { name },
+                detail: 'The name exists already.',
+              }),
+            )
+          : Promise.resolve({ name, kind: 'file', size: 0, modified: '2026-09-26T12:32:00Z' }),
+    },
+    trash: files && {
+      list: (location: { share: string }) =>
+        Promise.resolve(
+          files.trash[location.share] ?? { items: [], nextCursor: null, retentionDays: 30 },
+        ),
+    },
+    window: { setTitle: () => Promise.resolve() },
+    session: { save: () => Promise.resolve() },
   };
   return app as unknown as PithyxApp;
 }

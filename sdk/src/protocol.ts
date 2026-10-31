@@ -46,7 +46,9 @@ export type SizeClass = 'compact' | 'medium' | 'expanded';
 
 /**
  * A file the user handed to the app (opened with it, or picked in a desktop dialog). The app never learns where the
- * file is: `ref` is an opaque handle, valid for this user and app, that only the SDK file API accepts.
+ * file is: `ref` is an opaque handle that only the SDK file API accepts. It lasts as long as the window's connection:
+ * closing the window, reloading the app or reloading the desktop ends it, and a stale handle fails with
+ * `sdk.request.invalid`.
  */
 export interface FileRef {
   /** Opaque handle; only the SDK file API accepts it. */
@@ -71,6 +73,23 @@ export interface LaunchArgs {
   file?: FileRef;
   /** The user clicked a notification of the app while no window of it was open (see `notificationAction`). */
   notification?: NotificationActivation;
+  /** The user chose one of the manifest's `fileActions` for a selection in Files. */
+  action?: FileActionLaunch;
+}
+
+/**
+ * What a `fileActions` entry hands to the app: the selection as a share, a folder and names. The app reads and changes
+ * them through the files API with the user's rights, which needs `files.shares`.
+ */
+export interface FileActionLaunch {
+  /** The `id` of the action in the manifest. */
+  id: string;
+  /** The share the selection is in. */
+  location: ShareLocation;
+  /** The folder of the selection, relative to the share; `""` is its root. */
+  folder: string;
+  /** The selected files and folders in that folder, by name. */
+  names: string[];
 }
 
 /** One of the user's groups. The built-in group every user belongs to is left out. */
@@ -91,9 +110,11 @@ export type BackendStatus = 'stopped' | 'starting' | 'running' | 'updating' | 'u
 
 /**
  * Why an `unavailable` backend cannot start until an administrator acts: `storage` (a required storage request has no
- * folder yet; `context.storage` shows it as `unmapped`) or `pool` (the app pool is locked or missing).
+ * folder yet; `context.storage` shows it as `unmapped`), `pool` (the app pool is locked or missing) or `device` (a device
+ * the app needs, declared in `permissions` without `optional: true`, is not plugged in; the backend
+ * starts by itself once it is back).
  */
-export type BackendUnavailableReason = 'storage' | 'pool';
+export type BackendUnavailableReason = 'storage' | 'pool' | 'device';
 
 /** The app's backend, as the window sees it. */
 export interface BackendInfo {
@@ -239,6 +260,11 @@ export interface NotificationRequest {
    * characters.
    */
   tag?: string;
+  /**
+   * The kind of notification, one of the `id`s of the manifest's `notifications.categories`. A user who muted that
+   * kind gets the notification as read, without a toast or email.
+   */
+  category?: string;
 }
 
 /** A token for the app's backend. */
@@ -439,6 +465,7 @@ export interface Methods {
       limit?: number;
       sort?: SortKey;
       order?: SortOrder;
+      query?: string;
     };
     result: FolderPage;
   };

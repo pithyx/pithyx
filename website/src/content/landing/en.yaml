@@ -10,8 +10,8 @@ hero:
   github: { label: GitHub, href: https://github.com/pithyx/pithyx }
 showcase:
   image: ../../assets/screenshots/desktop.webp
-  alt: 'The Pithyx desktop in a browser: the Files and Storage windows side by side, two shortcuts and a sticky note on the desktop and the taskbar at the bottom'
-  caption: 'The web desktop with Files and Storage open side by side. Every app, built in or installed, opens in a window like these.'
+  alt: 'The Pithyx desktop in a browser: Files in front, Settings on the Pools page and the Log Center behind it, folders and shortcuts on the left, a sticky note and the taskbar at the bottom'
+  caption: 'The web desktop with Files, Settings and the Log Center open. Every app, built in or installed, opens in a window like these.'
 features:
   title: What is built in
   intro: 'Pithyx installs from a USB stick, and the installer runs in your browser. After that you manage storage, sharing, users, apps and the network in the web desktop.'
@@ -84,7 +84,10 @@ specs:
     - { label: 'File services', value: 'SMB 3, SFTP, WebDAV, FTP with TLS' }
     - { label: 'Network', value: 'Wired, IPv4 and IPv6, bonds and VLANs' }
     - { label: 'Apps', value: 'Static frontends, backends in Docker containers' }
-    - { label: 'Web desktop', value: 'HTTP on port 7484 (HTTPS not built yet)' }
+    - {
+        label: 'Web desktop',
+        value: 'HTTPS on port 7484, with the box as its own certificate authority',
+      }
     - { label: 'Languages', value: 'English, German' }
     - { label: 'License', value: 'AGPL-3.0, npm packages for app developers MIT' }
 gallery:
@@ -92,24 +95,49 @@ gallery:
   close: Close
   items:
     - {
+        image: '../../assets/screenshots/desktop-dark.webp',
+        alt: 'The desktop in the dark theme with Files, Settings and the Log Center open, desktop items on the left and a sticky note',
+        caption: 'The same desktop in the dark theme. Every screen works in light and dark, with an accent color of your choice.',
+      }
+    - {
+        image: '../../assets/screenshots/desktop-menu.webp',
+        alt: 'The Pithyx menu with the apps grouped into System, Apps and You, status tiles for the pools, the system and updates, recent files and the folders with their access',
+        caption: 'The Pithyx menu: apps by area, the state of the box at a glance, recent files and your folders.',
+      }
+    - {
         image: '../../assets/screenshots/files.webp',
-        alt: 'The Files app with the shared folders in the sidebar, a folder of twelve holiday photos in list view and the context menu of one photo open',
-        caption: 'Files: shared folders, the recycle bin and previous versions in the browser.',
+        alt: 'Files with the folder tree, a folder of holiday photos in list view and the details pane of the selected photo',
+        caption: 'Files: shared folders, home folders, the recycle bin and previous versions in the browser.',
       }
     - {
         image: '../../assets/screenshots/storage.webp',
-        alt: 'The Storage app with a healthy RAID-Z1 pool of four disks, its used and free space and the list of its disks',
-        caption: 'Storage: ZFS pools and disks, with the exact commands shown before anything runs.',
-      }
-    - {
-        image: '../../assets/screenshots/store.webp',
-        alt: 'The Store on the Installed tab with four installed apps, among them a chat app and the SDK showcase',
-        caption: 'Store: apps from catalogs or a file, with updates and a way back to the previous version.',
+        alt: 'Settings on the page Pools with summary tiles for capacity, use, disks and the last scrub, a healthy RAID-Z1 pool and a degraded mirror',
+        caption: 'Storage: ZFS pools and disks in Settings, with the exact commands shown before anything runs.',
       }
     - {
         image: '../../assets/screenshots/settings.webp',
-        alt: 'Settings on the Users page with four users and the badges Administrator and Two-factor',
-        caption: 'Settings: users and groups, shared folders, file services, network and backup.',
+        alt: 'Settings on the page Users and groups with a table of four users, their groups, file services and two-factor sign-in, and the details of the selected user',
+        caption: 'Settings: everything that sets up the box in one place, from users and shared folders to the network and backups.',
+      }
+    - {
+        image: '../../assets/screenshots/store.webp',
+        alt: 'The Store on Discover with the Editor of the official catalog under New and updated, ready to update to 1.1.0',
+        caption: 'Store: apps from catalogs or a file, with updates and a way back to the previous version.',
+      }
+    - {
+        image: '../../assets/screenshots/logs-center.webp',
+        alt: 'The Log Center in the dark theme with its sources and their counts, the levels, entries grouped by day and the details of a warning',
+        caption: 'Log Center: every log of the box and its apps, live, with filters and the details of each entry.',
+      }
+    - {
+        image: '../../assets/screenshots/monitor-performance.webp',
+        alt: 'The Resource Monitor with CPU and its cores, memory with the ZFS cache, network and disks during a scrub, and the temperatures',
+        caption: 'Resource Monitor: CPU, memory, network, disks, temperatures and processes of the last hour.',
+      }
+    - {
+        image: '../../assets/screenshots/personal-settings.webp',
+        alt: 'Personal settings with the pages Account, Sign-in and security, Appearance, Language and region, Notifications, Apps and What I can use',
+        caption: 'Personal settings: sign-in, appearance, language and notifications, for every user.',
       }
 ai:
   title: For AI assistants

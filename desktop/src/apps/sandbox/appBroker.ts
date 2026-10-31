@@ -7,6 +7,7 @@ import { download } from '../../shell/transfers';
 import { useDesktop } from '../../wm/store';
 import type { PendingFile } from '../host/rules';
 import { offerFileDialog, rememberNotification, type ChosenFile } from '../host/store';
+import { noteRecentFile } from '../files/recent';
 import { toPithyxError } from '../sdk/daemonError';
 import {
   folderWatcher,
@@ -164,7 +165,7 @@ export function appBrokerFor(target: {
           .catch(() => undefined);
       }
     },
-    notify: async ({ title, body, level, actions, data, tag }) =>
+    notify: async ({ title, body, level, actions, data, tag, category }) =>
       daemon(async () => {
         const created = await client.call((headers) =>
           api.POST('/api/app/notifications', {
@@ -176,6 +177,7 @@ export function appBrokerFor(target: {
               actions: actions ?? null,
               data: data === undefined ? null : (data as never),
               tag: tag ?? null,
+              category: category ?? null,
             },
           }),
         );
@@ -242,7 +244,7 @@ export function appBrokerFor(target: {
           shareOf,
         ),
       ),
-    'files.list': async ({ location, path, cursor, limit, sort, order }) =>
+    'files.list': async ({ location, path, cursor, limit, sort, order, query }) =>
       daemon(async () =>
         pageOf(
           await client.call((headers) =>
@@ -256,6 +258,7 @@ export function appBrokerFor(target: {
                   ...(limit === undefined ? {} : { limit }),
                   ...(sort === undefined ? {} : { sort }),
                   ...(order === undefined ? {} : { order }),
+                  ...(query === undefined ? {} : { query }),
                 },
               },
             }),
@@ -325,6 +328,7 @@ export function appBrokerFor(target: {
       });
       const refs: FileRef[] = [];
       for (const file of chosen ?? []) {
+        noteRecentFile(file.share, file.path);
         const write = target.permissions().includes('files.write') && file.access === 'readWrite';
         refs.push(await daemon(async () => handOut(file, write)));
       }
@@ -356,6 +360,7 @@ export function appBrokerFor(target: {
           data,
           () => undefined,
         );
+        noteRecentFile(chosen.share, chosen.path);
         return fileRef(location, chosen.path, entry);
       });
     },

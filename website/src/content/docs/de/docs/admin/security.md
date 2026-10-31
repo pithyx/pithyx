@@ -1,13 +1,13 @@
 ---
 title: 'Sicherheit'
-description: 'Transport, offene Ports, physischer Zugriff, SSH, Zwei-Faktor-Anmeldung, der Wiederherstellungsschlüssel und was die Box verlässt.'
+description: 'Transport, offene Ports, physischer Zugriff, SSH, Zwei-Faktor-Anmeldung, Passkeys, der Wiederherstellungsschlüssel, Apps mit Root-Zugriff und was die Box verlässt.'
 status: ready
 audience: admin
 sidebar:
   order: 9
 ---
 
-Pithyx behält alles auf der Box: keine Telemetrie, kein Cloud-Konto, kein Nach-Hause-Telefonieren. Der Web-Desktop spricht HTTPS mit einem Zertifikat der eigenen Zertifizierungsstelle der Box. Diese Seite behandelt Transport, offene Ports, physischen Zugriff, SSH, Zwei-Faktor-Anmeldung, den Wiederherstellungsschlüssel und die wenigen Verbindungen, die die Box von sich aus aufbaut.
+Pithyx behält alles auf der Box: keine Telemetrie, kein Cloud-Konto, kein Nach-Hause-Telefonieren. Der Web-Desktop spricht HTTPS mit einem Zertifikat der eigenen Zertifizierungsstelle der Box. Diese Seite behandelt Transport, offene Ports, physischen Zugriff, SSH, Zwei-Faktor-Anmeldung, Passkeys, den Wiederherstellungsschlüssel, Apps mit Root-Zugriff und die wenigen Verbindungen, die die Box von sich aus aufbaut.
 
 ## HTTPS und Zertifikate
 
@@ -29,7 +29,7 @@ Wer die Konsole der Box bedienen kann, vor Ort oder über die Fernwartung (BMC, 
 
 Jede Box schreibt bei der Installation ihre eigene ZFS-Host-ID, damit zwei vom selben Stick installierte Boxen nie als dasselbe System gelten. Ein Pool von vor einer Neuinstallation gilt deshalb als von einem anderen System benutzt und braucht den erzwungenen Import (siehe [Wiederherstellung](/de/docs/install/recovery/#die-pools-wieder-importieren)).
 
-Pool-Verschlüsselung gibt es in dieser Version nicht; der Speicher-Assistent sagt, sie kommt mit dem Schlüsseltresor. Ein Schlüssel in einem Tresor auf der Systemplatte schützt nur gegen gestohlene Platten, nicht gegen jemanden, der die ganze Box oder ihre Konsole hat.
+Ein Pool lässt sich beim Anlegen verschlüsseln ([Verschlüsselung](/de/docs/admin/storage/#verschlüsselung)). Liegt sein Schlüssel im Schlüsseltresor auf der Systemplatte, entsperrt die Box ihn bei jedem Start: Das schützt nur gegen gestohlene Platten, nicht gegen jemanden, der die ganze Box oder ihre Konsole hat. Ein Pool, der nach jedem Start von Hand entsperrt wird, schützt die Daten auch auf einer gestohlenen Box.
 
 ## SSH
 
@@ -44,13 +44,28 @@ Der Administrator, den du im Installer angelegt hast, ist in der Gruppe `sudo` u
 
 ## Zwei-Faktor-Anmeldung
 
-Jeder Benutzer kann die Zwei-Faktor-Anmeldung (TOTP) im Kontomenü unter **Zwei-Faktor-Authentifizierung** einschalten: den QR-Code scannen oder den Schlüssel eingeben, einen Code eingeben, **Einschalten** wählen und die 10 Wiederherstellungscodes aufbewahren, die einmal angezeigt werden; jeder gilt einmal. Die Codes nutzen SHA-1, 6 Stellen und 30 Sekunden. Gib bei der Anmeldung den Code ein oder wähle „Stattdessen einen Wiederherstellungscode verwenden“; die Abfrage ist 5 Minuten gültig. Zum Ausschalten braucht es das Passwort. Nach 5 fehlgeschlagenen Versuchen für einen Benutzer von einer Adresse oder 30 von einer Adresse in 5 Minuten werden weitere Versuche eine Zeit lang abgelehnt. Sitzungen enden nach 7 Tagen ohne Nutzung oder nach insgesamt 30 Tagen.
+Jeder Benutzer kann die Zwei-Faktor-Anmeldung (TOTP) in **Persönliche Einstellungen** unter **Zwei-Faktor-Authentifizierung** einschalten: den QR-Code scannen oder den Schlüssel eingeben, einen Code eingeben, **Einschalten** wählen und die 10 Wiederherstellungscodes aufbewahren, die einmal angezeigt werden; jeder gilt einmal. Die Codes nutzen SHA-1, 6 Stellen und 30 Sekunden. Gib bei der Anmeldung den Code ein oder wähle „Stattdessen einen Wiederherstellungscode verwenden“; die Abfrage ist 5 Minuten gültig. Zum Ausschalten braucht es das Passwort. Nach 5 fehlgeschlagenen Versuchen für einen Benutzer von einer Adresse oder 30 von einer Adresse in 5 Minuten werden weitere Versuche eine Zeit lang abgelehnt. Sitzungen enden nach 7 Tagen ohne Nutzung oder nach insgesamt 30 Tagen.
 
 SMB, SFTP, WebDAV und FTP nutzen nur das Passwort.
 
+## Passkeys
+
+Jeder Benutzer kann in **Persönliche Einstellungen** unter **Passkeys** Passkeys hinzufügen ([Dein Konto](/de/docs/user/account/#passkeys)). Ein Passkey ersetzt bei der Anmeldung am Desktop Passwort und zweiten Faktor; Dateidienste nutzen weiter das Passwort. Pithyx verlangt auffindbare Anmeldedaten mit Benutzerprüfung (PIN, Fingerabdruck oder Gesicht des Geräts) und keine Attestierung. Es fragt nie einen Metadatendienst, also verlässt nichts die Box. Einen hinzuzufügen braucht das aktuelle Passwort; jeder Benutzer hat bis zu 20.
+
+Ein Passkey ist an den Namen gebunden, unter dem die Box geöffnet wurde (die WebAuthn Relying Party). Er funktioniert also nur dort und nur über HTTPS auf einem Gerät, das der Box vertraut; für eine Adresse lehnt die Box Passkeys mit `auth.passkey.unavailable` ab. Jede Anmeldung nutzt eine einmalige Challenge, die 5 Minuten gilt, und prüft den Signaturzähler. Fehlgeschlagene Passkey-Anmeldungen zählen zur Grenze von 30 pro Adresse in 5 Minuten. Ein deaktiviertes Konto oder eines ohne das Recht zur Desktop-Anmeldung wird nach der Prüfung des Passkeys abgelehnt, wie beim Passwort. Das Zurücksetzen eines Passworts mit dem Wiederherstellungsschlüssel entfernt die Passkeys dieses Administrators. Passkeys gehören zum Konfigurationsbackup (Teil **Benutzer und Gruppen**).
+
 ## Der Wiederherstellungsschlüssel
 
-Die Ersteinrichtung zeigt den Wiederherstellungsschlüssel einmal an (`PTHX-` gefolgt von 26 Zeichen). Er ist der einzige Weg, das Administratorpasswort zurückzusetzen. Wähle dazu auf der Anmeldeseite „Passwort vergessen?“ und gib dann den Schlüssel, den Benutzernamen eines Administrators und ein neues Passwort ein. Das meldet diesen Benutzer überall ab, schaltet seine Zwei-Faktor-Anmeldung aus und stellt einen neuen Wiederherstellungsschlüssel aus; der alte wird ungültig. Es gibt einen Schlüssel für die ganze Box, und er gehört zum Konfigurationsbackup. Ohne den Schlüssel und das Passwort muss das System neu installiert werden. Andere Benutzer bitten einen Administrator um ein neues Passwort.
+Die Ersteinrichtung zeigt den Wiederherstellungsschlüssel einmal an (`PTHX-` gefolgt von 26 Zeichen). Er ist der einzige Weg, das Administratorpasswort zurückzusetzen. Wähle dazu auf der Anmeldeseite „Passwort vergessen?“ und gib dann den Schlüssel, den Benutzernamen eines Administrators und ein neues Passwort ein. Das meldet diesen Benutzer überall ab, schaltet seine Zwei-Faktor-Anmeldung aus, entfernt seine Passkeys und stellt einen neuen Wiederherstellungsschlüssel aus; der alte wird ungültig. Es gibt einen Schlüssel für die ganze Box, und er gehört zum Konfigurationsbackup. Ohne den Schlüssel und das Passwort muss das System neu installiert werden. Andere Benutzer bitten einen Administrator um ein neues Passwort.
+
+## Apps mit Root-Zugriff
+
+Manche Apps brauchen ein Recht, das root auf der Box ist, heute den ungefilterten Containerdienst `docker.socket.raw` (etwa eine Containerverwaltung). Pithyx lehnt sie nicht ab; ein solches Recht zu geben, verlangt im Installationsdialog einen eigenen roten Schritt, den eingetippten Namen der App und dein Passwort ([Sonderrechte](/de/docs/admin/apps-and-store/#sonderrechte)). Danach gilt:
+
+- Die App trägt im Store und auf ihrer Seite das Abzeichen **Root-Zugriff**.
+- **Einstellungen > Sicherheit** listet jede App mit Root-Zugriff und ihre Rechte. **Root-Zugriff entziehen** nimmt das Recht sofort weg, ohne Passwort; der Hintergrunddienst der App startet ohne es neu. Gibst du es wieder, verlangt Pithyx die volle Zustimmung.
+- Jeder andere Administrator bekommt die Benachrichtigung "<App> hat jetzt Root-Zugriff", auch per E-Mail oder Webhook, wo eingerichtet.
+- Die App aktualisiert sich nie von selbst, egal was die Update-Regel sagt. Lies die Versionshinweise und installiere ihr Update mit einem Klick auf der Seite **Updates** des Stores.
 
 ## Was die Box verlässt
 
@@ -60,6 +75,9 @@ Die Box schickt keine Daten an das Pithyx-Projekt. Das sind die ausgehenden Verb
 - **App-Kataloge**: Git über HTTPS oder SSH zu jedem aktivierten Katalog-Repository (der offizielle und der Community-Katalog sind an und werden standardmäßig von GitHub abgerufen), einmal täglich zur eingestellten Zeit mit einer zufälligen Verzögerung von bis zu einer Stunde, wenn du einen Katalog hinzufügst, und bei **Jetzt prüfen**. Schalte einen Katalog aus, um das zu beenden.
 - **Container-Images** von Katalog-Apps aus der Registry, die der Katalog nennt, außer das Paket bringt sie mit.
 - **Zeit**: Ist **Zeitserver** unter Einstellungen > **Regionale Einstellungen** leer, nutzt die Box die Debian-Vorgaben über systemd-timesyncd, das öffentliche Zeitserver kontaktiert.
+- **Benachrichtigungskanäle**: der E-Mail-Server und die Webhook-Adressen der [Benachrichtigungskanäle](/de/docs/admin/notifications/), wenn es etwas zu senden gibt oder bei **Test senden**.
+- **Let's Encrypt**: die ACME-Zertifizierungsstelle von Reverse-Proxy-Hosts mit einem Zertifikat von ihr, um es zu holen und zu erneuern ([Reverse Proxy](/de/docs/admin/reverse-proxy/#lets-encrypt)).
+- **USV**: der NUT-Server einer USV im Netzwerk, alle 5 Sekunden ([USV](/de/docs/admin/ups/)).
 - **Apps**, denen du die Berechtigung „Internet“ erlaubst, bekommen ein zweites Netzwerk mit ausgehendem Zugriff ins Internet; andere Apps haben keines. Geräte in deinem lokalen Netzwerk erreichen nur Apps mit der Berechtigung „Lokales Netzwerk“.
 
 Logs bleiben auf der Box unter `/var/log/pithyx/`. Geheimnisse werden in Logs maskiert. Passwörter werden als Argon2id-Hashes gespeichert.

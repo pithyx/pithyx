@@ -1,7 +1,13 @@
 {
   "views": {
-    "label": "Ansicht",
-    "performance": "Leistung",
+    "label": "Navigation des Ressourcenmonitors",
+    "search": "Suchen",
+    "overview": "Übersicht",
+    "cpu": "CPU",
+    "memory": "Arbeitsspeicher",
+    "disks": "Platten",
+    "network": "Netzwerk",
+    "temperatures": "Temperaturen",
     "processes": "Prozesse"
   },
   "summary": {
@@ -47,7 +53,9 @@
     "none": "Keine Netzwerkschnittstellen gefunden.",
     "receive": "Empfangen {value}",
     "send": "Gesendet {value}",
-    "chart": "Datenverkehr von {name} der letzten {range}, jetzt {received} empfangen und {sent} gesendet"
+    "chart": "Datenverkehr von {name} der letzten {range}, jetzt {received} empfangen und {sent} gesendet",
+    "total": "{count, plural, one {# Schnittstelle} other {# Schnittstellen}} · empfangen {received} · gesendet {sent}",
+    "totalChart": "Datenverkehr aller Schnittstellen der letzten {range}, jetzt {received} empfangen und {sent} gesendet"
   },
   "disks": {
     "title": "Festplatten",
@@ -56,7 +64,9 @@
     "write": "Geschrieben {value}",
     "busy": "Ausgelastet {value}",
     "chart": "Durchsatz von {name} der letzten {range}, jetzt {read} gelesen und {written} geschrieben",
-    "hint": "Aus den Zählern des Kernels gelesen: Eine schlafende Platte schläft weiter."
+    "hint": "Aus den Zählern des Kernels gelesen: Eine schlafende Platte schläft weiter.",
+    "total": "{count, plural, one {# Platte} other {# Platten}} · gelesen {read} · geschrieben {written}",
+    "totalChart": "Durchsatz aller Platten der letzten {range}, jetzt {read} gelesen und {written} geschrieben"
   },
   "temperatures": {
     "title": "Temperaturen",
@@ -80,5 +90,8 @@
     "empty": "Kein Prozess passt zum Filter.",
     "loading": "Prozesse werden gelesen …",
     "cpuHint": "CPU ist der Anteil an allen Kernen zusammen."
+  },
+  "top": {
+    "title": "Top-Prozesse"
   }
 }

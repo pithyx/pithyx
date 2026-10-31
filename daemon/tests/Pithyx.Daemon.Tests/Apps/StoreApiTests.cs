@@ -84,11 +84,14 @@ public sealed class StoreApiTests : IAsyncLifetime
     [InlineData("\"notifications\", \"directory.read\"", "", AppAccess.Admins)]
     [InlineData("", ", \"backend\": { \"root\": false }", AppAccess.Everybody)]
     [InlineData("", ", \"backend\": { \"root\": true }", AppAccess.Admins)]
-    [InlineData("", ", \"backend\": { \"elevated\": [] }", AppAccess.Everybody)]
-    [InlineData("", ", \"backend\": { \"elevated\": [\"device:/dev/dri/renderD128\"] }", AppAccess.Admins)]
+    [InlineData("\"device:/dev/dri/renderD128\"", ", \"backend\": { }", AppAccess.Admins)]
+    [InlineData("\"notifications\"", ", \"audience\": \"admins\"", AppAccess.Admins)]
+    [InlineData("\"notifications\"", ", \"audience\": \"everyone\"", AppAccess.Everybody)]
+    [InlineData("\"directory.read\"", ", \"audience\": \"everyone\"", AppAccess.Admins)]
     public void AppsWithElevatedRightsRootOrTheDirectoryAreSuggestedForAdministratorsOnly(string permissions, string backend, AppAccess expected)
     {
-        using var manifest = JsonDocument.Parse($"{{ \"permissions\": [{permissions}]{backend} }}");
+        var map = string.Join(", ", JsonSerializer.Deserialize<string[]>($"[{permissions}]")!.Select(name => $"{JsonSerializer.Serialize(name)}: {{}}"));
+        using var manifest = JsonDocument.Parse($"{{ \"permissions\": {{ {map} }}{backend} }}");
         Assert.Equal(expected, AppService.SuggestedAccess(manifest.RootElement));
     }
 

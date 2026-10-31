@@ -17,7 +17,7 @@ import { validateCompose } from './compose';
 import { validateIcon } from './icon';
 import type { Issue } from './issues';
 import { checkLayout } from './layout';
-import { isSupportedElevatedRight, validateManifest } from './manifest';
+import { isSupportedElevatedRight, tierOf, validateManifest } from './manifest';
 
 const fixtures = join(dirname(fileURLToPath(import.meta.url)), '../../../sdk/schema/fixtures');
 
@@ -40,6 +40,14 @@ function matches(issue: Issue, expected: ExpectedIssue): boolean {
     )
   );
 }
+
+describe('risk tier corpus', () => {
+  const { cases } = json('tiers', 'cases.json') as { cases: Record<string, string> };
+
+  it.each(Object.entries(cases))('%s is %s', (right, tier) => {
+    expect(tierOf(right)).toBe(tier);
+  });
+});
 
 describe('manifest corpus', () => {
   const expected = json('manifest', 'expected.json') as Record<string, ExpectedIssue[]>;
@@ -78,15 +86,26 @@ describe('manifest corpus', () => {
   });
 
   it.each([
-    'docker.socket',
     'host.full',
     'capability:BPF',
-    'capability:NET_ADMIN',
-    'device:/dev/dri/renderD128',
-    'host.network',
-    'host.pid',
+    'capability:SYS_ADMIN',
+    'device:/dev/sda',
+    'device:/dev/mem',
+    'device:/dev/tty1',
+    'device:/dev/zfs',
   ])('refuses the elevated right %s', (right) => {
     expect(isSupportedElevatedRight(right)).toBe(false);
+  });
+
+  it.each([
+    'capability:NET_ADMIN',
+    'device:/dev/dri/renderD128',
+    'device:/dev/ttyUSB0',
+    'device:/dev/net/tun',
+    'host.network',
+    'host.pid',
+  ])('grants the elevated right %s', (right) => {
+    expect(isSupportedElevatedRight(right)).toBe(true);
   });
 });
 
@@ -214,11 +233,17 @@ describe('layout corpus', () => {
     files: string[];
     entry: string;
     compose?: string;
+    screenshots?: string[];
+    sizes?: Record<string, number>;
     expected: { path: string; reason: string }[];
   }[];
 
   it.each(cases.map((entry) => [entry.name, entry] as const))('%s', (_, entry) => {
-    const issues = checkLayout(entry.files, { entry: entry.entry, compose: entry.compose });
+    const issues = checkLayout(
+      entry.files,
+      { entry: entry.entry, compose: entry.compose, screenshots: entry.screenshots },
+      (path) => entry.sizes?.[path] ?? 0,
+    );
     expect(issues.every((issue) => issue.code === 'app.package.layout_invalid')).toBe(true);
     expect(
       new Set(issues.map((issue) => JSON.stringify([issue.params.path, issue.params.reason]))),

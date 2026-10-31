@@ -1,17 +1,42 @@
 {
-  "tabs": {
-    "label": "Bereiche des Stores",
+  "nav": {
+    "label": "Store",
+    "search": "Suchen",
+    "discover": "Entdecken",
+    "all": "Alle Apps",
+    "categories": "Kategorien",
+    "yours": "Deine Apps",
     "installed": "Installiert",
-    "official": "Offiziell",
-    "community": "Community",
-    "own": "Eigene",
     "updates": "Updates",
-    "updatesCount": "Updates ({count})"
+    "updatesCount": "{count, plural, one {# Update} other {# Updates}}",
+    "catalogs": "Kataloge"
+  },
+  "search": {
+    "label": "Apps suchen",
+    "placeholder": "Apps nach Name, Beschreibung oder Stichwort suchen",
+    "results": "Ergebnisse für „{query}“"
+  },
+  "discover": {
+    "featured": {
+      "official": "Neu im offiziellen Katalog",
+      "community": "Neu im Community-Katalog",
+      "custom": "Neu in {name}"
+    },
+    "recent": "Neu und aktualisiert",
+    "noCatalogs": "Kein Katalog ist eingeschaltet, daher gibt es keine Apps zu zeigen.",
+    "showCatalogs": "Kataloge zeigen"
+  },
+  "card": {
+    "official": "Offizieller Katalog",
+    "community": "Community-Katalog",
+    "custom": "{name}, nicht verifiziert",
+    "sideload": "Aus einer Datei installiert",
+    "update": "Aktualisieren"
   },
   "installed": {
     "title": "Installierte Apps",
     "intro": "Auf dieser Box installierte Apps. Alle finden die Apps, die sie nutzen dürfen, in ihrem Pithyx-Menü.",
-    "empty": "Noch keine Apps installiert. Installiere eine aus ihrer Paketdatei (.pithyxapp).",
+    "empty": "Noch keine Apps installiert.",
     "loading": "Apps werden geladen",
     "pool": "App-Daten liegen auf dem Pool {pool}.",
     "installFromFile": "Aus Datei installieren",
@@ -19,7 +44,8 @@
     "disabled": "Deaktiviert",
     "busy": "In Arbeit",
     "unavailable": "Pool nicht verfügbar",
-    "unverified": "Nicht geprüft"
+    "unverified": "Nicht geprüft",
+    "toolbar": "Installierte Apps"
   },
   "detail": {
     "back": "Installierte Apps",
@@ -107,7 +133,7 @@
     "policy": {
       "title": "Updates",
       "label": "Wenn ein Katalog eine neuere Version hat",
-      "box": "Wie in den Store-Einstellungen",
+      "box": "Wie für die Box unter Updates festgelegt",
       "hint": "Ein Update, das neue Berechtigungen oder Sonderrechte verlangt, installiert sich nie von selbst."
     },
     "rollback": {
@@ -137,7 +163,11 @@
     },
     "notifications": {
       "title": "Benachrichtigungen",
-      "description": "Zeigt dem Nutzer, der sie verwendet, Benachrichtigungen."
+      "description": "Zeigt dem Nutzer, der sie verwendet, Benachrichtigungen.",
+      "external": {
+        "title": "E-Mail und Webhooks",
+        "description": "Seine Benachrichtigungen erreichen auch die E-Mail- und Webhook-Kanäle der Benutzer, nicht nur den Desktop."
+      }
     },
     "directory": {
       "read": {
@@ -184,12 +214,11 @@
       "no": "Läuft nur im Browser, ohne Hintergrunddienst."
     },
     "root": "Ein Container dieser App läuft als root. Pithyx lässt ihm auf der Box selbst keine Rechte, aber installiere sie nur, wenn du dem Entwickler vertraust.",
-    "elevated": "Sie fragt nach besonderen Rechten: {rights}",
     "access": "Wer sie nutzen darf",
     "accessSuggested": "Für diese App empfohlen: nur Administratoren, weil sie alle Nutzer sehen kann, in einem Container als root läuft oder nach besonderen Rechten fragt.",
     "pool": "Pool für App-Daten",
     "poolHint": "Alle Apps speichern ihre Daten auf diesem Pool. Er lässt sich nicht ändern, solange eine App installiert ist.",
-    "noPools": "Es gibt keinen Pool, der Apps aufnehmen kann. Lege zuerst einen in Speicher an.",
+    "noPools": "Es gibt keinen Pool, der Apps aufnehmen kann. Lege zuerst einen unter Einstellungen > Speicher an.",
     "loadingPools": "Pools werden geladen",
     "install": "Installieren",
     "update": "Aktualisieren",
@@ -203,7 +232,9 @@
     "updated": "{name} ist aktualisiert.",
     "stopped": "Die Installation wurde abgebrochen.",
     "fromCatalog": "Aus dem Katalog {catalog}, gegen seine Signatur geprüft.",
-    "fromCustomCatalog": "Aus dem Katalog {catalog}, der nicht geprüft ist: Installiere nur Apps aus Katalogen, denen du vertraust."
+    "fromCustomCatalog": "Aus dem Katalog {catalog}, der nicht geprüft ist: Installiere nur Apps aus Katalogen, denen du vertraust.",
+    "internet": "Diese App darf sich mit Servern im Internet verbinden.",
+    "accessAudience": "Für diese App empfohlen: nur Administratoren, weil ihr Autor sie für sie gemacht hat."
   },
   "uninstall": {
     "title": "{name} deinstallieren?",
@@ -221,26 +252,12 @@
     "stopped": "Das Entfernen wurde abgebrochen."
   },
   "catalog": {
-    "official": {
-      "title": "Offizielle Apps",
-      "intro": "Apps des Pithyx-Projekts, vom Projekt geprüft, gebaut und signiert."
-    },
-    "community": {
-      "title": "Community-Apps",
-      "intro": "Apps von Entwicklern außerhalb des Projekts. Das Projekt prüft sie vor der Veröffentlichung, kann aber nicht wie für eigene Apps für sie einstehen. Du kannst diesen Katalog in den Store-Einstellungen ausschalten."
-    },
-    "own": {
-      "title": "Deine Kataloge",
-      "intro": "Apps aus den Katalogen, die du hinzugefügt hast. Das Pithyx-Projekt prüft sie nicht."
-    },
-    "search": "Apps suchen",
-    "searchPlaceholder": "Name, Beschreibung oder Entwickler",
     "loading": "Apps werden geladen",
-    "empty": "Dieser Katalog hat noch keine Apps für diese Box.",
+    "empty": "Dieser Katalog hat noch keine Apps.",
     "noMatch": "Keine App passt zu „{query}“.",
     "apps": "Apps",
     "newNotice": "{name} wurde noch nicht abgerufen.",
-    "failedNotice": "Der letzte Abruf von {name} ist fehlgeschlagen; die Apps stammen aus seiner letzten geprüften Kopie. Die Store-Einstellungen nennen den Grund.",
+    "failedNotice": "Der letzte Abruf von {name} ist fehlgeschlagen; die Apps stammen aus seiner letzten geprüften Kopie. Die Seite Kataloge nennt den Grund.",
     "updateAvailable": "Update verfügbar",
     "installed": "Installiert",
     "installedVersion": "Version {version} installiert",
@@ -259,11 +276,23 @@
     "source": "Quellcode",
     "sourceLink": "Quellcode dieser Version im Katalog",
     "versions": "Versionen",
-    "needs": "braucht Pithyx {range}"
+    "needs": "braucht Pithyx {range}",
+    "noCategoryMatch": "Keine App in dieser Kategorie passt.",
+    "incompatible": "Nicht kompatibel",
+    "incompatibleReason": {
+      "box": "Diese App braucht Pithyx {range}; diese Box hat {version}. Nach einem Systemupdate lässt sie sich vielleicht installieren.",
+      "architecture": "Diese App ist nicht für den Prozessor dieser Box ({box}) gebaut; sie läuft auf {architectures}.",
+      "manifestOld": "Diese Version wurde für ein älteres Pithyx gemacht (Manifest-Version {manifest}), das diese Box nicht mehr installiert. Ihr Entwickler muss eine angepasste Version veröffentlichen.",
+      "manifestNew": "Diese Version wurde für ein neueres Pithyx gemacht (Manifest-Version {manifest}). Nach einem Systemupdate lässt sie sich vielleicht installieren."
+    },
+    "versionReason": {
+      "architecture": "nicht für {box}",
+      "manifestOld": "älteres App-Format",
+      "manifestNew": "neueres App-Format"
+    }
   },
   "updates": {
     "title": "Updates",
-    "intro": "Neuere Versionen installierter Apps. Die Store-Einstellungen legen fest, was die Box damit von selbst tut.",
     "versions": "{from} auf {to}",
     "newPermissions": "{count, plural, one {Verlangt # neue Berechtigung} other {Verlangt # neue Berechtigungen}}",
     "elevated": "Verlangt Sonderrechte",
@@ -273,13 +302,12 @@
       "notify": "Wartet auf dich",
       "none": "Wartet auf dich"
     },
-    "update": "Aktualisieren"
+    "update": "Aktualisieren",
+    "critical": "Hat Root-Zugriff: aktualisiert sich nie von selbst. Installiere das Update mit einem Klick, nachdem du es geprüft hast.",
+    "toolbar": "Updates",
+    "empty": "Alle installierten Apps sind aktuell."
   },
   "settings": {
-    "open": "Store-Einstellungen",
-    "back": "Store",
-    "title": "Store-Einstellungen",
-    "save": "Speichern",
     "updates": {
       "title": "Updates",
       "policy": "Wenn ein Katalog eine neuere Version hat",
@@ -291,16 +319,17 @@
       "policyHints": {
         "automatic": "Updates, die neue Berechtigungen oder Sonderrechte verlangen, warten trotzdem auf dich.",
         "notify": "Eine Benachrichtigung auf den Desktops der Administratoren.",
-        "none": "Updates erscheinen nur im Reiter Updates."
+        "none": "Updates erscheinen nur unter Updates."
       },
       "time": "Tägliche Prüfzeit",
-      "timeHint": "HH:MM in der Zeitzone der Box. Jede Box wartet zusätzlich bis zu einer Stunde.",
+      "timeHint": "HH:MM in der Zeitzone der Box. Jede Box wartet zusätzlich bis zu einer Stunde. Gilt, sobald du das Feld verlässt oder Enter drückst.",
       "timeInvalid": "Gib eine Uhrzeit wie 03:00 ein.",
       "next": "Nächste Prüfung: {time}",
       "last": "letzte Prüfung: {time}",
       "checkNow": "Jetzt prüfen",
       "checking": "Alle Kataloge werden jetzt geprüft.",
-      "notifications": "Administratoren bekommen Desktop-Benachrichtigungen zu Updates und zu Katalogen, die sich nicht abrufen lassen."
+      "notifications": "Administratoren bekommen Desktop-Benachrichtigungen zu Updates und zu Katalogen, die sich nicht abrufen lassen.",
+      "criticalHint": "Apps mit Root-Zugriff aktualisieren sich nie von selbst, egal was diese Einstellung sagt."
     },
     "channel": {
       "title": "Kanal",
@@ -325,7 +354,7 @@
       "verified": "Geprüft {time}, {count, plural, one {# App} other {# Apps}}.",
       "deployKey": "Deploy-Key",
       "deployKeyHint": "Dieser Katalog ist privat: Sein Repository braucht diesen Schlüssel als Deploy-Key nur zum Lesen.",
-      "deployKeyNext": "Füge diesen Schlüssel dem Repository als Deploy-Key ohne Schreibzugriff hinzu und rufe den Katalog dann in den Store-Einstellungen ab.",
+      "deployKeyNext": "Füge diesen Schlüssel dem Repository als Deploy-Key ohne Schreibzugriff hinzu und rufe den Katalog dann unter Kataloge ab.",
       "hostKey": "Beim ersten Verbinden gespeicherter Serverschlüssel: {key}",
       "sync": "Jetzt abrufen",
       "remove": "Entfernen",
@@ -334,16 +363,148 @@
       "url": "URL des Repositorys",
       "urlHint": "https://… für einen öffentlichen Katalog, git@host:besitzer/repository.git für einen privaten.",
       "addWarning": "Apps aus deinen eigenen Katalogen prüft das Pithyx-Projekt nicht. Füge nur Kataloge hinzu, denen du vertraust.",
-      "added": "Der Katalog wird abgerufen."
+      "added": "Der Katalog wird abgerufen.",
+      "toolbar": "Kataloge",
+      "intro": "Ein Katalog ist ein Git-Repository mit Apps. Die Box ruft die eingeschalteten Kataloge einmal am Tag ab und prüft die Signatur der beiden Kataloge des Projekts."
     },
     "community": {
       "title": "Community-Katalog nutzen?",
       "warning": "Community-Apps stammen von Entwicklern außerhalb des Pithyx-Projekts. Das Projekt prüft sie vor der Veröffentlichung, kann aber nicht wie für eigene Apps für sie einstehen.",
       "confirm": "Nutzen"
-    },
-    "file": {
-      "title": "Aus einer Datei installieren",
-      "intro": "Installiere eine App aus ihrer Paketdatei (.pithyxapp). Solche Apps sind nicht geprüft."
     }
+  },
+  "elevated": {
+    "section": "Sonderrechte",
+    "warning": "Diese Rechte reichen über die Sandbox des Hintergrunddienstes der App hinaus. Gib sie nur Apps, denen du vertraust.",
+    "sectionIntro": "Rechte über die Sandbox des Hintergrunddiensts der App hinaus. Entziehst du eines, startet der Dienst ohne es neu; ein Recht mit hohem Risiko oder Root-Zugriff wieder zu geben, verlangt dein Passwort.",
+    "hostNetwork": {
+      "title": "Netzwerk der Box",
+      "risk": "Ihr Hintergrunddienst nutzt das Netzwerk der Box statt eines eigenen: Er sieht jede Verbindung der Box und kann auf jedem Port jeder Netzwerkkarte Dienste anbieten."
+    },
+    "hostPid": {
+      "title": "Prozesse der Box",
+      "risk": "Ihr Hintergrunddienst sieht jeden Prozess der Box mit seiner Befehlszeile, in der Passwörter stehen können."
+    },
+    "device": {
+      "title": "Gerät {path}",
+      "risk": "Ihr Hintergrunddienst liest und schreibt dieses Gerät direkt, zum Beispiel eine Grafikkarte oder einen Funkstick für die Hausautomation."
+    },
+    "capability": {
+      "title": "Linux-Capability {name}",
+      "risk": "Root im Container der App bekommt die Capability {name} und kann damit Dinge tun, die ein Container sonst nicht kann, etwa sein eigenes Netzwerk ändern. Von der Box selbst bleibt er getrennt."
+    },
+    "unknown": "Ein Sonderrecht, das diese Version von Pithyx nicht erklärt.",
+    "badge": "Sonderrechte",
+    "grantLater": "Die App wird ohne sie installiert; ihr Hintergrunddienst läuft ohne diese Rechte, bis du sie auf ihrer Seite gibst.",
+    "stepUp": "Um Sonderrechte zu geben, bestätige mit deinem Passwort{twoFactor, select, true { und einem Code aus deiner Authenticator-App} other {}}. Die Bestätigung gilt fünf Minuten.",
+    "stepUpHeld": "Du hast gerade mit deinem Passwort bestätigt; das gilt bis {time}.",
+    "password": "Dein Passwort",
+    "code": "Code aus deiner Authenticator-App",
+    "grantTitle": "Sonderrecht geben",
+    "confirm": "Geben",
+    "cancel": "Abbrechen",
+    "dockerSocket": {
+      "title": "Eigene Container",
+      "risk": "Ihr Hintergrunddienst startet und steuert weitere Container über einen gefilterten Containerdienst. Er sieht nur die Container, die er selbst gestartet hat; sie laufen in der Sandbox der App, ohne Netzwerk, Dateien oder Geräte der Box. Mit der Internet-Berechtigung kann er Images herunterladen."
+    },
+    "dockerSocketRaw": {
+      "title": "Der ganze Containerdienst",
+      "risk": "Ihr Hintergrunddienst steuert den Containerdienst der Box ohne jeden Filter. Das ist dasselbe wie root auf der Box: Er kann jede Datei, jede App und jede Einstellung lesen und ändern. Gib dieses Recht nur einer App, die du selbst geschrieben hast oder der du ganz vertraust."
+    },
+    "deviceClass": {
+      "dri": "Grafikkarten (/dev/dri)",
+      "serial": "USB-Seriell-Adapter (/dev/serial)",
+      "tun": "Netzwerktunnel (/dev/net/tun)"
+    },
+    "deviceOptional": "Optional: Die App läuft auch ohne.",
+    "deviceMissing": "Nicht eingesteckt. Steck das Gerät ein und versuch es noch einmal.",
+    "deviceMissingOptional": "Nicht gefunden. Die App läuft ohne, zum Beispiel ohne Hardwarebeschleunigung.",
+    "deviceAbsent": "Nicht eingesteckt: Ihr Hintergrunddienst startet erst, wenn das Gerät wieder da ist.",
+    "deviceAbsentOptional": "Nicht gefunden: Der Hintergrunddienst läuft ohne.",
+    "tier": {
+      "elevated": "Gerätezugriff",
+      "high": "Hohes Risiko",
+      "critical": "Root-Zugriff"
+    },
+    "reason": "Warum die App es braucht: {reason}",
+    "noReason": "Die App nennt keinen Grund: Sie wurde installiert, bevor Apps einen nennen mussten.",
+    "hosts": "Spricht mit {hosts}",
+    "consent": {
+      "grant": "Diese Rechte geben",
+      "later": "Ohne sie installieren; später auf der Seite der App geben",
+      "elevated": "Ich erlaube die Geräte oben",
+      "high": "Ich verstehe, was die Rechte oben der App erlauben",
+      "critical": "Im nächsten Schritt bestätigst du den Root-Zugriff."
+    },
+    "rootBadge": "Root-Zugriff",
+    "critical": {
+      "title": "{name} bekommt Root-Zugriff auf die Box",
+      "consequences": "Mit {rights} kann der Hintergrunddienst der App jede Datei jedes Benutzers lesen und ändern, Passwörter und Einstellungen ändern und beliebige Software auf der Box ausführen: dasselbe wie root. Ein fehlerhaftes oder gekapertes Update der App könnte die Box übernehmen, deshalb aktualisiert Pithyx sie nie von selbst.",
+      "trust": "Gib es nur einer App, deren Quellcode du kennst und deren Autor du vertraust.",
+      "typeName": "Tippe zur Bestätigung den Namen der App ein: {name}",
+      "pasted": "Einfügen ist in Ordnung, aber das ist kein Scherz: Diese App bekommt die volle Kontrolle über die Box.",
+      "continue": "Weiter",
+      "back": "Zurück",
+      "install": "Mit Root-Zugriff installieren",
+      "update": "Mit Root-Zugriff aktualisieren",
+      "grant": "Root-Zugriff geben"
+    }
+  },
+  "info": {
+    "privacy": {
+      "title": "Datenschutz",
+      "none": "Sendet nichts aus der Box hinaus.",
+      "optional": "Sendet Daten nur aus der Box hinaus, wenn du es einschaltest.",
+      "telemetry": "Sendet Nutzungs- oder Absturzdaten an ihren Autor.",
+      "vendorAccount": "Braucht ein Konto bei einem Dienst außerhalb der Box.",
+      "unknown": "Der Autor sagt nicht, was die App aus der Box hinaus sendet."
+    },
+    "source": {
+      "title": "Quellcode",
+      "open": "Open Source ({license})",
+      "public": "Quellcode öffentlich, ohne Lizenzangabe",
+      "private": "Quellcode nicht öffentlich"
+    },
+    "arch": {
+      "title": "Läuft auf"
+    },
+    "languages": {
+      "title": "Sprachen",
+      "yours": "Verfügbar auf {language}",
+      "others": "Nicht in deiner Sprache; verfügbar auf {languages}"
+    },
+    "security": {
+      "title": "Sicherheitskontakt"
+    },
+    "categories": {
+      "title": "Kategorien"
+    },
+    "maturity": {
+      "beta": "Beta",
+      "experimental": "Experimentell"
+    },
+    "releaseNotes": "Neu in {version}",
+    "requirements": {
+      "memory": "Die App braucht etwa {needed} MB Arbeitsspeicher, und diese Box hat {available} MB. Sie wird trotzdem installiert, läuft aber vielleicht langsam.",
+      "disk": "Die App braucht etwa {needed} MB auf dem App-Pool, und {available} MB sind frei. Sie wird trotzdem installiert, aber der Platz reicht vielleicht nicht."
+    }
+  },
+  "category": {
+    "productivity": "Produktivität",
+    "office": "Büro",
+    "communication": "Kommunikation",
+    "files": "Dateien",
+    "backup": "Sicherung",
+    "photos": "Fotos",
+    "media": "Medien",
+    "home-automation": "Hausautomation",
+    "network": "Netzwerk",
+    "security": "Sicherheit",
+    "monitoring": "Überwachung",
+    "development": "Entwicklung",
+    "education": "Bildung",
+    "finance": "Finanzen",
+    "games": "Spiele",
+    "utilities": "Werkzeuge"
   }
 }

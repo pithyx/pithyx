@@ -81,16 +81,17 @@ public sealed class AppFiles(
             {
                 ShareAvailability.PoolMissing => "poolMissing",
                 ShareAvailability.PoolUnavailable => "poolUnavailable",
-                ShareAvailability.NotMounted => "notMounted",
+                // The SDK's reasons stay as published (SDK 1.0): a locked pool's share is one that is not mounted.
+                ShareAvailability.NotMounted or ShareAvailability.Locked => "notMounted",
                 _ => null,
             },
             share.Kind))];
     }
 
-    public async Task<AppFolderPage> ListAsync(InstalledApp app, ClaimsPrincipal user, AppFileLocation location, string? path, FileSort sort, SortOrder order, int? limit, string? cursor, CancellationToken cancellationToken)
+    public async Task<AppFolderPage> ListAsync(InstalledApp app, ClaimsPrincipal user, AppFileLocation location, string? path, FileSort sort, SortOrder order, int? limit, string? cursor, string? query, CancellationToken cancellationToken)
     {
         var target = Resolve(app, null, location, null, write: false, content: false);
-        var page = await files.ListAsync(user, target.ShareId, path, sort, order, limit, cursor, cancellationToken, target.Within);
+        var page = await files.ListAsync(user, target.ShareId, path, sort, order, limit, cursor, cancellationToken, target.Within, query);
         return new AppFolderPage(page.Path, page.FolderId, page.Total, page.Entries, page.NextCursor, page.Topic);
     }
 

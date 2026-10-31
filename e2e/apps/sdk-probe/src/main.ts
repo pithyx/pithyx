@@ -68,6 +68,8 @@ async function main(root: HTMLElement) {
   let picked = '';
   let saved = '';
   let activation: NotificationActivation | null = app.context.launch.notification ?? null;
+  // The last file action of the manifest the user chose in Files (D375).
+  let fileAction = app.context.launch.action ?? null;
   const events: string[] = [];
 
   // A message posted straight to the desktop window is not the app's port; the desktop must ignore it.
@@ -110,6 +112,13 @@ async function main(root: HTMLElement) {
           ? '-'
           : `${activation.action ?? t('notificationItself')} ${JSON.stringify(activation.data)}`,
         'activation',
+      ],
+      [
+        t('fileAction'),
+        fileAction === null
+          ? '-'
+          : `${fileAction.id} ${fileAction.folder}/${fileAction.names.join(',')}`,
+        'fileAction',
       ],
       [t('picked'), picked === '' ? '-' : picked, 'picked'],
       [t('saved'), saved === '' ? '-' : saved, 'saved'],
@@ -283,6 +292,7 @@ async function main(root: HTMLElement) {
   });
   app.on('launch', (launch) => {
     activation = launch.notification ?? activation;
+    fileAction = launch.action ?? fileAction;
     render();
   });
   // Asks for attention once the user leaves the window, so the taskbar entry pulses while another window has the focus.

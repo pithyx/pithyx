@@ -11,6 +11,7 @@
     "dev": "pnpm --filter @pithyx/desktop dev",
     "design": "pnpm --filter @pithyx/desktop design",
     "design:shots": "node tools/design-shots/render.ts",
+    "design:docs": "node tools/design-shots/docs.ts",
     "design:test": "playwright test -c tools/design-shots/playwright.config.ts",
     "lint": "pnpm --filter @pithyx/desktop css-types && pnpm --filter @pithyx/website sync && eslint . --concurrency auto",
     "typecheck": "tsc -p tsconfig.json && pnpm -r --parallel typecheck",
@@ -28,6 +29,7 @@
     "check:dco": "node tools/checks/dco.ts"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
     "@eslint/js": "^10.0.0",
     "@playwright/test": "^1.63.0",
     "@types/node": "^24.0.0",

@@ -6,7 +6,7 @@ sidebar:
   order: 5
 ---
 
-The first release was 1.0.0 (codename Pyxis), the current one is 1.1.0 (codename Carina); both are marked beta until a release is declared stable. A minor or major version gets a new constellation as its codename, a patch release keeps the one of its minor version (D374). The changes and known limitations of each release are in the changelog file in the repository.
+The first release was 1.0.0 (codename Pyxis), then came 1.1.0 (Carina), and the current one is 1.2.0 (codename Vela); all are marked beta until a release is declared stable. A minor or major version gets a new constellation as its codename, a patch release keeps the one of its minor version (D374). The changes and known limitations of each release are in the changelog file in the repository.
 
 ## Releases
 

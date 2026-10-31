@@ -10,8 +10,11 @@ import {
   WindowStatesScene,
   type SceneContext,
 } from './DesktopScreens';
+import { appScreens } from './appScreens';
+import { FileDialogScene } from './FileDialogScene';
 import { labels } from './labels';
 import { LogoScreen } from './LogoScreen';
+import { PatternAppScene, PatternsScreen, RecentFilesScene } from './PatternScreens';
 import styles from './screens.module.css';
 import { storageScreens } from './storageScreens';
 import { TokensScreen } from './TokensScreen';
@@ -132,6 +135,21 @@ export const screens: ScreenDefinition[] = [
     render: (context) => <DesktopScene context={context} windows="three" />,
   },
   {
+    id: 'desktop-window-menu',
+    group: 'desktop',
+    title: 'Window menu',
+    description:
+      'The app icon in the title bar of Files opens every window action with its shortcut, without dragging.',
+    render: (context) => (
+      <DesktopScene
+        context={context}
+        windows="three"
+        windowMenu
+        script={[{ press: 'desktop:window.menu', params: { title: '' } }]}
+      />
+    ),
+  },
+  {
     id: 'desktop-maximized',
     group: 'desktop',
     title: 'Maximized window',
@@ -196,6 +214,20 @@ export const screens: ScreenDefinition[] = [
     render: (context) => <StartMenuScene context={context} search={false} userMenuOpen />,
   },
   {
+    id: 'user-menu-appearance',
+    group: 'overlays',
+    title: 'User menu: appearance',
+    description: 'The submenu Appearance of the user menu: like the system, light or dark.',
+    render: (context) => (
+      <StartMenuScene
+        context={context}
+        search={false}
+        userMenuOpen
+        script={[{ press: 'desktop:menu.theme' }]}
+      />
+    ),
+  },
+  {
     id: 'notifications',
     group: 'overlays',
     title: 'Notification toasts',
@@ -217,5 +249,80 @@ export const screens: ScreenDefinition[] = [
       'Translated error text; the request id goes to the console only. Becomes a bottom sheet on phones.',
     render: (context) => <ErrorDialogScene context={context} />,
   },
+  {
+    id: 'patterns',
+    group: 'patterns',
+    title: 'Patterns',
+    description:
+      'Every pattern of @pithyx/ui from the design pass (D394) on its own: state badges, summary tiles, navigation, attention list, table with details pane, cards with meters, form sections with the action bar. Check every accent.',
+    render: (context) => <PatternsScreen context={context} />,
+  },
+  {
+    id: 'pattern-overview',
+    group: 'patterns',
+    title: 'Sample: settings overview',
+    description:
+      'AppFrame with the grouped navigation; box facts, Needs attention with one action per row, all settings. Compare with f-overview.',
+    render: (context) => <PatternAppScene context={context} page="overview" />,
+  },
+  {
+    id: 'pattern-network',
+    group: 'patterns',
+    title: 'Sample: network form',
+    description:
+      'Tabs, interface cards, form sections with label column, radio buttons, a select and the action bar fixed at the bottom. Compare with f-network.',
+    render: (context) => <PatternAppScene context={context} page="network" />,
+  },
+  {
+    id: 'pattern-users',
+    group: 'patterns',
+    title: 'Sample: users with details pane',
+    description:
+      'Tabs with counts, toolbar with the primary action first, a sortable table with two-line rows and the details pane of the selected user. Compare with f-users.',
+    render: (context) => <PatternAppScene context={context} page="users" />,
+  },
+  {
+    id: 'pattern-pools',
+    group: 'patterns',
+    title: 'Sample: pools as cards',
+    description:
+      'Summary tiles, toolbar, pool cards with state badge, facts, meter (orange when nearly full) and the expanded details with the disks and actions. Compare with f-storage.',
+    render: (context) => <PatternAppScene context={context} page="pools" />,
+  },
+  {
+    id: 'files-recent',
+    group: 'patterns',
+    title: 'Files: recent files',
+    description:
+      'The Recent place of Files (#333): name with the file type icon, the location as a link to the folder, when it was opened and the size. Compare with f-files.',
+    render: (context) => <RecentFilesScene context={context} />,
+  },
+  {
+    id: 'file-dialog-save',
+    group: 'patterns',
+    title: 'App file dialog: save',
+    description:
+      'The dialog an app opens with files.saveAs (#324): the places with a lock on read-only folders, up and the path in a field, the folder as a table, the file name below. Compare with f-files.',
+    render: (context) => (
+      <FileDialogScene
+        context={context}
+        request={{ kind: 'save', multiple: false, extensions: [], suggestedName: 'Notes.md' }}
+      />
+    ),
+  },
+  {
+    id: 'file-dialog-pick',
+    group: 'patterns',
+    title: 'App file dialog: choose',
+    description:
+      'The dialog of files.pick with several files and a type filter: only the pictures and folders are listed, and the line below says which types.',
+    render: (context) => (
+      <FileDialogScene
+        context={context}
+        request={{ kind: 'pick', multiple: true, extensions: ['jpg', 'png'], suggestedName: '' }}
+      />
+    ),
+  },
   ...storageScreens,
+  ...appScreens,
 ];

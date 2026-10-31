@@ -48,6 +48,13 @@ public sealed record TotpConfirmRequest(string Code);
 
 public sealed record TotpDisableRequest(string Password);
 
+/// <param name="Password">The signed-in user's password.</param>
+/// <param name="TotpCode">A current authenticator code, when two-factor sign-in is on.</param>
+public sealed record StepUpRequest(string Password, string? TotpCode = null);
+
+/// <param name="Until">Until when the session holds a step-up (UTC), or null.</param>
+public sealed record StepUpState(DateTimeOffset? Until);
+
 /// <param name="Codes">Shown exactly once. Each code replaces a TOTP code for one login.</param>
 public sealed record RecoveryCodes(IReadOnlyList<string> Codes);
 
@@ -55,3 +62,30 @@ public sealed record RecoverRequest(string Username, string RecoveryKey, string 
 
 /// <param name="RecoveryKey">The new recovery key. The old one no longer works.</param>
 public sealed record RecoverResponse(string RecoveryKey);
+
+/// <summary>A passkey of the signed-in user (D380).</summary>
+/// <param name="Id">Stable id.</param>
+/// <param name="Name">The name the user gave it, such as the device it lives on.</param>
+/// <param name="RpId">The name of the box it belongs to: it works only where the box is opened under this name.</param>
+/// <param name="BackedUp">Whether the authenticator syncs it to other devices.</param>
+/// <param name="CreatedAt">UTC.</param>
+/// <param name="LastUsedAt">UTC, or null before its first sign-in.</param>
+public sealed record PasskeyInfo(long Id, string Name, string RpId, bool BackedUp, string CreatedAt, string? LastUsedAt);
+
+public sealed record PasskeyList(IReadOnlyList<PasskeyInfo> Items);
+
+/// <param name="Ceremony">Pass back with the authenticator's answer within five minutes; it is used once.</param>
+/// <param name="Options">The WebAuthn options as JSON (<c>PublicKeyCredentialCreationOptionsJSON</c> or <c>PublicKeyCredentialRequestOptionsJSON</c>).</param>
+public sealed record PasskeyOptions(string Ceremony, System.Text.Json.JsonElement Options);
+
+/// <param name="Password">The current password: a new passkey signs in without it.</param>
+public sealed record PasskeyOptionsRequest(string Password);
+
+/// <param name="Ceremony">From the options.</param>
+/// <param name="Name">1 to 64 characters.</param>
+/// <param name="Credential">The answer of <c>navigator.credentials.create</c> as JSON (<c>RegistrationResponseJSON</c>).</param>
+public sealed record PasskeyCreateRequest(string Ceremony, string Name, System.Text.Json.JsonElement Credential);
+
+/// <param name="Ceremony">From the sign-in options.</param>
+/// <param name="Credential">The answer of <c>navigator.credentials.get</c> as JSON (<c>AuthenticationResponseJSON</c>).</param>
+public sealed record PasskeySignInRequest(string Ceremony, System.Text.Json.JsonElement Credential);

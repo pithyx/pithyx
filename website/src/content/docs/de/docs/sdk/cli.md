@@ -28,7 +28,7 @@ pithyx dev [folder] [--port 7400] [--host 127.0.0.1] [--endpoint name=url ...] [
 
 Startet den Mock-Desktop mit deinem gebauten Frontend in der Sandbox der Box und einen Proxy zum Backend. Der Port muss eine ganze Zahl von 1 bis 65535 sein. Ein Backend läuft mit `docker compose` aus `backend/compose.dev.yaml`, wenn es existiert, sonst aus der festgelegten `backend/compose.yaml`. `--endpoint name=url` (wiederholbar) richtet einen Endpunkt auf einen Server aus, den du selbst betreibst, und `--no-docker` lässt das Backend in Ruhe (Endpunkte ohne `--endpoint` antworten dann mit 503). Es braucht eine gültige `pithyx.json`. Beende es mit Strg+C. Details: [Deine erste App](/de/docs/developers/apps/first-app/#pithyx-dev).
 
-Mit Vite nutzt du stattdessen das Plugin: `import pithyx from '@pithyx/cli/vite'` und füge `pithyx()` zu `plugins` hinzu, dann starte `vite`. Optionen: `project`, `validate` (Standard true; validiert nach `vite build`), `endpoints` und `docker`.
+Mit Vite nutzt du stattdessen das Plugin: `import pithyx from '@pithyx/cli/vite'` und füge `pithyx()` zu `plugins` hinzu, dann starte `vite`. Optionen: `project`, `validate` (Standard true; validiert nach `vite build`), `allowReservedId` (Standard false, siehe `--allow-reserved-id`), `endpoints` und `docker`.
 
 ## pithyx build
 

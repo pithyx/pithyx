@@ -17,7 +17,7 @@ To sign in, enter your **User name** and **Password** on the page **Welcome back
 
 A setup page (**Set up Pithyx**, **Create administrator**) exists too. It appears only when a box has no users at all, for example after a reset. On a box installed with the installer you do not see it.
 
-Two-factor sign-in is optional. To turn it on, open the Pithyx menu, click your name and choose **Two-factor authentication**. See [Your account](/docs/user/account/).
+Two-factor sign-in is optional. To turn it on, open the Pithyx menu, click your name, choose **Personal settings** and then **Two-factor authentication**. See [Your account](/docs/user/account/).
 
 ## The recovery key
 
@@ -33,21 +33,21 @@ If you lose the key and the password, the system has to be reinstalled. See [Rec
 
 ## The first pool
 
-![The Create a pool wizard at step 3, Encryption, with No encryption chosen and Encrypt with a key not available yet](../../../../assets/screenshots/first-setup-encryption.webp)
+![The Create a pool wizard at step 3, Encryption, with Encrypt with a key chosen and Automatically at every start, from the key vault preselected](../../../../assets/screenshots/first-setup-encryption.webp)
 
 _Step 3 of the pool wizard: encryption can only be chosen when the pool is created._
 
-All of your data lives on ZFS pools, and the box starts without one. Create the first pool in the Storage app, which only administrators can open:
+All of your data lives on ZFS pools, and the box starts without one. Create the first pool in Settings, which only administrators can open:
 
-1. Open the Pithyx menu and start **Storage**.
+1. Open the Pithyx menu, start **Settings** and choose **Pools** under **Storage**.
 2. Click **Create pool…**.
-3. Pick the disks, a layout, whether to encrypt, and a name. The steps are **Disks**, **Layout**, **Encryption**, **Name and check**.
+3. Pick the disks, a layout, whether to encrypt, and a name. The steps are **Disks**, **Layout**, **Encryption**, **Name and check**, and **Key** for an encrypted pool.
 4. Click **Create pool**.
 
 Notes:
 
 - A disk that holds data asks you to type its serial number before it can be used. The system disk is never offered.
-- Pools cannot be encrypted yet. **Encrypt with a key** is not available, and a pool you create stays unencrypted. Choose **No encryption**.
+- Encryption can only be chosen now. **Encrypt with a key** shows the pool's key once: store it away from the box before you go on, because without it the data is lost. See [Encryption](/docs/admin/storage/#encryption).
 - The wizard can **Show commands** it will run.
 - Pool names start with a lowercase letter and may contain lowercase letters, digits, hyphens and underscores.
 - You can close the window while the pool is created; a notification tells you when it is done.
@@ -58,7 +58,7 @@ Users get a home folder on the first pool with the Pithyx layout once one exists
 
 Pithyx has no invitation links. An administrator creates each account:
 
-1. Open Settings > **Users**.
+1. Open Settings > **Users and groups**.
 2. Click **Create user** and enter a user name, an optional display name and a password. Every user is also in the group `users`.
 3. Give the person the password in person or through another safe channel.
 4. Set the rights with the **Rights** dialog.

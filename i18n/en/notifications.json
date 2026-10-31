@@ -54,11 +54,6 @@
         "body": "Disk {disk} (serial {serial}) reports {reallocated, number} reallocated, {pending, number} pending and {uncorrectable, number} uncorrectable sectors and {mediaErrors, number} media errors{selfTest, select, failed {; its last self-test failed} other {}}. Plan to replace it.",
         "action": "Open Storage"
       },
-      "resolved": {
-        "title": "Resolved: {problem}",
-        "body": "The storage problem is gone.",
-        "action": "Open Storage"
-      },
       "poolSuspended": {
         "title": "Pool {pool} has stopped",
         "body": "Too many disks of {pool} are gone, so ZFS stopped all reads and writes to protect the data. Connect the disks again: Pithyx resumes the pool on its own. Other pools keep working; do not destroy or export this one until then.",
@@ -67,6 +62,38 @@
       "diskMissing": {
         "title": "Disk {disk} of {pool} is not connected",
         "body": "Disk {disk} disappeared from {pool}. If it was unplugged by mistake, connect it again: Pithyx adds it back and ZFS copies what it missed. Otherwise replace it.",
+        "action": "Open Storage"
+      },
+      "poolLocked": {
+        "title": "Pool {pool} is locked",
+        "body": "{pool} waits for its key. Its shared folders, home folders and apps are unavailable until an administrator unlocks it in Settings > Storage.",
+        "action": "Open Storage"
+      },
+      "poolLockedVault": {
+        "title": "Pool {pool} could not be unlocked",
+        "body": "The key in the key vault did not unlock {pool}. Its data is untouched, but its shared folders, home folders and apps are unavailable until an administrator unlocks it in Settings > Storage with the stored key.",
+        "action": "Open Storage"
+      },
+      "poolLockedUsb": {
+        "title": "Pool {pool} waits for its USB stick",
+        "body": "Plug in the USB stick {stick} with the key of {pool}, or unlock it in Settings > Storage with the stored key. Until then its shared folders, home folders and apps are unavailable.",
+        "action": "Open Storage"
+      },
+      "poolLockedUsbFailed": {
+        "title": "Pool {pool} could not be unlocked from the USB stick",
+        "body": "The key file on the USB stick did not unlock {pool}: it holds an older key or is damaged. Its data is untouched. Unlock it in Settings > Storage with the stored key, then write the key to the stick again.",
+        "action": "Open Storage"
+      },
+      "resolved": {
+        "title": "Resolved: {problem}",
+        "body": "The storage problem is gone.",
+        "action": "Open Storage"
+      }
+    },
+    "usb": {
+      "unlocked": {
+        "title": "Pool {pool} unlocked from a USB stick",
+        "body": "The key on {stick} unlocked {pool}. You can pull the stick now and keep it safe: {pool} stays unlocked until the box restarts, and then needs the stick again.",
         "action": "Open Storage"
       }
     }
@@ -77,6 +104,18 @@
         "title": "Update available",
         "body": "{app} {version} is ready to install.",
         "action": "Install"
+      }
+    },
+    "device": {
+      "missing": {
+        "title": "A device of {app} is missing",
+        "body": "{app} needs {path}, which is not plugged in. Its background service does not run until the device is back."
+      }
+    },
+    "elevated": {
+      "critical": {
+        "title": "{app} has root access now",
+        "body": "{user} granted {app} the right {right}: the app can now control the whole box. If you did not expect that, revoke it in Settings > Security."
       }
     }
   },
@@ -178,6 +217,55 @@
       "degraded": {
         "title": "A system disk is missing",
         "body": "The {array, select, system {system} other {swap}} mirror runs on {working} of {expected} disks. The box keeps running; replace the disk soon."
+      }
+    },
+    "ups": {
+      "on_battery": {
+        "title": "The UPS runs on battery",
+        "body": "{charge, select, null {The power failed.} other {The power failed; the battery is at {charge} %.}} The box shuts down at the limit set in Settings > UPS."
+      },
+      "online": {
+        "title": "The power is back",
+        "body": "The UPS runs on line power again{charge, select, null {.} other {; the battery is at {charge} %.}}"
+      },
+      "shutdown": {
+        "title": "The box shuts down for the UPS",
+        "body": "{reason, select, forced {The UPS's NUT server shuts every system down.} low_battery {The UPS says its battery is low.} charge {The battery reached the charge limit.} runtime {The battery reached the runtime limit.} lost {The UPS ran on battery and stopped answering.} other {The UPS is about to run out.}} Shares and apps stop now."
+      },
+      "unreachable": {
+        "title": "The UPS does not answer",
+        "body": "{problem, select, refused {No NUT server answers.} timeout {The NUT server does not answer in time.} unknown_ups {The NUT server has no UPS of that name.} driver_not_connected {No UPS was found, or its driver failed.} data_stale {The UPS stopped sending data.} access_denied {The user or password is wrong.} other {The NUT server answered with an error.}} Without it, the box cannot shut down cleanly on a power failure."
+      }
+    }
+  },
+  "auth": {
+    "signin": {
+      "blocked": {
+        "title": "Repeated failed sign-ins",
+        "body": "{user, select, null {Somebody at {address} failed to sign in {failures} times within {minutes} minutes and has to wait.} other {Somebody at {address} failed to sign in as {user} {failures} times within {minutes} minutes and has to wait.}}"
+      }
+    }
+  },
+  "notifications": {
+    "channel": {
+      "test": {
+        "title": "Test notification",
+        "body": "If you read this, the channel {name} works."
+      },
+      "footer": "Sent by Pithyx on {box}."
+    },
+    "smtp": {
+      "test": {
+        "title": "Test email",
+        "body": "If you read this, the box can send email through {host}."
+      }
+    }
+  },
+  "proxy": {
+    "acme": {
+      "renewal_failed": {
+        "title": "Certificate of {name} not renewed",
+        "body": "Let's Encrypt did not renew it. Settings > Reverse proxy shows why; the box tries again later, and the current certificate stays until it ends."
       }
     }
   }

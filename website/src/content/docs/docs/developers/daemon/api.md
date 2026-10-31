@@ -38,7 +38,7 @@ Every request under `/api` that is not `GET`, `HEAD` or `OPTIONS` must carry the
 
 Only failed sign-in attempts count against the rate limit: 5 per client address and user name and 30 per client address in a fixed 5-minute window. The answer is 429 [`auth.rate.limited`](/docs/reference/errors/#auth.rate.limited) with a `Retry-After` header. The same limiter protects the file protocols.
 
-Passwords use Argon2id (64 MiB, 3 passes) and need at least 8 characters. Pithyx has no personal access tokens for scripts; a script signs in like the desktop does. Passkeys are not built.
+Passwords use Argon2id (64 MiB, 3 passes) and need at least 8 characters. Pithyx has no personal access tokens for scripts; a script signs in like the desktop does. Passkeys (D380) sign in to the desktop under `/api/auth/passkeys/`: `sign-in/options` and `sign-in` without a session, and the user's own list, `options` (after the current password), create and delete with one; options and answers travel as the WebAuthn JSON forms.
 
 ## WebSocket and topics
 
@@ -55,7 +55,7 @@ Client messages are `sub` and `unsub` with an id and a topic. The server answers
 | 4401       | Session ended    | show the sign-in     |
 | 4403       | Forbidden        | stop                 |
 
-Topic patterns may use `+` for one level and `#` for the rest. Permissions are checked for every snapshot and event. Topics today: `system/info`, `system/resources`, `system/processes`, `system/network`, `system/updates`, `storage/disks`, `storage/pools`, `storage/alerts`, `storage/snapshots`, `shares/list`, `jobs`, `jobs/+`, `notifications`, `session/permissions`, `files/+/+`, `thumbnails/+/+`, `apps`, `apps/admin`, `apps/+/context` and `store/admin`.
+Topic patterns may use `+` for one level and `#` for the rest. Permissions are checked for every snapshot and event. Topics today: `system/info`, `system/resources`, `system/processes`, `system/network`, `system/updates`, `system/ups`, `storage/disks`, `storage/pools`, `storage/alerts`, `storage/snapshots`, `shares/list`, `jobs`, `jobs/+`, `notifications`, `session/permissions`, `files/+/+`, `thumbnails/+/+`, `apps`, `apps/admin`, `apps/+/context`, `store/admin` and `system/logs` (administrators, only an exact subscription: every write of the logs with its entries, at most 200; the snapshot has none).
 
 ## Generated client
 

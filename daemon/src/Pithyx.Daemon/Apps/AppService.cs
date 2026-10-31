@@ -8,6 +8,7 @@ using Pithyx.Daemon.Auth;
 using Pithyx.Daemon.Database;
 using Pithyx.Daemon.Errors;
 using Pithyx.Daemon.Files;
+using Pithyx.Daemon.Notifications;
 using Pithyx.Daemon.Jobs;
 using Pithyx.Daemon.Permissions;
 using Pithyx.Daemon.Shares;
@@ -41,6 +42,10 @@ public sealed partial class AppService(
     ShareService shares,
     Docker.AppBackendRuntime backends,
     Proxy.AppBackends backendStates,
+    StepUps stepUps,
+    Audit.AuditLog audit,
+    Notifications.NotificationService notifications,
+    Docker.DeviceFs deviceFs,
     TimeProvider time,
     ILogger<AppService> logger)
 {
@@ -69,18 +74,32 @@ public sealed partial class AppService(
     {
         RequireAdmin(caller);
         ArgumentNullException.ThrowIfNull(request);
-        return await StartInstallAsync(CurrentUser.Id(caller), packageId, request, cancellationToken);
+        return await StartInstallAsync(CurrentUser.Id(caller), packageId, request, cancellationToken, caller);
     }
 
     /// <summary>
     /// The install or update of a package that <paramref name="userId"/> staged, as a job of that user, or of the box
-    /// (<see cref="JobService.Box"/>) for an automatic update.
+    /// (<see cref="JobService.Box"/>) for an automatic update. Elevated rights the app gets newly are granted only with
+    /// the consent their tiers ask of <paramref name="caller"/> (D311, D388), or installed revoked when the request says
+    /// so; the box never grants one.
     /// </summary>
-    public async Task<Job> StartInstallAsync(long userId, string packageId, InstallAppRequest request, CancellationToken cancellationToken)
+    public async Task<Job> StartInstallAsync(long userId, string packageId, InstallAppRequest request, CancellationToken cancellationToken, ClaimsPrincipal? caller = null)
     {
         ArgumentNullException.ThrowIfNull(request);
         var package = packages.Get(userId, packageId);
         var appId = package.AppId;
+        var added = AddedElevated(package.Manifest, registry.Find(appId));
+        var grantElevated = request.Elevated != false;
+        if (grantElevated && added.Count > 0)
+        {
+            RequireConsent(caller ?? throw new PithyxException(ErrorCodes.AuthStepUpRequired), appId, added, request.ConfirmCritical);
+        }
+        // A new app that cannot run without a device is not installed while the device is missing (D387).
+        if (request.Elevated != false && registry.Find(appId) is null
+            && AppRegistry.DevicesOf(package.Manifest, deviceFs).FirstOrDefault(device => !device.Optional && !device.Present) is { } missing)
+        {
+            throw new PithyxException(ErrorCodes.AppDeviceMissing, new Dictionary<string, object?> { ["path"] = missing.Path });
+        }
         var pool = ChoosePool(request.Pool);
         storage.RequirePool(pool);
         if (!registry.TryBegin(appId))
@@ -110,6 +129,7 @@ public sealed partial class AppService(
                     // The running version's backend stops before the snapshot, so its volumes are still; a failed update
                     // rolls the dataset back and starts it again. Its lock names the images the update may remove afterwards.
                     var previous = installed is not null && installed.Enabled ? Docker.BackendApp.Of(installed) : null;
+                    IReadOnlyList<string> granted = [];
                     var previousImages = previous?.HasBackend == true ? Docker.ImagesLock.HostImages(LockOf(pool, installed!)) : new HashSet<string>();
                     try
                     {
@@ -121,7 +141,7 @@ public sealed partial class AppService(
                         await AppVersions.InstallAsync(storage, pool, appId, package.Package, package.Version, update: installed is not null,
                             async (snapshot, token) =>
                             {
-                                var next = await NextBackendAsync(package, installed, token);
+                                var next = await NextBackendAsync(package, installed, grantElevated, token);
                                 // A required folder can only be mapped once the app is installed; its backend starts then.
                                 var start = next.HasBackend && installed?.Enabled != false && Docker.AppBackendRuntime.UnmappedRequired(next).Count == 0;
                                 try
@@ -130,7 +150,7 @@ public sealed partial class AppService(
                                     {
                                         await backends.StartAsync(pool, next, context.Report, token);
                                     }
-                                    await CommitAsync(package, pool, access, installed, snapshot, token);
+                                    granted = await CommitAsync(package, pool, access, installed, snapshot, grantElevated, caller?.Identity?.Name, token);
                                 }
                                 catch
                                 {
@@ -149,6 +169,18 @@ public sealed partial class AppService(
                                 await registry.ReloadAsync(CancellationToken.None);
                             });
                         LogInstalled(appId, package.Version, installed?.Version);
+                        foreach (var right in granted)
+                        {
+                            await audit.RecordAsync(caller, Audit.AuditLog.ElevatedGranted, appId, new Dictionary<string, string>
+                            {
+                                ["right"] = right,
+                                ["version"] = package.Version,
+                            }, CancellationToken.None);
+                        }
+                        if (caller is not null)
+                        {
+                            await NotifyCriticalAsync(caller, package.Manifest, granted);
+                        }
                     }
                     catch
                     {
@@ -288,6 +320,107 @@ public sealed partial class AppService(
     }
 
     /// <summary>
+    /// Grants or revokes elevated rights of the app's manifest (D311). Granting needs a step-up of the caller's session;
+    /// a running backend restarts with exactly the rights it holds then. Every change goes to the audit log.
+    /// </summary>
+    public async Task<AppDetails> SetElevatedAsync(ClaimsPrincipal caller, string appId, AppElevatedRequest request, CancellationToken cancellationToken)
+    {
+        RequireAdmin(caller);
+        ArgumentNullException.ThrowIfNull(request);
+        var app = RequireInstalled(appId);
+        var requested = Manifest.ElevatedRights.Of(app.Manifest).ToHashSet(StringComparer.Ordinal);
+        foreach (var change in request.Rights ?? [])
+        {
+            if (change?.Right is null || !requested.Contains(change.Right))
+            {
+                throw new PithyxException(ErrorCodes.AppPermissionNotRequested, new Dictionary<string, object?> { ["permission"] = Shorten(change?.Right ?? "") });
+            }
+        }
+        var held = app.GrantedElevated;
+        var changes = (request.Rights ?? []).Where(change => change.Granted != held.Contains(change.Right)).DistinctBy(change => change.Right).ToList();
+        RequireConsent(caller, appId, [.. changes.Where(change => change.Granted).Select(change => change.Right)], request.ConfirmCritical);
+        if (changes.Count == 0)
+        {
+            return registry.Details(app);
+        }
+        await ChangeAsync(appId, RunsBackend(app), async () =>
+        {
+            await using (var connection = await connections.OpenAsync(cancellationToken))
+            await using (var transaction = await connection.BeginTransactionAsync(cancellationToken))
+            {
+                foreach (var change in changes)
+                {
+                    await connection.ExecuteAsync(
+                        """
+                        INSERT INTO app_elevated (app_id, "right", granted, changed_at, changed_by) VALUES (@appId, @right, @granted, @now, @by)
+                        ON CONFLICT (app_id, "right") DO UPDATE SET granted = excluded.granted, changed_at = excluded.changed_at, changed_by = excluded.changed_by
+                        """,
+                        new { appId, right = change.Right, granted = change.Granted ? 1 : 0, now = SessionService.Format(time.GetUtcNow()), by = caller.Identity?.Name },
+                        transaction);
+                }
+                await transaction.CommitAsync(cancellationToken);
+            }
+            await registry.ReloadAsync(cancellationToken);
+            LogPermissions(appId);
+        }, CurrentUser.Id(caller), "apps.backend.restart", cancellationToken);
+        foreach (var change in changes)
+        {
+            await audit.RecordAsync(caller, change.Granted ? Audit.AuditLog.ElevatedGranted : Audit.AuditLog.ElevatedRevoked, appId,
+                new Dictionary<string, string> { ["right"] = change.Right, ["version"] = app.Version }, CancellationToken.None);
+        }
+        await NotifyCriticalAsync(caller, app.Manifest, [.. changes.Where(change => change.Granted).Select(change => change.Right)]);
+        return registry.Details(RequireInstalled(appId));
+    }
+
+    /// <summary>
+    /// The consent granting <paramref name="rights"/> needs (D388): none for the tier elevated beyond the administrator's
+    /// click, a step-up of the caller's session for the tiers high and critical, and for a critical right also the app's
+    /// id in <paramref name="confirmCritical"/>, which the desktop sends once the administrator typed the app's name.
+    /// </summary>
+    private void RequireConsent(ClaimsPrincipal caller, string appId, IReadOnlyList<string> rights, string? confirmCritical)
+    {
+        var tiers = rights.Select(Manifest.ElevatedRights.TierOf).ToList();
+        if (tiers.Any(tier => tier != Manifest.RiskTier.Elevated) && !stepUps.Holds(caller))
+        {
+            throw new PithyxException(ErrorCodes.AuthStepUpRequired);
+        }
+        if (rights.FirstOrDefault(right => Manifest.ElevatedRights.TierOf(right) == Manifest.RiskTier.Critical) is { } critical && confirmCritical != appId)
+        {
+            throw new PithyxException(ErrorCodes.AppElevatedConfirmationRequired, new Dictionary<string, object?> { ["right"] = critical });
+        }
+    }
+
+    public const string CriticalGrantedCode = "apps.elevated.critical";
+
+    /// <summary>Tells every other administrator that an app got root on the box (D388), on the desktop and the box's channels.</summary>
+    private async Task NotifyCriticalAsync(ClaimsPrincipal caller, JsonElement manifest, IReadOnlyList<string> granted)
+    {
+        if (granted.FirstOrDefault(right => Manifest.ElevatedRights.TierOf(right) == Manifest.RiskTier.Critical) is not { } right)
+        {
+            return;
+        }
+        var name = manifest.GetProperty("name").TryGetProperty("en", out var english) ? english.GetString() : null;
+        try
+        {
+            await notifications.CreateForAdministratorsAsync(
+                new NotificationDraft(CriticalGrantedCode, new Dictionary<string, object?>
+                {
+                    ["app"] = name ?? manifest.GetProperty("id").GetString(),
+                    ["right"] = right,
+                    ["user"] = caller.Identity?.Name ?? "",
+                }, NotificationTone.Warning),
+                CancellationToken.None,
+                except: CurrentUser.Id(caller));
+        }
+#pragma warning disable CA1031 // The right is granted; a failed notification is only logged.
+        catch (Exception exception)
+#pragma warning restore CA1031
+        {
+            LogNotifyFailed(exception, manifest.GetProperty("id").GetString()!);
+        }
+    }
+
+    /// <summary>
     /// Maps an existing folder in a shared folder to one storage request of the app's manifest, read-only or (when the
     /// request asks for it) read-write. The app's backend gets it mounted at its next start (A14).
     /// </summary>
@@ -383,6 +516,7 @@ public sealed partial class AppService(
                     if (hadBackend)
                     {
                         await backends.StopAsync(appId, pool, context.Cancellation);
+                        await backends.RemoveSpawnedAsync(appId, context.Cancellation);
                     }
                     // The held snapshot of the last update would keep the dataset from going; without the app it has no use.
                     if (pool is not null && removed?.Previous?.Snapshot is { } snapshot)
@@ -489,8 +623,10 @@ public sealed partial class AppService(
                                 automatic,
                             },
                             transaction);
-                        var wanted = previous.Manifest.GetProperty("permissions").EnumerateArray().Select(permission => permission.GetString()!).ToList();
+                        var wanted = Manifest.ElevatedRights.PermissionsOf(previous.Manifest);
                         await SyncPermissionsAsync(connection, transaction, appId, wanted, previous.Manifest);
+                        // A right the version just left had dropped comes back revoked: only a step-up grants one.
+                        await SyncElevatedAsync(connection, transaction, appId, previous.Manifest, grantNew: false, caller.Identity?.Name);
                         if (previous.Snapshot is { } snapshot)
                         {
                             await storage.RollbackAsync(pool, appId, snapshot, context.Cancellation, discardNewer: true);
@@ -608,7 +744,20 @@ public sealed partial class AppService(
             package.Package.Sha256,
             SuggestedAccess(package.Manifest),
             package.Origin?.Catalog,
-            installed is null && registry.Pool is { } pool && storage.RootOf(pool, package.AppId) is not null);
+            installed is null && registry.Pool is { } pool && storage.RootOf(pool, package.AppId) is not null,
+            AddedElevated(package.Manifest, installed),
+            [.. (installed?.ElevatedRights.Select(state => state.Right) ?? []).Except(Manifest.ElevatedRights.Of(package.Manifest), StringComparer.Ordinal)],
+            AppRegistry.DevicesOf(package.Manifest, deviceFs));
+    }
+
+    /// <summary>
+    /// The elevated rights of a manifest the app has no decision for yet (D311): all of them for an install, those new to
+    /// an update. A right an administrator revoked stays revoked and is not among them.
+    /// </summary>
+    private static List<string> AddedElevated(JsonElement manifest, InstalledApp? installed)
+    {
+        var decided = installed?.ElevatedRights.Select(state => state.Right).ToHashSet(StringComparer.Ordinal) ?? [];
+        return [.. Manifest.ElevatedRights.Of(manifest).Where(right => !decided.Contains(right))];
     }
 
     /// <summary>
@@ -616,7 +765,7 @@ public sealed partial class AppService(
     /// for the app's id however the install ends), the manifest's permissions without the ones an administrator revoked,
     /// and the storage mappings that still fit.
     /// </summary>
-    private async Task<Docker.BackendApp> NextBackendAsync(CheckedPackage package, InstalledApp? installed, CancellationToken cancellationToken)
+    private async Task<Docker.BackendApp> NextBackendAsync(CheckedPackage package, InstalledApp? installed, bool grantElevated, CancellationToken cancellationToken)
     {
         long uid;
         await using (var connection = await connections.OpenAsync(cancellationToken))
@@ -632,7 +781,12 @@ public sealed partial class AppService(
             ? requests.EnumerateArray().Select(request => request.GetProperty("id").GetString()!).ToHashSet(StringComparer.Ordinal)
             : [];
         var mappings = installed?.Storage.Where(mapping => storageIds.Contains(mapping.StorageId)).ToList() ?? [];
-        return new Docker.BackendApp(package.AppId, package.Version, package.Manifest, uid, internet, lan, mappings);
+        var held = installed?.GrantedElevated ?? new HashSet<string>(StringComparer.Ordinal);
+        var added = AddedElevated(package.Manifest, installed);
+        var elevated = Manifest.ElevatedRights.Of(package.Manifest)
+            .Where(right => held.Contains(right) || (grantElevated && added.Contains(right)))
+            .ToHashSet(StringComparer.Ordinal);
+        return new Docker.BackendApp(package.AppId, package.Version, package.Manifest, uid, internet, lan, mappings, elevated);
     }
 
     /// <summary>
@@ -724,7 +878,9 @@ public sealed partial class AppService(
     private static bool RunsBackend(InstalledApp app) => app.Enabled && Docker.BackendApp.Of(app).HasBackend;
 
     /// <summary>The registry change of an install or update, in one transaction: the last step of <see cref="AppVersions"/>.</summary>
-    private async Task CommitAsync(CheckedPackage package, string pool, AppAccess access, InstalledApp? installed, string? snapshot, CancellationToken cancellationToken)
+    /// <returns>The elevated rights it granted newly.</returns>
+    private async Task<IReadOnlyList<string>> CommitAsync(
+        CheckedPackage package, string pool, AppAccess access, InstalledApp? installed, string? snapshot, bool grantElevated, string? by, CancellationToken cancellationToken)
     {
         var appId = package.AppId;
         var now = SessionService.Format(time.GetUtcNow());
@@ -779,7 +935,32 @@ public sealed partial class AppService(
                 transaction);
         }
         await SyncPermissionsAsync(connection, transaction, appId, package.Permissions, package.Manifest);
+        var granted = await SyncElevatedAsync(connection, transaction, appId, package.Manifest, grantElevated, by);
         await transaction.CommitAsync(cancellationToken);
+        return granted;
+    }
+
+    /// <summary>
+    /// The elevated rights of the manifest (D311): one it no longer asks for goes, a decided one stays as it is, a new one
+    /// is granted when <paramref name="grantNew"/> (after a step-up) and revoked otherwise. Returns the rights granted.
+    /// </summary>
+    private async Task<IReadOnlyList<string>> SyncElevatedAsync(DbConnection connection, DbTransaction transaction, string appId, JsonElement manifest, bool grantNew, string? by)
+    {
+        var rights = Manifest.ElevatedRights.Of(manifest);
+        await connection.ExecuteAsync("DELETE FROM app_elevated WHERE app_id = @appId AND \"right\" NOT IN @rights", new { appId, rights }, transaction);
+        var granted = new List<string>();
+        foreach (var right in rights)
+        {
+            var inserted = await connection.ExecuteAsync(
+                "INSERT OR IGNORE INTO app_elevated (app_id, \"right\", granted, changed_at, changed_by) VALUES (@appId, @right, @granted, @now, @by)",
+                new { appId, right, granted = grantNew ? 1 : 0, now = SessionService.Format(time.GetUtcNow()), by },
+                transaction);
+            if (inserted > 0 && grantNew)
+            {
+                granted.Add(right);
+            }
+        }
+        return granted;
     }
 
     /// <summary>New permissions of the manifest are granted, dropped ones go, revoked ones stay revoked; so do storage mappings.</summary>
@@ -801,16 +982,17 @@ public sealed partial class AppService(
 
     /// <summary>
     /// Who should use an app after its install (D304): administrators only when it asks for elevated rights, root in a
-    /// container or the user directory (<c>directory.read</c>), everybody otherwise.
+    /// container or the user directory (<c>directory.read</c>), or when its <c>audience</c> is <c>admins</c> (D389);
+    /// everybody otherwise. An <c>audience</c> of <c>everyone</c> never lowers what the risk suggests.
     /// </summary>
     public static AppAccess SuggestedAccess(JsonElement manifest)
     {
-        var directory = manifest.TryGetProperty("permissions", out var permissions)
-            && permissions.EnumerateArray().Any(permission => permission.GetString() == "directory.read");
+        var directory = Manifest.ElevatedRights.Declares(manifest, "directory.read");
         var backend = manifest.TryGetProperty("backend", out var declared) ? declared : default;
         var root = backend.ValueKind == JsonValueKind.Object && backend.TryGetProperty("root", out var flag) && flag.ValueKind == JsonValueKind.True;
-        var elevated = backend.ValueKind == JsonValueKind.Object && backend.TryGetProperty("elevated", out var rights) && rights.GetArrayLength() > 0;
-        return directory || root || elevated ? AppAccess.Admins : AppAccess.Everybody;
+        var elevated = Manifest.ElevatedRights.Of(manifest).Count > 0;
+        var forAdmins = manifest.TryGetProperty("audience", out var audience) && audience.ValueKind == JsonValueKind.String && audience.GetString() == "admins";
+        return directory || root || elevated || forAdmins ? AppAccess.Admins : AppAccess.Everybody;
     }
 
     /// <summary>The access a storage request of the manifest asks for, or null when the manifest has no such request.</summary>
@@ -958,4 +1140,7 @@ public sealed partial class AppService(
 
     [LoggerMessage(Level = LogLevel.Information, Message = "Removed app {AppId}, data: {Data}")]
     private partial void LogRemoved(string appId, AppDataChoice data);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Telling the administrators about the critical right of app {AppId} failed")]
+    private partial void LogNotifyFailed(Exception exception, string appId);
 }

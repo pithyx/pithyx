@@ -12,15 +12,15 @@ public sealed record ManifestValidationResult(IReadOnlyList<ValidationIssue> Iss
 }
 
 /// <summary>
-/// Checks <c>pithyx.json</c> against <c>sdk/schema/manifest.v1.schema.json</c> (embedded at build) and the rules a
+/// Checks <c>pithyx.json</c> against <c>sdk/schema/manifest.v2.schema.json</c> (embedded at build) and the rules a
 /// schema cannot express. <c>@pithyx/cli</c> runs the same checks; the corpus in <c>sdk/schema/fixtures/manifest</c>
 /// holds both to the same verdicts and codes.
 /// </summary>
 public static class ManifestValidator
 {
-    public const int SupportedVersion = 1;
+    public const int SupportedVersion = 2;
 
-    private static readonly Lazy<JsonSchemaCheck> _schema = new(() => JsonSchemaCheck.Load("manifest.v1.schema.json"));
+    private static readonly Lazy<JsonSchemaCheck> _schema = new(() => JsonSchemaCheck.Load("manifest.v2.schema.json"));
 
     /// <summary>
     /// Validates the bytes of <c>pithyx.json</c>. Ids in <c>org.pithyx.*</c> are refused unless
@@ -140,11 +140,79 @@ public static class ManifestValidator
             }
         }
 
+        if (root.TryGetProperty("fileActions", out var actions))
+        {
+            var actionIds = new HashSet<string>(StringComparer.Ordinal);
+            var index = 0;
+            foreach (var action in actions.EnumerateArray())
+            {
+                var actionId = action.GetProperty("id").GetString()!;
+                if (!actionIds.Add(actionId))
+                {
+                    issues.Add(Duplicate($"/fileActions/{index}/id", actionId));
+                }
+                // An action applies to files with these extensions, to folders, or to both.
+                if (!action.TryGetProperty("extensions", out _) && !(action.TryGetProperty("folders", out var folders) && folders.GetBoolean()))
+                {
+                    issues.Add(new ValidationIssue(ErrorCodes.AppManifestSchemaViolation, ("path", $"/fileActions/{index}"), ("keyword", "required")));
+                }
+                index++;
+            }
+            if (!ElevatedRights.Declares(root, "files.shares"))
+            {
+                issues.Add(new ValidationIssue(ErrorCodes.AppManifestPermissionMissing, ("path", "/fileActions"), ("permission", "files.shares")));
+            }
+        }
+
+        if (root.TryGetProperty("notifications", out var notifications))
+        {
+            var categoryIds = new HashSet<string>(StringComparer.Ordinal);
+            var index = 0;
+            foreach (var category in notifications.GetProperty("categories").EnumerateArray())
+            {
+                var categoryId = category.GetProperty("id").GetString()!;
+                if (!categoryIds.Add(categoryId))
+                {
+                    issues.Add(Duplicate($"/notifications/categories/{index}/id", categoryId));
+                }
+                index++;
+            }
+            if (!ElevatedRights.Declares(root, "notifications"))
+            {
+                issues.Add(new ValidationIssue(ErrorCodes.AppManifestPermissionMissing, ("path", "/notifications"), ("permission", "notifications")));
+            }
+        }
+
         if (hasBackend)
         {
             issues.AddRange(BackendIssues(backend));
         }
+        issues.AddRange(ElevatedIssues(root, hasBackend ? backend : null));
         return issues;
+    }
+
+    private static IEnumerable<ValidationIssue> ElevatedIssues(JsonElement root, JsonElement? backend)
+    {
+        var asRoot = backend is { } declared && declared.TryGetProperty("root", out var flag) && flag.ValueKind == JsonValueKind.True;
+        foreach (var right in ElevatedRights.Of(root))
+        {
+            if (!IsSupportedElevatedRight(right))
+            {
+                yield return new ValidationIssue(ErrorCodes.AppElevatedUnsupported, ("right", right));
+            }
+            else if (backend is null)
+            {
+                yield return new ValidationIssue(ErrorCodes.AppElevatedBackendMissing, ("right", right));
+            }
+            else if (asRoot && NeedsHostNamespace(right))
+            {
+                yield return new ValidationIssue(ErrorCodes.AppElevatedRootConflict, ("right", right));
+            }
+            else if (!asRoot && right.StartsWith(CapabilityPrefix, StringComparison.Ordinal))
+            {
+                yield return new ValidationIssue(ErrorCodes.AppElevatedRootRequired, ("right", right));
+            }
+        }
     }
 
     private static IEnumerable<ValidationIssue> BackendIssues(JsonElement backend)
@@ -179,21 +247,47 @@ public static class ManifestValidator
                 index++;
             }
         }
-
-        if (backend.TryGetProperty("elevated", out var elevated))
-        {
-            foreach (var right in elevated.EnumerateArray().Select(element => element.GetString()!))
-            {
-                if (!IsSupportedElevatedRight(right))
-                {
-                    yield return new ValidationIssue(ErrorCodes.AppElevatedUnsupported, ("right", right));
-                }
-            }
-        }
     }
 
-    /// <summary>Whether this version of Pithyx can grant an elevated right the schema accepts: none (D345, A16 follows).</summary>
-    public static bool IsSupportedElevatedRight(string right) => false;
+    public const string DevicePrefix = "device:";
+
+    public const string CapabilityPrefix = "capability:";
+
+    public const string DockerSocket = "docker.socket";
+
+    public const string DockerSocketRaw = "docker.socket.raw";
+
+    /// <summary>
+    /// Whether this version of Pithyx can grant an elevated right the schema accepts (D311, D387): <c>host.network</c>,
+    /// <c>host.pid</c>, <c>docker.socket</c>, <c>docker.socket.raw</c>, a device node or class outside the block list and a
+    /// capability outside the block list. <c>host.full</c> stays refused.
+    /// </summary>
+    public static bool IsSupportedElevatedRight(string right)
+    {
+        ArgumentNullException.ThrowIfNull(right);
+        var rules = Compose.ComposeValidator.Rules;
+        if (rules.HostNamespaceRights.Contains(right) || right is DockerSocket or DockerSocketRaw)
+        {
+            return true;
+        }
+        if (right.StartsWith(DevicePrefix, StringComparison.Ordinal))
+        {
+            return !rules.Matches("blockedDevice", right[DevicePrefix.Length..]);
+        }
+        return right.StartsWith(CapabilityPrefix, StringComparison.Ordinal) && !rules.BlockedCapabilities.Contains(right[CapabilityPrefix.Length..]);
+    }
+
+    /// <summary>
+    /// Whether a granted right runs its service in the host's user namespace: the host's network or processes, or a
+    /// device whose group exists only on the host. Root there would be root on the box, so <c>backend.root</c> refuses it.
+    /// </summary>
+    public static bool NeedsHostNamespace(string right)
+    {
+        ArgumentNullException.ThrowIfNull(right);
+        var rules = Compose.ComposeValidator.Rules;
+        return rules.HostNamespaceRights.Contains(right)
+            || (right.StartsWith(DevicePrefix, StringComparison.Ordinal) && !rules.NamespacedDevices.Contains(right[DevicePrefix.Length..]));
+    }
 
     private static ValidationIssue Duplicate(string path, string value) =>
         new(ErrorCodes.AppManifestDuplicate, ("path", path), ("value", value));

@@ -25,6 +25,7 @@
     "devicePath": "^(?:/dev(?:/[A-Za-z0-9_][A-Za-z0-9._-]*)+)$",
     "devicePermissions": "^(?:r|w|rw)$",
     "capability": "^(?:(?!CAP_)[A-Z][A-Z0-9_]*)$",
+    "blockedDevice": "^(?:/dev/(?:mem|kmem|port|kmsg|zfs|console|tty|tty[0-9]+|ttyS[0-9]+|pts/.*|vcs.*|watchdog[0-9]*|loop.*|mapper/.*|dm-.*|md.*|btrfs-control|cpu/.*|input/.*|uinput|uhid|disk/.*|block/.*|sd[a-z].*|hd[a-z].*|vd[a-z].*|xvd[a-z].*|nvme.*|zd[0-9].*|zvol/.*|sr[0-9]+|sg[0-9]+|bsg/.*|mmcblk.*|nbd[0-9].*|ram[0-9]+|mtd.*|ubi.*|i2c-.*|ipmi.*|nvram|snapshot|userfaultfd|initctl|mcelog|cuse|ublk.*|rfkill|tpm.*|vga_arbiter))$",
     "signal": "^(?:SIG[A-Z][A-Z0-9]*(?:\\+[0-9]{1,2})?)$",
     "duration": "^(?=[0-9])(?:(?:[0-9]{1,9}h)?(?:[0-9]{1,9}m)?(?:[0-9]{1,9}s)?(?:[0-9]{1,9}ms)?(?:[0-9]{1,9}us)?)$",
     "byteSize": "^(?:[0-9]{1,12}(?:[bBkKmMgG]|[kKmMgG][bB])?)$",
@@ -72,7 +73,7 @@
     },
     "volumes": {
       "type": "mounts",
-      "description": "Named volumes to mount, in the short form `VOLUME:TARGET[:ro|rw]` or the long form. Host paths are refused."
+      "description": "Named volumes to mount, in the short form `VOLUME:TARGET[:ro|rw]` or the long form. Host paths are refused, except the Docker socket (`/var/run/docker.sock` or `/run/docker.sock` as the source) with the right `docker.socket` or `docker.socket.raw`."
     },
     "tmpfs": {
       "type": "tmpfs",
@@ -185,7 +186,7 @@
     "devices": {
       "type": "devices",
       "right": "device:",
-      "description": "Device nodes, `HOST[:CONTAINER[:PERMISSIONS]]`; each device needs its own right `device:<host path>`."
+      "description": "Device nodes, `HOST[:CONTAINER[:PERMISSIONS]]`; each device needs its own right `device:<host path>`. A device class (`/dev/dri`, `/dev/serial`, `/dev/net/tun`) stands for every node of the class present at the start."
     },
     "cap_drop": {
       "type": "capabilities",
@@ -238,7 +239,53 @@
     },
     "reservedTargets": ["/proc", "/sys", "/dev"],
     "dockerSockets": ["/var/run/docker.sock", "/run/docker.sock"],
-    "dockerSocketRight": "docker.socket"
+    "dockerSocketRight": "docker.socket",
+    "dockerSocketRawRight": "docker.socket.raw"
+  },
+  "elevated": {
+    "$comment": "Which elevated rights of the manifest's `permissions` the box grants (D311). `blockedCapabilities` are never granted. A right of `hostNamespaceRights`, and a device outside `namespacedDevices`, runs its service in the host's user namespace (Docker refuses the host network and process namespaces inside a user namespace, and a device's group exists only on the host), so it cannot go together with `backend.root`: root there would be root on the box. A capability only works for root, so `capability:` needs `backend.root`.",
+    "blockedCapabilities": [
+      "ALL",
+      "AUDIT_CONTROL",
+      "AUDIT_READ",
+      "BLOCK_SUSPEND",
+      "BPF",
+      "CHECKPOINT_RESTORE",
+      "DAC_READ_SEARCH",
+      "LINUX_IMMUTABLE",
+      "MAC_ADMIN",
+      "MAC_OVERRIDE",
+      "PERFMON",
+      "SYS_ADMIN",
+      "SYS_BOOT",
+      "SYS_MODULE",
+      "SYS_RAWIO",
+      "SYS_TIME",
+      "SYSLOG",
+      "WAKE_ALARM"
+    ],
+    "hostNamespaceRights": ["host.network", "host.pid"],
+    "namespacedDevices": ["/dev/net/tun"],
+    "deviceClasses": {
+      "$comment": "Device classes (D387): a device right on one of these paths names every node of the class that is present when the backend starts, with its group. `nodes` matches the names of the character devices directly in the folder; `links` matches the targets of the links below it, which are taken instead of the links. A class that is a single node is taken as it is.",
+      "/dev/dri": { "nodes": "^(?:card[0-9]+|renderD[0-9]+)$" },
+      "/dev/serial": { "links": "^(?:/dev/tty(?:USB|ACM)[0-9]+)$" },
+      "/dev/net/tun": {}
+    },
+    "tiers": {
+      "$comment": "The risk tier of each elevated right (D388), which decides how much the install dialog asks: `elevated` a yellow hint and a checkbox, `high` an orange risk text, a checkbox and the step-up, `critical` (root on the box) a red step of its own where the administrator types the app's name, plus the step-up; a critical app also never updates by itself. `rights` names the rights of the lower and the critical tier, and a device below a device right of it (`device:/dev/dri/renderD128` below `device:/dev/dri`) has its tier; every other right (a capability, another device) is `default`.",
+      "default": "high",
+      "rights": {
+        "device:/dev/net/tun": "elevated",
+        "device:/dev/dri": "elevated",
+        "device:/dev/serial": "elevated",
+        "host.network": "high",
+        "host.pid": "high",
+        "docker.socket": "high",
+        "docker.socket.raw": "critical",
+        "host.full": "critical"
+      }
+    }
   },
   "dependsOn": {
     "keys": {
@@ -427,6 +474,7 @@
       "devicePath": "Device paths below `/dev`.",
       "devicePermissions": "Permissions of a device.",
       "capability": "Linux capability names without the `CAP_` prefix.",
+      "blockedDevice": "Device nodes no app gets, whatever it declares: memory, consoles and terminals, disks and partitions and their control nodes, ZFS, input devices, watchdogs, firmware and hardware buses (D311). The box also refuses any node that is not a character device when the backend starts.",
       "signal": "Signal names, optionally with `+n` for a real-time signal.",
       "duration": "Durations.",
       "byteSize": "Sizes with an optional unit.",

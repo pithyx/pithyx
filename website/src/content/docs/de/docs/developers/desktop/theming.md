@@ -13,22 +13,26 @@ Alle Farben, Abstände, Schriftgrößen, Radien, Schatten und Bewegungen des Des
 
 `tokens.css` ist die einzige Token-Datei. Der Desktop importiert sie über `desktop/src/theme/index.css`; andere Projekte importieren `@pithyx/ui/tokens.css`. Komponenten-Styles sind CSS-Module.
 
-| Gruppe   | Namen                                                                                                                                                          |
-| -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Palette  | `--petrol-50` bis `--petrol-950`, `--amber-*`, `--neutral-*`, Statusfarben                                                                                     |
-| Farbe    | `--color-bg`, `--color-surface-1` bis `-3`, `--color-text`, `--color-border`, `--color-focus`, `--color-success`, `--color-warning`, `--color-danger` und mehr |
-| Shell    | `--color-desktop`, `--color-taskbar`, `--color-window-border`, `--color-titlebar`, `--color-note`                                                              |
-| Akzent   | `--color-accent`, `-hover`, `-pressed`, `-contrast`, `-subtle`                                                                                                 |
-| Schrift  | `--font-sans`, `--font-display`, `--font-mono`, `--font-size-xs` (0,75 rem) bis `--font-size-display-2` (2,5 rem)                                              |
-| Abstand  | `--space-0` (2 px), `--space-1` (4 px) bis `--space-7` (48 px)                                                                                                 |
-| Radius   | `--radius-xs` (4 px) bis `--radius-lg` (14 px), `--radius-full`                                                                                                |
-| Bewegung | `--duration-instant` (100 ms) bis `--duration-slow` (400 ms), `--ease-standard`                                                                                |
-| Ebenen   | `--z-*` von Desktop (0) und Fenstern (100) bis Tooltip (9000)                                                                                                  |
-| Größen   | `--touch-target` 44 px, `--control-height` 36 px, `--taskbar-size` 52 px, `--titlebar-height` 40 px                                                            |
+| Gruppe   | Namen                                                                                                                                                                                                                                          |
+| -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Palette  | `--petrol-50` bis `--petrol-950`, `--amber-*`, `--neutral-*`, Statusfarben                                                                                                                                                                     |
+| Farbe    | `--color-bg`, `--color-surface-1` bis `-3`, `--color-text`, `--color-border`, `--color-focus`, `--color-success`, `--color-warning`, `--color-danger` und mehr                                                                                 |
+| Shell    | `--color-desktop`, `--color-taskbar`, `--color-window-border`, `--color-titlebar`, `--color-note`, `--color-shell-bar`, `--color-shell-menu`                                                                                                   |
+| Zustand  | `--color-selection-strong` und `--color-selection-outline` (ausgewählte Zeilen und der aktive Navigationseintrag), `--color-info`, `--color-neutral-state` mit ihrem `-surface`                                                                |
+| Akzent   | `--color-accent`, `-hover`, `-pressed`, `-contrast`, `-subtle`                                                                                                                                                                                 |
+| Schrift  | `--font-sans`, `--font-display`, `--font-mono`, `--font-size-xs` (0,75 rem) bis `--font-size-display-2` (2,5 rem)                                                                                                                              |
+| Abstand  | `--space-0` (2 px), `--space-1` (4 px) bis `--space-7` (48 px)                                                                                                                                                                                 |
+| Radius   | `--radius-xs` (4 px) bis `--radius-lg` (14 px), `--radius-full`; nach Rolle `--radius-tag` (3 px), `--radius-control` (4 px), `--radius-card` (5 px), `--radius-window` (6 px)                                                                 |
+| Bewegung | `--duration-instant` (100 ms) bis `--duration-slow` (400 ms), `--ease-standard`                                                                                                                                                                |
+| Ebenen   | `--z-*` von Desktop (0) und Fenstern (100) bis Tooltip (9000)                                                                                                                                                                                  |
+| Größen   | `--touch-target` 44 px, `--control-height` 36 px, `--taskbar-size` 52 px, `--titlebar-height` 40 px                                                                                                                                            |
+| Dichte   | `--row-height` 28 px, `--row-height-md` 36 px, `--row-height-lg` 42 px, `--toolbar-control-height` 32 px, `--nav-width` 260 px, `--details-width` 280 px, `--form-label-width` 200 px, `--form-control-width` 360 px, `--taskbar-height` 44 px |
 
-Anpassungen in der Datei: Auf Geräten mit `(pointer: coarse)` wachsen Steuerelemente und Titelleisten auf 44 px und die Taskleiste auf 60 px. Mit `prefers-reduced-motion: reduce` sinken die Dauern auf 1 ms. Mit `prefers-reduced-transparency: reduce` oder erzwungenen Farben sind Taskleiste und Menüs deckend.
+Anpassungen in der Datei: Auf Geräten mit `(pointer: coarse)` wachsen Steuerelemente, Titelleisten, Tabellenzeilen, Navigationseinträge und die Elemente der Werkzeugleiste auf 44 px und die Taskleiste auf 60 px (`--taskbar-height` auf 52 px). Mit `prefers-reduced-motion: reduce` sinken die Dauern auf 1 ms. Mit `prefers-reduced-transparency: reduce` oder erzwungenen Farben sind Taskleiste und Menüs deckend.
 
 **Für Apps von Drittanbietern.** Apps in der Sandbox lesen diese Namen nicht. Das SDK setzt einen eigenen, stabilen Satz von `--pithyx-*`-Eigenschaften auf das Wurzelelement der App (zum Beispiel `--pithyx-color-background`, `--pithyx-color-accent`, `--pithyx-font-ui`, `--pithyx-space`). Siehe [@pithyx/sdk](/de/docs/sdk/sdk/). Die internen `--color-*`-Namen können sich ändern.
+
+Die Tokens des Design-Durchgangs (D394) sind die Radien nach Rolle, die Gruppe Dichte und die Farben für Shell, Auswahl und Zustand; die Muster von [`@pithyx/ui`](/de/docs/sdk/ui/) nutzen sie. Die Taskleiste und alles, was an ihr anliegt, nutzen `--taskbar-height`; `--taskbar-size` bleibt für Apps definiert, die es lesen, der Desktop nutzt es nicht mehr.
 
 Ein Test (`packages/ui/src/contrast.test.ts`) parst `tokens.css`, löst jedes Theme und jeden Akzent auf und verlangt einen Kontrast von mindestens 4,5 für Text und 3 für Grafiken (WCAG 2.2 AA).
 
@@ -36,15 +40,15 @@ Ein Test (`packages/ui/src/contrast.test.ts`) parst `tokens.css`, löst jedes Th
 
 ![Das Kontomenü im dunklen Design mit geöffnetem Untermenü Darstellung: Wie das System, Hell und Dunkel](../../../../../../assets/screenshots/theming-appearance.de.webp)
 
-_Darstellung im Kontomenü; Akzentfarbe und Hintergrundbild sind die Einträge darunter._
+_Darstellung im Kontomenü; Persönliche Einstellungen hat sie auch, mit Akzentfarbe und Hintergrundbild._
 
 Das Wurzelelement hat `color-scheme: light dark`, und jede semantische Farbe ist ein Paar `light-dark(a, b)`. Setzt du `data-theme="light"` oder `data-theme="dark"` auf `<html>`, erzwingt das ein Schema.
 
-Das Konto-Menü hat **Darstellung** mit **Wie das System**, **Hell** und **Dunkel**. Die Wahl wird pro Browser in `localStorage` gespeichert (`pithyx.theme`); "Wie das System" entfernt den Schlüssel. Die gespeicherte Wahl wird vor dem ersten Rendern angewendet, damit die Seite nicht aufblitzt.
+Das Kontomenü und Persönliche Einstellungen haben **Darstellung** mit **Wie das System**, **Hell** und **Dunkel**. Die Wahl wird pro Browser in `localStorage` gespeichert (`pithyx.theme`); "Wie das System" entfernt den Schlüssel. Die gespeicherte Wahl wird vor dem ersten Rendern angewendet, damit die Seite nicht aufblitzt.
 
 ## Akzente
 
-Es gibt sechs Presets: Petrol (der Standard), Ocean, Indigo, Plum, Moss und Graphite. Der Eintrag im Konto-Menü heißt **Akzentfarbe**. Das Preset wird mit `<html data-accent="...">` gesetzt. Die Liste ist absichtlich kuratiert: keine freie Farbauswahl, weil jedes Preset in beiden Themes auf Kontrast geprüft ist, und kein rotes Preset, damit ein Akzent nie wie ein Fehler aussieht.
+Es gibt sechs Presets: Petrol (der Standard), Ocean, Indigo, Plum, Moss und Graphite. Die Zeile in Persönliche Einstellungen heißt **Akzentfarbe**. Das Preset wird mit `<html data-accent="...">` gesetzt. Die Liste ist absichtlich kuratiert: keine freie Farbauswahl, weil jedes Preset in beiden Themes auf Kontrast geprüft ist, und kein rotes Preset, damit ein Akzent nie wie ein Fehler aussieht.
 
 Der Akzent und das Hintergrundbild (**Pithyx-Boxen** oder **Schlicht**) werden pro Benutzer im Daemon gespeichert und sind auf jedem Gerät gleich (`PUT /api/desktop/appearance`). Der Browser behält eine Kopie, damit das erste Zeichnen passt. Um einen Akzent hinzuzufügen, trägst du ihn in `ACCENTS` in `desktop/src/theme/appearance.ts` ein, fügst in `tokens.css` einen Block `[data-accent='x']` mit den fünf Akzent-Tokens hinzu und ergänzt `menu.accents.x` auf Englisch und Deutsch.
 

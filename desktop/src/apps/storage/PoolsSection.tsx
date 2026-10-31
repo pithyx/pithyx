@@ -3,8 +3,18 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { formatBytes } from '../../desktop/format';
 import { ErrorNotice } from '../../errors/ErrorNotice';
-import { Badge, Button, ProgressBar } from '@pithyx/ui';
-import { IconPlus } from '../../ui/icons';
+import {
+  Button,
+  Card,
+  cx,
+  Meter,
+  ProgressBar,
+  StatusBadge,
+  SummaryTile,
+  SummaryTiles,
+  Toolbar,
+} from '@pithyx/ui';
+import { IconDatabase, IconPlus } from '../../ui/icons';
 import {
   onInternal,
   STORAGE_JOB,
@@ -19,10 +29,17 @@ import { PoolChangeDialog, type PoolChange } from './PoolChangeDialog';
 import { isFinished } from './PlanRun';
 import { PoolWizard } from './PoolWizard';
 import {
+  ChangeKeyDialog,
+  ForgetKeyDialog,
+  RevealKeyDialog,
+  UnlockDialog,
+  WriteUsbKeyDialog,
+} from './PoolEncryption';
+import {
   describeProblem,
   formatDate,
   stateKey,
-  stateTone,
+  stateStatus,
   useDisks,
   usePools,
   type Translate,
@@ -40,6 +57,7 @@ export function PoolsSection({ app }: { app: PithyxApp }) {
   const [change, setChange] = useState<{ pool: Pool; vdev?: Vdev; action: PoolChange } | null>(
     null,
   );
+  const [keyAction, setKeyAction] = useState<{ pool: Pool; action: KeyAction } | null>(null);
   // Pools whose destroy job runs, by name; the card says so until the pool is gone or the job failed.
   const [deleting, setDeleting] = useState<Readonly<Record<string, number>>>({});
   const pools = usePools(app);
@@ -59,24 +77,22 @@ export function PoolsSection({ app }: { app: PithyxApp }) {
 
   return (
     <div className={styles.storage}>
-      <header className={styles.pageHeader}>
-        <div>
-          <h2 className={styles.pageTitle}>{t('nav.pools')}</h2>
-          <p className={styles.muted}>{t('intro')}</p>
-        </div>
-        <div className={styles.buttons}>
-          <Button
-            variant="primary"
-            onPress={() => {
-              setCreating(true);
-            }}
-            isDisabled={disks.data === undefined}
-          >
-            <IconPlus size={16} aria-hidden />
-            {t('create.button')}
-          </Button>
-        </div>
-      </header>
+      <p className={styles.muted}>{t('intro')}</p>
+      {pools.data !== undefined && pools.data.pools.length > 0 && (
+        <PoolSummary pools={pools.data.pools} />
+      )}
+      <Toolbar aria-label={t('pools.toolbar')}>
+        <Button
+          variant="primary"
+          onPress={() => {
+            setCreating(true);
+          }}
+          isDisabled={disks.data === undefined}
+        >
+          <IconPlus size={18} stroke={1.75} aria-hidden />
+          {t('create.button')}
+        </Button>
+      </Toolbar>
       {disks.data?.environment === 'dev' && <p className={styles.notice}>{t('dev')}</p>}
       {pools.isError && <ErrorNotice error={describeProblem(pools.error)} />}
       {pools.data?.pools.length === 0 && <p className={styles.muted}>{t('pools.empty')}</p>}
@@ -95,6 +111,9 @@ export function PoolsSection({ app }: { app: PithyxApp }) {
             onChange={(poolChange, vdev) => {
               setChange({ pool, action: poolChange, ...(vdev === undefined ? {} : { vdev }) });
             }}
+            onKey={(keyChange) => {
+              setKeyAction({ pool, action: keyChange });
+            }}
           />
         ))}
       </div>
@@ -105,6 +124,51 @@ export function PoolsSection({ app }: { app: PithyxApp }) {
           disks={disks.data.disks}
           onClose={() => {
             setCreating(false);
+          }}
+        />
+      )}
+      {keyAction?.action === 'unlock' && (
+        <UnlockDialog
+          app={app}
+          pool={keyAction.pool}
+          onClose={() => {
+            setKeyAction(null);
+          }}
+        />
+      )}
+      {keyAction?.action === 'change' && (
+        <ChangeKeyDialog
+          app={app}
+          pool={keyAction.pool}
+          onClose={() => {
+            setKeyAction(null);
+          }}
+        />
+      )}
+      {keyAction?.action === 'reveal' && (
+        <RevealKeyDialog
+          app={app}
+          pool={keyAction.pool}
+          onClose={() => {
+            setKeyAction(null);
+          }}
+        />
+      )}
+      {keyAction?.action === 'usb' && (
+        <WriteUsbKeyDialog
+          app={app}
+          pool={keyAction.pool}
+          onClose={() => {
+            setKeyAction(null);
+          }}
+        />
+      )}
+      {keyAction?.action === 'forget' && (
+        <ForgetKeyDialog
+          app={app}
+          pool={keyAction.pool}
+          onClose={() => {
+            setKeyAction(null);
           }}
         />
       )}
@@ -141,8 +205,79 @@ export function PoolsSection({ app }: { app: PithyxApp }) {
   );
 }
 
+/** The pools at a glance (D394): capacity, space used, the disks in them and the last scrub. */
+function PoolSummary({ pools }: { pools: readonly Pool[] }) {
+  const { t } = useTranslation('storage');
+  const locale = useFormatLocale();
+  const size = pools.reduce((sum, pool) => sum + pool.sizeBytes, 0);
+  const used = pools.reduce((sum, pool) => sum + pool.allocatedBytes, 0);
+  const disks = pools.flatMap((pool) =>
+    pool.vdevs.flatMap((vdev) => (vdev.children.length === 0 ? [vdev] : vdev.children)),
+  );
+  const failing = disks.filter((disk) => disk.missing || stateStatus(disk.state) !== 'success');
+  const scrubs = pools
+    .map((pool) => pool.scan)
+    .filter((scan) => scan !== null && scan.kind !== 'resilver' && scan.endedAt !== null)
+    .sort((a, b) => (b?.endedAt ?? '').localeCompare(a?.endedAt ?? ''));
+  const last = scrubs[0] ?? null;
+  return (
+    <SummaryTiles>
+      <SummaryTile
+        label={t('summary.capacity')}
+        value={formatBytes(size, locale)}
+        detail={t('summary.pools', { count: pools.length })}
+      />
+      <SummaryTile
+        label={t('summary.used')}
+        value={formatBytes(used, locale)}
+        detail={new Intl.NumberFormat(locale, {
+          style: 'percent',
+          maximumFractionDigits: 0,
+        }).format(size === 0 ? 0 : used / size)}
+      />
+      <SummaryTile
+        label={t('summary.disks')}
+        value={new Intl.NumberFormat(locale).format(disks.length)}
+        detail={
+          failing.length === 0
+            ? t('summary.allHealthy')
+            : t('summary.problems', { count: failing.length })
+        }
+      />
+      <SummaryTile
+        label={t('summary.lastScrub')}
+        value={
+          last?.endedAt == null
+            ? t('summary.never')
+            : new Intl.DateTimeFormat(locale, { dateStyle: 'medium' }).format(
+                new Date(last.endedAt),
+              )
+        }
+        {...(last === null ? {} : { detail: t('summary.errors', { count: last.errors }) })}
+      />
+    </SummaryTiles>
+  );
+}
+
 type OnAction = (action: PoolAction, vdev?: Vdev) => void;
 type OnChange = (action: PoolChange, vdev?: Vdev) => void;
+type KeyAction = 'unlock' | 'change' | 'forget' | 'reveal' | 'usb';
+
+/** Why a locked pool waits: a stored key that failed, its USB stick, the vault still at work, or the typed key. */
+function lockedHint(t: Translate, encryption: NonNullable<Pool['encryption']>): string {
+  if (encryption.vaultFailed) {
+    return t('encryption.lockedVaultHint');
+  }
+  if (encryption.usbFailed) {
+    return t('encryption.lockedUsbFailedHint');
+  }
+  if (encryption.keyInVault) {
+    return t('encryption.opening');
+  }
+  return encryption.usbKey != null
+    ? t('encryption.lockedUsbHint', { stick: encryption.usbKey.stick })
+    : t('encryption.lockedHint');
+}
 
 function PoolCard({
   pool,
@@ -150,131 +285,229 @@ function PoolCard({
   datasets,
   onAction,
   onChange,
+  onKey,
 }: {
   pool: Pool;
   deleting: boolean;
   datasets: Dataset[];
   onAction: OnAction;
   onChange: OnChange;
+  onKey: (action: KeyAction) => void;
 }) {
   const { t } = useTranslation('storage');
   const locale = useFormatLocale();
+  const encryption = pool.encryption ?? null;
   const data = pool.vdevs.filter((vdev) => vdev.role === 'data');
   const others = pool.vdevs.filter((vdev) => vdev.role !== 'data');
-  return (
-    <article className={styles.pool} aria-labelledby={`pool-${pool.name}`}>
-      <div className={styles.poolHead}>
-        <h4 id={`pool-${pool.name}`} className={styles.poolName}>
-          {pool.name}
-        </h4>
-        <span className={styles.badges}>
-          {pool.readOnly && <Badge tone="neutral">{t('pools.readOnly')}</Badge>}
-          {deleting ? (
-            <Badge tone="neutral">{t('pools.deleting')}</Badge>
-          ) : (
-            <Badge tone={stateTone(pool.state)}>{t(`state.${stateKey(pool.state)}`)}</Badge>
+  const tone =
+    pool.capacityPercent >= 90 ? 'danger' : pool.capacityPercent >= 80 ? 'warning' : 'accent';
+  const used = formatBytes(pool.allocatedBytes, locale);
+  const free = formatBytes(Math.max(0, pool.sizeBytes - pool.allocatedBytes), locale);
+  const actions = (
+    <div className={styles.poolActions}>
+      {deleting ? (
+        <p className={styles.muted} role="status">
+          {t('pools.deletingHint')}
+        </p>
+      ) : pool.readOnly ? (
+        <>
+          <Button
+            size="sm"
+            variant="primary"
+            onPress={() => {
+              onChange('pool.import');
+            }}
+          >
+            {t('change.import.button')}
+          </Button>
+          <Button
+            size="sm"
+            onPress={() => {
+              onChange('pool.export');
+            }}
+          >
+            {t('change.discard.button')}
+          </Button>
+        </>
+      ) : (
+        <>
+          <Button
+            size="sm"
+            onPress={() => {
+              onChange('pool.vdev.add');
+            }}
+          >
+            {t('change.add.button')}
+          </Button>
+          <Button
+            size="sm"
+            onPress={() => {
+              onAction('pool.spare.add');
+            }}
+          >
+            {t('actions.spareAdd.button')}
+          </Button>
+          {encryption !== null && !encryption.locked && (
+            <Button
+              size="sm"
+              onPress={() => {
+                onKey('change');
+              }}
+            >
+              {t('encryption.change')}
+            </Button>
           )}
-        </span>
-      </div>
-      {pool.readOnly && <p className={styles.notice}>{t('pools.readOnlyHint')}</p>}
-      <div className={styles.usage}>
-        <span>
-          {t('pools.used', {
-            used: formatBytes(pool.allocatedBytes, locale),
-            size: formatBytes(pool.sizeBytes, locale),
-          })}
-        </span>
-        <span className={styles.bar} aria-hidden>
-          <span className={styles.fill} style={{ width: `${String(pool.capacityPercent)}%` }} />
-        </span>
-      </div>
-      <p className={styles.muted}>
-        {t('pools.layout', { layout: data.map((vdev) => vdevLabel(t, vdev)).join(' + ') })}
-      </p>
-      {pool.scan !== null && <p className={styles.muted}>{scanText(t, pool, locale)}</p>}
-      <Expansion pool={pool} />
-      {pool.state !== 'ONLINE' && <p className={styles.notice}>{t('pools.degradedHint')}</p>}
-      <ul className={styles.vdevs} aria-label={t('pools.devices', { pool: pool.name })}>
-        {[...data, ...others].map((vdev) => (
-          <VdevItem
-            key={vdev.name}
-            vdev={vdev}
-            readOnly={pool.readOnly || deleting}
-            onAction={onAction}
-            onChange={onChange}
+          {encryption !== null && (
+            <Button
+              size="sm"
+              onPress={() => {
+                onKey('usb');
+              }}
+            >
+              {t('encryption.writeUsb')}
+            </Button>
+          )}
+          {encryption?.keyInVault === true && (
+            <Button
+              size="sm"
+              onPress={() => {
+                onKey('reveal');
+              }}
+            >
+              {t('encryption.reveal')}
+            </Button>
+          )}
+          {encryption?.keyInVault === true && (
+            <Button
+              size="sm"
+              onPress={() => {
+                onKey('forget');
+              }}
+            >
+              {t('encryption.forget')}
+            </Button>
+          )}
+          <Button
+            size="sm"
+            variant="danger"
+            onPress={() => {
+              onAction('pool.destroy');
+            }}
+          >
+            {t('actions.destroy.button')}
+          </Button>
+        </>
+      )}
+    </div>
+  );
+  return (
+    // The article names the card for its region of the page; the card itself is a disclosure.
+    <article className={styles.pool} aria-label={pool.name}>
+      <Card
+        icon={<IconDatabase size={24} stroke={1.5} />}
+        title={<span className={styles.poolName}>{pool.name}</span>}
+        badge={
+          <span className={styles.badges}>
+            {deleting ? (
+              <StatusBadge>{t('pools.deleting')}</StatusBadge>
+            ) : (
+              <StatusBadge tone={stateStatus(pool.state)}>
+                {t(`state.${stateKey(pool.state)}`)}
+              </StatusBadge>
+            )}
+            {pool.readOnly && <StatusBadge>{t('pools.readOnly')}</StatusBadge>}
+            {encryption !== null && (
+              <StatusBadge tone={encryption.locked ? 'warning' : 'neutral'}>
+                {t(encryption.locked ? 'encryption.locked' : 'encryption.encrypted')}
+              </StatusBadge>
+            )}
+          </span>
+        }
+        facts={[
+          data.map((vdev) => vdevLabel(t, vdev)).join(' + '),
+          pool.scan === null ? null : scanText(t, pool, locale),
+        ]
+          .filter((part) => part !== null && part !== '')
+          .join(' · ')}
+        meter={
+          <Meter
+            aria-label={t('pools.space', { pool: pool.name })}
+            value={pool.capacityPercent}
+            start={t('pools.usedShort', { used })}
+            end={t('pools.free', { free })}
+            valueLabel={t('pools.used', {
+              used,
+              size: formatBytes(pool.sizeBytes, locale),
+            })}
+            tone={tone}
           />
-        ))}
-      </ul>
-      <details className={styles.datasets} open={pool.readOnly}>
-        <summary>{t('datasets.title', { count: datasets.length })}</summary>
-        <ul>
-          {datasets.map((dataset) => (
-            <li key={dataset.name}>
-              <span className={styles.mono}>{dataset.name}</span>
-              <span className={styles.muted}>
-                {' '}
-                {dataset.mountPoint ?? t('datasets.notMounted')} ·{' '}
-                {formatBytes(dataset.usedBytes, locale)}
-              </span>
-            </li>
-          ))}
-        </ul>
-      </details>
-      <div className={styles.poolActions}>
-        {deleting ? (
-          <p className={styles.muted} role="status">
-            {t('pools.deletingHint')}
-          </p>
-        ) : pool.readOnly ? (
-          <>
-            <Button
-              size="sm"
-              variant="primary"
-              onPress={() => {
-                onChange('pool.import');
-              }}
-            >
-              {t('change.import.button')}
-            </Button>
-            <Button
-              size="sm"
-              onPress={() => {
-                onChange('pool.export');
-              }}
-            >
-              {t('change.discard.button')}
-            </Button>
-          </>
-        ) : (
-          <>
-            <Button
-              size="sm"
-              onPress={() => {
-                onChange('pool.vdev.add');
-              }}
-            >
-              {t('change.add.button')}
-            </Button>
-            <Button
-              size="sm"
-              onPress={() => {
-                onAction('pool.spare.add');
-              }}
-            >
-              {t('actions.spareAdd.button')}
-            </Button>
-            <Button
-              size="sm"
-              variant="danger"
-              onPress={() => {
-                onAction('pool.destroy');
-              }}
-            >
-              {t('actions.destroy.button')}
-            </Button>
-          </>
-        )}
-      </div>
+        }
+        defaultExpanded
+        actions={actions}
+      >
+        <div className={styles.poolDetails}>
+          {pool.readOnly && <p className={styles.notice}>{t('pools.readOnlyHint')}</p>}
+          {encryption?.locked === true && !pool.readOnly && (
+            <div className={cx(styles.notice, styles.lockedNotice)}>
+              <p>{lockedHint(t, encryption)}</p>
+              <Button
+                size="sm"
+                variant="primary"
+                onPress={() => {
+                  onKey('unlock');
+                }}
+              >
+                {t('encryption.unlock')}
+              </Button>
+            </div>
+          )}
+          {encryption?.unlockedFromUsb === true && (
+            <p className={styles.notice} role="status">
+              {t('encryption.unlockedFromUsb')}
+            </p>
+          )}
+          {encryption !== null && (
+            <p className={styles.muted}>
+              {encryption.keyInVault
+                ? t('encryption.inVault')
+                : encryption.usbKey != null
+                  ? t('encryption.onStick', { stick: encryption.usbKey.stick })
+                  : t('encryption.byHand')}
+              {encryption.keyInVault && encryption.usbKey != null && (
+                <> {t('encryption.alsoOnStick', { stick: encryption.usbKey.stick })}</>
+              )}
+            </p>
+          )}
+          <Expansion pool={pool} />
+          {pool.state !== 'ONLINE' && <p className={styles.notice}>{t('pools.degradedHint')}</p>}
+          <ul className={styles.vdevs} aria-label={t('pools.devices', { pool: pool.name })}>
+            {[...data, ...others].map((vdev) => (
+              <VdevItem
+                key={vdev.name}
+                vdev={vdev}
+                readOnly={pool.readOnly || deleting}
+                onAction={onAction}
+                onChange={onChange}
+              />
+            ))}
+          </ul>
+          <details className={styles.datasets} open={pool.readOnly}>
+            <summary>{t('datasets.title', { count: datasets.length })}</summary>
+            <ul>
+              {datasets.map((dataset) => (
+                <li key={dataset.name}>
+                  <span className={styles.mono}>{dataset.name}</span>
+                  <span className={styles.muted}>
+                    {' '}
+                    {dataset.mountPoint ?? t('datasets.notMounted')} ·{' '}
+                    {formatBytes(dataset.usedBytes, locale)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </details>
+        </div>
+      </Card>
     </article>
   );
 }
@@ -343,9 +576,9 @@ function VdevItem({
         {leaves.map((leaf) => (
           <li key={leaf.name} className={styles.leaf} data-state={leaf.state}>
             <span className={styles.mono}>{leaf.name}</span>
-            <Badge tone={stateTone(leaf.state)}>
+            <StatusBadge tone={leaf.missing ? 'danger' : stateStatus(leaf.state)}>
               {leaf.missing ? t('state.missing') : t(`state.${stateKey(leaf.state)}`)}
-            </Badge>
+            </StatusBadge>
             <span className={styles.leafActions}>
               {readOnly ? null : vdev.role === 'spare' ? (
                 <Button
@@ -359,21 +592,6 @@ function VdevItem({
                 </Button>
               ) : (
                 <>
-                  {!leaf.missing && (
-                    <Button
-                      size="sm"
-                      variant="quiet"
-                      onPress={() => {
-                        onAction(leaf.state === 'OFFLINE' ? 'pool.online' : 'pool.offline', leaf);
-                      }}
-                    >
-                      {t(
-                        leaf.state === 'OFFLINE'
-                          ? 'actions.online.button'
-                          : 'actions.offline.button',
-                      )}
-                    </Button>
-                  )}
                   <Button
                     size="sm"
                     variant="quiet"

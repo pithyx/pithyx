@@ -526,6 +526,40 @@ public sealed class AppApiForAppsTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task AMutedCategoryArrivesAsReadAndAnUndeclaredOneIsRefused()
+    {
+        await InstallAsync(AppA, "\"notifications\"", extra: ",\n  \"notifications\": { \"categories\": [{ \"id\": \"messages\", \"name\": { \"en\": \"Messages\" } }, { \"id\": \"mentions\", \"name\": { \"en\": \"Mentions\" } }] }");
+        var app = App(await TokenAsync(_admin, AppA));
+        async Task<JsonElement> NotifyAsync(object request)
+        {
+            using var response = await app.PostAsJsonAsync("/api/app/notifications", request, Token);
+            Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+            return await response.JsonAsync();
+        }
+
+        var categories = (await _admin.GetFromJsonAsync<JsonElement>("/api/notifications/categories", Token)).GetProperty("categories").EnumerateArray().ToList();
+        Assert.Equal(["messages", "mentions"], categories.Select(category => category.GetProperty("id").GetString()));
+        Assert.All(categories, category => Assert.False(category.GetProperty("muted").GetBoolean()));
+        using (var mute = await _admin.PutAsJsonAsync($"/api/notifications/categories/{AppA}/mentions", new { muted = true }, Token))
+        {
+            Assert.Equal(HttpStatusCode.NoContent, mute.StatusCode);
+        }
+        using (var unknown = await _admin.PutAsJsonAsync($"/api/notifications/categories/{AppA}/reminders", new { muted = true }, Token))
+        {
+            Assert.Equal("notifications.category.not_found", await ErrorAsync(unknown));
+        }
+
+        Assert.Equal(JsonValueKind.Null, (await NotifyAsync(new { title = "New message", category = "messages" })).GetProperty("readAt").ValueKind);
+        Assert.Equal(JsonValueKind.String, (await NotifyAsync(new { title = "You were mentioned", category = "mentions" })).GetProperty("readAt").ValueKind);
+        Assert.Equal(JsonValueKind.Null, (await NotifyAsync(new { title = "No category" })).GetProperty("readAt").ValueKind);
+        using (var undeclared = await app.PostAsJsonAsync("/api/app/notifications", new { title = "x", category = "reminders" }, Token))
+        {
+            Assert.Equal("notifications.message.invalid", await ErrorAsync(undeclared));
+        }
+        Assert.True((await _admin.GetFromJsonAsync<JsonElement>("/api/notifications/categories", Token)).GetProperty("categories")[1].GetProperty("muted").GetBoolean());
+    }
+
+    [Fact]
     public async Task TheContextTopicIsOnlyForUsersOfTheAppAndFollowsItsChanges()
     {
         await InstallAsync(AppA, "\"notifications\", \"files.read\"", extra: ",\n  \"storage\": [{ \"id\": \"inbox\", \"name\": { \"en\": \"Inbox\" }, \"access\": \"readWrite\", \"required\": false }]");

@@ -5,9 +5,11 @@ import {
   IconDownload,
   IconExternalLink,
   IconEye,
+  IconFilePlus,
   IconFolderPlus,
   IconHistory,
   IconPencil,
+  IconPlus,
   IconScissors,
   IconSquare,
   IconTrash,
@@ -25,9 +27,11 @@ export type FilesAction =
   | 'paste'
   | 'rename'
   | 'versions'
+  | 'addToDesktop'
   | 'delete'
   | 'deletePermanent'
   | 'newFolder'
+  | 'newFile'
   | 'upload'
   | 'selectAll';
 
@@ -42,7 +46,9 @@ export function FilesMenu({
   writable,
   canPaste,
   openOnly = false,
+  appActions = [],
   onAction,
+  onAppAction,
   onClose,
 }: {
   x: number;
@@ -57,7 +63,11 @@ export function FilesMenu({
   canPaste: boolean;
   /** Only "Open": the homes of every user, which open as shares of their own. */
   openOnly?: boolean;
+  /** The installed apps' file actions that apply to the selection (D375), with their app's icon. */
+  appActions?: readonly { label: string; icon: string }[];
   onAction: (action: FilesAction) => void;
+  /** One of `appActions` was chosen, by its index. */
+  onAppAction?: (index: number) => void;
   onClose: () => void;
 }) {
   const { t } = useTranslation('files');
@@ -68,7 +78,12 @@ export function FilesMenu({
         aria-label={kind === 'entries' ? t('menu.entries', { count }) : t('menu.folder')}
         autoFocus="first"
         onAction={(key) => {
-          onAction(String(key) as FilesAction);
+          const app = /^app-action-(\d+)$/.exec(String(key));
+          if (app === null) {
+            onAction(String(key) as FilesAction);
+          } else {
+            onAppAction?.(Number(app[1]));
+          }
         }}
         onClose={onClose}
       >
@@ -98,6 +113,18 @@ export function FilesMenu({
                 {t('actions.openWith')}
               </MenuItem>
             )}
+            {appActions.map((entry, index) => (
+              <MenuItem
+                key={index}
+                id={`app-action-${String(index)}`}
+                icon={<img src={entry.icon} width={18} height={18} alt="" />}
+              >
+                {entry.label}
+              </MenuItem>
+            ))}
+            <MenuItem id="addToDesktop" icon={<IconPlus {...icon} />}>
+              {t('actions.addToDesktop')}
+            </MenuItem>
             <MenuItem id="copy" icon={<IconCopy {...icon} />} shortcut={t('keys.copy')}>
               {t('actions.copy')}
             </MenuItem>
@@ -143,6 +170,11 @@ export function FilesMenu({
             {writable && (
               <MenuItem id="newFolder" icon={<IconFolderPlus {...icon} />}>
                 {t('actions.newFolder')}
+              </MenuItem>
+            )}
+            {writable && (
+              <MenuItem id="newFile" icon={<IconFilePlus {...icon} />}>
+                {t('actions.newFile')}
               </MenuItem>
             )}
             {writable && (

@@ -49,9 +49,9 @@ export function StorageSection({
 
   return (
     <section className={styles.group} aria-labelledby="store-storage">
-      <h3 id="store-storage" className={styles.sectionTitle}>
+      <h2 id="store-storage" className={styles.sectionTitle}>
         {t('detail.storage.title')}
-      </h3>
+      </h2>
       <p className={styles.muted}>{t('detail.storage.intro')}</p>
       <ul className={styles.permissions}>
         {requests.map((request) => {

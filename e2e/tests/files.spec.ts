@@ -1,8 +1,8 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { Locator, Page } from '@playwright/test';
 import { expect, test } from './fixtures';
-import { openFilesInShared, openFromStart, signInAsAdmin } from './session';
+import { openFilesInShared, openFromStart, resetDesktopItems, signInAsAdmin } from './session';
 
 // The simulated share "Shared" lives in the daemon's data directory (playwright.config.ts).
 const shared = join(process.env.PITHYX_E2E_DATA ?? '', 'shares', 'shared');
@@ -229,10 +229,10 @@ test('deletes into the recycle bin, restores, and deletes for good only after as
   await expect(row(page, 'keep.txt')).toHaveCount(0);
 
   await filesWindow(page).getByRole('button', { name: 'Recycle bin of Shared' }).click();
-  const bin = filesWindow(page).getByRole('listbox', { name: 'Recycle bin of Shared' });
-  await bin.getByRole('option', { name: 'keep.txt' }).click();
+  const bin = filesWindow(page).getByRole('grid', { name: 'Recycle bin of Shared' });
+  await bin.getByRole('row', { name: 'keep.txt' }).click();
   await filesWindow(page).getByRole('button', { name: 'Restore' }).click();
-  await expect(bin.getByRole('option', { name: 'keep.txt' })).toHaveCount(0);
+  await expect(bin.getByRole('row', { name: 'keep.txt' })).toHaveCount(0);
 
   await filesWindow(page).getByRole('button', { name: 'Back' }).click();
   await expect(row(page, 'keep.txt')).toBeVisible();
@@ -243,7 +243,7 @@ test('deletes into the recycle bin, restores, and deletes for good only after as
   await confirm.getByRole('button', { name: 'Delete permanently' }).click();
   await expect(row(page, 'gone.txt')).toHaveCount(0);
   await filesWindow(page).getByRole('button', { name: 'Recycle bin of Shared' }).click();
-  await expect(bin.getByRole('option', { name: 'gone.txt' })).toHaveCount(0);
+  await expect(bin.getByRole('row', { name: 'gone.txt' })).toHaveCount(0);
 });
 
 test('shows changes made elsewhere while the folder is open', async ({ page, browser }) => {
@@ -292,6 +292,73 @@ test('selecting everything in a large folder sends no list of names', async ({ p
     except: ['file 0.txt'],
   });
   await expect(filesWindow(page).getByText('1 item', { exact: true })).toBeVisible();
+});
+
+test('a search keeps the matching names of the folder and deletes only what it shows', async ({
+  page,
+}) => {
+  const files: Record<string, string> = { 'notes.txt': '' };
+  for (let i = 0; i < 250; i++) {
+    files[`Holiday ${String(i)}.jpg`] = '';
+  }
+  prepare('e2e-search', files);
+  await openFolder(page, 'e2e-search');
+  await expect(filesWindow(page).getByText('251 items')).toBeVisible();
+
+  const search = filesWindow(page).getByRole('searchbox', { name: 'Search in e2e-search' });
+  await search.fill('holiday 24');
+  await expect(filesWindow(page).getByText('11 matches')).toBeVisible();
+  await expect(row(page, 'Holiday 24.jpg')).toBeVisible();
+  await expect(row(page, 'notes.txt')).toHaveCount(0);
+
+  await row(page, 'Holiday 24.jpg').click();
+  await page.keyboard.press('Control+a');
+  await expect(filesWindow(page).getByText('11 selected')).toBeVisible();
+  const request = page.waitForRequest('**/api/files/operations');
+  await page.keyboard.press('Delete');
+  const body = (await request).postDataJSON() as { items?: unknown[]; allIn?: unknown };
+  expect(body.allIn).toBeUndefined();
+  expect(body.items).toHaveLength(11);
+  await expect(filesWindow(page).getByText('Nothing in this folder has')).toBeVisible();
+
+  await search.fill('');
+  await expect(filesWindow(page).getByText('240 items')).toBeVisible();
+  expect(existsSync(join(shared, 'e2e-search', 'notes.txt'))).toBe(true);
+});
+
+test('the folder tree in the navigation opens subfolders and follows the folder on view', async ({
+  page,
+}) => {
+  prepare('e2e-tree');
+  prepare(join('e2e-tree', 'inner', 'deep'));
+  await signInAsAdmin(page);
+  await openFilesInShared(page);
+  const side = filesWindow(page).getByRole('navigation', { name: 'Shares and recycle bin' });
+  const path = filesWindow(page).getByRole('navigation', { name: 'Path' });
+
+  await side.getByRole('button', { name: 'Show the folders in e2e-tree' }).click();
+  await side.getByRole('button', { name: 'inner', exact: true }).click();
+  await expect(path.getByRole('button', { name: 'inner', exact: true })).toHaveAttribute(
+    'aria-current',
+    'page',
+  );
+  await expect(side.getByRole('button', { name: 'inner', exact: true })).toHaveAttribute(
+    'aria-current',
+    'page',
+  );
+
+  await enter(page, 'deep');
+  const deep = side.getByRole('button', { name: 'deep', exact: true });
+  await expect(deep).toHaveAttribute('aria-current', 'page');
+  // A folder without subfolders has no toggle once that is known.
+  await expect(side.getByRole('button', { name: 'Show the folders in deep' })).toHaveCount(0);
+
+  await side.getByRole('button', { name: 'Hide the folders in e2e-tree' }).click();
+  await expect(deep).toHaveCount(0);
+  await expect(side.getByRole('button', { name: 'e2e-tree', exact: true })).toHaveAttribute(
+    'aria-current',
+    'page',
+  );
 });
 
 test('works with the keyboard alone', async ({ page }) => {
@@ -377,4 +444,51 @@ test('administrators find every other home in one list under homes', async ({ pa
 
   await files.getByRole('button', { name: 'Up one level' }).click();
   await expect(home).toBeVisible();
+});
+
+test('a file put on the desktop follows a rename, shows in Files and goes missing when it is gone', async ({
+  page,
+}) => {
+  prepare('e2e-shortcuts', { 'plan.txt': 'x' });
+  await openFolder(page, 'e2e-shortcuts');
+  const shortcut = (name: string) =>
+    page.getByRole('option', { name: `${name}, shortcut to a file or folder` });
+
+  await test.step('Add to desktop puts a shortcut there', async () => {
+    await row(page, 'plan.txt').click({ button: 'right' });
+    await page.getByRole('menuitem', { name: 'Add to desktop' }).click();
+    await expect(shortcut('plan.txt')).toBeVisible();
+  });
+
+  await test.step('a rename in Files renames the shortcut', async () => {
+    await row(page, 'plan.txt').click();
+    await page.keyboard.press('F2');
+    await filesWindow(page).getByRole('textbox', { name: 'Rename plan.txt' }).fill('plan-2.txt');
+    await page.keyboard.press('Enter');
+    await expect(row(page, 'plan-2.txt')).toBeVisible();
+    await expect(shortcut('plan-2.txt')).toBeVisible();
+  });
+
+  await test.step('Show in Files opens its folder with it selected', async () => {
+    await filesWindow(page).getByRole('button', { name: 'Close' }).click();
+    await shortcut('plan-2.txt').click({ button: 'right' });
+    await page.getByRole('menuitem', { name: 'Show in Files' }).click();
+    await expect(row(page, 'plan-2.txt')).toHaveAttribute('aria-selected', 'true');
+    await filesWindow(page).getByRole('button', { name: 'Close' }).click();
+  });
+
+  await test.step('a target removed past the daemon leaves a missing shortcut to remove', async () => {
+    rmSync(join(shared, 'e2e-shortcuts', 'plan-2.txt'));
+    await page.reload();
+    const missing = page.getByRole('option', {
+      name: 'plan-2.txt, shortcut whose target is missing',
+    });
+    await missing.click({ button: 'right' });
+    const menu = page.getByRole('menu');
+    await expect(menu.getByRole('menuitem')).toHaveText(['Remove from desktop']);
+    await menu.getByRole('menuitem').click();
+    await expect(missing).toHaveCount(0);
+  });
+
+  await resetDesktopItems(page);
 });

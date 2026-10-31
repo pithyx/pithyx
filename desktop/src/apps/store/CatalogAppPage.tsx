@@ -1,5 +1,5 @@
 import type { PithyxApp } from '@pithyx/sdk';
-import { Badge, Button } from '@pithyx/ui';
+import { Button, StatusBadge } from '@pithyx/ui';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -8,12 +8,19 @@ import { useFormatLocale } from '../../i18n';
 import { AppIcon } from '../../shell/AppIcon';
 import { IconArrowLeft, IconDownload, IconExternalLink } from '../../ui/icons';
 import { manifestText } from '../installed';
-import { storeCall, type StoreAppSummary } from '../sdk/store';
+import { storeCall, type StoreAppDetails, type StoreAppSummary } from '../sdk/store';
 import { describeProblem, formatDate } from '../storage/shared';
-import { SourceBadge } from './CatalogBrowser';
+import {
+  IncompatibleBadge,
+  IncompatibleNotice,
+  readsManifest,
+  useVersionReason,
+} from './Incompatible';
 import { InstallDialog } from './InstallDialog';
 import { manifestFacts } from './model';
+import { ElevatedRightText } from './ElevatedRights';
 import { PermissionText } from './PermissionText';
+import { MaturityBadge, StoreInfoRows } from './StoreInfo';
 import styles from './Store.module.css';
 
 /**
@@ -32,51 +39,53 @@ export function CatalogAppPage({
   onBack: () => void;
 }) {
   const { t, i18n } = useTranslation('store');
-  const locale = useFormatLocale();
   // Whether the dialog updates is fixed when it opens: the page learns of the install before the dialog closes.
   const [installing, setInstalling] = useState<{ update: boolean } | null>(null);
-  const details = useQuery({
-    queryKey: ['store', 'details', entry.catalog, entry.id],
-    queryFn: () =>
-      storeCall(app, 'internal.admin.store.details', { catalog: entry.catalog, appId: entry.id }),
-  });
+  const details = useCatalogDetails(app, entry.catalog, entry.id);
   const summary = details.data?.app ?? entry;
-  const facts = details.data === undefined ? null : manifestFacts(details.data.manifest);
+  const incompatible = summary.incompatible;
+  // A manifest of another version than this box reads has no rights or Store information to show.
+  const facts =
+    details.data === undefined || !readsManifest(incompatible)
+      ? null
+      : manifestFacts(details.data.manifest);
   const name = manifestText(summary.name, i18n.language);
   const description =
     summary.description === null ? null : manifestText(summary.description, i18n.language);
   const installed = summary.installedVersion !== null;
 
   return (
-    <div className={styles.app}>
-      <nav className={styles.crumbs}>
-        <button type="button" className={styles.back} onClick={onBack}>
-          <IconArrowLeft size={16} stroke={1.75} aria-hidden />
-          {backLabel}
-        </button>
-      </nav>
+    <>
+      <Button className={styles.back} variant="quiet" size="sm" onPress={onBack}>
+        <IconArrowLeft size={16} stroke={1.75} aria-hidden />
+        {backLabel}
+      </Button>
       <article className={styles.page} aria-labelledby="store-catalog-app-name">
         <header className={styles.appHeader}>
           <AppIcon app={{ icon: summary.icon, tone: 'graphite' }} size={64} />
           <div className={styles.headerText}>
-            <h2 id="store-catalog-app-name" className={styles.pageTitle}>
+            <h1 id="store-catalog-app-name" className={styles.appTitle}>
               {name}
-            </h2>
+            </h1>
             <p className={styles.muted}>
               {t('installed.version', { version: summary.version })}
               {summary.author !== null && ` · ${summary.author}`}
             </p>
             <span className={styles.badges}>
-              <SourceBadge kind={summary.kind} />
+              <StatusBadge tone={summary.kind === 'custom' ? 'warning' : 'info'}>
+                {t(`catalog.badge.${summary.kind}`)}
+              </StatusBadge>
+              <MaturityBadge maturity={summary.maturity} />
+              {incompatible !== null && <IncompatibleBadge />}
               {installed && (
-                <Badge tone="neutral">
+                <StatusBadge tone="success">
                   {t('catalog.installedVersion', { version: summary.installedVersion })}
-                </Badge>
+                </StatusBadge>
               )}
             </span>
           </div>
           <div className={styles.buttons}>
-            {(!installed || summary.update) && (
+            {incompatible === null && (!installed || summary.update) && (
               <Button
                 variant="primary"
                 onPress={() => {
@@ -102,6 +111,7 @@ export function CatalogAppPage({
           </div>
         </header>
         {description !== null && description !== '' && <p>{description}</p>}
+        {incompatible !== null && <IncompatibleNotice incompatible={incompatible} />}
         {summary.kind === 'custom' && <p className={styles.notice}>{t('catalog.unverified')}</p>}
         {details.isPending && (
           <p className={styles.loading} role="status">
@@ -109,61 +119,60 @@ export function CatalogAppPage({
           </p>
         )}
         {details.isError && <ErrorNotice error={describeProblem(details.error)} />}
-        {details.data !== undefined && facts !== null && (
+        {details.data !== undefined && (
           <>
-            {details.data.screenshots.length > 0 && (
-              <section className={styles.group} aria-labelledby="store-screenshots">
-                <h3 id="store-screenshots" className={styles.sectionTitle}>
-                  {t('catalog.screenshots')}
-                </h3>
-                <ul className={styles.screenshots}>
-                  {details.data.screenshots.map((url, index) => (
-                    <li key={url}>
-                      <img
-                        className={styles.screenshot}
-                        src={url}
-                        alt={t('catalog.screenshot', { name, number: index + 1 })}
-                        loading="lazy"
-                      />
+            <CatalogScreenshots details={details.data} name={name} />
+            {facts?.root === true && <p className={styles.warning}>{t('install.root')}</p>}
+            {facts !== null && facts.elevated.length > 0 && (
+              <section className={styles.group} aria-labelledby="store-catalog-elevated">
+                <h2 id="store-catalog-elevated" className={styles.sectionTitle}>
+                  {t('elevated.section')}
+                </h2>
+                <p className={styles.warning}>{t('elevated.warning')}</p>
+                <ul className={styles.permissions}>
+                  {facts.elevated.map((right) => (
+                    <li key={right} className={styles.permission}>
+                      <ElevatedRightText right={right} reason={facts.reasons[right]} />
                     </li>
                   ))}
                 </ul>
               </section>
             )}
-            {facts.root && <p className={styles.warning}>{t('install.root')}</p>}
-            {facts.elevated.length > 0 && (
-              <p className={styles.warning}>
-                {t('install.elevated', { rights: facts.elevated.join(', ') })}
-              </p>
+            {facts !== null && (
+              <section className={styles.group} aria-labelledby="store-catalog-permissions">
+                <h2 id="store-catalog-permissions" className={styles.sectionTitle}>
+                  {t('detail.permissions.title')}
+                </h2>
+                <p className={styles.muted}>
+                  {facts.backend ? t('install.backend.yes') : t('install.backend.no')}
+                </p>
+                {facts.permissions.length === 0 ? (
+                  <p className={styles.muted}>{t('install.noPermissions')}</p>
+                ) : (
+                  <ul className={styles.permissions}>
+                    {facts.permissions.map((permission) => (
+                      <li key={permission} className={styles.permission}>
+                        <PermissionText
+                          permission={permission}
+                          reason={facts.reasons[permission]}
+                          hosts={facts.hosts}
+                        />
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </section>
             )}
-            <section className={styles.group} aria-labelledby="store-catalog-permissions">
-              <h3 id="store-catalog-permissions" className={styles.sectionTitle}>
-                {t('detail.permissions.title')}
-              </h3>
-              <p className={styles.muted}>
-                {facts.backend ? t('install.backend.yes') : t('install.backend.no')}
-              </p>
-              {facts.permissions.length === 0 ? (
-                <p className={styles.muted}>{t('install.noPermissions')}</p>
-              ) : (
-                <ul className={styles.permissions}>
-                  {facts.permissions.map((permission) => (
-                    <li key={permission} className={styles.permission}>
-                      <PermissionText permission={permission} />
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </section>
             <section className={styles.group} aria-labelledby="store-catalog-facts">
-              <h3 id="store-catalog-facts" className={styles.sectionTitle}>
+              <h2 id="store-catalog-facts" className={styles.sectionTitle}>
                 {t('detail.facts.title')}
-              </h3>
+              </h2>
               <dl className={styles.facts}>
                 <dt>{t('detail.facts.author')}</dt>
                 <dd>{summary.author ?? '-'}</dd>
                 <dt>{t('detail.facts.license')}</dt>
                 <dd>{summary.license}</dd>
+                {facts !== null && <StoreInfoRows facts={facts} />}
                 <dt>{t('catalog.catalog')}</dt>
                 <dd className={styles.breakable}>{summary.catalog}</dd>
                 {details.data.homepage !== null && (
@@ -184,24 +193,7 @@ export function CatalogAppPage({
                 </dd>
               </dl>
             </section>
-            <section className={styles.group} aria-labelledby="store-catalog-versions">
-              <h3 id="store-catalog-versions" className={styles.sectionTitle}>
-                {t('catalog.versions')}
-              </h3>
-              <ul className={styles.permissions}>
-                {details.data.versions.map((version) => (
-                  <li key={version.version} className={styles.permission}>
-                    <span className={styles.permissionText}>
-                      <span className={styles.permissionTitle}>{version.version}</span>
-                      <span className={styles.muted}>
-                        {formatDate(version.publishedAt, locale)}
-                        {!version.fits && ` · ${t('catalog.needs', { range: version.pithyx })}`}
-                      </span>
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </section>
+            <CatalogVersions details={details.data} />
           </>
         )}
       </article>
@@ -220,6 +212,70 @@ export function CatalogAppPage({
           }}
         />
       )}
-    </div>
+    </>
+  );
+}
+
+/** The details query of a catalog app, shared by its catalog page and the page of the installed app. */
+export function useCatalogDetails(app: PithyxApp, catalog: string | null, appId: string) {
+  return useQuery({
+    queryKey: ['store', 'details', catalog, appId],
+    queryFn: () =>
+      storeCall(app, 'internal.admin.store.details', { catalog: catalog ?? '', appId }),
+    enabled: catalog !== null,
+  });
+}
+
+/** The screenshots a catalog shows for an app. */
+export function CatalogScreenshots({ details, name }: { details: StoreAppDetails; name: string }) {
+  const { t } = useTranslation('store');
+  if (details.screenshots.length === 0) {
+    return null;
+  }
+  return (
+    <section className={styles.group} aria-labelledby="store-screenshots">
+      <h2 id="store-screenshots" className={styles.sectionTitle}>
+        {t('catalog.screenshots')}
+      </h2>
+      <ul className={styles.screenshots}>
+        {details.screenshots.map((url, index) => (
+          <li key={url}>
+            <img
+              className={styles.screenshot}
+              src={url}
+              alt={t('catalog.screenshot', { name, number: index + 1 })}
+              loading="lazy"
+            />
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+/** Every version a catalog published of an app, with the ones this box cannot run marked. */
+export function CatalogVersions({ details }: { details: StoreAppDetails }) {
+  const { t } = useTranslation('store');
+  const locale = useFormatLocale();
+  const reason = useVersionReason();
+  return (
+    <section className={styles.group} aria-labelledby="store-catalog-versions">
+      <h2 id="store-catalog-versions" className={styles.sectionTitle}>
+        {t('catalog.versions')}
+      </h2>
+      <ul className={styles.permissions}>
+        {details.versions.map((version) => (
+          <li key={version.version} className={styles.permission}>
+            <span className={styles.permissionText}>
+              <span className={styles.permissionTitle}>{version.version}</span>
+              <span className={styles.muted}>
+                {formatDate(version.publishedAt, locale)}
+                {version.incompatible !== null && ` · ${reason(version.incompatible)}`}
+              </span>
+            </span>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }

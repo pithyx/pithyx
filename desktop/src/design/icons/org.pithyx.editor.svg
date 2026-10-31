@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <rect width="100" height="100" rx="22" fill="#0e4a5a"/>
+  <path d="M26 16h34l16 16v48a4 4 0 0 1-4 4H26a4 4 0 0 1-4-4V20a4 4 0 0 1 4-4z" fill="#eff4f5"/>
+  <path d="M60 16v12a4 4 0 0 0 4 4h12z" fill="#b9cfd4"/>
+  <rect x="30" y="38" width="10" height="5" rx="2.5" fill="#1a6e82"/>
+  <rect x="43" y="38" width="22" height="5" rx="2.5" fill="#9fbcc3"/>
+  <rect x="36" y="48" width="16" height="5" rx="2.5" fill="#e0a33a"/>
+  <rect x="55" y="48" width="12" height="5" rx="2.5" fill="#9fbcc3"/>
+  <rect x="36" y="58" width="12" height="5" rx="2.5" fill="#1a6e82"/>
+  <rect x="30" y="68" width="20" height="5" rx="2.5" fill="#9fbcc3"/>
+  <g transform="rotate(45 74 66)">
+    <rect x="68" y="40" width="12" height="34" rx="2" fill="#e0a33a"/>
+    <rect x="68" y="40" width="12" height="7" rx="2" fill="#b37a1f"/>
+    <path d="M68 74h12l-6 10z" fill="#f5d7a1"/>
+    <path d="M72 80.7h4L74 84z" fill="#0e4a5a"/>
+  </g>
+</svg>

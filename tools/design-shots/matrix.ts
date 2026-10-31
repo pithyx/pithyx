@@ -7,6 +7,7 @@ export const viewports = {
   phone: { width: 390, height: 844, touch: true },
   tablet: { width: 820, height: 1180, touch: true },
   laptop: { width: 1440, height: 900, touch: false },
+  ultrawide: { width: 3440, height: 1440, touch: false },
 } as const;
 export const themes = ['light', 'dark'] as const;
 export const languages = ['en', 'de'] as const;

@@ -61,7 +61,7 @@ public sealed record FileOperationResult(long Done, IReadOnlyList<string> Skippe
 /// renames it into place when complete, so a cancelled or failed copy never leaves half a file under the real name.
 /// Moves within one file system are renames; across file systems they copy, then delete the source.
 /// </summary>
-public sealed class FileOperations(ShareService shares, JobService jobs, TrashService trash, FileOwners owners, Storage.StorageUsage? usage = null)
+public sealed class FileOperations(ShareService shares, JobService jobs, TrashService trash, FileOwners owners, Storage.StorageUsage? usage = null, Layouts.DesktopFileLinks? links = null)
 {
     public const int MaxItems = 1000;
     private const long CopyChunk = 16L * 1024 * 1024;
@@ -89,7 +89,23 @@ public sealed class FileOperations(ShareService shares, JobService jobs, TrashSe
     {
         var plan = await PrepareAsync(user, request, cancellationToken);
         var kind = plan.ToTrash ? "trash" : request.Kind.ToString().ToLowerInvariant();
-        return await StartJobAsync(plan.UserId, $"files.{kind}", request, context => Task.Run(() => Run(request.Kind, plan.ToTrash, plan.UserId, plan.Sources, plan.Target, plan.Policy, new Progress(context, plan.Owner, context.Cancellation)), context.Cancellation), cancellationToken);
+        return await StartJobAsync(
+            plan.UserId,
+            $"files.{kind}",
+            request,
+            async context =>
+            {
+                var run = new Progress(context, plan.Owner, context.Cancellation);
+                try
+                {
+                    await Task.Run(() => Run(request.Kind, plan.ToTrash, plan.UserId, plan.Sources, plan.Target, plan.Policy, run), context.Cancellation);
+                }
+                finally
+                {
+                    await FollowMovesAsync(run);
+                }
+            },
+            cancellationToken);
     }
 
     /// <summary>
@@ -107,6 +123,7 @@ public sealed class FileOperations(ShareService shares, JobService jobs, TrashSe
         finally
         {
             usage?.Written();
+            await FollowMovesAsync(run);
         }
         return new FileOperationResult(run.Done, run.Skipped);
     }
@@ -127,8 +144,22 @@ public sealed class FileOperations(ShareService shares, JobService jobs, TrashSe
         finally
         {
             usage?.Written();
+            await FollowMovesAsync(run);
         }
         return new FileOperationResult(run.Done, run.Skipped);
+    }
+
+    /// <summary>Desktop shortcuts follow what was moved, also when the operation stopped part way.</summary>
+    private async Task FollowMovesAsync(Progress run)
+    {
+        if (links is null)
+        {
+            return;
+        }
+        foreach (var (fromShare, fromPath, toShare, toPath) in run.Moved)
+        {
+            await links.MovedAsync(fromShare, fromPath, toShare, toPath, CancellationToken.None);
+        }
     }
 
     private sealed record Prepared(
@@ -468,23 +499,35 @@ public sealed class FileOperations(ShareService shares, JobService jobs, TrashSe
             var (targetShare, targetPath) = target!.Value;
             using var targetRoot = FileService.OpenRoot(targetShare);
             using var targetFolder = FileService.Open(targetRoot, targetPath, LinuxFs.Path | LinuxFs.Directory);
-            if (kind == FileOperationKind.Move && TryRename(sourceFolder, name, targetFolder, path, policy, run))
+            if (kind == FileOperationKind.Move && TryRename(sourceFolder, name, targetFolder, path, policy, run, out var renamedAs))
             {
+                if (renamedAs is not null)
+                {
+                    run.Moved.Add((share.Id, path, targetShare.Id, FsPath.Join(targetPath, renamedAs)));
+                }
                 continue;
             }
-            Copy(sourceFolder, name, path, targetFolder, policy, run);
+            var copiedAs = Copy(sourceFolder, name, path, targetFolder, policy, run);
             if (kind == FileOperationKind.Move && !run.SkippedBelow(path))
             {
                 Delete(sourceFolder, name, path, run, counted: false);
+                if (copiedAs is not null)
+                {
+                    run.Moved.Add((share.Id, path, targetShare.Id, FsPath.Join(targetPath, copiedAs)));
+                }
             }
         }
         run.Context?.SetResult(new FileOperationResult(run.Done, run.Skipped));
         run.Report(null);
     }
 
-    /// <summary>A move within one file system. False when it has to copy instead (another file system, or a folder merge).</summary>
-    private static bool TryRename(SafeFileHandle fromFolder, string name, SafeFileHandle toFolder, string path, ConflictPolicy policy, Progress run)
+    /// <summary>
+    /// A move within one file system. False when it has to copy instead (another file system, or a folder merge).
+    /// <paramref name="movedAs"/> is the entry's name in the target folder, or null when nothing moved.
+    /// </summary>
+    private static bool TryRename(SafeFileHandle fromFolder, string name, SafeFileHandle toFolder, string path, ConflictPolicy policy, Progress run, out string? movedAs)
     {
+        movedAs = null;
         var stat = FileService.Stat(fromFolder, name);
         var targetName = name;
         if (FileService.TryStat(toFolder, name) is { } existing)
@@ -513,6 +556,7 @@ public sealed class FileOperations(ShareService shares, JobService jobs, TrashSe
         {
             LinuxFs.Rename(fromFolder, name, toFolder, targetName, replace: policy == ConflictPolicy.Overwrite);
             run.Add(run.CountOf(path));
+            movedAs = targetName;
             return true;
         }
         catch (FsError error) when (error.Errno == LinuxFs.EXDEV)
@@ -525,14 +569,15 @@ public sealed class FileOperations(ShareService shares, JobService jobs, TrashSe
         }
     }
 
-    private static void Copy(SafeFileHandle fromFolder, string name, string path, SafeFileHandle toFolder, ConflictPolicy policy, Progress run, string? asName = null)
+    /// <summary>Copies an entry; returns its name in the target folder, or null when it was skipped.</summary>
+    private static string? Copy(SafeFileHandle fromFolder, string name, string path, SafeFileHandle toFolder, ConflictPolicy policy, Progress run, string? asName = null)
     {
         run.Cancellation.ThrowIfCancellationRequested();
         var stat = FileService.Stat(fromFolder, name);
         if (stat.Kind is not (FsKind.File or FsKind.Folder))
         {
             run.Skip(path);
-            return;
+            return null;
         }
         var targetName = asName ?? name;
         var existing = FileService.TryStat(toFolder, targetName);
@@ -542,7 +587,7 @@ public sealed class FileOperations(ShareService shares, JobService jobs, TrashSe
             {
                 case ConflictPolicy.Skip:
                     run.Skip(path);
-                    return;
+                    return null;
                 case ConflictPolicy.Rename:
                     targetName = FreeName(toFolder, name);
                     existing = null;
@@ -571,7 +616,7 @@ public sealed class FileOperations(ShareService shares, JobService jobs, TrashSe
                 Copy(source, child, FsPath.Join(path, child), destination, policy == ConflictPolicy.Rename ? ConflictPolicy.Fail : policy, run);
             }
             run.Add(1);
-            return;
+            return targetName;
         }
 
         var temporary = $"{FsPath.UploadPrefix}{Guid.NewGuid():N}";
@@ -592,6 +637,7 @@ public sealed class FileOperations(ShareService shares, JobService jobs, TrashSe
                 throw FsErrors.From(error, targetName);
             }
             run.Add(1);
+            return targetName;
         }
         finally
         {
@@ -759,6 +805,9 @@ public sealed class FileOperations(ShareService shares, JobService jobs, TrashSe
         public long Done { get; private set; }
 
         public List<string> Skipped { get; } = [];
+
+        /// <summary>Entries moved so far: from share and path to share and path.</summary>
+        public List<(long FromShare, string FromPath, long ToShare, string ToPath)> Moved { get; } = [];
 
         public void Count(SafeFileHandle root, string path)
         {

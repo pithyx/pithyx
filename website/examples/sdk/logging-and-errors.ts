@@ -6,6 +6,7 @@ import { createI18n, type I18n } from '@pithyx/sdk/i18n';
 const RETRYABLE = new Set([
   'sdk.request.timeout',
   'sdk.backend.unreachable',
+  'sdk.box.unreachable',
   'app.backend.unavailable',
   'auth.rate.limited',
 ]);

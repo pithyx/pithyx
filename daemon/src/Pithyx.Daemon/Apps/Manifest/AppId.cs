@@ -5,7 +5,7 @@ namespace Pithyx.Daemon.Apps.Manifest;
 /// <summary>
 /// App ids (D302): the author's domain reversed plus the app name, 3 to 5 parts of lowercase letters, digits and
 /// dashes, at most 100 characters, for example <c>com.mueller.chat</c>. The manifest schema
-/// (<c>sdk/schema/manifest.v1.schema.json</c>) carries the same pattern; the shared fixture corpus keeps both alike.
+/// (<c>sdk/schema/manifest.v2.schema.json</c>) carries the same pattern; the shared fixture corpus keeps both alike.
 /// </summary>
 public static partial class AppId
 {

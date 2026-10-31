@@ -1176,6 +1176,291 @@
         }
       }
     },
+    "/api/auth/step-up": {
+      "get": {
+        "tags": [
+          "Auth"
+        ],
+        "description": "Until when this session holds a step-up (D311), or null.",
+        "operationId": "GetStepUp",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StepUpState"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "description": "Confirms the password and, with two-factor sign-in on, an authenticator code again; holds for five minutes in this session.",
+        "operationId": "StepUp",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StepUpRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StepUpState"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/passkeys/sign-in/options": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "description": "Options for signing in with a passkey of the name the box was opened under; refused with auth.passkey.unavailable for an address.",
+        "operationId": "PasskeySignInOptions",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PasskeyOptions"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/passkeys/sign-in": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "description": "Signs in with a passkey instead of the password and TOTP; the same limits on failed attempts apply.",
+        "operationId": "PasskeySignIn",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PasskeySignInRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserInfo"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/passkeys": {
+      "get": {
+        "tags": [
+          "Auth"
+        ],
+        "operationId": "ListPasskeys",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PasskeyList"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "operationId": "CreatePasskey",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PasskeyCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PasskeyInfo"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/passkeys/options": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "description": "Options for a new passkey of the signed-in user, after the current password.",
+        "operationId": "PasskeyCreateOptions",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PasskeyOptionsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PasskeyOptions"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/passkeys/{id}": {
+      "delete": {
+        "tags": [
+          "Auth"
+        ],
+        "operationId": "DeletePasskey",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/desktop": {
       "get": {
         "tags": [
@@ -1514,6 +1799,7 @@
         "tags": [
           "Desktop"
         ],
+        "description": "The user's desktop items. A shortcut to a file or folder says in target whether its target is a file, a folder or missing (gone, moved past the daemon, or no longer readable for the user).",
         "operationId": "ListDesktopItems",
         "responses": {
           "200": {
@@ -1545,7 +1831,7 @@
         "tags": [
           "Desktop"
         ],
-        "description": "Creates an item. The answer is 201 with the item, its URL as Location and its version as ETag.",
+        "description": "Creates an item. The answer is 201 with the item, its URL as Location and its version as ETag. A shortcut to a file or folder needs read access to it; otherwise the answer is the file error (for example fs.entry.not_found).",
         "operationId": "CreateDesktopItem",
         "requestBody": {
           "content": {
@@ -1906,6 +2192,89 @@
         }
       }
     },
+    "/api/notifications/categories": {
+      "get": {
+        "tags": [
+          "Notifications"
+        ],
+        "description": "The kinds of notifications the apps the signed-in user may open declare in their manifest (D390), each with whether the user muted it.",
+        "operationId": "ListNotificationCategories",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppNotificationCategoryList"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/notifications/categories/{app}/{category}": {
+      "put": {
+        "tags": [
+          "Notifications"
+        ],
+        "description": "Mutes or unmutes one kind of an app's notifications for the signed-in user (D390). A muted notification is kept as read, without a toast and without the user's channels. An app the user may not open or a category its manifest does not declare answers 404 notifications.category.not_found.",
+        "operationId": "MuteNotificationCategory",
+        "parameters": [
+          {
+            "name": "app",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "category",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NotificationCategoryMuteRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/notifications/app": {
       "post": {
         "tags": [
@@ -1933,6 +2302,608 @@
                 }
               }
             }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/notifications/language": {
+      "put": {
+        "tags": [
+          "Notifications"
+        ],
+        "description": "The language the signed-in user's desktop uses (en or de), for the emails and webhooks the box writes to them (D379). Without it the system language applies. Others answer 400 notifications.language.unsupported.",
+        "operationId": "SetNotificationLanguage",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NotificationLanguageRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/notifications/channels": {
+      "get": {
+        "tags": [
+          "Notifications"
+        ],
+        "description": "Lists the signed-in user's own channels, which get the notifications that reach the user: email and webhook channels with what they get and how their last delivery went. Header values never leave the box.",
+        "operationId": "ListNotificationChannels",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationChannelList"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Notifications"
+        ],
+        "description": "Adds one of the signed-in user's own channels, which get the notifications that reach the user. An email channel needs the SMTP server (409 notifications.smtp.missing); invalid fields answer 400 notifications.channel.invalid, too many 409 notifications.channel.limit_reached.",
+        "operationId": "CreateNotificationChannel",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NotificationChannelRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationChannel"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/notifications/channels/{id}": {
+      "put": {
+        "tags": [
+          "Notifications"
+        ],
+        "description": "Changes one of the signed-in user's own channels, which get the notifications that reach the user; its kind stays. A header without a value keeps the value saved before.",
+        "operationId": "UpdateNotificationChannel",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NotificationChannelRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationChannel"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Notifications"
+        ],
+        "description": "Removes one of the signed-in user's own channels, which get the notifications that reach the user.",
+        "operationId": "DeleteNotificationChannel",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/notifications/channels/{id}/test": {
+      "post": {
+        "tags": [
+          "Notifications"
+        ],
+        "description": "Sends a test message through one of the signed-in user's own channels, which get the notifications that reach the user now, also when it is off. A failure answers 502 notifications.channel.failed with the server's words and is kept on the channel.",
+        "operationId": "TestNotificationChannel",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationChannel"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/system/notifications/channels": {
+      "get": {
+        "tags": [
+          "Notifications"
+        ],
+        "description": "Administrators only. Lists the box's channels, which get what the system tells every administrator: email and webhook channels with what they get and how their last delivery went. Header values never leave the box.",
+        "operationId": "ListSystemNotificationChannels",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationChannelList"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Notifications"
+        ],
+        "description": "Administrators only. Adds one of the box's channels, which get what the system tells every administrator. An email channel needs the SMTP server (409 notifications.smtp.missing); invalid fields answer 400 notifications.channel.invalid, too many 409 notifications.channel.limit_reached.",
+        "operationId": "CreateSystemNotificationChannel",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NotificationChannelRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationChannel"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/system/notifications/channels/{id}": {
+      "put": {
+        "tags": [
+          "Notifications"
+        ],
+        "description": "Administrators only. Changes one of the box's channels, which get what the system tells every administrator; its kind stays. A header without a value keeps the value saved before.",
+        "operationId": "UpdateSystemNotificationChannel",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NotificationChannelRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationChannel"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Notifications"
+        ],
+        "description": "Administrators only. Removes one of the box's channels, which get what the system tells every administrator.",
+        "operationId": "DeleteSystemNotificationChannel",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/system/notifications/channels/{id}/test": {
+      "post": {
+        "tags": [
+          "Notifications"
+        ],
+        "description": "Administrators only. Sends a test message through one of the box's channels, which get what the system tells every administrator now, also when it is off. A failure answers 502 notifications.channel.failed with the server's words and is kept on the channel.",
+        "operationId": "TestSystemNotificationChannel",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationChannel"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/system/notifications/smtp": {
+      "get": {
+        "tags": [
+          "Notifications"
+        ],
+        "description": "Administrators only. The SMTP server email channels send through, without its password.",
+        "operationId": "GetNotificationSmtp",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SmtpStatus"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Notifications"
+        ],
+        "description": "Administrators only. Saves the SMTP server; an empty host removes it. A missing password keeps the saved one, an empty one removes it. Invalid fields answer 400 notifications.smtp.invalid.",
+        "operationId": "SetNotificationSmtp",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SmtpRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SmtpStatus"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/system/notifications/matrix": {
+      "get": {
+        "tags": [
+          "Notifications"
+        ],
+        "description": "Administrators only. Every event the box reports to its administrators, the box's channels and, per event, whether the administrators' desktop and each channel get it (D407). A cell nobody set shows its default: the desktop gets everything, a channel what its categories and least level take.",
+        "operationId": "GetNotificationMatrix",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationMatrix"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Notifications"
+        ],
+        "description": "Administrators only. Sets cells of the matrix and answers with the whole matrix; the other cells stay. An unknown event answers 400 notifications.event.unknown, a channel that is not one of the box's 404 notifications.channel.not_found.",
+        "operationId": "SetNotificationMatrix",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NotificationMatrixRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationMatrix"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/system/notifications/smtp/test": {
+      "post": {
+        "tags": [
+          "Notifications"
+        ],
+        "description": "Administrators only. Sends a test email to one address through the server given in the body, saved or not; a missing password takes the saved one, and nothing is stored. Invalid fields answer 400 notifications.smtp.invalid (field to for the address), a failure 502 notifications.channel.failed with the server's words.",
+        "operationId": "TestNotificationSmtp",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SmtpTestRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
           },
           "default": {
             "description": "Problem details with a stable error code.",
@@ -3008,7 +3979,7 @@
         "tags": [
           "Files"
         ],
-        "description": "One page of a folder. Paths are relative to the share with / as separator; \".\" and \"..\" are refused. sort is name (natural order, ignoring case), size or modified, order asc or desc; pass nextCursor as cursor for the next page. Subscribe to topic for live changes of the folder.",
+        "description": "One page of a folder. Paths are relative to the share with / as separator; \".\" and \"..\" are refused. sort is name (natural order, ignoring case), size or modified, order asc or desc; pass nextCursor as cursor for the next page. query keeps only the entries whose name contains it, ignoring case, in this folder only; total then counts the matches. Subscribe to topic for live changes of the folder.",
         "operationId": "ListFolder",
         "parameters": [
           {
@@ -3051,6 +4022,13 @@
           },
           {
             "name": "cursor",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "query",
             "in": "query",
             "schema": {
               "type": "string"
@@ -3845,6 +4823,285 @@
         }
       }
     },
+    "/api/storage/encryption/keys": {
+      "post": {
+        "tags": [
+          "Storage"
+        ],
+        "description": "Administrators only. A new random pool key (D384) for an encrypted pool or a key change. The box keeps nothing: the key is used only when it comes back in the request that creates the pool or changes its key.",
+        "operationId": "CreatePoolKey",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NewPoolKey"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/storage/pools/{pool}/unlock": {
+      "post": {
+        "tags": [
+          "Storage"
+        ],
+        "description": "Administrators only. Loads the key of an encrypted pool, typed or from the key vault, and mounts its datasets; its shares, homes and apps follow. Without a key it takes the vault's, and on an unlocked pool it only mounts what is missing.",
+        "operationId": "UnlockPool",
+        "parameters": [
+          {
+            "name": "pool",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PoolUnlockRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/storage/pools/{pool}/key": {
+      "post": {
+        "tags": [
+          "Storage"
+        ],
+        "description": "Administrators only. Replaces the key of an unlocked encrypted pool with a new key from POST /api/storage/encryption/keys, which the user stored first; the old key stops working at once. The key vault then holds the new key, or none.",
+        "operationId": "ChangePoolKey",
+        "parameters": [
+          {
+            "name": "pool",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PoolKeyChange"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/storage/pools/{pool}/key/reveal": {
+      "post": {
+        "tags": [
+          "Storage"
+        ],
+        "description": "Administrators only. The pool's key from the key vault, for an administrator who lost the stored copy (D384). Needs the password again and, with two-factor sign-in on, a current authenticator code; failures count like failed sign-ins. Logged without the key.",
+        "operationId": "RevealPoolKey",
+        "parameters": [
+          {
+            "name": "pool",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PoolKeyRevealRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NewPoolKey"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/storage/usb-sticks": {
+      "get": {
+        "tags": [
+          "Storage"
+        ],
+        "description": "Administrators only. The file systems on USB sticks and other removable disks a pool key can be written to (D385): FAT, exFAT or ext, on a disk nothing has mounted and no pool uses. From memory; reads no disk.",
+        "operationId": "ListUsbSticks",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UsbStickList"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/storage/pools/{pool}/key/usb": {
+      "post": {
+        "tags": [
+          "Storage"
+        ],
+        "description": "Administrators only. Writes the pool's key to a USB stick as pithyx-keys/<pool GUID>.key (D385); the box then unlocks the pool whenever the stick is plugged in, and the stick may be pulled afterwards. The key is the typed one or the key vault's, which needs the password again and, with two-factor sign-in on, a current authenticator code (failures count like failed sign-ins). The key is checked against the pool first and read back from the stick. Logged without the key.",
+        "operationId": "WritePoolKeyToUsb",
+        "parameters": [
+          {
+            "name": "pool",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PoolKeyUsbRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/storage/pools/{pool}/key/vault": {
+      "delete": {
+        "tags": [
+          "Storage"
+        ],
+        "description": "Administrators only. Deletes the pool's key from the key vault on the system disk. The pool stays unlocked until the box restarts; then it waits for its key to be typed.",
+        "operationId": "RemovePoolKeyFromVault",
+        "parameters": [
+          {
+            "name": "pool",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/storage/plans": {
       "post": {
         "tags": [
@@ -4543,6 +5800,51 @@
                   "type": "array",
                   "items": {
                     "type": "string"
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/logs/counts": {
+      "get": {
+        "tags": [
+          "Logs"
+        ],
+        "description": "Administrators only. Warnings and errors per source since from, from the current logs on the system disk; sources without either are left out.",
+        "operationId": "GetLogCounts",
+        "parameters": [
+          {
+            "name": "from",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/LogCount"
                   }
                 }
               }
@@ -5608,6 +6910,48 @@
         }
       }
     },
+    "/api/system/proxy/hosts/{id}/certificate": {
+      "post": {
+        "tags": [
+          "System"
+        ],
+        "description": "Administrators only. Asks the ACME authority for the proxy host's certificate now, as a job, regardless of the wait after failures. Refused with proxy.acme.not_acme for a host with another certificate.",
+        "operationId": "RenewProxyHostCertificate",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Job"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/system/proxy/redirects": {
       "post": {
         "tags": [
@@ -5724,6 +7068,118 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProxySettings"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/system/proxy/redirects/{id}/certificate": {
+      "post": {
+        "tags": [
+          "System"
+        ],
+        "description": "Administrators only. Asks the ACME authority for the redirect host's certificate now, as a job.",
+        "operationId": "RenewProxyRedirectCertificate",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Job"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/system/proxy/acme": {
+      "get": {
+        "tags": [
+          "System"
+        ],
+        "description": "Administrators only. The ACME authority hosts get certificates from (Let's Encrypt unless changed), the contact address, its current terms of service and whether they are agreed.",
+        "operationId": "GetProxyAcme",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AcmeAccount"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "System"
+        ],
+        "description": "Administrators only. Sets the ACME authority and the contact address, and agrees to the authority's current terms of service; another authority needs a new agreement.",
+        "operationId": "SetProxyAcme",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AcmeAccountRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AcmeAccount"
                 }
               }
             }
@@ -6179,6 +7635,76 @@
         }
       }
     },
+    "/api/system/ups": {
+      "get": {
+        "tags": [
+          "System"
+        ],
+        "description": "Administrators only. The UPS settings (without the password), what the box knows about the UPS right now and whether a UPS on USB is possible. The topic system/ups sends the same.",
+        "operationId": "GetSystemUps",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpsStatus"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "System"
+        ],
+        "description": "Administrators only. Saves the UPS settings and watches the UPS with them at once: off, a UPS on USB through the box's own NUT server, or a UPS of another NUT server. On battery the box shuts down at the charge or runtime limit, when the UPS says its battery is low or when the server's primary forces it.",
+        "operationId": "SetSystemUps",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpsSettingsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpsStatus"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/system/backup": {
       "post": {
         "tags": [
@@ -6443,7 +7969,7 @@
         "tags": [
           "Apps"
         ],
-        "description": "Administrators only. Installs or updates the app from an uploaded package as a job and answers 202 with it. The first app needs pool, the pool for every app's data; access (everybody by default) decides who may use a newly installed app. An update takes a snapshot of the app's dataset first and returns to it when a step fails.",
+        "description": "Administrators only. Installs or updates the app from an uploaded package as a job and answers 202 with it. The first app needs pool, the pool for every app's data; access (everybody by default) decides who may use a newly installed app. An update takes a snapshot of the app's dataset first and returns to it when a step fails. A package with elevated rights the app does not hold yet needs a step-up (password and TOTP in the request, or one of this session made in the last five minutes; auth.step_up.required otherwise), or elevated false to install it with them revoked (D311).",
         "operationId": "InstallAppPackage",
         "parameters": [
           {
@@ -6609,6 +8135,57 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/AppPermissionsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/apps/{appId}/elevated": {
+      "put": {
+        "tags": [
+          "Apps"
+        ],
+        "description": "Administrators only. Grants or revokes elevated rights of the app's manifest (D311); granting needs a step-up with the password and, with two-factor sign-in on, an authenticator code (auth.step_up.required otherwise), which then holds for five minutes. A running backend restarts with the rights it holds. Every change goes to the audit log.",
+        "operationId": "SetAppElevatedRights",
+        "parameters": [
+          {
+            "name": "appId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AppElevatedRequest"
               }
             }
           },
@@ -7958,6 +9535,13 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "query",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -8723,6 +10307,131 @@
         },
         "description": "Confirms a `sub` or `unsub`. For `sub`, the snapshots of matching topics follow."
       },
+      "AcmeAccount": {
+        "required": [
+          "directory",
+          "email",
+          "termsOfService",
+          "termsAgreed",
+          "reachable"
+        ],
+        "type": "object",
+        "properties": {
+          "directory": {
+            "type": "string",
+            "description": "The authority's directory URL."
+          },
+          "email": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The contact address, or none."
+          },
+          "termsOfService": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The authority's current terms of service, if its directory could be read."
+          },
+          "termsAgreed": {
+            "type": "boolean",
+            "description": "An administrator agreed to the terms; hosts may use the authority."
+          },
+          "reachable": {
+            "type": "boolean",
+            "description": "The directory could be read just now."
+          }
+        },
+        "description": "Settings &gt; Reverse proxy, the certificates from an ACME authority."
+      },
+      "AcmeAccountRequest": {
+        "type": "object",
+        "properties": {
+          "directory": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "An `https` directory URL, or none for Let's Encrypt."
+          },
+          "email": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "A contact address, or none."
+          },
+          "agreeToTerms": {
+            "type": "boolean",
+            "description": "The administrator agrees to the authority's current terms of service.",
+            "default": false
+          }
+        },
+        "description": "New ACME settings."
+      },
+      "AcmeCertificateStatus": {
+        "required": [
+          "status",
+          "notAfter",
+          "attemptedAt",
+          "retryAt",
+          "running",
+          "errorCode",
+          "errorParams"
+        ],
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "description": "`pending` before the first certificate, `valid` or `failed` after the last try."
+          },
+          "notAfter": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The end of the certificate the host presents, if it has one.",
+            "format": "date-time"
+          },
+          "attemptedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "When the box last asked the authority.",
+            "format": "date-time"
+          },
+          "retryAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "When the box asks again by itself: before the end of the certificate, or later after failures.",
+            "format": "date-time"
+          },
+          "running": {
+            "type": "boolean",
+            "description": "A request to the authority runs now."
+          },
+          "errorCode": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Why the last try failed (an error code of `proxy.acme.*`)."
+          },
+          "errorParams": {
+            "type": [
+              "null",
+              "object"
+            ],
+            "description": "Its parameters, for example the name and the authority's own words."
+          }
+        },
+        "description": "Where the certificate of a host from the ACME authority stands."
+      },
       "ActiveCertificateSource": {
         "enum": [
           "authority",
@@ -8867,7 +10576,7 @@
                       "null",
                       "string"
                     ],
-                    "description": "Why a backend that is not running cannot start, which makes it `unavailable` (D360): `storage` (a required\nstorage request is not mapped) or `pool` (the app pool is locked or missing); null otherwise."
+                    "description": "Why a backend that is not running cannot start, which makes it `unavailable` (D360): `storage` (a required\nstorage request is not mapped), `pool` (the app pool is locked or missing) or `device` (a required device is\nnot plugged in, D387); null otherwise."
                   }
                 },
                 "description": "The app's backend: the state of its containers and the names of its endpoints."
@@ -8932,7 +10641,9 @@
           "storage",
           "catalog",
           "updatePolicy",
-          "previousVersion"
+          "previousVersion",
+          "elevated",
+          "devices"
         ],
         "type": "object",
         "properties": {
@@ -9025,9 +10736,122 @@
               "string"
             ],
             "description": "The version before its last update, which a rollback restores with its data; null when there is none."
+          },
+          "elevated": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AppElevatedRight"
+            },
+            "description": "Each elevated right of the manifest's `permissions` with its tier and whether it is granted (D311, D388)."
+          },
+          "devices": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AppDeviceState"
+            },
+            "description": "Each device of the manifest's elevated rights with whether it is optional and plugged in now (D387)."
           }
         },
         "description": "An installed app for administrators (topic `apps/admin` and `GET /api/apps`)."
+      },
+      "AppDeviceState": {
+        "required": [
+          "path",
+          "optional",
+          "present"
+        ],
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "The device or device class, for example `/dev/dri`."
+          },
+          "optional": {
+            "type": "boolean",
+            "description": "The backend runs without it (`optional` on its right)."
+          },
+          "present": {
+            "type": "boolean",
+            "description": "At least one node of it is plugged in now."
+          }
+        },
+        "description": "A device an app's backend asks for (D387)."
+      },
+      "AppElevatedRequest": {
+        "required": [
+          "rights"
+        ],
+        "type": "object",
+        "properties": {
+          "rights": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AppElevatedState"
+            },
+            "description": "Elevated rights of the app's manifest with whether the app keeps them; the others stay as they are."
+          },
+          "password": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The administrator's password; granting a right of the tier high or critical needs a step-up (D311, D388), unless an earlier one of this session is valid."
+          },
+          "totpCode": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "A current authenticator code with the password, when two-factor sign-in is on."
+          },
+          "confirmCritical": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The app's id, sent once the administrator typed the app's name in the critical step; granting a critical right needs it (D388)."
+          }
+        }
+      },
+      "AppElevatedRight": {
+        "required": [
+          "right",
+          "granted",
+          "tier"
+        ],
+        "type": "object",
+        "properties": {
+          "right": {
+            "type": "string",
+            "description": "For example `host.network` or `device:/dev/dri`."
+          },
+          "granted": {
+            "type": "boolean",
+            "description": "False until an administrator grants it, and after one revoked it; the backend then runs without it."
+          },
+          "tier": {
+            "description": "How much it can do on the box, from the compose rules: what granting it asks, and a critical right keeps the app from updating by itself.",
+            "$ref": "#/components/schemas/RiskTier"
+          }
+        },
+        "description": "An elevated right of an installed app as administrators see it (D311, D388)."
+      },
+      "AppElevatedState": {
+        "required": [
+          "right",
+          "granted"
+        ],
+        "type": "object",
+        "properties": {
+          "right": {
+            "type": "string",
+            "description": "For example `host.network` or `device:/dev/dri/renderD128`."
+          },
+          "granted": {
+            "type": "boolean",
+            "description": "False until an administrator grants it after a step-up, and after one revoked it; the backend then runs without it."
+          }
+        }
       },
       "AppFileEntry": {
         "required": [
@@ -9349,7 +11173,8 @@
                 "window",
                 "permissions",
                 "logLevel",
-                "fileHandlers"
+                "fileHandlers",
+                "fileActions"
               ],
               "type": "object",
               "properties": {
@@ -9425,6 +11250,54 @@
                     "description": "The kinds of files an app opens (`fileHandlers` of its manifest)."
                   },
                   "description": "The files the app opens, for \"Open with\"."
+                },
+                "fileActions": {
+                  "type": "array",
+                  "items": {
+                    "required": [
+                      "id",
+                      "label",
+                      "extensions",
+                      "folders",
+                      "multiple",
+                      "writes"
+                    ],
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "description": "Sent back to the app in `launch.action.id`."
+                      },
+                      "label": {
+                        "type": "object",
+                        "additionalProperties": {
+                          "type": "string"
+                        },
+                        "description": "The menu entry by language (`en` always)."
+                      },
+                      "extensions": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        },
+                        "description": "Lowercase extensions of the files it applies to; empty for none."
+                      },
+                      "folders": {
+                        "type": "boolean",
+                        "description": "Whether it applies to folders."
+                      },
+                      "multiple": {
+                        "type": "boolean",
+                        "description": "Whether it takes several items at once."
+                      },
+                      "writes": {
+                        "type": "boolean",
+                        "description": "Whether it writes into the folder of the selection."
+                      }
+                    },
+                    "description": "An entry of the app for the context menu of files and folders (`fileActions` of its manifest, D375)."
+                  },
+                  "description": "The app's entries for the context menu of files and folders (D375)."
                 }
               },
               "description": "An installed app as a user who may use it sees it (topic `apps`)."
@@ -9532,6 +11405,71 @@
         },
         "description": "A button of an app's notification."
       },
+      "AppNotificationCategory": {
+        "required": [
+          "app",
+          "appName",
+          "id",
+          "name",
+          "description",
+          "muted"
+        ],
+        "type": "object",
+        "properties": {
+          "app": {
+            "type": "string",
+            "description": "The app's id."
+          },
+          "appName": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "The app's name by language."
+          },
+          "id": {
+            "type": "string",
+            "description": "The category's id in the manifest."
+          },
+          "name": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Its name by language."
+          },
+          "description": {
+            "type": [
+              "null",
+              "object"
+            ],
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Its description by language, if any."
+          },
+          "muted": {
+            "type": "boolean",
+            "description": "The user muted it."
+          }
+        },
+        "description": "One kind of notification an app the user may open sends (D390)."
+      },
+      "AppNotificationCategoryList": {
+        "required": [
+          "categories"
+        ],
+        "type": "object",
+        "properties": {
+          "categories": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AppNotificationCategory"
+            }
+          }
+        },
+        "description": "The notification categories of the apps the user may open, by app and in manifest order."
+      },
       "AppNotificationLevel": {
         "enum": [
           "info",
@@ -9624,6 +11562,13 @@
               "string"
             ],
             "description": "Replaces the app's earlier notification with the same tag for this user; 1 to 64 characters."
+          },
+          "category": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "One of the manifest's `notifications.categories` (D390); a user who muted it gets the notification as read, without a toast or channel."
           }
         },
         "description": "Body of `POST /api/app/notifications`: the SDK's `notify` of a third-party app."
@@ -9730,7 +11675,7 @@
             "description": "SHA-256 of the package file, lowercase hex."
           },
           "suggestedAccess": {
-            "description": "Who should use the app after an install (D304): administrators only when it asks for elevated rights, root in a container or `directory.read`, everybody otherwise. An install without access takes it.",
+            "description": "Who should use the app after an install (D304): administrators only when it asks for elevated rights, root in a container or `directory.read`, or its `audience` is `admins` (D389), everybody otherwise. An install without access takes it.",
             "$ref": "#/components/schemas/AppAccess"
           },
           "catalog": {
@@ -9744,6 +11689,36 @@
             "type": "boolean",
             "description": "For an install: an earlier installation was removed with \"Keep the data\", and the app gets its data and its user id again.",
             "default": false
+          },
+          "addedElevated": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "description": "Elevated rights the package asks for that the app does not hold or had revoked (D311): installing grants them, so it needs a step-up with password and TOTP."
+          },
+          "removedElevated": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "description": "Elevated rights the installed version had that the package no longer asks for."
+          },
+          "devices": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/AppDeviceState"
+            },
+            "description": "Each device of the package's elevated rights with whether it is optional and plugged in now (D387): a missing required one refuses the install with `app.device.missing`, a missing optional one is only a hint."
           }
         },
         "description": "A checked package, kept for 15 minutes for its installation by the administrator who uploaded it."
@@ -10059,7 +12034,9 @@
           "addedPermissions",
           "elevated",
           "policy",
-          "automatic"
+          "automatic",
+          "critical",
+          "releaseNotes"
         ],
         "type": "object",
         "properties": {
@@ -10096,7 +12073,21 @@
           },
           "automatic": {
             "type": "boolean",
-            "description": "The next check installs it on its own: the policy is automatic and nothing new is asked for."
+            "description": "The next check installs it on its own: the policy is automatic, nothing new is asked for and the app has no critical right."
+          },
+          "critical": {
+            "type": "boolean",
+            "description": "The app has a critical right (root on the box) or the new version asks for one, so it never updates by itself whatever the policy (D388)."
+          },
+          "releaseNotes": {
+            "type": [
+              "null",
+              "object"
+            ],
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "What is new in the new version by language, from its manifest's `releaseNotes` (D389), if it has them."
           }
         },
         "description": "A newer version of an installed app that a catalog offers."
@@ -10618,6 +12609,13 @@
         ],
         "description": "The key of a certificate the authority issues."
       },
+      "ChannelKind": {
+        "enum": [
+          "email",
+          "webhook"
+        ],
+        "description": "How a channel delivers: an email through the box's SMTP server, or an HTTP POST."
+      },
       "ClientMessage": {
         "required": [
           "type",
@@ -10912,6 +12910,14 @@
         },
         "description": "The Debian updates apt offers; the kernel and ZFS never come from Debian (D338)."
       },
+      "DesktopFileTarget": {
+        "enum": [
+          "file",
+          "folder",
+          "missing",
+          null
+        ]
+      },
       "DesktopItem": {
         "required": [
           "id",
@@ -10946,7 +12952,7 @@
               "null",
               "string"
             ],
-            "description": "Shortcuts: the label the user gave it, or null for the app's name in the user's language."
+            "description": "Shortcuts and files: the label the user gave it, or null for the app's or the target's own name."
           },
           "text": {
             "type": [
@@ -10969,9 +12975,35 @@
             "type": "integer",
             "description": "Increments with every change. Send it as `If-Match: \"n\"` with the next change of this item.",
             "format": "int64"
+          },
+          "share": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "Files: the shared folder or home of the target.",
+            "format": "int64"
+          },
+          "path": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Files: the target's path in the share; it follows renames and moves made through the daemon."
+          },
+          "target": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Files: whether the target is a file or a folder, or missing for this user.",
+                "$ref": "#/components/schemas/DesktopFileTarget"
+              }
+            ]
           }
         },
-        "description": "An app shortcut or a sticky note on the desktop, shared across the user's devices."
+        "description": "An app shortcut, a shortcut to a file or folder, or a sticky note on the desktop, shared across the user's devices."
       },
       "DesktopItemChange": {
         "type": "object",
@@ -10981,7 +13013,7 @@
               "null",
               "string"
             ],
-            "description": "Shortcuts: the new label; an empty string goes back to the app's name."
+            "description": "Shortcuts and files: the new label; an empty string goes back to the app's or the target's name."
           },
           "text": {
             "type": [
@@ -11012,7 +13044,8 @@
       "DesktopItemKind": {
         "enum": [
           "shortcut",
-          "note"
+          "note",
+          "file"
         ]
       },
       "DesktopState": {
@@ -11585,6 +13618,7 @@
           "app.app.busy",
           "app.app.no_previous",
           "app.app.not_found",
+          "app.arch.unsupported",
           "app.backend.endpoint_unknown",
           "app.backend.missing",
           "app.backend.start_failed",
@@ -11598,7 +13632,13 @@
           "app.compose.storage_mismatch",
           "app.compose.value_invalid",
           "app.compose.yaml_invalid",
+          "app.device.missing",
+          "app.device.unavailable",
           "app.docker.unavailable",
+          "app.elevated.backend_missing",
+          "app.elevated.confirmation_required",
+          "app.elevated.root_conflict",
+          "app.elevated.root_required",
           "app.elevated.unsupported",
           "app.icon.invalid",
           "app.image.mismatch",
@@ -11608,6 +13648,7 @@
           "app.manifest.id_invalid",
           "app.manifest.id_reserved",
           "app.manifest.invalid_json",
+          "app.manifest.permission_missing",
           "app.manifest.pithyx_invalid",
           "app.manifest.reference_unknown",
           "app.manifest.schema_violation",
@@ -11637,6 +13678,11 @@
           "auth.csrf.header_missing",
           "auth.desktop.not_allowed",
           "auth.display_name.invalid",
+          "auth.passkey.invalid",
+          "auth.passkey.limit",
+          "auth.passkey.name_invalid",
+          "auth.passkey.not_found",
+          "auth.passkey.unavailable",
           "auth.password.too_common",
           "auth.password.too_long",
           "auth.password.too_short",
@@ -11645,6 +13691,7 @@
           "auth.recovery.invalid",
           "auth.session.expired",
           "auth.setup.already_done",
+          "auth.step_up.required",
           "auth.totp.already_enabled",
           "auth.totp.invalid",
           "auth.totp.not_enrolled",
@@ -11752,10 +13799,35 @@
           "network.vlan.duplicate",
           "network.vlan.id_invalid",
           "network.vlan.parent_invalid",
+          "notifications.category.not_found",
+          "notifications.channel.failed",
+          "notifications.channel.invalid",
+          "notifications.channel.limit_reached",
+          "notifications.channel.not_found",
+          "notifications.event.unknown",
+          "notifications.language.unsupported",
           "notifications.message.invalid",
           "notifications.notification.not_found",
+          "notifications.smtp.invalid",
+          "notifications.smtp.missing",
           "permissions.grant.invalid",
           "proxy.access.denied",
+          "proxy.acme.caa",
+          "proxy.acme.connection",
+          "proxy.acme.directory_invalid",
+          "proxy.acme.dns",
+          "proxy.acme.email_invalid",
+          "proxy.acme.failed",
+          "proxy.acme.name_not_public",
+          "proxy.acme.name_rejected",
+          "proxy.acme.not_acme",
+          "proxy.acme.port_unavailable",
+          "proxy.acme.rate_limited",
+          "proxy.acme.running",
+          "proxy.acme.terms_required",
+          "proxy.acme.unauthorized",
+          "proxy.acme.unreachable",
+          "proxy.acme.wildcard",
           "proxy.address.denied",
           "proxy.address.invalid",
           "proxy.auth.required",
@@ -11820,7 +13892,12 @@
           "storage.dataset.unchanged",
           "storage.disk.not_found",
           "storage.disk.refused",
+          "storage.encryption.key_invalid",
+          "storage.encryption.key_required",
+          "storage.encryption.key_wrong",
+          "storage.encryption.not_in_vault",
           "storage.encryption.unavailable",
+          "storage.encryption.vault_failed",
           "storage.import.device_unknown",
           "storage.import.force_required",
           "storage.import.not_found",
@@ -11835,10 +13912,13 @@
           "storage.pool.encryption_required",
           "storage.pool.expanding",
           "storage.pool.layout_invalid",
+          "storage.pool.locked",
           "storage.pool.name_invalid",
           "storage.pool.name_mismatch",
           "storage.pool.name_taken",
+          "storage.pool.not_encrypted",
           "storage.pool.not_found",
+          "storage.pool.not_locked",
           "storage.pool.not_prepared",
           "storage.pool.read_only",
           "storage.pool.suspended",
@@ -11853,6 +13933,10 @@
           "storage.snapshot.not_found",
           "storage.snapshot.not_pithyx",
           "storage.snapshot.schedule_invalid",
+          "storage.usb.not_found",
+          "storage.usb.read_only",
+          "storage.usb.unreadable",
+          "storage.usb.write_failed",
           "storage.vdev.not_found",
           "storage.vdev.not_raidz",
           "storage.volume.size_invalid",
@@ -11890,6 +13974,8 @@
           "system.time.server_invalid",
           "system.time.servers_too_many",
           "system.time.zone_invalid",
+          "system.ups.invalid",
+          "system.ups.unavailable",
           "tls.custom.expired",
           "tls.custom.invalid",
           "tls.custom.key_mismatch",
@@ -13212,6 +15298,34 @@
                 "$ref": "#/components/schemas/AppAccess"
               }
             ]
+          },
+          "password": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The administrator's password, for a package that asks for elevated rights it would get newly (D311); not needed while an earlier step-up of this session is valid."
+          },
+          "totpCode": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "A current authenticator code with the password, when two-factor sign-in is on."
+          },
+          "elevated": {
+            "type": [
+              "null",
+              "boolean"
+            ],
+            "description": "For a package with new elevated rights: false installs it with them revoked instead."
+          },
+          "confirmCritical": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The app's id, sent once the administrator typed the app's name in the critical step; granting a critical right needs it (D388)."
           }
         }
       },
@@ -13932,6 +16046,31 @@
           "unavailable"
         ]
       },
+      "LogCount": {
+        "required": [
+          "source",
+          "warnings",
+          "errors"
+        ],
+        "type": "object",
+        "properties": {
+          "source": {
+            "type": "string",
+            "description": "The source as the Log Center lists it (`daemon`, `system/&lt;service&gt;`, `app/&lt;id&gt;`)."
+          },
+          "warnings": {
+            "type": "integer",
+            "description": "Entries of level warn.",
+            "format": "int64"
+          },
+          "errors": {
+            "type": "integer",
+            "description": "Entries of level error.",
+            "format": "int64"
+          }
+        },
+        "description": "How many warnings and errors a source logged in a time range."
+      },
       "LogEntry": {
         "required": [
           "id",
@@ -14199,6 +16338,95 @@
             "description": "Pass to `/api/auth/login/totp` within five minutes."
           }
         }
+      },
+      "LogsAdded": {
+        "required": [
+          "entries",
+          "truncated"
+        ],
+        "type": "object",
+        "properties": {
+          "entries": {
+            "type": "array",
+            "items": {
+              "required": [
+                "id",
+                "time",
+                "level",
+                "source",
+                "message",
+                "requestId",
+                "user",
+                "data",
+                "archived"
+              ],
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "integer",
+                  "description": "Stable within the current logs or the archive it comes from.",
+                  "format": "int64"
+                },
+                "time": {
+                  "type": "string",
+                  "description": "When it happened, UTC.",
+                  "format": "date-time"
+                },
+                "level": {
+                  "enum": [
+                    "debug",
+                    "info",
+                    "warn",
+                    "error"
+                  ]
+                },
+                "source": {
+                  "type": "string",
+                  "description": "`daemon`, `system/&lt;service&gt;` (for example `system/kernel`, `system/smbd`) or `app/&lt;id&gt;`."
+                },
+                "message": {
+                  "type": "string",
+                  "description": "The rendered message; secrets are masked before it is stored."
+                },
+                "requestId": {
+                  "type": [
+                    "null",
+                    "string"
+                  ],
+                  "description": "The request id (W3C trace id) of the request that caused it, if any."
+                },
+                "user": {
+                  "type": [
+                    "null",
+                    "string"
+                  ],
+                  "description": "The user an app entry was written for, if any."
+                },
+                "data": {
+                  "type": [
+                    "null",
+                    "object"
+                  ],
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "description": "Further fields (event name, error code, path, the app's own data), as text."
+                },
+                "archived": {
+                  "type": "boolean",
+                  "description": "True when the entry comes from the archive on a pool."
+                }
+              },
+              "description": "One log entry of the daemon, a system service or an app."
+            },
+            "description": "The newest entries of one write, oldest first, at most 200."
+          },
+          "truncated": {
+            "type": "boolean",
+            "description": "True when the write held more entries than the event carries; the Log Center then reloads."
+          }
+        },
+        "description": "An event of the topic `system/logs`: the entries the daemon just wrote, so an open Log Center shows them live\nwithout asking again (asking would log the request and so feed itself). The snapshot has none."
       },
       "MarkNotificationsReadRequest": {
         "type": "object",
@@ -14573,21 +16801,36 @@
               "null",
               "string"
             ],
-            "description": "Shortcuts: the id of the app to open. Required for shortcuts, not allowed for notes."
+            "description": "Shortcuts: the id of the app to open. Required for shortcuts, not allowed otherwise."
           },
           "name": {
             "type": [
               "null",
               "string"
             ],
-            "description": "Shortcuts: an own label, or null for the app's name."
+            "description": "Shortcuts and files: an own label, or null for the app's or the target's name."
           },
           "text": {
             "type": [
               "null",
               "string"
             ],
-            "description": "Notes: the text, at most 4000 characters. Required for notes, not allowed for shortcuts."
+            "description": "Notes: the text, at most 4000 characters. Required for notes, not allowed otherwise."
+          },
+          "share": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "Files: the shared folder or home of the target. Required for files, not allowed otherwise.",
+            "format": "int64"
+          },
+          "path": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Files: the target's path in the share; the user must be able to read it."
           }
         }
       },
@@ -14632,6 +16875,24 @@
             "description": "The ids of the first members."
           }
         }
+      },
+      "NewPoolKey": {
+        "required": [
+          "key",
+          "hex"
+        ],
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "description": "The key as the user stores it and types it into Pithyx: `PXPK-` and 56 characters in groups of four."
+          },
+          "hex": {
+            "type": "string",
+            "description": "The same key as ZFS takes it (64 hex characters), to unlock the pool with `zfs load-key` without Pithyx."
+          }
+        },
+        "description": "Response of `POST /api/storage/encryption/keys` and `POST /api/storage/pools/{pool}/key/reveal`."
       },
       "NewShare": {
         "required": [
@@ -14747,6 +17008,235 @@
         },
         "description": "An entry of a user's notification history. The text is not part of it: the desktop translates `code` with\n`params` from the `notifications` namespace (`&lt;code&gt;.title`, `.body`)."
       },
+      "NotificationCategory": {
+        "enum": [
+          "storage",
+          "updates",
+          "backups",
+          "security",
+          "apps",
+          "system"
+        ],
+        "description": "What a notification is about, so a channel can pick its events."
+      },
+      "NotificationCategoryMuteRequest": {
+        "required": [
+          "muted"
+        ],
+        "type": "object",
+        "properties": {
+          "muted": {
+            "type": "boolean",
+            "description": "Whether the user mutes the category."
+          }
+        },
+        "description": "Body of `PUT /api/notifications/categories/{app}/{category}`."
+      },
+      "NotificationChannel": {
+        "required": [
+          "id",
+          "name",
+          "kind",
+          "enabled",
+          "recipients",
+          "url",
+          "format",
+          "headers",
+          "categories",
+          "minLevel",
+          "lastSentAt",
+          "errorCode",
+          "errorParams"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Stable id.",
+            "format": "int64"
+          },
+          "name": {
+            "type": "string",
+            "description": "The name its owner gave it."
+          },
+          "kind": {
+            "description": "Email or webhook.",
+            "$ref": "#/components/schemas/ChannelKind"
+          },
+          "enabled": {
+            "type": "boolean",
+            "description": "Off keeps it without sending."
+          },
+          "recipients": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The addresses of an email channel."
+          },
+          "url": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The address of a webhook."
+          },
+          "format": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "What a webhook sends.",
+                "$ref": "#/components/schemas/WebhookFormat"
+              }
+            ]
+          },
+          "headers": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The names of the headers a webhook sends; their values never leave the box."
+          },
+          "categories": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NotificationCategory"
+            },
+            "description": "The events it gets."
+          },
+          "minLevel": {
+            "description": "The least serious notification it gets.",
+            "$ref": "#/components/schemas/NotificationLevel"
+          },
+          "lastSentAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "When it last delivered something.",
+            "format": "date-time"
+          },
+          "errorCode": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Why the last delivery failed, until one works again."
+          },
+          "errorParams": {
+            "type": [
+              "null",
+              "object"
+            ],
+            "description": "Its parameters."
+          }
+        },
+        "description": "A channel that takes notifications beyond the desktop (D379)."
+      },
+      "NotificationChannelList": {
+        "required": [
+          "items",
+          "emailAvailable",
+          "max"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NotificationChannel"
+            },
+            "description": "The channels, oldest first."
+          },
+          "emailAvailable": {
+            "type": "boolean",
+            "description": "An administrator set up the SMTP server, so email channels can send."
+          },
+          "max": {
+            "type": "integer",
+            "description": "How many channels there may be.",
+            "format": "int32"
+          }
+        },
+        "description": "A user's channels or those of the box."
+      },
+      "NotificationChannelRequest": {
+        "required": [
+          "name",
+          "kind"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "1 to 60 characters."
+          },
+          "kind": {
+            "description": "Email or webhook; it cannot change later.",
+            "$ref": "#/components/schemas/ChannelKind"
+          },
+          "enabled": {
+            "type": "boolean",
+            "description": "Defaults to on.",
+            "default": true
+          },
+          "recipients": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "description": "For email: 1 to 10 addresses."
+          },
+          "url": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "For a webhook: an `http` or `https` address, never one of the box itself."
+          },
+          "format": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "For a webhook; defaults to `json`.",
+                "$ref": "#/components/schemas/WebhookFormat"
+              }
+            ]
+          },
+          "headers": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/WebhookHeader"
+            },
+            "description": "For a webhook: at most 10 headers."
+          },
+          "categories": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/NotificationCategory"
+            },
+            "description": "The events it gets; at least one."
+          },
+          "minLevel": {
+            "description": "Defaults to `warning`.",
+            "$ref": "#/components/schemas/NotificationLevel"
+          }
+        },
+        "description": "A new or changed channel."
+      },
       "NotificationEvent": {
         "required": [
           "change",
@@ -14848,6 +17338,27 @@
         },
         "description": "Event of the `notifications` topic. Only the user whose notifications changed receives it."
       },
+      "NotificationLanguageRequest": {
+        "required": [
+          "language"
+        ],
+        "type": "object",
+        "properties": {
+          "language": {
+            "type": "string",
+            "description": "The language the user's desktop uses, `en` or `de`."
+          }
+        },
+        "description": "Body of `PUT /api/notifications/language`."
+      },
+      "NotificationLevel": {
+        "enum": [
+          "info",
+          "warning",
+          "error"
+        ],
+        "description": "How serious a notification is: from its tone, critical is `error`, a warning `warning`, the rest `info`."
+      },
       "NotificationList": {
         "required": [
           "items"
@@ -14863,6 +17374,165 @@
           }
         },
         "description": "Snapshot of the `notifications` topic and answer of `GET /api/notifications`."
+      },
+      "NotificationMatrix": {
+        "required": [
+          "events",
+          "channels",
+          "cells"
+        ],
+        "type": "object",
+        "properties": {
+          "events": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NotificationMatrixEvent"
+            },
+            "description": "Every event the box reports to its administrators, in display order."
+          },
+          "channels": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NotificationMatrixChannel"
+            },
+            "description": "The box's channels."
+          },
+          "cells": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NotificationMatrixCell"
+            },
+            "description": "One cell per event and column: the desktop first, then each channel."
+          }
+        },
+        "description": "Settings &gt; Notifications, the matrix of events by the desktop and the box's channels (D407)."
+      },
+      "NotificationMatrixCell": {
+        "required": [
+          "event",
+          "channel",
+          "enabled",
+          "changed"
+        ],
+        "type": "object",
+        "properties": {
+          "event": {
+            "type": "string",
+            "description": "The event's code."
+          },
+          "channel": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "The channel's id, or null for the administrators' desktop.",
+            "format": "int64"
+          },
+          "enabled": {
+            "type": "boolean",
+            "description": "It gets the event."
+          },
+          "changed": {
+            "type": "boolean",
+            "description": "An administrator set it; otherwise it is the default (the desktop gets everything, a channel what its categories and least level take)."
+          }
+        },
+        "description": "Whether a column gets an event."
+      },
+      "NotificationMatrixChange": {
+        "required": [
+          "event",
+          "channel",
+          "enabled"
+        ],
+        "type": "object",
+        "properties": {
+          "event": {
+            "type": "string",
+            "description": "The event's code."
+          },
+          "channel": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "A channel of the box, or null for the administrators' desktop.",
+            "format": "int64"
+          },
+          "enabled": {
+            "type": "boolean",
+            "description": "Whether it gets the event."
+          }
+        },
+        "description": "A cell to set."
+      },
+      "NotificationMatrixChannel": {
+        "required": [
+          "id",
+          "name",
+          "kind",
+          "enabled"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "The channel's id.",
+            "format": "int64"
+          },
+          "name": {
+            "type": "string",
+            "description": "Its name."
+          },
+          "kind": {
+            "description": "Email or webhook.",
+            "$ref": "#/components/schemas/ChannelKind"
+          },
+          "enabled": {
+            "type": "boolean",
+            "description": "Off sends nothing, whatever its cells say."
+          }
+        },
+        "description": "A column of the notification matrix: one of the box's channels."
+      },
+      "NotificationMatrixEvent": {
+        "required": [
+          "code",
+          "category",
+          "level"
+        ],
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "The event's notification code; its texts are under `notifications.json`."
+          },
+          "category": {
+            "description": "What it is about.",
+            "$ref": "#/components/schemas/NotificationCategory"
+          },
+          "level": {
+            "description": "How serious it usually is.",
+            "$ref": "#/components/schemas/NotificationLevel"
+          }
+        },
+        "description": "A row of the notification matrix (D407)."
+      },
+      "NotificationMatrixRequest": {
+        "required": [
+          "cells"
+        ],
+        "type": "object",
+        "properties": {
+          "cells": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NotificationMatrixChange"
+            },
+            "description": "The cells to set; the others stay."
+          }
+        },
+        "description": "Body of `PUT /api/system/notifications/matrix`."
       },
       "NotificationTone": {
         "enum": [
@@ -14917,6 +17587,130 @@
               "type": "string"
             },
             "description": "Where the partition is mounted; empty when it is not."
+          }
+        }
+      },
+      "PasskeyCreateRequest": {
+        "required": [
+          "ceremony",
+          "name",
+          "credential"
+        ],
+        "type": "object",
+        "properties": {
+          "ceremony": {
+            "type": "string",
+            "description": "From the options."
+          },
+          "name": {
+            "type": "string",
+            "description": "1 to 64 characters."
+          },
+          "credential": {
+            "description": "The answer of `navigator.credentials.create` as JSON (`RegistrationResponseJSON`).",
+            "$ref": "#/components/schemas/JsonElement"
+          }
+        }
+      },
+      "PasskeyInfo": {
+        "required": [
+          "id",
+          "name",
+          "rpId",
+          "backedUp",
+          "createdAt",
+          "lastUsedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Stable id.",
+            "format": "int64"
+          },
+          "name": {
+            "type": "string",
+            "description": "The name the user gave it, such as the device it lives on."
+          },
+          "rpId": {
+            "type": "string",
+            "description": "The name of the box it belongs to: it works only where the box is opened under this name."
+          },
+          "backedUp": {
+            "type": "boolean",
+            "description": "Whether the authenticator syncs it to other devices."
+          },
+          "createdAt": {
+            "type": "string",
+            "description": "UTC."
+          },
+          "lastUsedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "UTC, or null before its first sign-in."
+          }
+        },
+        "description": "A passkey of the signed-in user (D380)."
+      },
+      "PasskeyList": {
+        "required": [
+          "items"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PasskeyInfo"
+            }
+          }
+        }
+      },
+      "PasskeyOptions": {
+        "required": [
+          "ceremony",
+          "options"
+        ],
+        "type": "object",
+        "properties": {
+          "ceremony": {
+            "type": "string",
+            "description": "Pass back with the authenticator's answer within five minutes; it is used once."
+          },
+          "options": {
+            "description": "The WebAuthn options as JSON (`PublicKeyCredentialCreationOptionsJSON` or `PublicKeyCredentialRequestOptionsJSON`).",
+            "$ref": "#/components/schemas/JsonElement"
+          }
+        }
+      },
+      "PasskeyOptionsRequest": {
+        "required": [
+          "password"
+        ],
+        "type": "object",
+        "properties": {
+          "password": {
+            "type": "string",
+            "description": "The current password: a new passkey signs in without it."
+          }
+        }
+      },
+      "PasskeySignInRequest": {
+        "required": [
+          "ceremony",
+          "credential"
+        ],
+        "type": "object",
+        "properties": {
+          "ceremony": {
+            "type": "string",
+            "description": "From the sign-in options."
+          },
+          "credential": {
+            "description": "The answer of `navigator.credentials.get` as JSON (`AuthenticationResponseJSON`).",
+            "$ref": "#/components/schemas/JsonElement"
           }
         }
       },
@@ -15128,6 +17922,60 @@
               }
             ],
             "description": "A RAID-Z expansion (OpenZFS 2.3): a disk attached to a raidz vdev, onto which ZFS spreads the existing data."
+          },
+          "encryption": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "For a pool Pithyx encrypted (its `&lt;pool&gt;/pithyx` is an encryption root, D384): whether it is locked and where its key is kept; null for an unencrypted pool.",
+                "$ref": "#/components/schemas/PoolEncryption"
+              }
+            ]
+          }
+        }
+      },
+      "PoolEncryption": {
+        "required": [
+          "locked",
+          "keyInVault"
+        ],
+        "type": "object",
+        "properties": {
+          "locked": {
+            "type": "boolean",
+            "description": "True while its key is not loaded: its datasets are not mounted, and its shares, homes and apps are unavailable."
+          },
+          "keyInVault": {
+            "type": "boolean",
+            "description": "True when the key vault on the system disk holds its key, so the box unlocks it at start."
+          },
+          "vaultFailed": {
+            "type": "boolean",
+            "description": "True when the vault's key was tried and did not unlock the pool (wrong, unreadable or damaged): the pool waits for its key to be typed.",
+            "default": false
+          },
+          "usbKey": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "The USB stick its key was last written to on this box (D385), or null; the box also unlocks it from any other stick that holds its key.",
+                "$ref": "#/components/schemas/PoolUsbKey"
+              }
+            ]
+          },
+          "unlockedFromUsb": {
+            "type": "boolean",
+            "description": "True when the key on a USB stick unlocked it since the last start: the stick may be pulled, the pool stays unlocked until the next start.",
+            "default": false
+          },
+          "usbFailed": {
+            "type": "boolean",
+            "description": "True when a key file on a USB stick was tried and did not unlock the pool (an older key or damaged): the pool waits for another stick or the typed key.",
+            "default": false
           }
         }
       },
@@ -15186,6 +18034,83 @@
           }
         },
         "description": "A RAID-Z expansion (OpenZFS 2.3): a disk attached to a raidz vdev, onto which ZFS spreads the existing data."
+      },
+      "PoolKeyChange": {
+        "required": [
+          "key",
+          "keepInVault"
+        ],
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "description": "The new key from `POST /api/storage/encryption/keys`, after the user stored it."
+          },
+          "keepInVault": {
+            "type": "boolean",
+            "description": "True to keep the new key in the key vault; false removes the old one from it."
+          }
+        },
+        "description": "Request of `POST /api/storage/pools/{pool}/key`."
+      },
+      "PoolKeyRevealRequest": {
+        "required": [
+          "password"
+        ],
+        "type": "object",
+        "properties": {
+          "password": {
+            "type": "string",
+            "description": "The administrator's password."
+          },
+          "totpCode": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "A current code of the authenticator app, required when the administrator has two-factor sign-in on."
+          }
+        },
+        "description": "Request of `POST /api/storage/pools/{pool}/key/reveal`: the signed-in administrator's credentials again."
+      },
+      "PoolKeyUsbRequest": {
+        "required": [
+          "device"
+        ],
+        "type": "object",
+        "properties": {
+          "device": {
+            "type": "string",
+            "description": "The stick's file system, `device` of `GET /api/storage/usb-sticks`."
+          },
+          "key": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The pool's key as typed, or null to take it from the key vault, which needs `password` again."
+          },
+          "password": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Without a typed key: the administrator's password."
+          },
+          "totpCode": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Without a typed key: a current authenticator code, required when the administrator has two-factor sign-in on."
+          },
+          "removeFromVault": {
+            "type": "boolean",
+            "description": "Afterwards take the key out of the key vault, so the stick (or the typed key) unlocks the pool at start.",
+            "default": false
+          }
+        },
+        "description": "Request of `POST /api/storage/pools/{pool}/key/usb` (D385)."
       },
       "PoolList": {
         "required": [
@@ -15266,6 +18191,51 @@
             "format": "int64"
           }
         }
+      },
+      "PoolUnlockRequest": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The pool's key as typed, or null to take it from the key vault."
+          },
+          "keepInVault": {
+            "type": "boolean",
+            "description": "With a typed key: keep it in the key vault once it opened the pool (on an unlocked pool once it is checked), so the box unlocks the pool at start.",
+            "default": false
+          }
+        },
+        "description": "Request of `POST /api/storage/pools/{pool}/unlock`."
+      },
+      "PoolUsbKey": {
+        "required": [
+          "stick",
+          "serial",
+          "writtenAt"
+        ],
+        "type": "object",
+        "properties": {
+          "stick": {
+            "type": "string",
+            "description": "How the stick was named then: its label, else vendor and model."
+          },
+          "serial": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The stick's serial number, if it has one."
+          },
+          "writtenAt": {
+            "type": "string",
+            "description": "When the key was written.",
+            "format": "date-time"
+          }
+        },
+        "description": "Where a pool's key was written to a USB stick; no secret, kept beside the key vault and never in a backup."
       },
       "PowerAction": {
         "enum": [
@@ -15366,7 +18336,8 @@
       "ProxyCertificateSource": {
         "enum": [
           "box",
-          "custom"
+          "custom",
+          "acme"
         ],
         "description": "Which certificate a host presents on 443."
       },
@@ -15415,7 +18386,8 @@
           "accessLog",
           "logSource",
           "createdAt",
-          "updatedAt"
+          "updatedAt",
+          "acme"
         ],
         "type": "object",
         "properties": {
@@ -15560,6 +18532,18 @@
             "type": "string",
             "description": "When it was last saved.",
             "format": "date-time"
+          },
+          "acme": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "With a certificate from the ACME authority: where it stands.",
+                "$ref": "#/components/schemas/AcmeCertificateStatus"
+              }
+            ],
+            "description": "Where the certificate of a host from the ACME authority stands."
           }
         },
         "description": "A proxy host as Settings shows it."
@@ -15749,7 +18733,8 @@
           "certificate",
           "presented",
           "createdAt",
-          "updatedAt"
+          "updatedAt",
+          "acme"
         ],
         "type": "object",
         "properties": {
@@ -15807,6 +18792,18 @@
             "type": "string",
             "description": "When it was last saved.",
             "format": "date-time"
+          },
+          "acme": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "With a certificate from the ACME authority: where it stands.",
+                "$ref": "#/components/schemas/AcmeCertificateStatus"
+              }
+            ],
+            "description": "Where the certificate of a host from the ACME authority stands."
           }
         },
         "description": "A redirect host as Settings shows it."
@@ -16955,6 +19952,14 @@
           }
         }
       },
+      "RiskTier": {
+        "enum": [
+          "elevated",
+          "high",
+          "critical"
+        ],
+        "description": "How much an elevated right can do on the box, and so how much granting it asks (D388)."
+      },
       "RollbackRequest": {
         "required": [
           "snapshot",
@@ -17635,6 +20640,169 @@
         },
         "description": "SMART health of one disk as last read. The API serves it from memory; reading it never runs a command."
       },
+      "SmtpRequest": {
+        "required": [
+          "host"
+        ],
+        "type": "object",
+        "properties": {
+          "host": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Empty removes the server."
+          },
+          "port": {
+            "type": "integer",
+            "description": "1 to 65535; defaults to 587.",
+            "format": "int32",
+            "default": 587
+          },
+          "security": {
+            "description": "Defaults to STARTTLS.",
+            "$ref": "#/components/schemas/SmtpSecurity"
+          },
+          "username": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The sign-in name, or none."
+          },
+          "password": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "A new password; null keeps the saved one, empty removes it."
+          },
+          "from": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The sender address."
+          }
+        },
+        "description": "A new SMTP server, or none."
+      },
+      "SmtpSecurity": {
+        "enum": [
+          "tls",
+          "startTls",
+          "none"
+        ],
+        "description": "How the box talks to its SMTP server."
+      },
+      "SmtpStatus": {
+        "required": [
+          "configured",
+          "host",
+          "port",
+          "security",
+          "username",
+          "passwordSet",
+          "from"
+        ],
+        "type": "object",
+        "properties": {
+          "configured": {
+            "type": "boolean",
+            "description": "A server is set; email channels can send."
+          },
+          "host": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The server's name or address."
+          },
+          "port": {
+            "type": "integer",
+            "description": "Its port.",
+            "format": "int32"
+          },
+          "security": {
+            "description": "How the box talks to it.",
+            "$ref": "#/components/schemas/SmtpSecurity"
+          },
+          "username": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The sign-in name, if it needs one."
+          },
+          "passwordSet": {
+            "type": "boolean",
+            "description": "A password is saved."
+          },
+          "from": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The sender address."
+          }
+        },
+        "description": "Settings &gt; Notifications, the SMTP server, without its password."
+      },
+      "SmtpTestRequest": {
+        "required": [
+          "to",
+          "host"
+        ],
+        "type": "object",
+        "properties": {
+          "to": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The address that gets the test email."
+          },
+          "host": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The server's name or address."
+          },
+          "port": {
+            "type": "integer",
+            "description": "1 to 65535; defaults to 587.",
+            "format": "int32",
+            "default": 587
+          },
+          "security": {
+            "description": "Defaults to STARTTLS.",
+            "$ref": "#/components/schemas/SmtpSecurity"
+          },
+          "username": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The sign-in name, or none."
+          },
+          "password": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The password; null takes the saved one, empty sends without."
+          },
+          "from": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The sender address."
+          }
+        },
+        "description": "Body of `POST /api/system/notifications/smtp/test`: the server as it is in the form, and where to send."
+      },
       "Snapshot": {
         "required": [
           "dataset",
@@ -17939,6 +21107,41 @@
         },
         "description": "The apps the user opens after signing in (D373); the same on every device."
       },
+      "StepUpRequest": {
+        "required": [
+          "password"
+        ],
+        "type": "object",
+        "properties": {
+          "password": {
+            "type": "string",
+            "description": "The signed-in user's password."
+          },
+          "totpCode": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "A current authenticator code, when two-factor sign-in is on."
+          }
+        }
+      },
+      "StepUpState": {
+        "required": [
+          "until"
+        ],
+        "type": "object",
+        "properties": {
+          "until": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Until when the session holds a step-up (UTC), or null.",
+            "format": "date-time"
+          }
+        }
+      },
       "StorageAlert": {
         "required": [
           "key",
@@ -18118,7 +21321,7 @@
         "properties": {
           "action": {
             "type": "string",
-            "description": "`pool.create`, `pool.destroy`, `pool.replace`, `pool.spare.add`, `pool.spare.remove`, `pool.offline`, `pool.online`, `pool.import.readonly`, `pool.import`, `pool.export`, `pool.vdev.add`, `pool.raidz.expand`, `dataset.rename`, `dataset.set`, `dataset.destroy`, `volume.create`, `snapshot.destroy` or `snapshot.rollback`."
+            "description": "`pool.create`, `pool.destroy`, `pool.replace`, `pool.spare.add`, `pool.spare.remove`, `pool.import.readonly`, `pool.import`, `pool.export`, `pool.vdev.add`, `pool.raidz.expand`, `dataset.rename`, `dataset.set`, `dataset.destroy`, `volume.create`, `snapshot.destroy` or `snapshot.rollback`."
           },
           "pool": {
             "type": "string",
@@ -18153,14 +21356,14 @@
               "null",
               "string"
             ],
-            "description": "GUID of the device to replace, take offline, bring online or remove, or of the raidz vdev to expand."
+            "description": "GUID of the device to replace or remove, or of the raidz vdev to expand."
           },
           "encryption": {
             "type": [
               "null",
               "string"
             ],
-            "description": "The answer to the encryption question of a new pool: `none`, or `key` once the key vault exists."
+            "description": "The answer to the encryption question of a new pool: `none`, or `key` to encrypt it with EncryptionKey (D384)."
           },
           "confirmName": {
             "type": [
@@ -18252,9 +21455,23 @@
               "boolean"
             ],
             "description": "For imports: import a pool that was last used by another system; needs ConfirmName."
+          },
+          "encryptionKey": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "For `encryption: key`: the new pool's key from `POST /api/storage/encryption/keys`, after the user stored it."
+          },
+          "keepKeyInVault": {
+            "type": [
+              "null",
+              "boolean"
+            ],
+            "description": "For `encryption: key`: true to keep the key in the key vault on the system disk, so the box unlocks the pool at start; false to unlock it by hand after every start."
           }
         },
-        "description": "A destructive storage action to plan. Which fields an action needs: `pool.create` Pool, Layout, DiskIds,\nEncryption (and Confirmations for disks that are not empty); `pool.destroy` Pool and ConfirmName;\n`pool.replace` Pool, Vdev and one disk in DiskIds with its serial in Confirmations; `pool.spare.add` Pool\nand one disk; `pool.spare.remove`, `pool.offline` and `pool.online` Pool and Vdev;\n`pool.import.readonly` PoolGuid from the import scan, NewName when the name is taken, and Force with the pool\nname in ConfirmName when the scan says `needsForce`; `pool.import` Pool (imported read-only), and Force with\nConfirmName to force it; `pool.export` Pool; `pool.vdev.add` Pool, Layout (`single`, `mirror`,\n`raidz1` to `raidz3`), DiskIds, Confirmations, and ConfirmName when the preview says so;\n`pool.raidz.expand` Pool, Vdev (the raidz vdev), one disk and ConfirmName;\n`dataset.rename` Pool, Dataset and NewName; `dataset.set` Pool, Dataset and at least one of QuotaBytes,\nReservationBytes, Compression and RecordSizeBytes; `dataset.destroy` Pool, Dataset and ConfirmName;\n`volume.create` Pool, Name, SizeBytes and Sparse; `snapshot.destroy` Pool, Dataset and the snapshot's\nName; `snapshot.rollback` Pool, Dataset, the snapshot's Name and the dataset's full name in ConfirmName."
+        "description": "A destructive storage action to plan. Which fields an action needs: `pool.create` Pool, Layout, DiskIds,\nEncryption (with EncryptionKey and KeepKeyInVault for `key`, and Confirmations for disks that are not empty); `pool.destroy` Pool and ConfirmName;\n`pool.replace` Pool, Vdev and one disk in DiskIds with its serial in Confirmations; `pool.spare.add` Pool\nand one disk; `pool.spare.remove` Pool and Vdev;\n`pool.import.readonly` PoolGuid from the import scan, NewName when the name is taken, and Force with the pool\nname in ConfirmName when the scan says `needsForce`; `pool.import` Pool (imported read-only), and Force with\nConfirmName to force it; `pool.export` Pool; `pool.vdev.add` Pool, Layout (`single`, `mirror`,\n`raidz1` to `raidz3`), DiskIds, Confirmations, and ConfirmName when the preview says so;\n`pool.raidz.expand` Pool, Vdev (the raidz vdev), one disk and ConfirmName;\n`dataset.rename` Pool, Dataset and NewName; `dataset.set` Pool, Dataset and at least one of QuotaBytes,\nReservationBytes, Compression and RecordSizeBytes; `dataset.destroy` Pool, Dataset and ConfirmName;\n`volume.create` Pool, Name, SizeBytes and Sparse; `snapshot.destroy` Pool, Dataset and the snapshot's\nName; `snapshot.rollback` Pool, Dataset, the snapshot's Name and the dataset's full name in ConfirmName."
       },
       "StorageSchedule": {
         "required": [
@@ -18346,7 +21563,13 @@
           "license",
           "icon",
           "installedVersion",
-          "update"
+          "update",
+          "categories",
+          "keywords",
+          "maturity",
+          "incompatible",
+          "publishedAt",
+          "critical"
         ],
         "type": "object",
         "properties": {
@@ -18364,7 +21587,7 @@
           },
           "version": {
             "type": "string",
-            "description": "The newest version for this box."
+            "description": "The newest version for this box, or the newest version when the box can run none."
           },
           "name": {
             "type": "object",
@@ -18407,10 +21630,49 @@
           },
           "update": {
             "type": "boolean",
-            "description": "The installed app is older than Version."
+            "description": "The installed app is older than Version and the box can install it."
+          },
+          "categories": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Its categories from the manifest (D389), empty without."
+          },
+          "keywords": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Its search words from the manifest, empty without."
+          },
+          "maturity": {
+            "type": "string",
+            "description": "Its maturity: `stable` (also without the field), `beta` or `experimental`."
+          },
+          "incompatible": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Set when this box can install no version of the app: why, for Version (D393).",
+                "$ref": "#/components/schemas/StoreIncompatible"
+              }
+            ],
+            "description": "Why this box cannot install a catalog version, with what the user needs to know (D393)."
+          },
+          "publishedAt": {
+            "type": "string",
+            "description": "When the catalog published Version, for the Store's new and updated apps.",
+            "format": "date-time"
+          },
+          "critical": {
+            "type": "boolean",
+            "description": "Version asks for a critical right (root on the box), shown as the badge Root access before the install (D388)."
           }
         },
-        "description": "An app of a catalog, at the newest version this box can run."
+        "description": "An app of a catalog, at the newest version this box can run, or at its newest version when it can run none."
       },
       "StoreAppDetails": {
         "required": [
@@ -18424,11 +21686,11 @@
         "type": "object",
         "properties": {
           "app": {
-            "description": "The app at its newest fitting version.",
+            "description": "The app at its newest fitting version, or at its newest version with why it does not fit.",
             "$ref": "#/components/schemas/StoreApp"
           },
           "manifest": {
-            "description": "That version's manifest.",
+            "description": "That version's manifest; of another manifest version when `App.Incompatible` says so.",
             "$ref": "#/components/schemas/JsonElement"
           },
           "screenshots": {
@@ -18480,7 +21742,8 @@
           "publishedAt",
           "pithyx",
           "fits",
-          "dataVersion"
+          "dataVersion",
+          "incompatible"
         ],
         "type": "object",
         "properties": {
@@ -18499,7 +21762,7 @@
           },
           "fits": {
             "type": "boolean",
-            "description": "This box can install it (its version and architecture)."
+            "description": "This box can install it (its version, architecture and manifest version)."
           },
           "dataVersion": {
             "type": [
@@ -18508,6 +21771,18 @@
             ],
             "description": "Its data version, if it declares one.",
             "format": "int32"
+          },
+          "incompatible": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Why this box cannot install it, when it does not fit.",
+                "$ref": "#/components/schemas/StoreIncompatible"
+              }
+            ],
+            "description": "Why this box cannot install a catalog version, with what the user needs to know (D393)."
           }
         },
         "description": "A published version of a catalog app."
@@ -18518,6 +21793,60 @@
           "beta"
         ],
         "description": "Which branch of every catalog the box reads: `catalog` (stable) or `catalog-next` (beta)."
+      },
+      "StoreIncompatible": {
+        "required": [
+          "reason",
+          "pithyx",
+          "boxVersion",
+          "architectures",
+          "boxArchitecture",
+          "manifestVersion"
+        ],
+        "type": "object",
+        "properties": {
+          "reason": {
+            "description": "The reason.",
+            "$ref": "#/components/schemas/StoreIncompatibleReason"
+          },
+          "pithyx": {
+            "type": "string",
+            "description": "The range of Pithyx versions the version runs on."
+          },
+          "boxVersion": {
+            "type": "string",
+            "description": "The box's Pithyx version."
+          },
+          "architectures": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The architectures the version is built for."
+          },
+          "boxArchitecture": {
+            "type": "string",
+            "description": "The box's architecture."
+          },
+          "manifestVersion": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "The version's manifest version.",
+            "format": "int32"
+          }
+        },
+        "description": "Why this box cannot install a catalog version, with what the user needs to know (D393)."
+      },
+      "StoreIncompatibleReason": {
+        "enum": [
+          "box",
+          "architecture",
+          "manifestOld",
+          "manifestNew"
+        ],
+        "description": "Why this box cannot install a catalog version (D393)."
       },
       "StoreSettings": {
         "required": [
@@ -19090,10 +22419,12 @@
           "storage/snapshots",
           "store/admin",
           "system/info",
+          "system/logs",
           "system/network",
           "system/processes",
           "system/resources",
           "system/updates",
+          "system/ups",
           "thumbnails/+/+"
         ],
         "type": "object",
@@ -19143,6 +22474,9 @@
           "system/info": {
             "$ref": "#/components/schemas/SystemInfo"
           },
+          "system/logs": {
+            "$ref": "#/components/schemas/LogsAdded"
+          },
           "system/network": {
             "$ref": "#/components/schemas/NetworkState"
           },
@@ -19154,6 +22488,9 @@
           },
           "system/updates": {
             "$ref": "#/components/schemas/UpdateStatus"
+          },
+          "system/ups": {
+            "$ref": "#/components/schemas/UpsStatus"
           },
           "thumbnails/+/+": {
             "$ref": "#/components/schemas/ThumbnailsReady"
@@ -19177,10 +22514,12 @@
           "storage/snapshots",
           "store/admin",
           "system/info",
+          "system/logs",
           "system/network",
           "system/processes",
           "system/resources",
           "system/updates",
+          "system/ups",
           "thumbnails/+/+"
         ],
         "type": "object",
@@ -19230,6 +22569,9 @@
           "system/info": {
             "$ref": "#/components/schemas/SystemInfo"
           },
+          "system/logs": {
+            "$ref": "#/components/schemas/LogsAdded"
+          },
           "system/network": {
             "$ref": "#/components/schemas/NetworkState"
           },
@@ -19241,6 +22583,9 @@
           },
           "system/updates": {
             "$ref": "#/components/schemas/UpdateStatus"
+          },
+          "system/ups": {
+            "$ref": "#/components/schemas/UpsStatus"
           },
           "thumbnails/+/+": {
             "$ref": "#/components/schemas/ThumbnailWatch"
@@ -19826,6 +23171,334 @@
         },
         "description": "Settings &gt; Updates for administrators (topic `system/updates`).\n    `Supported`: Whether updates and rollbacks apply here; false on a machine not laid out by the installer.\n    `UnsupportedReason`: `not_btrfs`, `not_subvolume`, `not_array` or `findmnt`.\n    `RunningJobId`: The job of an update or rollback that runs now.\n    `Snapshots`: The kept snapshots, newest first; each can be restored.\n    `Source`: The update source the box follows (D339); only the recovery menu switches it.\n    `SourceCandidate`: A source file saved in Settings for the recovery menu, or null."
       },
+      "UpsConnection": {
+        "enum": [
+          "off",
+          "connecting",
+          "connected",
+          "unreachable"
+        ],
+        "description": "Whether the box reaches its UPS."
+      },
+      "UpsMode": {
+        "enum": [
+          "off",
+          "usb",
+          "network"
+        ],
+        "description": "Where the box reads its UPS from (D377): nowhere, a UPS on USB through the box's own NUT server, or another NUT server."
+      },
+      "UpsPower": {
+        "enum": [
+          "unknown",
+          "online",
+          "onBattery"
+        ],
+        "description": "Where the UPS takes its power from."
+      },
+      "UpsSettingsRequest": {
+        "required": [
+          "mode"
+        ],
+        "type": "object",
+        "properties": {
+          "mode": {
+            "description": "Off, a UPS on USB, or a UPS of another NUT server.",
+            "$ref": "#/components/schemas/UpsMode"
+          },
+          "host": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The NUT server of a network UPS (a host name or an address); required for the mode `network`."
+          },
+          "port": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "Its port, 1 to 65535.",
+            "format": "int32"
+          },
+          "name": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The UPS's name on that server: letters, digits, dot, dash and underscore, up to 64."
+          },
+          "username": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The NUT user, empty for none; no spaces or quotes, up to 64."
+          },
+          "password": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "A new password; an empty one removes it, a missing one keeps it."
+          },
+          "batteryLow": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "The charge limit in percent, 5 to 90.",
+            "format": "int32"
+          },
+          "runtimeLow": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "The runtime limit in minutes, 1 to 60.",
+            "format": "int32"
+          }
+        },
+        "description": "New UPS settings; a missing field keeps its value."
+      },
+      "UpsSettingsView": {
+        "required": [
+          "mode",
+          "host",
+          "port",
+          "name",
+          "username",
+          "hasPassword",
+          "batteryLow",
+          "runtimeLow"
+        ],
+        "type": "object",
+        "properties": {
+          "mode": {
+            "description": "Off, a UPS on USB, or a UPS of another NUT server.",
+            "$ref": "#/components/schemas/UpsMode"
+          },
+          "host": {
+            "type": "string",
+            "description": "The NUT server of a network UPS."
+          },
+          "port": {
+            "type": "integer",
+            "description": "Its port, 3493 unless set.",
+            "format": "int32"
+          },
+          "name": {
+            "type": "string",
+            "description": "The UPS's name on that server."
+          },
+          "username": {
+            "type": "string",
+            "description": "The NUT user the box signs in with, empty for none."
+          },
+          "hasPassword": {
+            "type": "boolean",
+            "description": "Whether a password is saved; the password itself is never sent."
+          },
+          "batteryLow": {
+            "type": "integer",
+            "description": "On battery, the box shuts down at or below this charge in percent (5 to 90).",
+            "format": "int32"
+          },
+          "runtimeLow": {
+            "type": "integer",
+            "description": "On battery, the box shuts down at or below this many minutes of runtime left (1 to 60).",
+            "format": "int32"
+          }
+        },
+        "description": "The UPS settings as administrators see them."
+      },
+      "UpsState": {
+        "required": [
+          "connection",
+          "power",
+          "lowBattery",
+          "charge",
+          "runtime",
+          "load",
+          "model",
+          "problem",
+          "onBatterySince",
+          "shutdownReason"
+        ],
+        "type": "object",
+        "properties": {
+          "connection": {
+            "description": "Off, connecting, connected or unreachable; while unreachable the other values are the last ones read.",
+            "$ref": "#/components/schemas/UpsConnection"
+          },
+          "power": {
+            "description": "On line power or on battery, unknown before the first answer.",
+            "$ref": "#/components/schemas/UpsPower"
+          },
+          "lowBattery": {
+            "type": "boolean",
+            "description": "The UPS says its battery is low."
+          },
+          "charge": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "Battery charge in percent, if the UPS reports it.",
+            "format": "int32"
+          },
+          "runtime": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "Runtime left on battery in seconds, if the UPS reports it.",
+            "format": "int32"
+          },
+          "load": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "Load in percent of the UPS's capacity, if the UPS reports it.",
+            "format": "int32"
+          },
+          "model": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Manufacturer and model, if the UPS reports them."
+          },
+          "problem": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Why the UPS is unreachable: `refused` (no NUT server answers), `timeout`, `unknown_ups` (the server\nhas no UPS of that name), `driver_not_connected` (no UPS on USB, or its driver failed), `data_stale`,\n`access_denied` (user or password wrong) or `protocol`."
+          },
+          "onBatterySince": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "When the UPS went on battery, while it is.",
+            "format": "date-time"
+          },
+          "shutdownReason": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Why the box shuts down, once it does: `forced` (the NUT server's primary shuts everything down), `low_battery`, `charge`, `runtime` or `lost` (the UPS was on battery and stopped answering)."
+          }
+        },
+        "description": "What the box knows about its UPS right now."
+      },
+      "UpsStatus": {
+        "required": [
+          "settings",
+          "state",
+          "usbAvailable"
+        ],
+        "type": "object",
+        "properties": {
+          "settings": {
+            "description": "The saved settings, without the password.",
+            "$ref": "#/components/schemas/UpsSettingsView"
+          },
+          "state": {
+            "description": "What the box knows about the UPS right now.",
+            "$ref": "#/components/schemas/UpsState"
+          },
+          "usbAvailable": {
+            "type": "boolean",
+            "description": "The NUT server is installed, so the mode `usb` works (always on an installed box)."
+          }
+        },
+        "description": "Settings &gt; UPS: the settings, the UPS's state and whether this box can drive a UPS on USB."
+      },
+      "UsbStick": {
+        "required": [
+          "device",
+          "diskId",
+          "fileSystem",
+          "label",
+          "vendor",
+          "model",
+          "serial",
+          "sizeBytes",
+          "readOnly"
+        ],
+        "type": "object",
+        "properties": {
+          "device": {
+            "type": "string",
+            "description": "The partition's device node, or the disk's when the file system covers the whole disk."
+          },
+          "diskId": {
+            "type": "string",
+            "description": "The disk's stable id, see string Disk.Id."
+          },
+          "fileSystem": {
+            "type": "string",
+            "description": "`vfat`, `exfat`, `ext2`, `ext3` or `ext4`."
+          },
+          "label": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The file system's label, if any."
+          },
+          "vendor": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The disk's vendor, if any."
+          },
+          "model": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The disk's model, if any."
+          },
+          "serial": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The disk's serial number, if any."
+          },
+          "sizeBytes": {
+            "type": "integer",
+            "description": "Size of the file system's partition or disk.",
+            "format": "int64"
+          },
+          "readOnly": {
+            "type": "boolean",
+            "description": "True when the disk is write-protected: keys can be read from it, not written."
+          }
+        },
+        "description": "A file system on a USB stick or another removable disk that can carry pool keys (D385)."
+      },
+      "UsbStickList": {
+        "required": [
+          "sticks"
+        ],
+        "type": "object",
+        "properties": {
+          "sticks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UsbStick"
+            }
+          }
+        },
+        "description": "Response of `GET /api/storage/usb-sticks`: the file systems a pool key can be written to."
+      },
       "UserDeletion": {
         "required": [
           "job"
@@ -20175,6 +23848,33 @@
           "SessionEnded",
           "Forbidden"
         ]
+      },
+      "WebhookFormat": {
+        "enum": [
+          "json",
+          "ntfy",
+          null
+        ]
+      },
+      "WebhookHeader": {
+        "required": [
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "The header name."
+          },
+          "value": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Its value; in a request null keeps the value saved before under this name."
+          }
+        },
+        "description": "A header a webhook sends, for example a token."
       },
       "WindowPreference": {
         "required": [

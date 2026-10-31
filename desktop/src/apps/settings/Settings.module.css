@@ -1,68 +1,68 @@
-.app {
-  display: grid;
-  grid-template-rows: auto 1fr;
+.frame {
   height: 100%;
-  min-height: 0;
 }
 
-.crumbs {
-  display: flex;
-  align-items: center;
-  padding: var(--space-2) var(--space-3);
-  border-bottom: 1px solid var(--color-border);
-  background: var(--color-surface-2);
-}
-
-.back {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-1);
-  min-height: 2rem;
-  padding: 0 var(--space-3);
-  border: 0;
-  border-radius: var(--radius-sm);
-  background: transparent;
-  color: inherit;
-  font: inherit;
-  font-weight: var(--font-weight-medium);
-  cursor: pointer;
-}
-
-.back:hover {
-  background: var(--color-surface-hover);
-}
-
-.overview {
-  grid-row: 1 / -1;
+/* The overview of D394: the box, Needs attention, then every area as a tile. */
+.overviewPage {
   display: flex;
   flex-direction: column;
   gap: var(--space-5);
   min-width: 0;
-  overflow: auto;
-  padding: var(--space-4) var(--space-5);
 }
 
-.overviewHeader {
+.boxCard {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
-  gap: var(--space-3);
+  gap: var(--space-4) var(--space-5);
+  padding: var(--space-4) var(--space-5);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  background: var(--color-surface-2);
 }
 
-.search {
-  width: min(20rem, 100%);
+.boxName {
+  min-width: 0;
 }
 
-.category {
-  display: grid;
-  gap: var(--space-2);
-}
-
-.categoryTitle {
+.boxName h2 {
   margin: 0;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+}
+
+.boxName p {
+  margin: var(--space-0) 0 0;
   color: var(--color-text-muted);
   font-size: var(--font-size-sm);
+}
+
+.boxFacts {
+  display: grid;
+  grid-template-columns: auto auto;
+  gap: var(--space-1) var(--space-4);
+  margin: 0 0 0 auto;
+  font-size: var(--font-size-sm);
+}
+
+.boxFacts dt {
+  color: var(--color-text-muted);
+}
+
+.boxFacts dd {
+  margin: 0;
+}
+
+.tabPanel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding-top: var(--space-4);
+}
+
+.overviewHeading {
+  margin: 0 0 var(--space-3);
+  font-size: var(--font-size-md);
   font-weight: var(--font-weight-semibold);
 }
 
@@ -180,14 +180,11 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
+  min-width: 0;
   margin: 0;
   padding-inline-start: var(--space-5);
-}
-
-.page {
-  min-width: 0;
-  overflow: auto;
-  padding: var(--space-4) var(--space-5);
+  /* Addresses and the FTP fingerprint are long words; they break rather than widen a phone's page. */
+  overflow-wrap: anywhere;
 }
 
 .content {
@@ -273,6 +270,23 @@
   color: var(--color-text-muted);
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-semibold);
+}
+
+/* A form of its own inside a FormSection (D394: controls stay narrow). */
+.narrow {
+  max-width: 30rem;
+}
+
+/* A paragraph inside a FormSection, above or instead of its rows. */
+.sectionIntro {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+
+.stack {
+  display: grid;
+  min-width: 0;
 }
 
 .shareName {
@@ -585,4 +599,149 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--space-2);
+}
+
+/* A value shown in a form row instead of a control. */
+.rowValue {
+  margin: 0;
+}
+
+/* A control and its button side by side in a form row; the button goes below when the row is narrow. */
+.rowControls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--space-2);
+}
+
+.rowControls > :first-child {
+  flex: 1 1 10em;
+  min-width: 0;
+}
+
+/* Long values without spaces, such as a certificate fingerprint, wrap anywhere instead of widening the row. */
+.breakAll {
+  overflow-wrap: anywhere;
+}
+
+/* The notification matrix (D407): events by the desktop and the box's channels, the event column and the header stay
+   in view while it scrolls. */
+.matrixScroll {
+  container: matrix / inline-size;
+  max-width: 100%;
+  overflow: auto;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+}
+
+.matrix {
+  min-width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: var(--font-size-sm);
+}
+
+.matrix th,
+.matrix td {
+  padding: var(--space-1) var(--space-3);
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-surface-1);
+  text-align: start;
+}
+
+.matrix thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--color-surface-2);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+}
+
+.matrix th:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  min-width: 14rem;
+}
+
+.matrix thead th:first-child {
+  z-index: 3;
+}
+
+.matrixColumn {
+  min-width: 7rem;
+  text-align: center;
+}
+
+.matrix .matrixColumn {
+  text-align: center;
+}
+
+.matrixGroup th,
+.matrixGroup td {
+  background: var(--color-surface-2);
+  font-weight: var(--font-weight-semibold);
+}
+
+.matrixEvent {
+  font-weight: var(--font-weight-regular);
+}
+
+.matrixCell > * {
+  justify-content: center;
+}
+
+.matrix .matrixCell {
+  text-align: center;
+}
+
+/* A narrow window never scrolls sideways: each event becomes a block with its checkboxes in a row below, each named by
+   its column. */
+@container matrix (width < 640px) {
+  .matrix,
+  .matrix tbody,
+  .matrix tr {
+    display: block;
+  }
+
+  .matrix thead {
+    display: none;
+  }
+
+  .matrix tr {
+    padding: var(--space-2) var(--space-3);
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .matrix th,
+  .matrix td {
+    border-bottom: 0;
+    padding: 0;
+  }
+
+  .matrix th:first-child {
+    position: static;
+    display: block;
+    min-width: 0;
+  }
+
+  .matrix .matrixCell {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    margin-inline-end: var(--space-4);
+    text-align: start;
+  }
+
+  .matrix .matrixGroup {
+    background: var(--color-surface-2);
+  }
+
+  .matrix .matrixCell::before {
+    content: attr(data-column);
+    color: var(--color-text-muted);
+    font-size: var(--font-size-xs);
+  }
 }

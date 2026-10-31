@@ -28,6 +28,7 @@ Antworten fließen ungepuffert durch, Server-Sent Events und große Downloads ko
 ### HTTPS
 
 - **Zertifikat**: **Von der Zertifizierungsstelle der Box** stellt im Speicher ein Zertifikat für die Domains des Hosts aus (397 Tage, erneuert 30 Tage vor dem Ende und immer, wenn sich die Zertifizierungsstelle ändert). Jede Domain muss im Bereich der Zertifizierungsstelle liegen ([`tls.name.not_permitted`](/de/docs/reference/errors/#tls.name.not_permitted)); deine eigene Domain nimmst du mit einer neuen Zertifizierungsstelle in Einstellungen > **Zertifikate** in den Bereich auf. **Eigenes hochladen** nimmt ein Zertifikat mit Kette und unverschlüsseltem Schlüssel im PEM-Format, das jede Domain abdeckt ([`proxy.certificate.name_mismatch`](/de/docs/reference/errors/#proxy.certificate.name_mismatch)), zum Beispiel eines für eine öffentliche Domain. Ein abgelaufener oder kaputter Upload wird durch das eigene Zertifikat der Box ersetzt, und der Host zeigt **Kein Zertifikat**, wenn er keines hat.
+- **Von Let's Encrypt** holt ein kostenloses Zertifikat, dem jedes Gerät vertraut, nur für öffentliche Domains; siehe [Let's Encrypt](#lets-encrypt).
 - Die Box wählt das Zertifikat nach dem Namen, den der Browser beim TLS-Handshake nennt, auf 443 und auf 7484; ein Name ohne Host bekommt das Zertifikat der Box.
 - **HTTP auf HTTPS umleiten** (standardmäßig an) beantwortet einfaches HTTP auf 80 mit einer Umleitung auf 443 (301 für GET und HEAD, sonst 308). Ausgeschaltet antwortet der Host auch auf 80.
 - **HTTP/2 anbieten** (standardmäßig an) lässt Browser auf 443 HTTP/2 nutzen.
@@ -64,6 +65,18 @@ Die Anmeldung läuft über die Weboberfläche der Box. Erreichst du einen Host v
 
 Die Liste zeigt für jeden Host, ob sein Ziel beim Öffnen der Seite geantwortet hat; **Ziel prüfen** schaut noch einmal nach.
 
+### Let's Encrypt
+
+Ein Proxy-Host oder Weiterleitungs-Host mit dem Zertifikat **Von Let's Encrypt** bekommt ein Zertifikat für alle seine Domains von Let's Encrypt (oder einer anderen ACME-Zertifizierungsstelle) und erneuert es selbst ein Drittel seiner Laufzeit vor dem Ende, bei den üblichen 90 Tagen also 30 Tage vorher. Die Box spricht nur für diese Hosts mit der Zertifizierungsstelle.
+
+1. Lies im Abschnitt **Let's Encrypt** unter Einstellungen > **Reverse Proxy** die **Nutzungsbedingungen**, stimm ihnen zu und speichere. Eine E-Mail-Adresse ist optional; die Zertifizierungsstelle darf dir dorthin zu dem Konto schreiben. Eine andere Zertifizierungsstelle kommt in **ACME-Verzeichnis** (eine `https`-Adresse) und braucht eine eigene Zustimmung.
+2. Lass im DNS jede Domain des Hosts auf die öffentliche Adresse der Box zeigen und leite Port 80 (und 443 für die Besucher) deines Routers an die Box weiter. Die Zertifizierungsstelle prüft jeden Namen über Port 80 (HTTP-01); diese Prüfung beantwortet die Box selbst, für jeden Host.
+3. Leg den Host mit dem Zertifikat **Von Let's Encrypt** an oder bearbeite ihn. Die erste Anfrage startet sofort.
+
+Der Host zeigt, wo sein Zertifikat steht: wartet auf das erste, gültig bis zu einem Datum, oder warum die letzte Anfrage fehlschlug, mit den Worten der Zertifizierungsstelle, etwa [`proxy.acme.dns`](/de/docs/reference/errors/#proxy.acme.dns) (ein Name hat keine Adresse), [`proxy.acme.connection`](/de/docs/reference/errors/#proxy.acme.connection) (Port 80 erreicht die Box nicht aus dem Internet), [`proxy.acme.unauthorized`](/de/docs/reference/errors/#proxy.acme.unauthorized), [`proxy.acme.caa`](/de/docs/reference/errors/#proxy.acme.caa) oder [`proxy.acme.rate_limited`](/de/docs/reference/errors/#proxy.acme.rate_limited). Nach einem Fehler versucht es die Box nach einer Stunde wieder und wartet dann jedes Mal doppelt so lange, bis zu einem Tag; **Jetzt erneuern** fragt sofort. Bis das erste Zertifikat da ist, oder wenn eines nicht erneuert werden konnte, zeigt der Host das eigene Zertifikat der Box. Eine fehlgeschlagene Erneuerung benachrichtigt die Administratoren.
+
+Wildcards ([`proxy.acme.wildcard`](/de/docs/reference/errors/#proxy.acme.wildcard)) und lokale Namen wie `nas.home.arpa`, `.local`, Namen ohne Punkt oder IP-Adressen ([`proxy.acme.name_not_public`](/de/docs/reference/errors/#proxy.acme.name_not_public)) bekommen kein Zertifikat von einer öffentlichen Zertifizierungsstelle; nimm dafür die eigene der Box. Ohne Zustimmung zu den Bedingungen lehnt ein Host die Wahl mit [`proxy.acme.terms_required`](/de/docs/reference/errors/#proxy.acme.terms_required) ab, ohne den einfachen Proxy-Port 80 mit [`proxy.acme.port_unavailable`](/de/docs/reference/errors/#proxy.acme.port_unavailable).
+
 ## Weiterleitungs-Hosts
 
 Ein Weiterleitungs-Host schickt Browser von seinen Domains mit 301, 302, 307 oder 308 zu einer anderen Adresse. Mit **Pfad und Abfrage behalten** geht eine Anfrage für `/a?b=1` an die Zieladresse, gefolgt von `/a?b=1`. Auf 443 zeigt er ein Zertifikat vor wie ein Proxy-Host.
@@ -78,8 +91,8 @@ Ein Stream leitet einen Port der Box, TCP, UDP oder beides, Byte für Byte an ei
 
 ## Sicherheit
 
-Der Proxy läuft im Daemon, der als root läuft, und nur Administratoren dürfen Ziele festlegen. Anfragen, die der Proxy selbst geschickt hat, erkennt er und lehnt sie mit 508 ab ([`proxy.loop.detected`](/de/docs/reference/errors/#proxy.loop.detected)). Die Einstellungen sind im Konfigurations-Backup als Teil **Reverse Proxy**; hochgeladene Zertifikate kommen mit dem Teil **Zertifikate** (Dateien `proxy-host-<id>.pem` und `.key` neben denen der Box).
+Der Proxy läuft im Daemon, der als root läuft, und nur Administratoren dürfen Ziele festlegen. Anfragen, die der Proxy selbst geschickt hat, erkennt er und lehnt sie mit 508 ab ([`proxy.loop.detected`](/de/docs/reference/errors/#proxy.loop.detected)). Die Einstellungen sind im Konfigurations-Backup als Teil **Reverse Proxy**; hochgeladene Zertifikate und die von Let's Encrypt kommen mit dem Teil **Zertifikate** (Dateien `proxy-host-<id>.pem`, `proxy-host-<id>-acme.pem` (`proxy-redirect-<id>-acme.pem`) und ihre `.key` neben denen der Box, mit dem Kontoschlüssel `acme-account-<hash>.key`).
 
 ## Noch nicht gebaut
 
-Lastverteilung mit Health-Checks, Regeln pro Pfad, Ratenbegrenzung und Let's Encrypt kommen später.
+Lastverteilung mit Health-Checks, Regeln pro Pfad, Ratenbegrenzung und Zertifikate über DNS-01 (nötig für Wildcards) kommen später.

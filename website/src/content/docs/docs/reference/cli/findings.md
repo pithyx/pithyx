@@ -53,7 +53,10 @@ Reported by [`validate`](/docs/reference/cli/validate/) and [`pack`](/docs/refer
   - `reason` = `merge_key`: it uses a merge key at {path}
   - `reason` = `key_not_string`: a key at {path} is not text
   - `reason` = `other`: it breaks a rule for Compose files
-- [`app.elevated.unsupported`](/docs/reference/errors/#app.elevated.unsupported) (error): The app asks for the right {right}, which this version of Pithyx does not grant.
+- [`app.elevated.backend_missing`](/docs/reference/errors/#app.elevated.backend_missing) (error): The app asks for {right}, a right only a background service can use, but it has no background service.
+- [`app.elevated.root_conflict`](/docs/reference/errors/#app.elevated.root_conflict) (error): The app runs its background service as root and asks for {right}. That right runs the service directly on the box, where root would control the whole box, so Pithyx refuses the combination.
+- [`app.elevated.root_required`](/docs/reference/errors/#app.elevated.root_required) (error): The app asks for {right}, but only a background service that runs as root can use a capability.
+- [`app.elevated.unsupported`](/docs/reference/errors/#app.elevated.unsupported) (error): The app asks for the right {right}, which Pithyx does not grant to any app.
 - [`app.icon.invalid`](/docs/reference/errors/#app.icon.invalid) (error): The app's icon cannot be used: {reason}.
   - `reason` = `too_large`: it is larger than 64 KB
   - `reason` = `malformed`: it is not a valid SVG file
@@ -73,11 +76,14 @@ Reported by [`validate`](/docs/reference/cli/validate/) and [`pack`](/docs/refer
 - [`app.manifest.id_invalid`](/docs/reference/errors/#app.manifest.id_invalid) (error): The app id {id} is not valid. It is the author's domain reversed plus the app name, for example com.example.chat.
 - [`app.manifest.id_reserved`](/docs/reference/errors/#app.manifest.id_reserved) (error): The app id {id} is reserved for the apps that come with Pithyx.
 - [`app.manifest.invalid_json`](/docs/reference/errors/#app.manifest.invalid_json) (error): The app's manifest (pithyx.json) is not valid JSON.
+- [`app.manifest.permission_missing`](/docs/reference/errors/#app.manifest.permission_missing) (error): The manifest uses {path}, which needs the permission {permission}. Add it to permissions.
 - [`app.manifest.pithyx_invalid`](/docs/reference/errors/#app.manifest.pithyx_invalid) (error): The Pithyx version range {pithyx} in the manifest is not valid.
 - [`app.manifest.reference_unknown`](/docs/reference/errors/#app.manifest.reference_unknown) (error): The manifest refers to {name} at {path}, which it does not declare.
 - [`app.manifest.schema_violation`](/docs/reference/errors/#app.manifest.schema_violation) (error): The app's manifest is not valid at {path} ({keyword}).
 - [`app.manifest.sdk_invalid`](/docs/reference/errors/#app.manifest.sdk_invalid) (error): The SDK version range {sdk} in the manifest is not valid.
-- [`app.manifest.version_unsupported`](/docs/reference/errors/#app.manifest.version_unsupported) (error): This app needs a newer version of Pithyx (manifest version {version}, this box reads version {supported}).
+- [`app.manifest.version_unsupported`](/docs/reference/errors/#app.manifest.version_unsupported) (error): {version}
+  - `version` = `1`: This app was made for an older version of Pithyx (manifest version 1, this box reads version {supported}). Ask its author for a new version.
+  - `version` = `other`: This app needs a newer version of Pithyx (manifest version {version}, this box reads version {supported}).
 - [`app.manifest.window_size_invalid`](/docs/reference/errors/#app.manifest.window_size_invalid) (error): The app's smallest window size is larger than its default size.
 - [`app.package.invalid`](/docs/reference/errors/#app.package.invalid) (error): The file is not a valid app package: {reason}.
   - `reason` = `gzip`: it is not gzip-compressed or it is damaged
@@ -95,6 +101,7 @@ Reported by [`validate`](/docs/reference/cli/validate/) and [`pack`](/docs/refer
   - `reason` = `duplicate`: {path} is in it twice
   - `reason` = `unexpected`: {path} does not belong in an app package
   - `reason` = `reserved`: {path} uses a name reserved for the backend
+  - `reason` = `too_large`: {path} is larger than 1 MiB
   - `reason` = `other`: {path} is not allowed
 
 <!-- /generated -->
@@ -118,6 +125,8 @@ Only the CLI reports these. `cli.backend.unbuilt` comes from the Vite plugin aft
   - `reason` = `unused`: {image} is not used
   - `reason` = `other`: {image} differs
 - `cli.manifest.missing` (error): pithyx.json does not exist in {folder}. Run the command in the project folder of an app, or name that folder.
+- `cli.manifest.security_missing` (warning): The app asks for a right of high risk or root access but names no security contact. Add security (an https URL or a mailto: address), so administrators know where to report a vulnerability.
+- `cli.rights.raw_socket` (warning): The app asks for docker.socket.raw, the unfiltered container service: root on the box. Every box asks the administrator to type the app's name to grant it, and the app never updates by itself. If the app only manages containers it starts itself, ask for docker.socket instead.
 
 <!-- /generated -->
 

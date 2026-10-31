@@ -1,6 +1,6 @@
 import { type Page } from '@playwright/test';
 import { expect, test } from './fixtures';
-import { admin, openAccountMenu, openFromDesktop } from './session';
+import { admin, openAccountMenu, openFromDesktop, openPersonalSettings } from './session';
 import { totp } from './totp';
 
 const password = 'correct horse battery';
@@ -47,11 +47,11 @@ async function confirmStored(page: Page) {
 }
 
 function disks(page: Page) {
-  return page.getByRole('region', { name: 'Storage', exact: true });
+  return page.getByRole('region', { name: 'Settings', exact: true });
 }
 
 async function openDisks(page: Page) {
-  await openFromDesktop(page, 'Storage');
+  await openFromDesktop(page, 'Settings');
   await disks(page).getByRole('button', { name: 'Disks', exact: true }).click();
   await expect(disks(page).getByRole('row', { name: /sdg/ })).toBeVisible();
 }
@@ -123,8 +123,8 @@ test('setup, recovery key, TOTP sign-in and password reset with the recovery key
   });
 
   await test.step('turn on two-factor authentication', async () => {
-    await openAccountMenu(page);
-    await page.getByRole('menuitem', { name: 'Two-factor authentication' }).click();
+    const settings = await openPersonalSettings(page, 'Sign-in and security');
+    await settings.getByRole('button', { name: 'Two-factor authentication', exact: true }).click();
     const dialog = page.getByRole('dialog', { name: 'Two-factor authentication' });
     await dialog.getByRole('button', { name: 'Set up' }).click();
     await expect(
@@ -237,6 +237,37 @@ test('the language list switches the sign-in screen with the mouse and the keybo
   await expect(page.getByRole('button', { name: 'Language: Automatic' })).toBeFocused();
 });
 
+test('a language list that opens under a resting pointer keeps the keyboard choice', async ({
+  page,
+}) => {
+  await page.goto('/');
+  const button = page.getByRole('button', { name: 'Language: Automatic' });
+  await button.click();
+  const box = await page.getByRole('option', { name: 'Deutsch' }).boundingBox();
+  if (box === null) {
+    throw new Error('no option');
+  }
+  const x = box.x + box.width / 2;
+  const y = box.y + box.height / 2;
+  await page.mouse.move(x, y);
+  await page.keyboard.press('Escape');
+  await expect(button).toBeFocused();
+
+  // The list opens again under the resting pointer and Home moves to the first option. The browser reports the
+  // pointer over the new list by itself, without a move, sometimes only after Home (the flake of #276); the test sends
+  // that report after Home itself, and it must not take the option under the pointer.
+  await page.keyboard.press('Enter');
+  await expect(page.getByRole('listbox')).toBeFocused();
+  await page.keyboard.press('Home');
+  const deutsch = page.getByRole('option', { name: 'Deutsch' });
+  for (const type of ['pointerover', 'pointerenter', 'pointermove']) {
+    await deutsch.dispatchEvent(type, { clientX: x, clientY: y, bubbles: type !== 'pointerenter' });
+  }
+  await page.keyboard.press('Enter');
+  await expect(page.getByRole('heading', { name: 'Welcome back' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Language: Automatic' })).toBeFocused();
+});
+
 test('phones sign in and see the storage app full screen', async ({ browser }) => {
   const context = await browser.newContext({
     viewport: { width: 390, height: 844 },
@@ -246,7 +277,7 @@ test('phones sign in and see the storage app full screen', async ({ browser }) =
   const page = await context.newPage();
   await page.goto('/');
   await signIn(page, newPassword);
-  await page.getByRole('option', { name: 'Storage, shortcut' }).tap();
+  await page.getByRole('option', { name: 'Settings, shortcut' }).tap();
   const region = disks(page);
   await region.getByRole('button', { name: 'Disks', exact: true }).tap();
   await expect(region.getByRole('row', { name: /sdg/ })).toBeVisible();

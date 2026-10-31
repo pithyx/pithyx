@@ -1,6 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 import {
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
   type CSSProperties,
@@ -81,12 +82,27 @@ export function Note({
     [client, note.id],
   );
 
-  function moveTo(target: Cell) {
+  /** Moves the note; returns whether it changed its cell. */
+  function moveTo(target: Cell): boolean {
     const next = placeNote(target, size);
-    if (next.column !== note.column || next.row !== note.row) {
-      void changeItems(client, [{ id: note.id, column: next.column, row: next.row }]);
+    if (next.column === note.column && next.row === note.row) {
+      return false;
     }
+    void changeItems(client, [{ id: note.id, column: next.column, row: next.row }]);
+    return true;
   }
+
+  // A dropped note keeps its drag offset until it renders in its new cell: the items cache tells React about the move
+  // only a task later, and clearing the offset at once showed the old cell for a moment.
+  const settling = useRef(false);
+  useLayoutEffect(() => {
+    const target = element.current;
+    if (settling.current && target !== null) {
+      settling.current = false;
+      target.style.transform = '';
+      delete target.dataset.dragging;
+    }
+  }, [cell.column, cell.row]);
 
   function onBarPointerDown(event: ReactPointerEvent<HTMLElement>) {
     if (
@@ -107,11 +123,12 @@ export function Note({
         target.dataset.dragging = '';
       },
       end: (delta, moved) => {
+        if (moved && moveTo(nearestCell({ x: origin.x + delta.x, y: origin.y + delta.y }))) {
+          settling.current = true;
+          return;
+        }
         target.style.transform = '';
         delete target.dataset.dragging;
-        if (moved) {
-          moveTo(nearestCell({ x: origin.x + delta.x, y: origin.y + delta.y }));
-        }
       },
     });
   }

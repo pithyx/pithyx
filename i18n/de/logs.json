@@ -1,16 +1,15 @@
 {
-  "filter": "Protokolle filtern",
   "list": "Protokolleinträge",
   "search": {
     "label": "Protokolle durchsuchen",
-    "placeholder": "Meldungen oder eine Anfrage-ID suchen"
+    "placeholder": "Meldungen durchsuchen"
   },
   "levels": {
     "label": "Stufen",
-    "debug": "Debug",
-    "info": "Info",
-    "warn": "Warnung",
-    "error": "Fehler"
+    "all": "Alle",
+    "warnings": "Warnungen",
+    "errors": "Fehler",
+    "debug": "Debug"
   },
   "range": {
     "label": "Zeitraum",
@@ -23,13 +22,11 @@
   "sources": {
     "label": "Quellen",
     "all": "Alle Quellen",
-    "some": "{count, plural, one {# Quelle} other {# Quellen}}",
-    "none": "Noch keine Quellen",
     "daemon": "Pithyx-Daemon",
-    "system": "System · {name}",
-    "app": "App · {name}"
+    "audit": "Audit-Protokoll",
+    "search": "Quellen durchsuchen",
+    "proxy": "Reverse Proxy · {host}"
   },
-  "refresh": "Aktualisieren",
   "export": {
     "label": "Exportieren",
     "text": "Als Text exportieren",
@@ -44,7 +41,6 @@
     "level": "Stufe",
     "source": "Quelle",
     "user": "Benutzer",
-    "requestId": "Anfrage-ID",
     "stored": "Gespeichert",
     "archive": "Im Archiv"
   },
@@ -74,5 +70,40 @@
     "never": "nie",
     "cancel": "Abbrechen",
     "save": "Speichern"
+  },
+  "navigation": "Protokollquellen",
+  "toolbar": "Aktionen für Protokolle",
+  "level": {
+    "debug": "Debug",
+    "info": "Info",
+    "warn": "Warnung",
+    "error": "Fehler"
+  },
+  "groups": {
+    "system": "System",
+    "apps": "Apps"
+  },
+  "counts": {
+    "problems": "{count, plural, one {# Warnung oder Fehler} other {# Warnungen und Fehler}}"
+  },
+  "live": {
+    "pause": "Anhalten",
+    "resume": "Live"
+  },
+  "status": {
+    "entries": "{count, plural, one {# Eintrag} other {# Einträge}} geladen",
+    "live": "Live",
+    "paused": "Angehalten",
+    "kept": "Aufbewahrt für {count, plural, one {# Tag} other {# Tage}}"
+  },
+  "day": {
+    "today": "Heute, {date}",
+    "yesterday": "Gestern, {date}"
+  },
+  "columns": {
+    "time": "Zeit",
+    "level": "Stufe",
+    "source": "Quelle",
+    "message": "Meldung"
   }
 }

@@ -827,19 +827,67 @@ public sealed partial class StoreService(
         entry.GetProperty("architectures").EnumerateArray().Any(architecture => architecture.GetString() == BoxArchitecture)
         && VersionRange.Satisfies(options.BoxVersion, entry.GetProperty("pithyx").GetString() ?? "*");
 
-    /// <summary>The newest version of an app in a copy that this box can run.</summary>
+    /// <summary>
+    /// The newest version of an app in a copy that this box can run. A version published with an older manifest (version
+    /// 1, D388) stays in the catalog for good, but this box no longer installs it.
+    /// </summary>
     private (string Version, JsonElement Entry)? Newest(CatalogCopy copy, string appId) =>
         copy.Index.GetProperty("apps").TryGetProperty(appId, out var app)
             ? app.GetProperty("versions").EnumerateObject()
-                .Where(version => Fits(version.Value))
+                .Where(version => Fits(version.Value) && Readable(copy.Manifests[(appId, version.Name)]))
                 .Select(version => ((string Version, JsonElement Entry)?)(version.Name, version.Value))
                 .OrderByDescending(version => version!.Value.Version, Comparer<string>.Create(AppService.CompareVersions))
                 .FirstOrDefault()
             : null;
 
-    private StoreApp Summary(CatalogCopy copy, string appId, string version)
+    private static DateTimeOffset PublishedAt(JsonElement entry) =>
+        DateTimeOffset.Parse(entry.GetProperty("publishedAt").GetString()!, CultureInfo.InvariantCulture);
+
+    private static bool Readable(JsonElement manifest) => ManifestVersionOf(manifest) == Manifest.ManifestValidator.SupportedVersion;
+
+    private static int? ManifestVersionOf(JsonElement manifest) =>
+        manifest.TryGetProperty("manifestVersion", out var version) && version.ValueKind == JsonValueKind.Number && version.TryGetInt32(out var number) ? number : null;
+
+    /// <summary>Why this box cannot install a version, or null when it can (D393). The manifest version comes first: nothing else of it can be read.</summary>
+    private StoreIncompatible? Incompatibility(JsonElement entry, JsonElement manifest)
+    {
+        var range = entry.GetProperty("pithyx").GetString() ?? "*";
+        var architectures = entry.GetProperty("architectures").EnumerateArray().Select(architecture => architecture.GetString() ?? "").ToList();
+        var manifestVersion = ManifestVersionOf(manifest);
+        StoreIncompatibleReason? reason =
+            manifestVersion is not { } number || number < Manifest.ManifestValidator.SupportedVersion ? StoreIncompatibleReason.ManifestOld
+            : number > Manifest.ManifestValidator.SupportedVersion ? StoreIncompatibleReason.ManifestNew
+            : !architectures.Contains(BoxArchitecture) ? StoreIncompatibleReason.Architecture
+            : !VersionRange.Satisfies(options.BoxVersion, range) ? StoreIncompatibleReason.Box
+            : null;
+        return reason is { } found ? new StoreIncompatible(found, range, options.BoxVersion, architectures, BoxArchitecture, manifestVersion) : null;
+    }
+
+    /// <summary>
+    /// The version of an app the Store shows: the newest this box can run, otherwise the newest of all with why the box
+    /// cannot run it, so an app never vanishes from the Store only because this box is too old or too new for it (D393).
+    /// </summary>
+    private (string Version, JsonElement Entry, StoreIncompatible? Incompatible)? Shown(CatalogCopy copy, string appId)
+    {
+        if (Newest(copy, appId) is { } newest)
+        {
+            return (newest.Version, newest.Entry, null);
+        }
+        if (!copy.Index.GetProperty("apps").TryGetProperty(appId, out var app))
+        {
+            return null;
+        }
+        var latest = app.GetProperty("versions").EnumerateObject()
+            .OrderByDescending(version => version.Name, Comparer<string>.Create(AppService.CompareVersions))
+            .Select(version => ((string Version, JsonElement Entry)?)(version.Name, version.Value))
+            .FirstOrDefault();
+        return latest is { } found ? (found.Version, found.Entry, Incompatibility(found.Entry, copy.Manifests[(appId, found.Version)])) : null;
+    }
+
+    private StoreApp Summary(CatalogCopy copy, string appId, string version, StoreIncompatible? incompatible)
     {
         var manifest = copy.Manifests[(appId, version)];
+        var entry = copy.Entry(appId, version)!.Value;
         var installed = registry.Find(appId);
         return new StoreApp(
             copy.CatalogId,
@@ -852,10 +900,16 @@ public sealed partial class StoreService(
             manifest.TryGetProperty("license", out var license) ? license.GetString() ?? "" : "",
             $"/api/store/catalogs/{copy.CatalogId}/apps/{appId}/{version}/icon",
             installed?.Version,
-            installed is not null && AppService.CompareVersions(version, installed.Version) > 0);
+            installed is not null && incompatible is null && AppService.CompareVersions(version, installed.Version) > 0,
+            Words(manifest, "categories"),
+            Words(manifest, "keywords"),
+            manifest.TryGetProperty("maturity", out var maturity) ? maturity.GetString() ?? "stable" : "stable",
+            incompatible,
+            PublishedAt(entry),
+            Readable(manifest) && Manifest.ElevatedRights.IsCritical(manifest));
     }
 
-    /// <summary>Apps of the enabled catalogs (or one of them) whose id, name, description or author contains the query.</summary>
+    /// <summary>Apps of the enabled catalogs (or one of them) whose id, name, description, author or keywords (D389) contain the query.</summary>
     public async Task<StoreAppList> SearchAsync(ClaimsPrincipal caller, string? catalog, string? query, CancellationToken cancellationToken)
     {
         RequireAdmin(caller);
@@ -874,11 +928,11 @@ public sealed partial class StoreService(
                 {
                     continue;
                 }
-                if (Newest(copy, app.Name) is not { } newest)
+                if (Shown(copy, app.Name) is not { } shown)
                 {
                     continue;
                 }
-                var summary = Summary(copy, app.Name, newest.Version);
+                var summary = Summary(copy, app.Name, shown.Version, shown.Incompatible);
                 if (text.Length == 0 || Matches(summary, text))
                 {
                     results.Add(summary);
@@ -892,7 +946,8 @@ public sealed partial class StoreService(
         app.Id.Contains(text, StringComparison.OrdinalIgnoreCase)
         || app.Name.Values.Any(name => name.Contains(text, StringComparison.OrdinalIgnoreCase))
         || app.Description?.Values.Any(description => description.Contains(text, StringComparison.OrdinalIgnoreCase)) == true
-        || app.Author?.Contains(text, StringComparison.OrdinalIgnoreCase) == true;
+        || app.Author?.Contains(text, StringComparison.OrdinalIgnoreCase) == true
+        || app.Keywords.Any(keyword => keyword.Contains(text, StringComparison.OrdinalIgnoreCase));
 
     private async Task<CatalogCopy> CopyAsync(string catalogId, CancellationToken cancellationToken) =>
         (await EnabledCopiesAsync(cancellationToken)).FirstOrDefault(copy => copy.CatalogId == catalogId)
@@ -901,12 +956,15 @@ public sealed partial class StoreService(
     private static PithyxException AppNotFound(string appId, string version) =>
         new(ErrorCodes.StoreAppNotFound, new Dictionary<string, object?> { ["id"] = Shorten(appId), ["version"] = Shorten(version) });
 
-    /// <summary>The detail page of a catalog app: its newest fitting version, screenshots, source and every version.</summary>
+    /// <summary>
+    /// The detail page of a catalog app: its newest fitting version (or its newest version with why it does not fit),
+    /// screenshots, source and every version.
+    /// </summary>
     public async Task<StoreAppDetails> DetailsAsync(ClaimsPrincipal caller, string catalogId, string appId, CancellationToken cancellationToken)
     {
         RequireAdmin(caller);
         var copy = await CopyAsync(catalogId, cancellationToken);
-        var newest = Newest(copy, appId) ?? throw AppNotFound(appId, "");
+        var newest = Shown(copy, appId) ?? throw AppNotFound(appId, "");
         var entry = newest.Entry;
         var manifest = copy.Manifests[(appId, newest.Version)];
         var source = entry.GetProperty("source");
@@ -914,16 +972,21 @@ public sealed partial class StoreService(
             ? shots.EnumerateArray().Select(shot => $"/api/store/catalogs/{catalogId}/apps/{appId}/{newest.Version}/screenshots/{shot.GetProperty("name").GetString()}").ToList()
             : [];
         var versions = copy.Index.GetProperty("apps").GetProperty(appId).GetProperty("versions").EnumerateObject()
-            .Select(version => new StoreAppVersion(
-                version.Name,
-                DateTimeOffset.Parse(version.Value.GetProperty("publishedAt").GetString()!, CultureInfo.InvariantCulture),
-                version.Value.GetProperty("pithyx").GetString() ?? "*",
-                Fits(version.Value),
-                version.Value.TryGetProperty("dataVersion", out var data) ? data.GetInt32() : null))
+            .Select(version =>
+            {
+                var incompatible = Incompatibility(version.Value, copy.Manifests[(appId, version.Name)]);
+                return new StoreAppVersion(
+                    version.Name,
+                    PublishedAt(version.Value),
+                    version.Value.GetProperty("pithyx").GetString() ?? "*",
+                    incompatible is null,
+                    version.Value.TryGetProperty("dataVersion", out var data) ? data.GetInt32() : null,
+                    incompatible);
+            })
             .OrderByDescending(version => version.Version, Comparer<string>.Create(AppService.CompareVersions))
             .ToList();
         return new StoreAppDetails(
-            Summary(copy, appId, newest.Version),
+            Summary(copy, appId, newest.Version, newest.Incompatible),
             manifest,
             screenshots,
             manifest.TryGetProperty("homepage", out var homepage) ? homepage.GetString() : null,
@@ -1070,11 +1133,12 @@ public sealed partial class StoreService(
                     continue;
                 }
                 var manifest = copy.Manifests[(app.Id, newest.Version)];
-                var had = Strings(app.Manifest, "permissions");
-                var added = Strings(manifest, "permissions").Where(permission => !had.Contains(permission)).ToList();
-                var elevated = (IsRoot(manifest) && !IsRoot(app.Manifest)) || Elevated(manifest).Except(Elevated(app.Manifest)).Any();
+                var had = Manifest.ElevatedRights.PermissionsOf(app.Manifest);
+                var added = Manifest.ElevatedRights.PermissionsOf(manifest).Except(had, StringComparer.Ordinal).ToList();
+                var elevated = (IsRoot(manifest) && !IsRoot(app.Manifest)) || Manifest.ElevatedRights.Of(manifest).Except(Manifest.ElevatedRights.Of(app.Manifest)).Any();
+                var critical = Manifest.ElevatedRights.IsCritical(app.Manifest) || Manifest.ElevatedRights.IsCritical(manifest);
                 var effective = app.UpdatePolicy ?? policy;
-                updates.Add(new AppUpdate(app.Id, app.Version, newest.Version, copy.CatalogId, added, elevated, effective, effective == UpdatePolicy.Automatic && added.Count == 0 && !elevated));
+                updates.Add(new AppUpdate(app.Id, app.Version, newest.Version, copy.CatalogId, added, elevated, effective, UpdatesItself(effective, added.Count, elevated, critical), critical, Texts(manifest, "releaseNotes")));
                 break;
             }
         }
@@ -1082,16 +1146,16 @@ public sealed partial class StoreService(
         Changed?.Invoke();
     }
 
-    private static HashSet<string> Strings(JsonElement manifest, string property) =>
-        manifest.TryGetProperty(property, out var values) ? values.EnumerateArray().Select(value => value.GetString()!).ToHashSet(StringComparer.Ordinal) : [];
+    /// <summary>
+    /// Whether the box installs an update by itself (D329, D388): only under the automatic policy, and never when it asks
+    /// for new permissions or elevated rights or the app has a critical right (root on the box), so a hijacked release
+    /// of such an app cannot take over the box unseen. Those updates wait for one click of an administrator.
+    /// </summary>
+    public static bool UpdatesItself(UpdatePolicy policy, int addedPermissions, bool elevated, bool critical) =>
+        policy == UpdatePolicy.Automatic && addedPermissions == 0 && !elevated && !critical;
 
     private static bool IsRoot(JsonElement manifest) =>
         manifest.TryGetProperty("backend", out var backend) && backend.TryGetProperty("root", out var root) && root.ValueKind == JsonValueKind.True;
-
-    private static IEnumerable<string> Elevated(JsonElement manifest) =>
-        manifest.TryGetProperty("backend", out var backend) && backend.TryGetProperty("elevated", out var rights)
-            ? rights.EnumerateArray().Select(right => right.GetString()!)
-            : [];
 
     /// <summary>
     /// After a check: automatic updates start as jobs of the box (one failure does not stop the others), and the
@@ -1129,6 +1193,9 @@ public sealed partial class StoreService(
                 cancellationToken);
         }
     }
+
+    private static string[] Words(JsonElement manifest, string property) =>
+        manifest.TryGetProperty(property, out var words) ? [.. words.EnumerateArray().Select(word => word.GetString()!)] : [];
 
     private static Dictionary<string, string>? Texts(JsonElement element, string property) =>
         element.TryGetProperty(property, out var texts) && texts.ValueKind == JsonValueKind.Object
