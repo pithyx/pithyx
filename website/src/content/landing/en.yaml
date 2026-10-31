@@ -121,7 +121,7 @@ gallery:
       }
     - {
         image: '../../assets/screenshots/store.webp',
-        alt: 'The Store on Discover with a featured photo app and new and updated apps as cards',
+        alt: 'The Store on Discover with the Editor of the official catalog under New and updated, ready to update to 1.1.0',
         caption: 'Store: apps from catalogs or a file, with updates and a way back to the previous version.',
       }
     - {

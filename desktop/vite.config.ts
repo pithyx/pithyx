@@ -2,8 +2,8 @@ import optimizeLocales from '@react-aria/optimize-locales-plugin';
 import babel from '@rolldown/plugin-babel';
 import react, { reactCompilerPreset } from '@vitejs/plugin-react';
 import { createHash } from 'node:crypto';
-import { mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
-import { dirname, join, relative } from 'node:path';
+import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
+import { dirname, join, relative, resolve } from 'node:path';
 import { brotliCompressSync, constants, gzipSync } from 'node:zlib';
 import { defaultClientConditions, defaultServerConditions, defineConfig, type Plugin } from 'vite';
 import { compileMessages } from './scripts/compile-messages.ts';
@@ -32,6 +32,34 @@ function cssModuleTypes(): Plugin {
       if (file.endsWith('.module.css')) {
         writeDeclaration(file);
       }
+    },
+  };
+}
+
+// The design gallery has no daemon: icons of its sample apps that the desktop loads from /api/apps/<id>/icon (the
+// Store's installed apps) come from src/design/icons/<id>.svg, only for pages of design.html.
+function designIcons(): Plugin {
+  return {
+    name: 'pithyx-design-icons',
+    apply: 'serve',
+    configureServer(server) {
+      server.middlewares.use((request, response, next) => {
+        const match = /^\/api\/apps\/([a-z0-9.-]+)\/icon(?:\?|$)/.exec(request.url ?? '');
+        const file =
+          match === null
+            ? null
+            : resolve(import.meta.dirname, 'src/design/icons', `${match[1] ?? ''}.svg`);
+        if (
+          file === null ||
+          !(request.headers.referer ?? '').includes('/design.html') ||
+          !existsSync(file)
+        ) {
+          next();
+          return;
+        }
+        response.setHeader('content-type', 'image/svg+xml');
+        response.end(readFileSync(file));
+      });
     },
   };
 }
@@ -250,6 +278,7 @@ export default defineConfig({
     precompress(),
     bundleGraph(),
     devCompression(),
+    designIcons(),
   ],
   define: { __PITHYX_VERSION__: JSON.stringify(pithyxVersion) },
   // Workspace packages (the SDK, @pithyx/ui) are compiled from source.

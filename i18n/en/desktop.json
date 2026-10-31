@@ -231,10 +231,7 @@
         "preferences": "Personal settings"
       }
     },
-    "photos": "Photos",
-    "users": "Users",
-    "containers": "Containers",
-    "terminal": "Terminal"
+    "users": "Users"
   },
   "roles": {
     "administrator": "Administrator",

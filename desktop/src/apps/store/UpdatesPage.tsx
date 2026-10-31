@@ -183,6 +183,12 @@ function UpdateSettings({ app, state }: { app: PithyxApp; state: StoreState }) {
     },
   });
   const timeValid = /^([01][0-9]|2[0-3]):[0-5][0-9]$/.test(time);
+  // The time applies like the choice above it, when the field is left or with Enter (D394, #364).
+  const commitTime = () => {
+    if (timeValid && time !== settings.time && !save.isPending) {
+      save.mutate({ time });
+    }
+  };
 
   return (
     <FormSection title={t('settings.updates.title')}>
@@ -210,23 +216,21 @@ function UpdateSettings({ app, state }: { app: PithyxApp; state: StoreState }) {
         </fieldset>
       </FormRow>
       <FormRow label={t('settings.updates.time')} hint={t('settings.updates.timeHint')}>
-        <div className={styles.inline}>
+        <form
+          onSubmit={(event) => {
+            event.preventDefault();
+            commitTime();
+          }}
+        >
           <TextField
             value={time}
             inputMode="numeric"
             {...(timeValid ? {} : { errorMessage: t('settings.updates.timeInvalid') })}
             isInvalid={!timeValid}
             onChange={setTime}
+            onBlur={commitTime}
           />
-          <Button
-            isDisabled={!timeValid || time === settings.time || save.isPending}
-            onPress={() => {
-              save.mutate({ time });
-            }}
-          >
-            {t('settings.save')}
-          </Button>
-        </div>
+        </form>
       </FormRow>
       <p className={styles.muted}>{t('settings.updates.notifications')}</p>
       {save.isError && <ErrorNotice error={describeProblem(save.error)} />}

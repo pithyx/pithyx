@@ -308,7 +308,6 @@
     "empty": "Every installed app is up to date."
   },
   "settings": {
-    "save": "Save",
     "updates": {
       "title": "Updates",
       "policy": "When a catalog has a newer version",
@@ -323,7 +322,7 @@
         "none": "Updates only appear under Updates."
       },
       "time": "Daily check time",
-      "timeHint": "HH:MM in the box's time zone. Each box adds its own delay of up to an hour.",
+      "timeHint": "HH:MM in the box's time zone. Each box adds its own delay of up to an hour. Applies when you leave the field or press Enter.",
       "timeInvalid": "Enter a time like 03:00.",
       "next": "Next check: {time}",
       "last": "last check: {time}",
