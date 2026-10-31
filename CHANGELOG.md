@@ -62,6 +62,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Changed
 
+- The plain wallpaper leaves out the amber glow along with the boxes, so it is the petrol gradient alone.
 - The screenshots of the website and the design gallery show only what exists: the Store with the Editor of the official catalog and the empty community catalog, the Editor in the Pithyx menu, and notifications, log entries and processes the box really has, instead of invented apps and events. The daily check time of the Store's updates applies when the field is left, like the policy above it (#367).
 - The edit dialog of a shared folder and the SMB workgroup in Settings > **File services** apply at once like the switches around them: when the field is left or with Enter; their **Save** buttons are gone (#364).
 - Tables with two-line rows (users and groups, shared folders, home folders, disks) have taller rows with room above and below (52 px, D406, #358).

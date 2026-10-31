@@ -66,7 +66,8 @@
   }
 }
 
-/* The plain wallpaper keeps the colors and the glow without the boxes. */
-.wallpaper[data-plain] g {
+/* The plain wallpaper keeps the petrol gradient alone, without the boxes and their amber glow. */
+.wallpaper[data-plain] g,
+.wallpaper[data-plain] .glow {
   display: none;
 }
