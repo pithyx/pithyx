@@ -45,7 +45,7 @@
       "name": "Name",
       "description": "Description",
       "datasetKept": "Renaming changes only the name users see; the dataset keeps its name.",
-      "save": "Save",
+      "atOnce": "Every change here applies at once: a name or description when you leave its field or press Enter.",
       "saved": "Saved.",
       "rights": "Rights",
       "rightsIntro": "Changes apply right away. A user gets the most that it or one of its groups is given; administrators can always read and change everything.",
@@ -235,7 +235,6 @@
   },
   "fileServices": {
     "intro": "File services let other computers open your shared folders over the network. Users sign in with their Pithyx user name and password.",
-    "save": "Save",
     "service": "Service",
     "connect": "Connect",
     "firewall": {
@@ -258,7 +257,7 @@
       "explain": "Network drives for Windows, macOS and Linux. Only encrypted, signed connections of current systems (SMB 3) are accepted.",
       "switch": "Offer shared folders over SMB",
       "workgroup": "Workgroup",
-      "workgroupHint": "Up to 15 letters, digits, dots, dashes and underscores. Most networks use WORKGROUP.",
+      "workgroupHint": "Up to 15 letters, digits, dots, dashes and underscores. Most networks use WORKGROUP. Applies when you leave the field or press Enter.",
       "windows": "Windows: in File Explorer, enter",
       "mac": "macOS and Linux: connect to the server",
       "trash": "Files deleted over SMB go to the shared folder's recycle bin, where Files can restore them.",

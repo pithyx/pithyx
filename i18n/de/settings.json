@@ -45,7 +45,7 @@
       "name": "Name",
       "description": "Beschreibung",
       "datasetKept": "Umbenennen ändert nur den Namen, den Benutzer sehen; das Dataset behält seinen Namen.",
-      "save": "Speichern",
+      "atOnce": "Jede Änderung hier gilt sofort: Name und Beschreibung, sobald du das Feld verlässt oder Enter drückst.",
       "saved": "Gespeichert.",
       "rights": "Rechte",
       "rightsIntro": "Änderungen gelten sofort. Ein Benutzer bekommt das Meiste, was ihm selbst oder einer seiner Gruppen gegeben ist; Administratoren können immer alles lesen und ändern.",
@@ -235,7 +235,6 @@
   },
   "fileServices": {
     "intro": "Mit Dateidiensten öffnen andere Computer deine freigegebenen Ordner über das Netzwerk. Benutzer melden sich mit ihrem Pithyx-Benutzernamen und Passwort an.",
-    "save": "Speichern",
     "service": "Dienst",
     "connect": "Verbinden",
     "firewall": {
@@ -258,7 +257,7 @@
       "explain": "Netzlaufwerke für Windows, macOS und Linux. Angenommen werden nur verschlüsselte, signierte Verbindungen aktueller Systeme (SMB 3).",
       "switch": "Freigegebene Ordner über SMB anbieten",
       "workgroup": "Arbeitsgruppe",
-      "workgroupHint": "Bis zu 15 Buchstaben, Ziffern, Punkte, Bindestriche und Unterstriche. Die meisten Netzwerke nutzen WORKGROUP.",
+      "workgroupHint": "Bis zu 15 Buchstaben, Ziffern, Punkte, Bindestriche und Unterstriche. Die meisten Netzwerke nutzen WORKGROUP. Gilt, sobald du das Feld verlässt oder Enter drückst.",
       "windows": "Windows: gib im Datei-Explorer ein",
       "mac": "macOS und Linux: verbinde dich mit dem Server",
       "trash": "Über SMB gelöschte Dateien landen im Papierkorb des freigegebenen Ordners, wo Dateien sie wiederherstellt.",
