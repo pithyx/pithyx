@@ -31,7 +31,8 @@ export default defineConfig({
       title: 'Pithyx',
       description: 'Free, self-hosted NAS and server OS with a web desktop.',
       logo: { src: './src/assets/logo.svg', replacesTitle: false },
-      favicon: '/favicon.svg',
+      // A new name whenever the icon changes: browsers keep a favicon long after it was replaced.
+      favicon: '/pithyx-icon.svg',
       defaultLocale: 'root',
       locales: {
         root: { label: 'English', lang: 'en' },
