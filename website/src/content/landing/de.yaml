@@ -120,7 +120,7 @@ gallery:
       }
     - {
         image: '../../assets/screenshots/store.de.webp',
-        alt: 'Der Store auf Entdecken mit einer hervorgehobenen Foto-App und neuen und aktualisierten Apps als Karten',
+        alt: 'Der Store auf Entdecken mit dem Editor aus dem offiziellen Katalog unter Neu und aktualisiert, bereit für das Update auf 1.1.0',
         caption: 'Store: Apps aus Katalogen oder aus einer Datei, mit Updates und einem Weg zurück zur vorigen Version.',
       }
     - {

@@ -31,7 +31,7 @@ Each app gets a dataset `<pool>/pithyx/apps/<id>`, mounted at `/<pool>/.pithyx/a
 
 ## Updates and rollback
 
-![The page Updates with an update of Media Server and its release notes, and the update settings with the policy Tell administrators and the daily check time 03:00](../../../../assets/screenshots/store-update-settings.webp)
+![The page Updates with the update of the Editor from 1.0.0 to 1.1.0 and its release notes, and the update settings with the policy Tell administrators and the daily check time 03:00](../../../../assets/screenshots/store-update-settings.webp)
 
 _The page Updates: waiting updates, what happens with new versions and when the box checks._
 

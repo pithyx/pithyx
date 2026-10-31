@@ -5,6 +5,7 @@ import type { FileEntry, FolderPage, ShareInfo, TrashPage } from '@pithyx/sdk';
 import type { LogCount, LogEntry, LogStatus } from '../apps/sdk/logs';
 import type { ProcessList, ResourceSample, ResourceSnapshot } from '../apps/sdk/monitor';
 import type { AdminAppList, AppDetails, StoreAppSummary, StoreState } from '../apps/sdk/store';
+import editorSvg from './icons/org.pithyx.editor.svg?raw';
 import { local } from './sampleLanguage';
 import type { NotificationMatrix } from '../apps/sdk/notifications';
 import { EVENT_CODES } from '../apps/settings/NotificationMatrix';
@@ -162,19 +163,25 @@ export const sampleLogEntries: LogEntry[] = [
     209,
     '2026-09-26T12:28:13Z',
     'error',
-    'app/org.example.photos',
-    'Thumbnail worker stopped: out of memory',
+    'store',
+    'Catalog org.pithyx.community not fetched: the repository did not answer',
     {
-      data: { exitCode: '137', container: 'worker' },
+      data: { catalog: 'org.pithyx.community', code: 'store.catalog.unreachable' },
     },
   ),
-  entry(208, '2026-09-26T12:12:11Z', 'info', 'app/org.example.notes', 'Backend started'),
+  entry(
+    208,
+    '2026-09-26T12:12:11Z',
+    'info',
+    'app/org.pithyx.editor',
+    'Opened notes.md in a new tab',
+  ),
   entry(
     207,
     '2026-09-26T12:12:09Z',
     'info',
     'store',
-    'Notes 2.4.1 installed from the official catalog',
+    'org.pithyx.editor 1.0.0 installed from the official catalog',
     {
       user: 'anna',
     },
@@ -231,15 +238,14 @@ export const sampleLogSources = [
   'shares',
   'storage',
   'store',
-  'app/org.example.notes',
-  'app/org.example.photos',
+  'app/org.pithyx.editor',
 ];
 
 export const sampleLogCounts: LogCount[] = [
   { source: 'storage', warnings: 1, errors: 1 },
   { source: 'auth', warnings: 1, errors: 0 },
   { source: 'network', warnings: 1, errors: 0 },
-  { source: 'app/org.example.photos', warnings: 0, errors: 1 },
+  { source: 'store', warnings: 0, errors: 1 },
 ];
 
 export const sampleLogStatus: LogStatus = {
@@ -371,7 +377,7 @@ export const sampleProcesses: ProcessList = {
     process(812, 'z_rd_int', 'root', 14.2, 0),
     process(1204, 'pithyx-daemon', 'pithyx', 2.1, 148_000_000),
     process(2210, 'smbd', 'anna', 1.6, 42_000_000),
-    process(3318, 'thumbnailer', 'app-40012', 1.2, 212_000_000),
+    process(3318, 'dockerd', 'root', 1.2, 212_000_000),
     process(3302, 'node', 'app-40007', 0.6, 96_000_000),
     process(931, 'sshd', 'root', 0.1, 9_400_000),
     process(1, 'systemd', 'root', 0, 13_100_000),
@@ -384,11 +390,8 @@ export const monitorEvents: Record<string, unknown> = {
   'internal.admin.monitor.processes': sampleProcesses,
 };
 
-// App icons as tinted tiles with a simple glyph, drawn here so the gallery needs no package.
-const icon = (tile: string, glyph: string, path: string) =>
-  `data:image/svg+xml,${encodeURIComponent(
-    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><rect width="48" height="48" rx="10" fill="${tile}"/><path d="${path}" fill="none" stroke="${glyph}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
-  )}`;
+/** The Editor's own icon from pithyx/apps-official, the one app of the official catalog. */
+export const editorIcon = `data:image/svg+xml,${encodeURIComponent(editorSvg)}`;
 
 const storeApp = (
   id: string,
@@ -421,86 +424,24 @@ const storeApp = (
   ...extra,
 });
 
+// The Store as a box sees it today: the official catalog has the Editor alone (1.1.0, published on 2026-10-28; this box
+// still has 1.0.0), and the community catalog is empty. No invented apps (#367).
+const editorDescription = {
+  en: 'Edit text, configuration and code files with syntax highlighting, write Markdown with a live preview, and change binary files byte by byte in the hex editor. Several files open as tabs, and every window is on its own.',
+  de: 'Bearbeite Text-, Konfigurations- und Codedateien mit Syntaxhervorhebung, schreibe Markdown mit Live-Vorschau und ändere Binärdateien Byte für Byte im Hex-Editor. Mehrere Dateien öffnen sich als Tabs, und jedes Fenster ist für sich.',
+};
+
 export const sampleStoreApps: StoreAppSummary[] = [
   storeApp(
-    'org.example.photos',
-    { en: 'Photo Library', de: 'Fotobibliothek' },
-    {
-      en: 'Browse, tag and share the photos on your shared folders, with albums and faces found on the box.',
-      de: 'Fotos in deinen freigegebenen Ordnern ansehen, verschlagworten und teilen, mit Alben und Gesichtern, die die Box findet.',
-    },
-    'Example Photo Team',
-    ['photos'],
-    '3.2.0',
-    '2026-09-24T10:00:00Z',
-    icon('#dbe8f7', '#1f4f86', 'M10 34l9-10 7 7 5-5 7 8M10 12h28v24H10z'),
-  ),
-  storeApp(
-    'org.example.notes',
-    { en: 'Notes', de: 'Notizen' },
-    {
-      en: 'Plain text notes with folders and search, kept in your home folder.',
-      de: 'Notizen als reiner Text mit Ordnern und Suche, in deinem Home-Ordner.',
-    },
-    'Example Labs',
-    ['productivity'],
-    '2.4.1',
-    '2026-09-20T09:30:00Z',
-    icon('#f6ead0', '#7a4d0b', 'M14 10h20v28H14zM19 18h10M19 24h10M19 30h6'),
-    { installedVersion: '2.4.1' },
-  ),
-  storeApp(
-    'org.example.media',
-    { en: 'Media Server', de: 'Medienserver' },
-    {
-      en: 'Streams films and music from your shared folders to the devices of your home.',
-      de: 'Spielt Filme und Musik aus deinen freigegebenen Ordnern auf den Geräten zu Hause ab.',
-    },
-    'Example Media Group',
-    ['media'],
-    '1.8.0',
-    '2026-09-18T14:00:00Z',
-    icon('#e5dff4', '#4b3592', 'M12 14h24v20H12zM21 19l8 5-8 5z'),
-    { installedVersion: '1.7.2', update: true },
-  ),
-  storeApp(
-    'org.example.backup',
-    { en: 'Offsite Backup', de: 'Externe Sicherung' },
-    {
-      en: 'Copies chosen shared folders, encrypted, to a second box or a disk of your own.',
-      de: 'Kopiert ausgewählte freigegebene Ordner verschlüsselt auf eine zweite Box oder eine eigene Platte.',
-    },
-    'Example Backup Project',
-    ['backup'],
-    '0.9.4',
-    '2026-09-12T08:00:00Z',
-    icon('#d8efe6', '#1d6b4f', 'M24 10v20M16 22l8 8 8-8M12 36h24'),
-  ),
-  storeApp(
-    'org.example.recipes',
-    { en: 'Recipe Box', de: 'Rezeptkiste' },
-    {
-      en: 'Collect recipes, plan the week and print a shopping list.',
-      de: 'Rezepte sammeln, die Woche planen und eine Einkaufsliste drucken.',
-    },
-    'Example Kitchen',
-    ['productivity'],
-    '1.2.0',
-    '2026-09-03T12:00:00Z',
-    icon('#f9e1dc', '#8c2f1c', 'M14 20h20v16H14zM18 20v-6h12v6'),
-  ),
-  storeApp(
-    'org.example.monitor',
-    { en: 'Uptime Watch', de: 'Online-Wächter' },
-    {
-      en: 'Checks your websites and devices and tells you when one stops answering.',
-      de: 'Prüft deine Websites und Geräte und meldet, wenn eines nicht mehr antwortet.',
-    },
-    'Example Ops',
-    ['tools'],
-    '2.0.3',
-    '2026-08-27T16:00:00Z',
-    icon('#dcecef', '#1e5f6b', 'M10 26h7l4-9 6 16 4-7h7'),
+    'org.pithyx.editor',
+    { en: 'Editor', de: 'Editor' },
+    editorDescription,
+    'The Pithyx project',
+    ['office', 'development'],
+    '1.1.0',
+    '2026-10-28T20:42:05Z',
+    editorIcon,
+    { installedVersion: '1.0.0', update: true },
   ),
 ];
 
@@ -534,10 +475,7 @@ const installed = (
 
 export const sampleInstalledApps: AdminAppList = {
   pool: 'tank',
-  apps: [
-    installed('org.example.notes', '2.4.1', { en: 'Notes', de: 'Notizen' }, '2.3.0'),
-    installed('org.example.media', '1.7.2', { en: 'Media Server', de: 'Medienserver' }),
-  ],
+  apps: [installed('org.pithyx.editor', '1.0.0', { en: 'Editor', de: 'Editor' })],
 };
 
 export const sampleStoreState: StoreState = {
@@ -550,18 +488,18 @@ export const sampleStoreState: StoreState = {
   },
   updates: [
     {
-      id: 'org.example.media',
+      id: 'org.pithyx.editor',
       catalog: 'org.pithyx.official',
-      installedVersion: '1.7.2',
-      version: '1.8.0',
+      installedVersion: '1.0.0',
+      version: '1.1.0',
       policy: 'notify',
       automatic: false,
       critical: false,
       elevated: false,
       addedPermissions: [],
       releaseNotes: {
-        en: 'Faster library scans and subtitles in more languages.',
-        de: 'Schnelleres Durchsuchen der Bibliothek und Untertitel in mehr Sprachen.',
+        en: 'Follows manifest version 2: each permission says why the Editor needs it.',
+        de: 'Folgt Manifest-Version 2: Jede Berechtigung sagt, warum der Editor sie braucht.',
       },
     },
   ],
@@ -581,8 +519,31 @@ export const sampleStoreState: StoreState = {
       verifiedAt: '2026-09-26T01:00:11Z',
       checkedAt: '2026-09-26T01:00:11Z',
       commit: null,
-      sequence: 12,
-      appCount: 6,
+      sequence: 3,
+      appCount: 1,
+      errorCode: null,
+      errorParams: null,
+      hasRegistryToken: false,
+      hostKey: null,
+      sshPublicKey: null,
+    },
+    {
+      key: 2,
+      id: 'org.pithyx.community',
+      kind: 'community',
+      url: 'https://github.com/pithyx/apps-community.git',
+      name: { en: 'Community apps', de: 'Community-Apps' },
+      description: null,
+      homepage: null,
+      enabled: true,
+      busy: false,
+      status: 'ok',
+      verified: true,
+      verifiedAt: '2026-09-26T01:00:11Z',
+      checkedAt: '2026-09-26T01:00:11Z',
+      commit: null,
+      sequence: 1,
+      appCount: 0,
       errorCode: null,
       errorParams: null,
       hasRegistryToken: false,

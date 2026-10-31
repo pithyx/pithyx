@@ -308,7 +308,6 @@
     "empty": "Alle installierten Apps sind aktuell."
   },
   "settings": {
-    "save": "Speichern",
     "updates": {
       "title": "Updates",
       "policy": "Wenn ein Katalog eine neuere Version hat",
@@ -323,7 +322,7 @@
         "none": "Updates erscheinen nur unter Updates."
       },
       "time": "Tägliche Prüfzeit",
-      "timeHint": "HH:MM in der Zeitzone der Box. Jede Box wartet zusätzlich bis zu einer Stunde.",
+      "timeHint": "HH:MM in der Zeitzone der Box. Jede Box wartet zusätzlich bis zu einer Stunde. Gilt, sobald du das Feld verlässt oder Enter drückst.",
       "timeInvalid": "Gib eine Uhrzeit wie 03:00 ein.",
       "next": "Nächste Prüfung: {time}",
       "last": "letzte Prüfung: {time}",

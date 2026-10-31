@@ -31,7 +31,7 @@ Jede App bekommt ein Dataset `<pool>/pithyx/apps/<id>`, eingehängt unter `/<poo
 
 ## Updates und Rollback
 
-![Die Seite Updates mit einem Update von Media Server und seinen Versionshinweisen und den Update-Einstellungen mit der Regel Administratoren benachrichtigen und der täglichen Prüfzeit 03:00](../../../../../assets/screenshots/store-update-settings.de.webp)
+![Die Seite Updates mit dem Update des Editors von 1.0.0 auf 1.1.0 und seinen Versionshinweisen und den Update-Einstellungen mit der Regel Administratoren benachrichtigen und der täglichen Prüfzeit 03:00](../../../../../assets/screenshots/store-update-settings.de.webp)
 
 _Die Seite Updates: wartende Updates, was mit neuen Versionen passiert und wann die Box prüft._
 

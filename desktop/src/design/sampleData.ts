@@ -3,7 +3,6 @@ import type { RecentFile } from '../apps/files/recent';
 // files, folders, pools and notes) and raw values that the formatters turn into localized text.
 import {
   IconActivity,
-  IconBox,
   IconBuildingStore,
   IconFileText,
   IconFileTypePdf,
@@ -11,9 +10,7 @@ import {
   IconFolder,
   IconFolders,
   IconListDetails,
-  IconPhoto,
   IconSettings,
-  IconTerminal2,
   IconUserCog,
 } from '../ui/icons';
 import type { components } from '@pithyx/api-client';
@@ -23,7 +20,7 @@ import type { Language } from '../i18n';
 import type { JobItem, NotificationItem } from '../shell/Notifications';
 import type { StartEntry } from '../shell/StartMenu';
 import type { AppInfo } from '../shell/types';
-import { sampleFolder } from './appSamples';
+import { editorIcon, sampleFolder } from './appSamples';
 import { local } from './sampleLanguage';
 
 export const appDefinitions = {
@@ -33,10 +30,9 @@ export const appDefinitions = {
   settings: { id: coreAppIds.settings, icon: IconSettings, tone: 'graphite' },
   store: { id: coreAppIds.store, icon: IconBuildingStore, tone: 'indigo' },
   preferences: { id: coreAppIds.preferences, icon: IconUserCog, tone: 'ocean' },
-  photos: { id: 'photos', icon: IconPhoto, tone: 'rose' },
-  containers: { id: 'containers', icon: IconBox, tone: 'moss' },
-  terminal: { id: 'terminal', icon: IconTerminal2, tone: 'amber' },
-} satisfies Record<string, Omit<AppInfo, 'name'>>;
+  // The one app of the official catalog (pithyx/apps-official), with its own icon; no invented apps (#367).
+  editor: { id: 'org.pithyx.editor', icon: editorIcon, tone: 'petrol', name: 'Editor' },
+} satisfies Record<string, Omit<AppInfo, 'name'> & { name?: string }>;
 
 export type AppId = keyof typeof appDefinitions;
 export type Apps = Record<AppId, AppInfo>;
@@ -47,9 +43,12 @@ export function useApps(): Apps {
   const apps = {} as Apps;
   for (const [id, definition] of Object.entries(appDefinitions) as [
     AppId,
-    Omit<AppInfo, 'name'>,
+    Omit<AppInfo, 'name'> & { name?: string },
   ][]) {
-    apps[id] = { ...definition, name: appName(definition.id) };
+    apps[id] = {
+      ...definition,
+      name: 'name' in definition ? definition.name : appName(definition.id),
+    };
   }
   return apps;
 }
@@ -82,7 +81,7 @@ export const desktopShortcuts: AppId[] = ['files', 'settings'];
 /** The menu's app list by area, as the desktop groups it: System for administrators, Apps, You. */
 export const startApps = {
   system: ['files', 'settings', 'monitor', 'logs', 'store'],
-  apps: ['photos', 'containers', 'terminal'],
+  apps: ['editor'],
   you: ['preferences'],
 } as const satisfies Record<string, readonly AppId[]>;
 
@@ -148,7 +147,7 @@ export const startRecent: RecentFile[] = [
   },
 ];
 
-/** A query that matches the Photos app in each language. */
+/** A query that matches settings pages and a folder in each language. */
 export const searchQuery: Record<Language, string> = { en: 'sha', de: 'frei' };
 
 export const searchFiles: StartEntry[] = [
@@ -171,7 +170,7 @@ export function notifications(apps: Apps): NotificationItem[] {
     {
       id: 'n1',
       app: apps.settings,
-      message: { code: 'storage.scrub.finished', params: { pool: 'tank', errors: 0 } },
+      message: { code: 'update.installed', params: { version: '1.2.1' } },
       minutesAgo: 2,
       unread: true,
       tone: 'success',
@@ -179,15 +178,15 @@ export function notifications(apps: Apps): NotificationItem[] {
     {
       id: 'n2',
       app: apps.settings,
-      message: { code: 'storage.disk.warm', params: { disk: 3, pool: 'tank', temperature: 52 } },
+      message: { code: 'storage.alert.capacityWarning', params: { pool: 'fast', percent: 85 } },
       minutesAgo: 14,
       unread: true,
       tone: 'warning',
     },
     {
       id: 'n3',
-      app: apps.containers,
-      message: { code: 'apps.update.available', params: { app: 'Immich', version: '2.4.1' } },
+      app: apps.store,
+      message: { code: 'store.updates.available', params: { count: 1, apps: 'Editor 1.1.0' } },
       minutesAgo: 95,
     },
   ];
