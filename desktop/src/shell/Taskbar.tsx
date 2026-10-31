@@ -7,7 +7,7 @@ import {
   IconSquare,
   IconX,
 } from '../ui/icons';
-import { useEffect, useRef, useState, type Ref } from 'react';
+import { useEffect, useRef, useState, type ReactNode, type Ref } from 'react';
 import { Button as AriaButton } from 'react-aria-components';
 import { useTranslation } from 'react-i18next';
 import {
@@ -52,6 +52,8 @@ export interface TaskbarProps {
   notificationsRef?: Ref<HTMLButtonElement>;
   /** A horizontal swipe along the bar: 1 for the next app, -1 for the previous one. */
   onSwipe?: (direction: 1 | -1) => void;
+  /** The box's state at the start of the status area, for administrators only (D394). */
+  boxStatus?: ReactNode;
 }
 
 // Creating Intl formatters is slow; the clock needs the same three for every render.
@@ -94,6 +96,7 @@ export function Taskbar({
   switcherRef,
   notificationsRef,
   onSwipe,
+  boxStatus,
 }: TaskbarProps) {
   const { t } = useTranslation();
   const formats = clockFormats(locale);
@@ -292,6 +295,7 @@ export function Taskbar({
       </AriaButton>
 
       <div className={styles.status}>
+        {boxStatus !== undefined && <div className={styles.boxStatus}>{boxStatus}</div>}
         <TransfersButton position={position} />
         {jobs > 0 && (
           <AriaButton

@@ -39,20 +39,28 @@ export function EditShareDialog({
   const queryClient = useQueryClient();
   const [name, setName] = useState(share.name);
   const [description, setDescription] = useState(share.description);
+  // What the box has, so a field left unchanged sends nothing.
+  const [saved, setSaved] = useState({ name: share.name, description: share.description });
   const save = useMutation({
-    mutationFn: () =>
+    mutationFn: (next: { name: string; description: string }) =>
       internalCall(app, 'internal.admin.shares.update', {
         shareId: share.id,
-        ...(name.trim() === share.name ? {} : { name }),
-        ...(description.trim() === share.description ? {} : { description }),
+        ...(next.name.trim() === saved.name ? {} : { name: next.name }),
+        ...(next.description.trim() === saved.description ? {} : { description: next.description }),
       }),
     onSuccess: (updated) => {
+      setSaved({ name: updated.name, description: updated.description });
       queryClient.setQueryData<ShareDetails[]>(shareListKey, (list) =>
         list?.map((entry) => (entry.id === updated.id ? updated : entry)),
       );
     },
   });
-  const changed = name.trim() !== share.name || description.trim() !== share.description;
+  // Like every other setting of the dialog, name and description apply at once: when the field is left or with Enter.
+  const commit = () => {
+    if (name.trim() !== saved.name || description.trim() !== saved.description) {
+      save.mutate({ name, description });
+    }
+  };
 
   return (
     <Dialog
@@ -71,11 +79,10 @@ export function EditShareDialog({
           aria-label={t('shares.editDialog.details')}
           onSubmit={(event) => {
             event.preventDefault();
-            if (changed) {
-              save.mutate();
-            }
+            commit();
           }}
         >
+          <p className={styles.muted}>{t('shares.editDialog.atOnce')}</p>
           <TextField
             label={t('shares.editDialog.name')}
             {...(share.dataset === null ? {} : { description: t('shares.editDialog.datasetKept') })}
@@ -84,6 +91,7 @@ export function EditShareDialog({
               setName(value);
               save.reset();
             }}
+            onBlur={commit}
             autoComplete="off"
             maxLength={64}
           />
@@ -94,19 +102,17 @@ export function EditShareDialog({
               setDescription(value);
               save.reset();
             }}
+            onBlur={commit}
             autoComplete="off"
             maxLength={200}
           />
-          <div className={styles.buttons}>
-            <Button type="submit" variant="primary" isDisabled={!changed || save.isPending}>
-              {t('shares.editDialog.save')}
-            </Button>
-            {save.isSuccess && (
-              <p className={styles.muted} role="status">
-                {t('shares.editDialog.saved')}
-              </p>
-            )}
-          </div>
+          {/* Enter in a field applies it; the button is never shown. */}
+          <button type="submit" hidden />
+          {save.isSuccess && (
+            <p className={styles.muted} role="status">
+              {t('shares.editDialog.saved')}
+            </p>
+          )}
           {save.isError && <ErrorNotice error={describeProblem(save.error)} />}
         </form>
         {share.dataset !== null && <ShareProtocols app={app} share={share} />}

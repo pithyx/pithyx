@@ -196,8 +196,11 @@ public static class JournalParser
 
     // The app of a container line: Docker's journald driver writes the label com.pithyx.app as COM_PITHYX_APP (D309).
     // Only the daemon sets that label (the Compose rewriter refuses it from developers), but the id is checked anyway.
+    // A container an app started through its Docker socket carries com.pithyx.spawned-by instead (D387).
     private static string? AppOf(JsonElement root) =>
-        Text(root, "_SYSTEMD_UNIT") == "docker.service" && Text(root, "COM_PITHYX_APP") is { } app && Apps.Manifest.AppId.IsValid(app) ? app : null;
+        Text(root, "_SYSTEMD_UNIT") == "docker.service"
+        && (Text(root, "COM_PITHYX_APP") ?? Text(root, "COM_PITHYX_SPAWNED_BY")) is { } app
+        && Apps.Manifest.AppId.IsValid(app) ? app : null;
 
     private static string SourceOf(JsonElement root)
     {

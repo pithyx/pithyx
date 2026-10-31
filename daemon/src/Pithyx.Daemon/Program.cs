@@ -23,12 +23,14 @@ using Pithyx.Daemon.Realtime;
 using Pithyx.Daemon.ReverseProxy;
 using Pithyx.Daemon.Shares;
 using Pithyx.Daemon.Storage;
+using Pithyx.Daemon.Storage.Encryption;
 using Pithyx.Daemon.Storage.Health;
 using Pithyx.Daemon.Storage.Snapshots;
 using Pithyx.Daemon.Storage.Zfs;
 using Pithyx.Daemon.SystemSettings;
 using Pithyx.Daemon.Tls;
 using Pithyx.Daemon.Updates;
+using Pithyx.Daemon.Ups;
 using Pithyx.Daemon.Users;
 using Scalar.AspNetCore;
 using Serilog;
@@ -121,6 +123,7 @@ builder.Services.AddSingleton<TopicRegistry>();
 builder.Services.AddSingleton<TopicHub>();
 builder.Services.AddPithyxMonitoring();
 builder.Services.AddPithyxSystemSettings(mode);
+builder.Services.AddPithyxUps(mode, watch: !BuildTimeDocument.IsGenerating && !installer.Active);
 builder.Services.AddPithyxNetwork(mode);
 builder.Services.AddPithyxTls(new TlsOptions(Path.Combine(Path.GetDirectoryName(paths.DatabasePath) ?? ".", "tls"), https, ReadHost: mode == DaemonMode.Real));
 builder.Services.AddPithyxReverseProxy();
@@ -142,6 +145,12 @@ builder.Services.AddSingleton<PoolImportScanner>();
 builder.Services.AddSingleton<StoragePlanner>();
 builder.Services.AddSingleton<CommandPlanStore>();
 builder.Services.AddSingleton<CommandPlanRunner>();
+builder.Services.AddSingleton(new KeyVault(Path.Combine(Path.GetDirectoryName(paths.DatabasePath) ?? ".", "pool-keys")));
+builder.Services.AddSingleton(services => new UsbKeyDrive(
+    services.GetRequiredService<ICommandRunner>(),
+    mode == DaemonMode.Real ? "/run/pithyx/usb-key" : Path.Combine(Path.GetDirectoryName(paths.DatabasePath) ?? ".", "usb-key"),
+    services.GetRequiredService<ILogger<UsbKeyDrive>>()));
+builder.Services.AddSingleton<PoolEncryptionService>();
 builder.Services.AddSingleton<SystemStateService>();
 builder.Services.AddPithyxSnapshots();
 builder.Services.AddPithyxStorageHealth();
@@ -153,6 +162,7 @@ if (!BuildTimeDocument.IsGenerating)
     if (!installer.Active)
     {
         builder.Services.AddPithyxStorageHealthMonitor();
+        builder.Services.AddHostedService(services => services.GetRequiredService<PoolEncryptionService>());
     }
     if (mode == DaemonMode.Real && !installer.Active)
     {
@@ -171,6 +181,7 @@ if (!BuildTimeDocument.IsGenerating)
         builder.Services.AddHostedService(services => services.GetRequiredService<BoxCertificates>());
         builder.Services.AddHostedService(services => services.GetRequiredService<Pithyx.Daemon.FileServices.Ftp.FtpServer>());
         builder.Services.AddHostedService(services => services.GetRequiredService<ProxyService>());
+        builder.Services.AddHostedService(services => services.GetRequiredService<Pithyx.Daemon.ReverseProxy.AcmeService>());
         builder.Services.AddHostedService(services => services.GetRequiredService<StreamForwarder>());
     }
 }
@@ -302,6 +313,7 @@ if (!installer.Active)
     api.MapTlsEndpoints();
     api.MapProxyEndpoints();
     api.MapUpdateEndpoints();
+    api.MapUpsEndpoints();
     api.MapPowerEndpoint();
     api.MapBackupEndpoints();
     api.MapAppEndpoints();

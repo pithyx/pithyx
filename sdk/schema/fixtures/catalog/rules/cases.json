@@ -153,6 +153,22 @@
       ]
     },
     {
+      "name": "no privacy in the manifest",
+      "manifest": {
+        "privacy": null
+      },
+      "expected": [
+        {
+          "code": "store.catalog.rule_violation",
+          "params": {
+            "rule": "manifest_field",
+            "path": "apps/com.example.notes/pithyx.json",
+            "field": "privacy"
+          }
+        }
+      ]
+    },
+    {
       "name": "a license that is not OSI approved",
       "manifest": {
         "license": "BUSL-1.1"
@@ -1180,6 +1196,34 @@
           }
         }
       ]
+    },
+    {
+      "name": "the raw Docker socket in a catalog, allowed with informed consent (D388)",
+      "manifest": {
+        "permissions": {
+          "docker.socket.raw": {
+            "reason": {
+              "en": "Manages the containers of the box."
+            }
+          }
+        },
+        "backend": {
+          "compose": "backend/compose.yaml",
+          "endpoints": {
+            "api": {
+              "service": "server",
+              "port": 8080
+            }
+          },
+          "lifecycle": "onDemand"
+        }
+      },
+      "files": {
+        "backend/compose.dev.yaml": {
+          "text": "services:\n  server:\n    build: ./server\n    volumes:\n      - /var/run/docker.sock:/var/run/docker.sock\n"
+        }
+      },
+      "expected": []
     }
   ]
 }

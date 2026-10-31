@@ -1,17 +1,35 @@
 {
-  "manifestVersion": 1,
+  "manifestVersion": 2,
   "id": "com.example.package-fixture",
   "version": "1.0.0",
-  "name": { "en": "Package fixture", "de": "Paket-Beispiel" },
-  "description": { "en": "A project that pithyx pack turns into the package next to it." },
-  "author": { "name": "Pithyx" },
+  "name": {
+    "en": "Package fixture",
+    "de": "Paket-Beispiel"
+  },
+  "description": {
+    "en": "A project that pithyx pack turns into the package next to it."
+  },
+  "author": {
+    "name": "Pithyx"
+  },
   "license": "MIT",
   "entry": "frontend/index.html",
   "sdk": "^1.0.0-rc.2",
-  "permissions": [],
+  "arch": [
+    "amd64",
+    "arm64"
+  ],
+  "source": "https://github.com/example/app",
+  "permissions": {},
   "window": {
     "instances": "multi",
-    "defaultSize": { "width": 480, "height": 360 },
-    "minSize": { "width": 320, "height": 240 }
+    "defaultSize": {
+      "width": 480,
+      "height": 360
+    },
+    "minSize": {
+      "width": 320,
+      "height": 240
+    }
   }
 }

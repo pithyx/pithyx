@@ -1,7 +1,7 @@
 ---
 title: 'Home folders'
 description: 'Every user gets a private home folder on the home pool; administrators pick the pool, set quotas and decide what happens to the home of a deleted user.'
-status: draft
+status: ready
 audience: admin
 sidebar:
   order: 5
@@ -26,7 +26,7 @@ Files deleted in the SMB share `homes` do not go to a recycle bin; they are gone
 
 ## The home pool
 
-Each home is a dataset `<pool>/pithyx/homes/<user>`, mounted at `/<pool>/homes/<user>`. When the first pool with the Pithyx layout exists, it becomes the home pool, and every user without a home gets one there; a user created before that gets the home as soon as the pool is there. Users created later get theirs at once. The **Users** page shows each home's path, or "No pool yet".
+Each home is a dataset `<pool>/pithyx/homes/<user>`, mounted at `/<pool>/homes/<user>`. When the first pool with the Pithyx layout exists, it becomes the home pool, and every user without a home gets one there; a user created before that gets the home as soon as the pool is there. Users created later get theirs at once. The details of a user in Settings > **Users and groups** show the home's path, or "No pool yet".
 
 To move every home to another pool, choose the pool under **Move to** and **Move home folders**. A pool is offered only while it is online, writable, has the Pithyx layout and is unlocked; it also needs room for all homes ([`homes.pool.no_space`](/docs/reference/errors/#homes.pool.no_space)). The move runs as a job, one home after the other:
 
@@ -40,17 +40,17 @@ A home on a pool that is gone (destroyed, or exported and not imported again) ca
 
 ## Quotas
 
-**Default quota** applies to every home without its own quota; leave it empty for no limit. **Quota** on a home sets the user's own: **Use the default quota**, **No limit** or **Own quota**. A quota is at least 1 MiB ([`homes.quota.invalid`](/docs/reference/errors/#homes.quota.invalid)) and counts the files and the snapshots of the home. When a home is full, writing to it fails until files are deleted and the recycle bin is emptied.
+**Default quota** applies to every home without its own quota; leave it empty for no limit. Select a home and choose **Quota** in the toolbar above the table to set the user's own: **Use the default quota**, **No limit** or **Own quota**. A quota is at least 1 MiB ([`homes.quota.invalid`](/docs/reference/errors/#homes.quota.invalid)) and counts the files and the snapshots of the home. When a home is full, writing to it fails until files are deleted and the recycle bin is emptied.
 
 ## When a user is deleted
 
-Deleting a user in Settings > **Users** asks what happens to the home folder:
+Deleting a user in Settings > **Users and groups** asks what happens to the home folder:
 
-- **Keep it** (the default): the home stays, renamed to `<name>.deleted-<user id>`, so the name is free for a new user. Administrators see it below **homes**.
+- **Keep it** (the default): the home stays, renamed to `<name>.deleted-<uid>` (the user's Linux user id), so the name is free for a new user. Administrators see it below **homes**.
 - **Move its files into a shared folder**: a new folder named after the user in the shared folder you choose gets every file, then the home is deleted with its recycle bin. This runs as a job.
 - **Delete it with every file**: the home goes with its files, recycle bin and snapshots, after you typed the user name.
 
-A kept home appears on the **Home folders** page with "user deleted". **Move into shared folder** and **Delete** do the same as above later; **Delete** asks you to type the folder name. A new user with the same name never gets an old home: a home that belongs to another user id is renamed out of the way first.
+A kept home appears on the **Home folders** page with "user deleted". Select it, and **Move into shared folder** and **Delete** in the toolbar do the same as above later; **Delete** asks you to type the folder name. A new user with the same name never gets an old home: a home that belongs to another user id is renamed out of the way first.
 
 ## Limits
 

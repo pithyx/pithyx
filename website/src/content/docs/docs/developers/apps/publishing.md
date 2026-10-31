@@ -12,12 +12,12 @@ A catalog is a Git repository that lists apps for the Store. Pithyx has two proj
 ## Catalogs
 
 - **Official** (`pithyx/apps-official`) is the only source of `org.pithyx.*` apps besides the system image. **Community** (`pithyx/apps-community`) is on by default too; an administrator can switch it off. An administrator can add **Own** catalogs.
-- **Source.** Each app lives in `apps/<id>/` on the `master` branch. CI builds the frontend and the images, pushes the images to `ghcr.io/<owner>/apps/<id>/<service>:<version>` (never overwritten, linked by digest), and writes two CI-only branches: `catalog-next` (the beta channel) and `catalog` (the stable channel). The stable branch is updated only after a manual approval.
+- **Source.** Each app lives in `apps/<id>/` on the `master` branch. CI builds the frontend (with Node.js 24, `npm ci` and `npm run build`, which must write `dist/`; an app without `package.json` ships its folder `frontend/` as it is) and the images, pushes the images to `ghcr.io/<owner>/apps/<id>/<service>:<version>` (never overwritten, linked by digest), and writes two CI-only branches: `catalog-next` (the beta channel) and `catalog` (the stable channel). The stable branch is updated only after a manual approval.
 - **Files.** `catalog.json` at the root names the catalog. Each branch holds `index.json` and, for project catalogs, `index.json.sig`. Per version, the index lists hashes and sizes of the package, manifest, icon and screenshots, the images, the architectures, the `pithyx` range, the `dataVersion`, the license and the source commit. The files are at `apps/<id>/<version>/`: `<id>-<version>.pithyxapp`, `pithyx.json`, `icon.svg` and `screenshots/`.
 - **Sequence.** Each publish raises the index `sequence` by one. The box refuses a lower number ([`store.catalog.sequence_old`](/docs/reference/errors/#store.catalog.sequence_old)).
 - **Signature.** Ed25519 over the exact bytes of `index.json`. A box accepts a project catalog if at least one signature comes from a key it trusts for the channel and every signature by a trusted key verifies. Unknown key ids are ignored, which allows key rotation. A failed check is [`store.catalog.signature_invalid`](/docs/reference/errors/#store.catalog.signature_invalid). Custom catalogs are not signed and the Store marks their apps as not verified.
 - **On the box.** Catalogs are shallow clones in `/var/lib/pithyx/catalogs/<id>/`, fetched with git over https or ssh (3 minute timeout, no hooks, no submodules). A failed fetch keeps the last verified copy. Every file is checked against the index hash.
-- **Channels and updates.** The Store settings have a channel (stable reads `catalog`, beta reads `catalog-next`), an update policy (automatic, notify or none; default notify), a daily check time (default 03:00 with a random delay of up to 60 minutes) and a per-app override. An update that needs new permissions, root or elevated rights is never installed automatically.
+- **Channels and updates.** The Store has a channel on its page **Catalogs** (stable reads `catalog`, beta reads `catalog-next`), and on its page **Updates** an update policy (automatic, notify or none; default notify) and a daily check time (default 03:00 with a random delay of up to 60 minutes); each app can override the policy. An update that needs new permissions, root or elevated rights is never installed automatically, and neither is any update of an app holding a right of the tier root access (`docker.socket.raw`, D388).
 
 ## The review
 
@@ -28,12 +28,18 @@ Machine rules run on every pull request (`pithyx catalog check`, see below):
 - Each app has a `maintainers.json` with 1 to 20 GitHub logins. A pull request that changes an app must come from one of the maintainers as the file stood before the change. A new app's file must name its author.
 - Workflows: `check.yaml` (pull requests, read only), `publish.yaml` (pushes to `master` write `catalog-next`) and `promote.yaml` (manual, writes `catalog` after approval in the environment `catalog-release`). Runs from outside contributors wait for approval.
 
+### Apps of the official catalog
+
+An app in `pithyx/apps-official` has an id in `org.pithyx.*`, which `pithyx validate`, `build`, `pack`, `dev` and the Vite plugin refuse by default with [`app.manifest.id_reserved`](/docs/reference/errors/#app.manifest.id_reserved). Pass `--allow-reserved-id` (Vite plugin: `pithyx({ allowReservedId: true })`) to build and check it; the catalog's `publish.yaml` packs with it. Every other check stays.
+
+A box refuses an `org.pithyx.*` id in a package from a file, also with that option, so the app reaches a box only through the official catalog. To try it on a box first, pack a copy whose `pithyx.json` has another id (for example `com.example.editor`) and install that copy with **Install from file**.
+
 ## Rules
 
 From `sdk/schema/catalog.v1.rules.json`:
 
 - One app folder per pull request, under `apps/`. At most 5 MiB per app folder and 1000 characters per line.
-- Required files: `pithyx.json`, `icon.svg`, `maintainers.json` and one of `LICENSE`, `LICENSE.md`, `LICENSE.txt`. The manifest needs `license` and `pithyx`.
+- Required files: `pithyx.json`, `icon.svg`, `maintainers.json` and one of `LICENSE`, `LICENSE.md`, `LICENSE.txt`. The manifest needs `license`, `pithyx` and `privacy` (what the app sends out of the box, D389). Like every manifest it gives a `reason` for each permission and special right, `arch` and `source`; a reviewer checks that the reasons are true. Every catalog may ship a special right of any tier, also `docker.socket.raw` (D388); the box asks the administrator for consent by tier.
 - Up to 8 screenshots in `screenshots/`, each at most 1 MiB, named `[a-z0-9][a-z0-9_-]{0,62}` with `.png`, `.jpg` or `.webp`.
 - Files are UTF-8 text or listed media (gif, jpeg, png, webp, woff2) whose content matches the extension. Minified files (`.min.js` and similar) and unlisted files are refused.
 - Every `FROM` and `COPY --from` in a Dockerfile is pinned by `@sha256` or is `scratch`.
@@ -45,7 +51,7 @@ From `sdk/schema/catalog.v1.rules.json`:
 
 1. Create a repository from `pithyx/catalog-template`. The publish job refuses the template's placeholder id.
 2. Put your apps in `apps/<id>/`. The CLI commands run in the repository root: `pithyx catalog check`, `pending`, `index`, `sign` and `verify` (see [@pithyx/cli](/docs/sdk/cli/#pithyx-catalog)).
-3. In the Store, open the **Own** tab and add the repository by URL.
+3. In the Store, open **Catalogs**, choose **Add catalog** and enter the repository's URL.
    - A public `https://host/path` URL is fetched at once.
    - A private repository uses an SSH URL such as `git@host:owner/repo.git`. The box creates an SSH deploy key and shows its public half; add it to the repository as a read-only key, then fetch.
    - Images in a private registry need a read token (`user:token`). The Store has no field for it; set it through the API with `PATCH /api/store/catalogs/{key}` and `registryToken`.

@@ -41,7 +41,7 @@ Faustregeln: keinen Spinner vor 300 ms zeigen, Apps mit dynamischem `import()` �
 - Er läuft nur auf Anforderung: mit dem Pull-Request-Label `e2e`, durch manuelles Starten des Workflows oder für jeden Pull Request und Push auf `beta` und `stable`. Füge das Label bei Änderungen an Benutzerabläufen, der Shell, dem Fenstermanager, der Anmeldung, der Einrichtung, dem SDK-Transport, dem API-Vertrag, dem Ladepfad oder dem Bundle hinzu.
 - Er startet, nachdem die Daemon-Tests fertig sind, weil parallele Last die Zeiten verfälscht. Bei Pushes auf `dev` werden die Budgets übersprungen (`PITHYX_SKIP_BUDGETS=1`).
 - Zeiten schwanken mit der Last der Maschine. Schlägt ein Budget fehl, ohne dass deine Änderung etwas Langsames enthält, prüfe `uptime` und führe es noch einmal aus.
-- `pnpm design:test` öffnet jeden Bildschirm der Design-Galerie in 390x844, 820x1180 und 1440x900 in Englisch und Deutsch und schlägt bei Überlauf oder verdeckter Titelleiste fehl. Barrierefreiheit wird mit axe in `e2e/tests/a11y.spec.ts` geprüft, der Token-Kontrast in `packages/ui/src/contrast.test.ts`.
+- `pnpm design:test` öffnet jeden Bildschirm der Design-Galerie in 390x844, 820x1180, 1440x900 und 3440x1440 in Englisch und Deutsch, schlägt bei Überlauf oder verdeckter Titelleiste fehl und prüft jeden Bildschirm mit axe in Hell und Dunkel. Die Abläufe einer echten Box prüft axe in `e2e/tests/a11y.spec.ts`, den Token-Kontrast `packages/ui/src/contrast.test.ts`.
 
 ## Messen
 

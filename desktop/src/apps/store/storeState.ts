@@ -1,6 +1,7 @@
 import type { PithyxApp } from '@pithyx/sdk';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   onStore,
   STORE_CHANGED,
@@ -32,16 +33,12 @@ export function useStoreState(app: PithyxApp) {
   });
 }
 
-/** The tab a catalog's apps appear in: the project's two by kind, every custom catalog under Own. */
-export type CatalogTab = 'official' | 'community' | 'own';
-
-export function tabOf(kind: CatalogKind): CatalogTab {
-  return kind === 'custom' ? 'own' : kind;
-}
-
-/** The enabled catalogs of a tab. */
-export function catalogsOf(catalogs: readonly CatalogInfo[], tab: CatalogTab): CatalogInfo[] {
-  return catalogs.filter((catalog) => catalog.enabled && tabOf(catalog.kind) === tab);
+/** The apps of the enabled catalogs whose id, name, description, author or keywords contain the query; all for ''. */
+export function useCatalogApps(app: PithyxApp, query: string) {
+  return useQuery({
+    queryKey: ['store', 'search', query],
+    queryFn: () => storeCall(app, 'internal.admin.store.search', query === '' ? {} : { query }),
+  });
 }
 
 /** A catalog's name in the user's language, else its id or URL. */
@@ -51,4 +48,25 @@ export function catalogName(catalog: CatalogInfo, language: string): string {
     return names[language] ?? names[language.slice(0, 2)] ?? names.en ?? catalog.url;
   }
   return catalog.id ?? catalog.url;
+}
+
+/**
+ * Where an app comes from, in a few words: "Official catalog" and "Community catalog" for the project's two, a custom
+ * catalog by its name, and a package file.
+ */
+export function useSourceLabel(catalogs: readonly CatalogInfo[]) {
+  const { t, i18n } = useTranslation('store');
+  return (source: { catalog: string | null; kind?: CatalogKind }) => {
+    if (source.catalog === null) {
+      return t('card.sideload');
+    }
+    const catalog = catalogs.find((entry) => entry.id === source.catalog);
+    const kind = source.kind ?? catalog?.kind ?? 'custom';
+    if (kind !== 'custom') {
+      return t(`card.${kind}`);
+    }
+    return t('card.custom', {
+      name: catalog === undefined ? source.catalog : catalogName(catalog, i18n.language),
+    });
+  };
 }

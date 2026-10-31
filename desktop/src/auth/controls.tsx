@@ -199,6 +199,11 @@ export function LanguageSelect() {
   const [choice, setChoice] = useState<Language | 'auto'>(storedLanguage() ?? 'auto');
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(0);
+  // Keys can arrive faster than React renders (Home, then Enter), so the handlers read the active option from here.
+  const activeIndex = useRef(0);
+  // Where the pointer was last seen over the open list: a list that opens under a resting pointer must not take the
+  // option under it from the keyboard, so only a pointer that really moved picks an option.
+  const pointer = useRef<{ x: number; y: number } | null>(null);
   const id = useId();
   const root = useRef<HTMLDivElement>(null);
   const button = useRef<HTMLButtonElement>(null);
@@ -224,8 +229,14 @@ export function LanguageSelect() {
     };
   }, [open]);
 
+  function moveTo(index: number) {
+    activeIndex.current = index;
+    setActive(index);
+  }
+
   function show() {
-    setActive(
+    pointer.current = null;
+    moveTo(
       Math.max(
         0,
         options.findIndex((option) => option.value === choice),
@@ -283,18 +294,18 @@ export function LanguageSelect() {
           onKeyDown={(event) => {
             const last = options.length - 1;
             const moves: Record<string, number> = {
-              ArrowDown: Math.min(active + 1, last),
-              ArrowUp: Math.max(active - 1, 0),
+              ArrowDown: Math.min(activeIndex.current + 1, last),
+              ArrowUp: Math.max(activeIndex.current - 1, 0),
               Home: 0,
               End: last,
             };
             const target = moves[event.key];
             if (target !== undefined) {
               event.preventDefault();
-              setActive(target);
+              moveTo(target);
             } else if (event.key === 'Enter' || event.key === ' ') {
               event.preventDefault();
-              const option = options[active];
+              const option = options[activeIndex.current];
               if (option !== undefined) {
                 choose(option.value);
               }
@@ -316,8 +327,12 @@ export function LanguageSelect() {
               aria-selected={option.value === choice}
               data-active={index === active || undefined}
               className={styles.languageOption}
-              onPointerEnter={() => {
-                setActive(index);
+              onPointerMove={(event) => {
+                const last = pointer.current;
+                pointer.current = { x: event.clientX, y: event.clientY };
+                if (last !== null && (last.x !== event.clientX || last.y !== event.clientY)) {
+                  moveTo(index);
+                }
               }}
               onClick={() => {
                 choose(option.value);

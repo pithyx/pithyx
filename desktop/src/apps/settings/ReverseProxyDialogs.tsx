@@ -130,6 +130,7 @@ function CertificateFields({
         >
           <option value="box">{t('proxy.certificate.box')}</option>
           <option value="custom">{t('proxy.certificate.custom')}</option>
+          <option value="acme">{t('proxy.certificate.acme')}</option>
         </select>
         <span className={styles.optionHint}>{t(`proxy.certificate.${source}Hint`)}</span>
       </label>

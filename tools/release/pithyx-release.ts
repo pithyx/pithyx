@@ -6,7 +6,7 @@
 //
 // Without a command in a terminal it asks which command to run and for its options, shows the plan and asks before it
 // runs. Commands: status, checklist, iso, update, sign, channel, publish-beta, publish-sdk, sources, baseline,
-// templates, key. `pithyx-release help` lists them with their options.
+// templates, key, sign-remote. `pithyx-release help` lists them with their options.
 import { spawnSync } from 'node:child_process';
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { homedir } from 'node:os';
@@ -72,6 +72,10 @@ const OPTIONS = {
   'npm-dry-run': { type: 'boolean' },
   install: { type: 'boolean' },
   yes: { type: 'boolean' },
+  from: { type: 'string' },
+  repo: { type: 'string' },
+  work: { type: 'string' },
+  publish: { type: 'boolean' },
 } as const;
 
 export type Options = Partial<Record<keyof typeof OPTIONS, string | boolean>>;
@@ -119,6 +123,18 @@ export const COMMANDS: Record<string, CommandInfo> = {
     asks: [
       { name: 'file', question: 'Update file' },
       { name: 'sequence', question: 'Sequence (higher than the current one)' },
+    ],
+  },
+  'sign-remote': {
+    summary:
+      'Fetch an update file from the build machine, sign it here with channel.json (sign-remote.sh)',
+    usage:
+      'sign-remote --from <[user@]host:dir> --key <pem> --key-id <id> [--version <v>] [--sequence <n>] [--repo <owner/name>] [--work <dir>] [--publish [--yes]]',
+    asks: [
+      { name: 'from', question: 'Build machine and folder ([user@]host:dir)' },
+      { name: 'version', question: 'Version' },
+      { name: 'key', question: 'Private key file' },
+      { name: 'key-id', question: 'Key id' },
     ],
   },
   'publish-beta': {
@@ -358,6 +374,34 @@ export function plan(
       }
       return [{ command: script('build-channel.sh'), args, why: 'channel.json and its signature' }];
     }
+    case 'sign-remote': {
+      const from = text(options, 'from');
+      const key = text(options, 'key');
+      const keyId = text(options, 'key-id');
+      if (from === undefined || key === undefined || keyId === undefined) {
+        throw new PlanError(
+          'pithyx-release sign-remote --from <[user@]host:dir> --key <pem> --key-id <id>',
+        );
+      }
+      const version = versionOf(options, facts);
+      const args = ['--from', from, '--version', version, '--key', key, '--key-id', keyId];
+      for (const name of ['sequence', 'repo', 'work'] as const) {
+        const value = text(options, name);
+        if (value !== undefined) {
+          args.push(`--${name}`, value);
+        }
+      }
+      if (options.publish === true) {
+        args.push('--publish', ...(options.yes === true ? ['--yes'] : []));
+      }
+      return [
+        {
+          command: script('sign-remote.sh'),
+          args,
+          why: `the ${version} update file of ${from} signed with ${keyId}, with channel.json${options.publish === true ? ', published' : ''}`,
+        },
+      ];
+    }
     case 'publish-beta': {
       const file = positionals[0];
       if (file === undefined) {
@@ -380,10 +424,20 @@ export function plan(
       if (options['npm-dry-run'] === true) {
         args.push('--dry-run');
       }
+      // A stable version goes straight to latest; publish-sdk.sh refuses it without --latest.
+      const prerelease = facts.sdkVersion.includes('-');
+      if (!prerelease && options.latest !== true) {
+        throw new PlanError(
+          `${facts.sdkVersion} is a stable version: it is published as latest, pass --latest (only after the owner's approval)`,
+        );
+      }
+      if (options.latest === true && !prerelease) {
+        args.push('--latest');
+      }
       const steps: Step[] = [
         { command: script('publish-sdk.sh'), args, why: `the npm packages at ${facts.sdkVersion}` },
       ];
-      if (options.latest === true && options['npm-dry-run'] !== true) {
+      if (options.latest === true && prerelease && options['npm-dry-run'] !== true) {
         // publish-sdk.sh never moves latest to a prerelease; the owner's --latest does it afterwards.
         for (const name of SDK_PACKAGES) {
           steps.push({
@@ -568,6 +622,12 @@ async function menu(facts: Facts): Promise<number> {
     }
     if (choice === 'update') {
       options.sign = /^y/i.test(await prompt.question('Sign it with the beta key? [y/N] '));
+    }
+    if (choice === 'publish-sdk') {
+      const question = facts.sdkVersion.includes('-')
+        ? `Also move latest to ${facts.sdkVersion}? [y/N] `
+        : `Publish ${facts.sdkVersion} as latest, the version npm installs by default? [y/N] `;
+      options.latest = /^y/i.test(await prompt.question(question));
     }
     if (choice === 'status') {
       return 0;

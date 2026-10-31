@@ -68,12 +68,14 @@ public static class LogDatabase
 
     public static DateTimeOffset Time(long micros) => DateTimeOffset.UnixEpoch.AddTicks(micros * 10);
 
-    public static async Task InsertAsync(SqliteConnection connection, SqliteTransaction transaction, IReadOnlyList<PendingLogEntry> batch)
+    /// <summary>Inserts a batch and returns the entries as stored, with their ids.</summary>
+    public static async Task<IReadOnlyList<LogEntry>> InsertAsync(SqliteConnection connection, SqliteTransaction transaction, IReadOnlyList<PendingLogEntry> batch)
     {
         ArgumentNullException.ThrowIfNull(batch);
+        var stored = new List<LogEntry>(batch.Count);
         await using var command = connection.CreateCommand();
         command.Transaction = transaction;
-        command.CommandText = "INSERT INTO entries (time, level, source, message, request_id, user, data) VALUES ($time, $level, $source, $message, $request, $user, $data)";
+        command.CommandText = "INSERT INTO entries (time, level, source, message, request_id, user, data) VALUES ($time, $level, $source, $message, $request, $user, $data) RETURNING id";
         var time = command.Parameters.Add("$time", SqliteType.Integer);
         var level = command.Parameters.Add("$level", SqliteType.Integer);
         var source = command.Parameters.Add("$source", SqliteType.Text);
@@ -90,7 +92,8 @@ public static class LogDatabase
             request.Value = (object?)entry.RequestId ?? DBNull.Value;
             user.Value = (object?)entry.User ?? DBNull.Value;
             data.Value = entry.Data is { Count: > 0 } fields ? JsonSerializer.Serialize(fields) : DBNull.Value;
-            await command.ExecuteNonQueryAsync();
+            var id = (long)(await command.ExecuteScalarAsync())!;
+            stored.Add(new LogEntry(id, Time(Micros(entry.Time)), entry.Level, entry.Source, entry.Message, entry.RequestId, entry.User, entry.Data is { Count: > 0 } ? entry.Data : null, Archived: false));
         }
         foreach (var group in batch.GroupBy(entry => entry.Source, StringComparer.Ordinal))
         {
@@ -99,6 +102,7 @@ public static class LogDatabase
                 new { source = group.Key, seen = group.Max(entry => Micros(entry.Time)) },
                 transaction);
         }
+        return stored;
     }
 
     /// <summary>
@@ -161,6 +165,12 @@ public static class LogDatabase
             row.Data is null ? null : JsonSerializer.Deserialize<Dictionary<string, string>>(row.Data),
             archived))];
     }
+
+    /// <summary>Warnings and errors per source since <paramref name="from"/>.</summary>
+    public static async Task<IReadOnlyList<LogCount>> CountsAsync(SqliteConnection connection, DateTimeOffset from) =>
+        [.. await connection.QueryAsync<LogCount>(
+            "SELECT source AS Source, sum(level = @warn) AS Warnings, sum(level = @error) AS Errors FROM entries WHERE time >= @from AND level >= @warn GROUP BY source",
+            new { from = Micros(from), warn = (int)LogLevelName.Warn, error = (int)LogLevelName.Error })];
 
     public static async Task<IReadOnlyList<string>> SourcesAsync(SqliteConnection connection) =>
         [.. await connection.QueryAsync<string>("SELECT source FROM sources ORDER BY source")];

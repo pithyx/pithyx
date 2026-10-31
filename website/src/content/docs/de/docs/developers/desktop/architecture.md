@@ -18,7 +18,7 @@ Der Desktop ist eine React-19-Single-Page-App in `desktop/` (Vite 8, TypeScript,
 - **Installer.** Die Oberfläche des Installers wird nur auf dem Live-System geladen.
 - **Design-Galerie.** `desktop/design.html` (`pnpm design`, Port 5174) zeigt jeden Bildschirm für Layout-Prüfungen. Sie dient nur der Entwicklung.
 - **Dev-Server.** Er leitet `/api` und `/ws` an den Daemon weiter und schreibt den `Origin`-Header von WebSocket-Upgrades um, weil der Daemon nur seinen eigenen Origin akzeptiert.
-- **Sichere Kontexte.** Der Desktop funktioniert über reines HTTP per Adresse. ESLint lehnt `crypto.randomUUID`, `crypto.subtle`, die Clipboard-API, Service Worker, WebAuthn, Benachrichtigungen, `window.open` und ähnliche APIs außerhalb von `desktop/src/platform/browser.ts` ab, das Fallbacks bietet (`randomId`, `copyText`, `openInNewTab`).
+- **Sichere Kontexte.** Der Desktop funktioniert über reines HTTP per Adresse. ESLint lehnt `crypto.randomUUID`, `crypto.subtle`, die Clipboard-API, Service Worker, WebAuthn, Benachrichtigungen, `window.open` und ähnliche APIs außerhalb von `desktop/src/platform/browser.ts` ab, das Fallbacks bietet (`randomId`, `copyText`, `openInNewTab`). `deviceTrust` registriert den Service Worker (`desktop/service-worker.js`, als `sw.js` mit einem Cache-Namen pro Build geschrieben) und erkennt so, ob das Gerät der Box vertraut; Passkeys (`createPasskey`, `getPasskey`, mit der JSON-Umwandlung in `platform/webauthnJson.ts`, die beim ersten Gebrauch lädt) warten darauf.
 - **Texte.** ESLint lehnt außerdem String-Literale in JSX (`i18next/no-literal-string`) und Importe von Icon-Bibliotheken ab, die nicht über `ui/icons.ts` laufen.
 
 ## Shell und Fenstermanager
@@ -34,7 +34,7 @@ Der Fenstermanager ist ein zustand-Store (`useDesktop`). Jede Änderung läuft �
 - **Tastatur.** Alle Fenster-Shortcuts nutzen Alt+Umschalt, weil Browser und Betriebssysteme sie nicht belegen: Leertaste für das Fenstermenü, Links und Rechts zum Einrasten, Hoch zum Maximieren, Runter zum Wiederherstellen oder Minimieren, Bild auf und Bild ab zum Wechseln zwischen Fenstern.
 - **Layout-Gedächtnis.** Das Layout (Fenster, Positionen, Reihenfolge, Taskleiste) wird pro Benutzer und Gerät im Daemon gespeichert (`PUT /api/desktop/layout` mit `If-Match`), um 1 Sekunde entprellt, nur vom sichtbaren Tab, und geschrieben, wenn die Seite ausgeblendet wird. Fenster von Apps, die du nicht mehr öffnen darfst, werden beim Wiederherstellen übersprungen. Limits: 50 Fenster, 16 KB Fensterargumente, 48 KB für das gesamte Layout. "Desktop holen von" kopiert das Layout eines anderen Geräts.
 - **Darstellung.** Akzent und Hintergrundbild werden pro Benutzer gespeichert und über Geräte hinweg geteilt; die Wahl zwischen hell und dunkel wird pro Browser gespeichert.
-- **Desktop-Elemente** (Verknüpfungen und Notizen) werden pro Benutzer über `/api/desktop/items` gespeichert.
+- **Desktop-Elemente** (Verknüpfungen zu Apps, Dateien und Ordnern sowie Notizen) werden pro Benutzer über `/api/desktop/items` gespeichert; Verknüpfungen zu Dateien folgen dem Umbenennen und Verschieben über den Daemon (D382).
 
 ## Kern-Apps
 

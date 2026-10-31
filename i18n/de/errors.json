@@ -5,6 +5,9 @@
       "not_found": "Es ist keine App mit der ID {id} installiert.",
       "no_previous": "{id} hat keine Version vor dem letzten Update, zu der es zurückgehen kann."
     },
+    "arch": {
+      "unsupported": "Diese App läuft nur auf {supported}, nicht auf dieser Box ({arch})."
+    },
     "backend": {
       "endpoint_unknown": "Die App hat keinen Backend-Endpunkt namens {endpoint}.",
       "missing": "Die App hat kein Backend.",
@@ -22,11 +25,19 @@
       "value_invalid": "Die Compose-Datei der App hat unter {path} einen Wert, den Pithyx ablehnt: {reason, select, required {er fehlt} type {er hat den falschen Typ} format {sein Format ist ungültig} range {er liegt außerhalb des erlaubten Bereichs} unpinned {das Image ist nicht mit @sha256 festgelegt} interpolation {er nutzt $ für eine Variable (schreib $$ für ein Dollarzeichen)} no_value {die Variable hat keinen Wert} duplicate {er kommt doppelt vor} reserved {er ist für Pithyx reserviert} host_path {er bindet einen Ordner des Hosts ein} anonymous {das Volume hat keinen Namen} cycle {die Dienste hängen im Kreis voneinander ab} image_and_build {der Dienst hat image und build, nutze nur eins davon} other {er ist ungültig}}.",
       "yaml_invalid": "Die Compose-Datei der App ist nicht lesbar: {reason, select, too_large {sie ist größer als 64 KB} not_utf8 {sie ist kein UTF-8} character {sie enthält einen Tabulator oder ein anderes nicht erlaubtes Zeichen} syntax {sie ist kein gültiges YAML} documents {sie muss genau ein Dokument enthalten} too_deep {sie ist zu tief verschachtelt} directive {sie enthält eine YAML-Direktive} anchor {sie nutzt Anker oder Aliase} tag {sie nutzt YAML-Tags} duplicate_key {{path} kommt doppelt vor} merge_key {sie nutzt unter {path} einen Merge-Schlüssel} key_not_string {ein Schlüssel unter {path} ist kein Text} other {sie verletzt eine Regel für Compose-Dateien}}."
     },
+    "device": {
+      "unavailable": "Das Gerät {path}, das die App braucht, ist nicht da oder kann keiner App gegeben werden, deshalb startet ihr Hintergrunddienst nicht.",
+      "missing": "Die App braucht das Gerät {path}, und keins ist eingesteckt. Steck das Gerät ein und versuch es noch einmal."
+    },
     "docker": {
       "unavailable": "Der Container-Dienst antwortet nicht, deshalb können App-Backends gerade nicht laufen."
     },
     "elevated": {
-      "unsupported": "Die App verlangt das Recht {right}, das diese Version von Pithyx nicht vergibt."
+      "unsupported": "Die App verlangt das Recht {right}, das Pithyx keiner App gibt.",
+      "root_conflict": "Die App führt ihren Hintergrunddienst als root aus und verlangt {right}. Mit diesem Recht läuft der Dienst direkt auf der Box, wo root die ganze Box beherrschen würde, deshalb lehnt Pithyx die Kombination ab.",
+      "root_required": "Die App verlangt {right}, aber nur ein Hintergrunddienst, der als root läuft, kann eine Capability nutzen.",
+      "backend_missing": "Die App verlangt {right}, ein Recht, das nur ein Hintergrunddienst nutzen kann, aber sie hat keinen Hintergrunddienst.",
+      "confirmation_required": "{right} gibt der App die volle Kontrolle über die Box. Tippe im Installationsdialog den Namen der App ein, um es zu bestätigen."
     },
     "icon": {
       "invalid": "Das Symbol der App ist nicht verwendbar: {reason, select, too_large {es ist größer als 64 KB} malformed {es ist keine gültige SVG-Datei} not_svg {es ist kein SVG-Bild} viewbox {seine viewBox fehlt oder ist nicht quadratisch} doctype {es enthält einen DOCTYPE} processing_instruction {es enthält eine Verarbeitungsanweisung} element_forbidden {es enthält das Element {element}} event_attribute {es enthält das Ereignisattribut {attribute}} external_href {es verweist auf etwas außerhalb der Datei} style_import {seine Styles nutzen @import} style_url {es lädt mit url() etwas außerhalb der Datei} style_escape {seine Styles enthalten Escape-Sequenzen} other {es verletzt eine Regel für Symbole}}."
@@ -41,11 +52,12 @@
       "id_invalid": "Die App-ID {id} ist ungültig. Sie besteht aus der umgekehrten Domain des Autors und dem App-Namen, zum Beispiel com.example.chat.",
       "id_reserved": "Die App-ID {id} ist für die Apps reserviert, die mit Pithyx kommen.",
       "invalid_json": "Das Manifest der App (pithyx.json) ist kein gültiges JSON.",
+      "permission_missing": "Das Manifest nutzt {path}, das die Berechtigung {permission} braucht. Ergänze sie unter permissions.",
       "pithyx_invalid": "Der Pithyx-Versionsbereich {pithyx} im Manifest ist ungültig.",
       "reference_unknown": "Das Manifest verweist unter {path} auf {name}, das es nicht deklariert.",
       "schema_violation": "Das Manifest der App ist unter {path} ungültig ({keyword}).",
       "sdk_invalid": "Der SDK-Versionsbereich {sdk} im Manifest ist ungültig.",
-      "version_unsupported": "Diese App braucht eine neuere Version von Pithyx (Manifest-Version {version}, diese Box liest Version {supported}).",
+      "version_unsupported": "{version, select, 1 {Diese App wurde für eine ältere Version von Pithyx gemacht (Manifest-Version 1, diese Box liest Version {supported}). Bitte ihren Autor um eine neue Version.} other {Diese App braucht eine neuere Version von Pithyx (Manifest-Version {version}, diese Box liest Version {supported}).}}",
       "window_size_invalid": "Die kleinste Fenstergröße der App ist größer als ihre Standardgröße."
     },
     "mapping": {
@@ -53,7 +65,7 @@
     },
     "package": {
       "invalid": "Die Datei ist kein gültiges App-Paket: {reason, select, gzip {sie ist nicht mit gzip komprimiert oder beschädigt} format {sie ist kein tar-Archiv, das diese Box liest} checksum {ein Header ist beschädigt} truncated {sie endet zu früh} trailing_data {nach ihrem Ende folgen noch Daten} entry_type {{path} ist ein Link oder eine Spezialdatei} extended_header {sie hat einen erweiterten Header, der nicht erlaubt ist} name_mismatch {der lange Name von {path} passt nicht zu seinem eigenen Namen} other {sie kann nicht gelesen werden}}.",
-      "layout_invalid": "Das App-Paket ist ungültig: {reason, select, missing {{path} fehlt} unsafe {der Pfad {path} ist nicht erlaubt} duplicate {{path} ist doppelt enthalten} unexpected {{path} gehört nicht in ein App-Paket} reserved {{path} nutzt einen Namen, der für das Backend reserviert ist} other {{path} ist nicht erlaubt}}.",
+      "layout_invalid": "Das App-Paket ist ungültig: {reason, select, missing {{path} fehlt} unsafe {der Pfad {path} ist nicht erlaubt} duplicate {{path} ist doppelt enthalten} unexpected {{path} gehört nicht in ein App-Paket} reserved {{path} nutzt einen Namen, der für das Backend reserviert ist} too_large {{path} ist größer als 1 MiB} other {{path} ist nicht erlaubt}}.",
       "lock_invalid": "Die Liste der Backend-Images der App passt nicht ({reason, select, missing {sie fehlt} invalid {sie ist ungültig} stale {sie passt nicht zum Backend} other {nichts für {architecture}}}).",
       "not_found": "Das geprüfte Paket ist nicht mehr da. Lade die Datei noch einmal hoch.",
       "too_large": "Das App-Paket ist zu groß: {reason, select, size {die Datei darf höchstens {limit} MB haben} unpacked {ihre Dateien dürfen zusammen höchstens {limit} MB haben} files {es darf höchstens {limit} Dateien enthalten} manifest {pithyx.json darf höchstens {limit} KB haben} other {es überschreitet eine Grenze}}.",
@@ -97,6 +109,13 @@
     "display_name": {
       "invalid": "Dein Anzeigename darf höchstens {maxLength} Zeichen und keine Steuerzeichen enthalten."
     },
+    "passkey": {
+      "invalid": "Der Passkey wurde nicht angenommen. Vielleicht wurde er entfernt oder gehört zu einem anderen Namen der Box.",
+      "limit": "Du kannst höchstens {max} Passkeys haben. Entferne zuerst einen.",
+      "name_invalid": "Der Name braucht 1 bis {maxLength} Zeichen und keine Steuerzeichen.",
+      "not_found": "Diesen Passkey gibt es nicht (mehr).",
+      "unavailable": "Passkeys brauchen die Box über ihren Namen und HTTPS geöffnet, nicht als {host}."
+    },
     "password": {
       "too_common": "Dieses Passwort ist zu bekannt. Wähle eines, das schwerer zu erraten ist.",
       "too_long": "Dein Passwort darf höchstens {maxLength} Zeichen lang sein.",
@@ -116,6 +135,9 @@
     },
     "setup": {
       "already_done": "Dieses System ist bereits eingerichtet."
+    },
+    "step_up": {
+      "required": "Bestätige zuerst mit deinem Passwort. Die Bestätigung gilt fünf Minuten."
     },
     "totp": {
       "already_enabled": "Die Zwei-Faktor-Authentifizierung ist bereits aktiviert.",
@@ -205,7 +227,7 @@
       "path_taken": "Unter {path} ist schon etwas anderes eingehängt. Wähle einen anderen Namen.",
       "pool_not_prepared": "Der Pool {pool} hat keinen Platz für freigegebene Ordner (pithyx/shares), deshalb lässt sich dort keiner anlegen.",
       "read_only": "In diesem Share darfst du nur lesen.",
-      "unavailable": "{name} lässt sich gerade nicht öffnen: {reason, select, pool_missing {sein Pool ist nicht angeschlossen} pool_unavailable {sein Pool ist angehalten, weil Platten fehlen} other {sein Ordner ist nicht eingehängt}}. Er kommt von selbst zurück, sobald seine Platten wieder da sind."
+      "unavailable": "{name} lässt sich gerade nicht öffnen: {reason, select, pool_missing {sein Pool ist nicht angeschlossen. Er kommt von selbst zurück, sobald seine Platten wieder da sind} pool_unavailable {sein Pool ist angehalten, weil Platten fehlen. Er kommt von selbst zurück, sobald seine Platten wieder da sind} locked {sein Pool ist gesperrt. Ein Administrator entsperrt ihn unter Einstellungen > Speicher mit dem Schlüssel des Pools} other {sein Ordner ist nicht eingehängt}}."
     },
     "thumbnail": {
       "not_found": "Für diese Datei gibt es noch keine Vorschau.",
@@ -358,11 +380,30 @@
     }
   },
   "notifications": {
+    "channel": {
+      "invalid": "Der Kanal wurde nicht gespeichert: {field, select, name {sein Name ist leer oder länger als 60 Zeichen} kind {seine Art oder Stufe ist unbekannt} recipients {er braucht 1 bis 10 gültige E-Mail-Adressen} url {seine Adresse muss mit http:// oder https:// beginnen und darf nicht die Box selbst sein} format {sein Format ist unbekannt} headers {ein Header ist ungültig, reserviert oder doppelt, oder es sind mehr als 10} categories {er braucht mindestens eine Art von Ereignis} other {ein Wert ist ungültig}}.",
+      "failed": "Der Kanal konnte nicht zustellen: {detail}",
+      "limit_reached": "Es gibt schon {max} Kanäle. Entferne zuerst einen.",
+      "not_found": "Diesen Kanal gibt es nicht mehr."
+    },
+    "language": {
+      "unsupported": "Die Box kann nicht in der Sprache {language} schreiben."
+    },
     "message": {
-      "invalid": "Die Benachrichtigung wurde nicht gesendet: {field, select, app {die App-ID ist ungültig} title {der Titel ist leer oder länger als {maxLength} Zeichen} other {der Text ist länger als {maxLength} Zeichen}}."
+      "invalid": "Die Benachrichtigung wurde nicht gesendet: {field, select, app {die App-ID ist ungültig} title {der Titel ist leer oder länger als {maxLength} Zeichen} category {die Kategorie ist keine, die die App angibt} other {der Text ist länger als {maxLength} Zeichen}}."
     },
     "notification": {
       "not_found": "Diese Benachrichtigung gibt es nicht mehr."
+    },
+    "smtp": {
+      "invalid": "Der E-Mail-Server wurde nicht gespeichert: {field, select, host {sein Name ist leer oder ungültig} port {der Port muss zwischen 1 und 65535 liegen} security {die Verschlüsselung ist unbekannt} username {der Benutzername ist zu lang} password {das Passwort ist zu lang} from {der Absender ist keine gültige E-Mail-Adresse} to {die Adresse für den Test ist keine gültige E-Mail-Adresse} other {ein Wert ist ungültig}}.",
+      "missing": "E-Mail-Kanäle brauchen einen E-Mail-Server. Ein Administrator richtet ihn unter Einstellungen > Benachrichtigungen ein."
+    },
+    "category": {
+      "not_found": "Keine App, die du öffnen darfst, hat die Benachrichtigungskategorie {category} von {app}."
+    },
+    "event": {
+      "unknown": "Ein Benachrichtigungsereignis {event} gibt es nicht."
     }
   },
   "permissions": {
@@ -373,6 +414,24 @@
   "proxy": {
     "access": {
       "denied": "Du darfst {host} nicht öffnen. Ein Administrator kann dich beim Proxy-Host zulassen."
+    },
+    "acme": {
+      "caa": "Das DNS von {name} erlaubt dieser Zertifizierungsstelle keine Zertifikate (CAA-Eintrag). {detail}",
+      "connection": "Die Zertifizierungsstelle hat {name} auf Port 80 nicht erreicht. Leite Port 80 deines Routers an die Box weiter und prüf die Firewall. {detail}",
+      "directory_invalid": "Das ACME-Verzeichnis muss eine https-Adresse sein.",
+      "dns": "{name} hat keinen öffentlichen DNS-Eintrag, der auf die Box zeigt. {detail}",
+      "email_invalid": "Gib eine gültige E-Mail-Adresse ein oder lass das Feld leer.",
+      "failed": "Die Zertifizierungsstelle hat kein Zertifikat für {name} ausgestellt. {detail}",
+      "name_not_public": "{name} ist keine öffentliche Domain. Let's Encrypt zertifiziert nur Namen im Internet; nutze dafür das eigene Zertifikat der Box.",
+      "name_rejected": "Die Zertifizierungsstelle stellt für {name} keine Zertifikate aus. {detail}",
+      "not_acme": "Dieser Host nutzt kein Zertifikat von Let's Encrypt.",
+      "port_unavailable": "Die Box antwortet hier nicht auf Port 80, wo Let's Encrypt die Domain prüft.",
+      "rate_limited": "Zu viele Anfragen für {name}; die Box versucht es später noch einmal. {detail}",
+      "running": "Das Zertifikat dieses Hosts wird bereits angefordert.",
+      "terms_required": "Stimm zuerst den Nutzungsbedingungen von Let's Encrypt zu.",
+      "unauthorized": "Für {name} hat auf Port 80 ein anderer Server geantwortet. Lass die Domain auf die Box zeigen und leite Port 80 an sie weiter. {detail}",
+      "unreachable": "Die ACME-Zertifizierungsstelle antwortet nicht ({detail}). Prüf die Internetverbindung der Box.",
+      "wildcard": "{name} ist ein Platzhalter. Let's Encrypt zertifiziert Platzhalter nur über DNS, was die Box nicht macht; gib stattdessen jeden Namen einzeln an."
     },
     "address": {
       "denied": "Deine Adresse darf diese Seite nicht öffnen.",
@@ -477,6 +536,9 @@
       "endpoint_unknown": "Die App hat eine Backend-Verbindung angefragt, die sie nicht hat ({endpoint}).",
       "unreachable": "Die App hat ihr Backend nicht erreicht ({endpoint}). Prüf die Verbindung zur Box."
     },
+    "box": {
+      "unreachable": "Die Box ist nicht erreichbar. Prüf die Verbindung und versuch es erneut."
+    },
     "method": {
       "unknown": "Diese Pithyx-Version unterstützt nicht, was die App angefragt hat ({method})."
     },
@@ -500,7 +562,7 @@
     },
     "command": {
       "failed": "Der Speicherbefehl {command} ist fehlgeschlagen (Exit-Code {exitCode}). Danach wurde nichts mehr ausgeführt; Details stehen im Protokoll.",
-      "timed_out": "{command} ist nicht innerhalb von {minutes, plural, one {# Minute} other {# Minuten}} fertig geworden. Wahrscheinlich antwortet eine Platte des Pools nicht mehr und ZFS wartet auf sie. Prüfe die Platten unter Speicher. Reagieren auch andere Pools nicht mehr, starte die Box neu."
+      "timed_out": "{command} ist nicht innerhalb von {minutes, plural, one {# Minute} other {# Minuten}} fertig geworden. Wahrscheinlich antwortet eine Platte des Pools nicht mehr und ZFS wartet auf sie. Prüfe die Platten unter Einstellungen > Speicher. Reagieren auch andere Pools nicht mehr, starte die Box neu."
     },
     "dataset": {
       "compression_invalid": "Die Kompression {compression} setzt Pithyx nicht. Wähle off, lz4, zle, zstd (Stufen 1 bis 19) oder gzip (Stufen 1 bis 9).",
@@ -523,7 +585,18 @@
       "refused": "Die Platte darf nicht verwendet werden: {reason, select, system_disk {sie enthält das System} mounted {ein Dateisystem darauf ist in Benutzung} pool_member {sie gehört zu einem Pool} not_test_disk {sie ist keine eingetragene Testplatte} other {sie ist nicht sicher verwendbar}}."
     },
     "encryption": {
-      "unavailable": "Verschlüsselung kommt mit dem Schlüsseltresor im nächsten Update. Ein Pool lässt sich nur beim Anlegen verschlüsseln; leg ihn also nur dann unverschlüsselt an, wenn das für seine Daten in Ordnung ist."
+      "unavailable": "Diese Box kann keine Pools verschlüsseln. Ein Pool lässt sich nur beim Anlegen verschlüsseln; leg ihn also nur dann unverschlüsselt an, wenn das für seine Daten in Ordnung ist.",
+      "key_invalid": "Das ist kein Pool-Schlüssel. Ein Pool-Schlüssel beginnt mit PXPK und hat danach 56 Zeichen; prüfe ihn auf Tippfehler.",
+      "key_wrong": "Dieser Schlüssel entsperrt den Pool {name} nicht. Er ist ein Pool-Schlüssel, aber von einem anderen Pool oder ein älterer.",
+      "key_required": "Gib den Schlüssel des Pools {name} ein.",
+      "vault_failed": "Der Schlüssel des Pools {name} konnte nicht im Schlüsseltresor auf der Systemplatte abgelegt werden. Der Pool ist jetzt entsperrt; nach dem nächsten Start wartet er auf seinen Schlüssel, bewahre den Schlüssel also auf. Prüfe die Systemplatte im Protokoll und entsperre den Pool oder ändere den Schlüssel erneut, um ihn im Tresor aufzubewahren.",
+      "not_in_vault": "Der Schlüsseltresor enthält keinen Schlüssel des Pools {name}. Nur der Schlüssel, den du selbst aufbewahrt hast, kann ihn öffnen."
+    },
+    "usb": {
+      "not_found": "Dieser USB-Stick kann keinen Pool-Schlüssel aufnehmen ({device}): Er ist weg, oder er hat kein freies FAT-, exFAT- oder ext-Dateisystem. Stecke ihn erneut ein oder nimm einen anderen Stick.",
+      "read_only": "Der USB-Stick {stick} ist schreibgeschützt. Schalte den Schreibschutz aus oder nimm einen anderen Stick.",
+      "unreadable": "Der USB-Stick {stick} ließ sich nicht öffnen ({reason}). Auf ihm wurde nichts verändert. Prüfe den Stick an einem Computer oder nimm einen anderen.",
+      "write_failed": "Der Schlüssel konnte nicht auf den USB-Stick {stick} geschrieben werden ({reason}). Verlass dich nicht auf diesen Stick: Prüfe ihn an einem Computer oder nimm einen anderen, und bewahre den Schlüssel weiter auf."
     },
     "plan": {
       "action_invalid": "Unbekannte Speicheraktion.",
@@ -543,7 +616,10 @@
       "expanding": "Der Pool {name} wird schon erweitert. Die nächste Platte kannst du hinzufügen, wenn das fertig ist.",
       "read_only": "Der Pool {name} ist schreibgeschützt importiert und lässt sich nicht ändern. Importiere ihn zuerst zur Nutzung.",
       "disks_missing": "Platten von {name} sind nicht angeschlossen, deshalb lässt er sich gerade weder löschen noch abmelden: Der Befehl würde den Pool anhalten und hängen bleiben, bis die Box neu startet. Schließ die Platten erst wieder an, oder starte die Box neu, damit sie den Pool vergisst.",
-      "suspended": "{name} hat alle Lese- und Schreibzugriffe angehalten, weil zu viele seiner Platten fehlen. Löschen oder Abmelden würde jetzt hängen bleiben, bis die Box neu startet. Schließ die Platten wieder an; Pithyx setzt den Pool dann von selbst fort."
+      "suspended": "{name} hat alle Lese- und Schreibzugriffe angehalten, weil zu viele seiner Platten fehlen. Löschen oder Abmelden würde jetzt hängen bleiben, bis die Box neu startet. Schließ die Platten wieder an; Pithyx setzt den Pool dann von selbst fort.",
+      "not_encrypted": "Der Pool {name} ist nicht verschlüsselt.",
+      "locked": "Der Pool {name} ist gesperrt. Entsperre ihn zuerst mit seinem Schlüssel.",
+      "not_locked": "Der Pool {name} ist schon entsperrt. Um seinen Schlüssel im Schlüsseltresor aufzubewahren, gib den Schlüssel ein: Er wird geprüft und dann aufbewahrt."
     },
     "schedule": {
       "invalid": "Dieser Zeitplan lässt sich nicht setzen. Wähle Aus, Wöchentlich oder Monatlich für einen vorhandenen Pool."
@@ -578,7 +654,7 @@
       "preview_required": "Importiere den Pool {name} zuerst schreibgeschützt und prüf seine Datasets, dann importiere ihn zur Nutzung."
     },
     "zfs": {
-      "unavailable": "ZFS hat nicht rechtzeitig geantwortet oder einen Fehler gemeldet, deshalb kann Pithyx nicht zeigen, was sich ändern würde. Versuch es gleich noch einmal. Wenn es so bleibt, wartet vielleicht ein Pool auf Platten, die fehlen: sieh im Speicher nach."
+      "unavailable": "ZFS hat nicht rechtzeitig geantwortet oder einen Fehler gemeldet, deshalb kann Pithyx nicht zeigen, was sich ändern würde. Versuch es gleich noch einmal. Wenn es so bleibt, wartet vielleicht ein Pool auf Platten, die fehlen: sieh unter Einstellungen > Speicher nach."
     }
   },
   "store": {
@@ -629,6 +705,10 @@
       "server_invalid": "„{server}“ ist weder ein Hostname noch eine Adresse.",
       "servers_too_many": "Gib höchstens {max} Zeitserver an.",
       "zone_invalid": "Das System kennt die Zeitzone „{zone}“ nicht."
+    },
+    "ups": {
+      "invalid": "Die USV-Einstellung „{field, select, mode {Modus} host {Server} port {Port} name {USV-Name} username {Benutzer} password {Passwort} batteryLow {Akku-Grenze} runtimeLow {Laufzeit-Grenze} other {{field}}}“ ist ungültig.",
+      "unavailable": "Auf diesem Rechner gibt es keinen NUT-Server für eine USV an USB."
     }
   },
   "tls": {

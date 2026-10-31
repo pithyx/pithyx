@@ -11,20 +11,54 @@ import {
   type SortOrder,
   type PithyxApp,
 } from '@pithyx/sdk';
-import { Fragment, useEffect, useEffectEvent, useRef, useState, type DragEvent } from 'react';
+import {
+  Fragment,
+  useEffect,
+  useEffectEvent,
+  useRef,
+  useState,
+  type CSSProperties,
+  type DragEvent,
+  type ReactNode,
+} from 'react';
+import { ToggleButton } from 'react-aria-components';
 import { useTranslation } from 'react-i18next';
 import { useStore } from 'zustand';
-import { Button, Checkbox, cx, Dialog, IconButton } from '@pithyx/ui';
+import {
+  Button,
+  DetailsPane as SidePane,
+  Checkbox,
+  cx,
+  Dialog,
+  IconButton,
+  SearchField,
+  Toolbar,
+  ToolbarButton,
+  ToolbarSeparator,
+} from '@pithyx/ui';
 import {
   IconArrowLeft,
   IconArrowRight,
   IconArrowUp,
   IconChevronRight,
+  IconClipboard,
+  IconClock,
+  IconCopy,
+  IconDownload,
+  IconEye,
   IconFolderPlus,
   IconHome,
   IconLayoutGrid,
+  IconFile,
+  IconFolder,
+  IconHistory,
+  IconLayoutSidebarRight,
   IconListDetails,
+  IconLock,
   IconMenu2,
+  IconPencil,
+  IconRefresh,
+  IconScissors,
   IconServer2,
   IconTrash,
   IconUpload,
@@ -34,21 +68,39 @@ import {
 import { randomId } from '../../platform/browser';
 import { setClipboard, useFilesClipboard } from './clipboard';
 import { filesCall, onThumbnails, thumbnailUrl } from '../sdk/filesInternal';
-import { choiceExtension, defaultAction, openWithChoices, type OpenWith } from './defaultAction';
+import {
+  choiceExtension,
+  currentChoice,
+  defaultAction,
+  openWithChoices,
+  type OpenWith,
+} from './defaultAction';
 import { chooseFileDefault, useFileDefaults } from './fileDefaults';
-import { useInstalledApps } from '../installed';
+import { manifestText, useInstalledApps } from '../installed';
 import { useAppName } from '../names';
 import styles from './FilesApp.module.css';
+import { actionsFor } from './fileActions';
 import { FilesMenu, type FilesAction } from './FilesMenu';
-import { isEmpty, itemsToDrop, parseDragged, type DraggedEntries, type DropTarget } from './drop';
-import { dragKindOf, ENTRIES_TYPE, FolderView } from './FolderView';
+import {
+  ENTRIES_TYPE,
+  isEmpty,
+  itemsToDrop,
+  parseDragged,
+  type DraggedEntries,
+  type DropTarget,
+} from './drop';
+import { dragKindOf, FolderView } from './FolderView';
 import { compareEntries } from './order';
+import { addFileShortcuts } from '../../items/ItemsLayer';
+import { itemsKey } from '../../items/query';
 import { crumbsOf, freeName, joinPath, nameOf, parentOf } from './paths';
 import {
   emptySelection,
   forget,
+  isSelected,
   selectAll,
   selectedCount,
+  selectNames,
   selectOnly,
   single,
   toItems,
@@ -56,9 +108,19 @@ import {
 } from './selection';
 import { createTransfers, type Transfers } from './transfers';
 import { TrashView, trashKey } from './TrashView';
+import { RECENT_PLACE, useRecentFiles, type RecentFile } from './recent';
+import { RecentView } from './RecentView';
 import { VersionsDialog } from './VersionsDialog';
 import { createThumbnails, thumbnailKey } from './thumbnails';
-import { changeFolder, folderKey, keepOnly, prefetchFolder, useFolder } from './useFolder';
+import {
+  changeFolder,
+  folderKey,
+  keepOnly,
+  matchesQuery,
+  prefetchFolder,
+  useFolder,
+  useSubfolders,
+} from './useFolder';
 
 /** Where a window is: a folder of a share, or the share's recycle bin. Saved with the layout. */
 interface Place {
@@ -92,6 +154,16 @@ function restorePlace(saved: unknown): Place {
   return { share: null, path: '', view: 'folder' };
 }
 
+function initialSelection(saved: unknown, here: string): { at: string; selection: Selection } {
+  if (typeof saved === 'object' && saved !== null) {
+    const { share, path, select } = saved as Record<string, unknown>;
+    if (typeof share === 'string' && typeof path === 'string' && typeof select === 'string') {
+      return { at: `${share}:${path}:folder`, selection: selectOnly(select) };
+    }
+  }
+  return { at: here, selection: emptySelection };
+}
+
 function dropKey(share: string, path: string): string {
   return JSON.stringify([share, path]);
 }
@@ -105,9 +177,10 @@ function codeOf(error: unknown): string | null {
  * through `app.files`, `app.jobs` and `app.trash`.
  */
 export function FilesApp({ app }: { app: PithyxApp }) {
-  const { t } = useTranslation('files');
+  const { t, i18n } = useTranslation('files');
   const client = useQueryClient();
   const [place, setPlace] = useState<Place>(() => restorePlace(app.context.session));
+  const [detailsOpen, setDetailsOpen] = useState(false);
   const [history, setHistory] = useState<{ back: Place[]; forward: Place[] }>({
     back: [],
     forward: [],
@@ -127,6 +200,7 @@ export function FilesApp({ app }: { app: PithyxApp }) {
   const [openWith, setOpenWith] = useState<FileEntry | null>(null);
   const [alwaysUse, setAlwaysUse] = useState(false);
   const installed = useInstalledApps((state) => state.apps);
+  const fileChoices = useFileDefaults((state) => state.choices);
   const appName = useAppName();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [menu, setMenu] = useState<{ x: number; y: number; entry: FileEntry | null } | null>(null);
@@ -156,13 +230,16 @@ export function FilesApp({ app }: { app: PithyxApp }) {
   const sharedFolders = shareList.filter((candidate) => candidate.kind === undefined);
   const userHomes = shareList.filter((candidate) => candidate.kind === 'userHome');
   const atHomes = place.share === HOMES && userHomes.length > 0;
+  const recent = useRecentFiles();
+  const atRecent = place.share === RECENT_PLACE && recent !== undefined;
   // Each home is a share of its own (its trash, versions and pool), so the homes are listed as folders that open it.
   const homeEntries: FileEntry[] = userHomes
     .map((home): FileEntry => ({ name: home.name, kind: 'folder', size: 0, modified: '' }))
     .sort((a, b) => compareEntries(a, b, sort.key, sort.order));
-  const share: ShareInfo | undefined = atHomes
-    ? undefined
-    : (shareList.find((candidate) => candidate.id === place.share) ?? shareList[0]);
+  const share: ShareInfo | undefined =
+    atHomes || atRecent
+      ? undefined
+      : (shareList.find((candidate) => candidate.id === place.share) ?? shareList[0]);
   const shareId = share?.id ?? null;
   const inUserHome = share?.kind === 'userHome';
   const path = share?.id === place.share ? place.path : '';
@@ -171,37 +248,62 @@ export function FilesApp({ app }: { app: PithyxApp }) {
   const here = `${shareId ?? ''}:${path}:${view}`;
 
   const [announcement, setAnnouncement] = useState<string | null>(null);
-  // Selection and inline rename belong to one folder; another folder starts empty.
-  const [selectionState, setSelectionState] = useState({ at: here, selection: emptySelection });
+  // Selection and inline rename belong to one folder; another folder starts empty. "Show in Files" on the desktop
+  // opens a window with one entry selected.
+  const [selectionState, setSelectionState] = useState(() =>
+    initialSelection(app.context.session, here),
+  );
   const selection = selectionState.at === here ? selectionState.selection : emptySelection;
   const setSelection = (next: Selection) => {
     setSelectionState({ at: here, selection: next });
     setAnnouncement(null);
   };
+  // A search keeps the names of this folder that contain it; it belongs to the folder, like the selection.
+  const [searchState, setSearchState] = useState({ at: here, text: '' });
+  const search = searchState.at === here ? searchState.text : '';
+  const searching = search.trim() !== '';
+  const setSearch = (text: string) => {
+    setSearchState({ at: here, text });
+    setSelectionState({ at: here, selection: emptySelection });
+  };
+  const homeList = homeEntries.filter((entry) => matchesQuery(entry.name, search));
+  // Folders of the tree the user opened or closed, or went through, by share and path. Any other folder is open while
+  // the folder on view is inside it, so the tree always shows where the user is.
+  const [toggled, setToggled] = useState<ReadonlyMap<string, boolean>>(new Map());
   const [renamingState, setRenamingState] = useState<{ at: string; name: string } | null>(null);
   const renaming = renamingState?.at === here ? renamingState.name : null;
   const setRenaming = (name: string | null) => {
     setRenamingState(name === null ? null : { at: here, name });
   };
 
-  const folder = useFolder(app, view === 'folder' ? shareId : null, path, sort.key, sort.order, {
-    onRemoved: (names) => {
-      setSelectionState((state) =>
-        state.at === here ? { at: here, selection: forget(state.selection, names) } : state,
-      );
+  const folder = useFolder(
+    app,
+    view === 'folder' ? shareId : null,
+    path,
+    sort.key,
+    sort.order,
+    search,
+    {
+      onRemoved: (names) => {
+        setSelectionState((state) =>
+          state.at === here ? { at: here, selection: forget(state.selection, names) } : state,
+        );
+      },
+      onGone: () => {
+        go({ share: shareId, path: parentOf(path), view: 'folder' }, false);
+      },
     },
-    onGone: () => {
-      go({ share: shareId, path: parentOf(path), view: 'folder' }, false);
-    },
-  });
+  );
   const location = { share: shareId ?? '' };
   const title = atHomes
     ? t('shares.homes')
-    : view === 'trash'
-      ? t('trash')
-      : path === ''
-        ? (share?.name ?? '')
-        : nameOf(path);
+    : atRecent
+      ? t('recent.title')
+      : view === 'trash'
+        ? t('trash')
+        : path === ''
+          ? (share?.name ?? '')
+          : nameOf(path);
 
   // The window title and the saved place follow the folder on screen (the window manager and the layout live
   // outside React).
@@ -211,10 +313,12 @@ export function FilesApp({ app }: { app: PithyxApp }) {
     }
   }, [app, t, title]);
   useEffect(() => {
-    if (shareId !== null) {
+    if (atRecent) {
+      void app.session.save({ share: RECENT_PLACE, path: '', view: 'folder', layout });
+    } else if (shareId !== null) {
       void app.session.save({ share: shareId, path, view, layout });
     }
-  }, [app, shareId, path, view, layout]);
+  }, [app, atRecent, shareId, path, view, layout]);
   // Thumbnails rendered by the daemon arrive as events: syncing with the SDK.
   useEffect(() => onThumbnails(app, thumbnails.receive), [app, thumbnails]);
   const thumbnailSize = layout === 'grid' ? 'large' : 'small';
@@ -237,6 +341,20 @@ export function FilesApp({ app }: { app: PithyxApp }) {
     };
     if (remember) {
       setHistory((current) => ({ back: [...current.back, place], forward: [] }));
+    }
+    // The tree opened the folders down to the one on view; they stay open when the user goes elsewhere (the recycle
+    // bin, another share) until the user closes them.
+    if (place.share !== null && place.view === 'folder') {
+      const share = place.share;
+      setToggled((current) => {
+        const kept = new Map(current);
+        for (const folder of foldersDownTo(place.path)) {
+          if (!kept.has(treeKey(share, folder))) {
+            kept.set(treeKey(share, folder), true);
+          }
+        }
+        return kept;
+      });
     }
     setPlace(next);
     setAnnouncement(null);
@@ -295,6 +413,7 @@ export function FilesApp({ app }: { app: PithyxApp }) {
     if (running === undefined) {
       return;
     }
+    void client.invalidateQueries({ queryKey: itemsKey });
     if (shareId !== null) {
       void client.invalidateQueries({ queryKey: trashKey(shareId) });
       // Other folders are revalidated when they are visited again; the one on screen follows its live changes.
@@ -446,16 +565,20 @@ export function FilesApp({ app }: { app: PithyxApp }) {
     }
   }
 
-  async function createFolder() {
+  /** Creates a folder or an empty file under a free default name and starts renaming it. */
+  async function createEntry(kind: 'folder' | 'file') {
     if (shareId === null) {
       return;
     }
     const taken = new Set(folder.entries.map((entry) => entry.name));
-    const base = t('dialog.newFolderName');
+    const base = kind === 'folder' ? t('dialog.newFolderName') : t('dialog.newFileName');
     let name = taken.has(base) ? freeName(base, (candidate) => taken.has(candidate)) : base;
     for (let attempt = 0; attempt < 20; attempt++) {
       try {
-        const entry = await app.files.createFolder(location, joinPath(path, name));
+        const entry =
+          kind === 'folder'
+            ? await app.files.createFolder(location, joinPath(path, name))
+            : await app.files.upload(location, path, name, new Blob([]));
         changeFolder(client, shareId, path, { changed: [entry], removed: [] });
         setSelection(selectOnly(entry.name));
         setRenaming(entry.name);
@@ -488,6 +611,8 @@ export function FilesApp({ app }: { app: PithyxApp }) {
     setSelection(selectOnly(trimmed));
     try {
       await app.files.rename(location, joinPath(path, oldName), trimmed);
+      // Shortcuts on the desktop follow the rename on the daemon.
+      void client.invalidateQueries({ queryKey: itemsKey });
     } catch (error) {
       changeFolder(client, shareId, path, { changed: [entry], removed: [trimmed] });
       setSelection(selectOnly(oldName));
@@ -495,26 +620,69 @@ export function FilesApp({ app }: { app: PithyxApp }) {
     }
   }
 
-  async function openIn(entry: FileEntry, how: OpenWith) {
-    if (how === 'viewer' && shareId !== null) {
+  /** Opens a file of the folder on screen, or of another folder with `at` (a recent file). */
+  async function openIn(
+    entry: FileEntry,
+    how: OpenWith,
+    at = { share: shareId, folder: path, writable },
+  ) {
+    if (how === 'viewer' && at.share !== null) {
       await filesCall(app, 'internal.files.openViewer', {
-        share: shareId,
-        folder: path,
+        share: at.share,
+        folder: at.folder,
         name: entry.name,
       }).catch(report);
-    } else if (how.startsWith('app:') && shareId !== null) {
+    } else if (how.startsWith('app:') && at.share !== null) {
       await filesCall(app, 'internal.files.openWithApp', {
-        share: shareId,
-        folder: path,
+        share: at.share,
+        folder: at.folder,
         name: entry.name,
         app: how.slice('app:'.length),
         size: entry.size,
         modified: entry.modified,
-        writable,
+        writable: at.writable,
       }).catch(report);
-    } else {
-      await app.files.download(location, joinPath(path, entry.name)).catch(report);
+    } else if (at.share !== null) {
+      await app.files.download({ share: at.share }, joinPath(at.folder, entry.name)).catch(report);
     }
+  }
+
+  async function openRecent(file: RecentFile) {
+    const entry: FileEntry = {
+      name: nameOf(file.path),
+      kind: 'file',
+      size: file.size,
+      modified: file.modified,
+    };
+    const at = {
+      share: String(file.share),
+      folder: parentOf(file.path),
+      writable: shareList.some(
+        (candidate) => candidate.id === String(file.share) && candidate.access === 'readWrite',
+      ),
+    };
+    const action = defaultAction(entry, installed ?? [], useFileDefaults.getState().choices);
+    if (action.kind === 'view') {
+      await openIn(entry, 'viewer', at);
+    } else if (action.kind === 'app') {
+      await openIn(entry, `app:${action.id}`, at);
+    } else if (action.kind === 'download') {
+      await openIn(entry, 'download', at);
+    }
+  }
+
+  /** Shows a recent file in its folder, selected. */
+  function showRecent(file: RecentFile) {
+    const target = {
+      share: String(file.share),
+      path: parentOf(file.path),
+      view: 'folder' as const,
+    };
+    go(target);
+    setSelectionState({
+      at: `${target.share}:${target.path}:folder`,
+      selection: selectOnly(nameOf(file.path)),
+    });
   }
 
   async function open(entry: FileEntry) {
@@ -551,11 +719,18 @@ export function FilesApp({ app }: { app: PithyxApp }) {
     }
   }
 
+  /** The selected names in the folder on screen, also when everything is selected. */
+  function selectedNames(): string[] {
+    return folder.entries
+      .filter((entry) => isSelected(selection, entry.name))
+      .map((entry) => entry.name);
+  }
+
   function selectedEntry(): FileEntry | undefined {
     const name = single(selection);
     return name === null
       ? undefined
-      : (atHomes ? homeEntries : folder.entries).find((entry) => entry.name === name);
+      : (atHomes ? homeList : folder.entries).find((entry) => entry.name === name);
   }
 
   function act(action: FilesAction) {
@@ -590,6 +765,24 @@ export function FilesApp({ app }: { app: PithyxApp }) {
           setRenaming(entry.name);
         }
         break;
+      case 'addToDesktop':
+        if (shareId !== null) {
+          const names = selectedNames();
+          const ids = addFileShortcuts(
+            client,
+            Number(shareId),
+            names.map((name) => joinPath(path, name)),
+            {
+              folders: new Set(
+                folder.entries
+                  .filter((entry) => entry.kind !== 'file' && names.includes(entry.name))
+                  .map((entry) => joinPath(path, entry.name)),
+              ),
+            },
+          );
+          setAnnouncement(t('announce.addedToDesktop', { count: ids.length }));
+        }
+        break;
       case 'versions':
         if (entry !== undefined && shareId !== null) {
           setVersionsOf({ share: shareId, path: joinPath(path, entry.name), name: entry.name });
@@ -606,13 +799,21 @@ export function FilesApp({ app }: { app: PithyxApp }) {
         }
         break;
       case 'newFolder':
-        void createFolder();
+        void createEntry('folder');
+        break;
+      case 'newFile':
+        void createEntry('file');
         break;
       case 'upload':
         upload.current?.click();
         break;
       case 'selectAll':
-        setSelection(selectAll());
+        // A search shows a part of the folder, so only what it shows is selected, never the whole folder.
+        setSelection(
+          searching
+            ? selectNames((atHomes ? homeList : folder.entries).map((entry) => entry.name))
+            : selectAll(),
+        );
         break;
     }
   }
@@ -702,8 +903,39 @@ export function FilesApp({ app }: { app: PithyxApp }) {
     });
   }
 
-  const count = selectedCount(selection, atHomes ? homeEntries.length : folder.total);
+  const count = selectedCount(selection, atHomes ? homeList.length : folder.total);
   const menuEntry = menu?.entry ?? null;
+  // The apps' file actions for the selected entries (D375); only for a selection of loaded entries named one by one.
+  const selectedItems = toItems(selection);
+  const chosen =
+    menuEntry === null || atHomes || view !== 'folder' || !('names' in selectedItems)
+      ? []
+      : folder.entries.filter((entry) => selectedItems.names.includes(entry.name));
+  const appActions =
+    chosen.length > 0 && chosen.length === count
+      ? actionsFor(chosen, installed ?? [], writable)
+      : [];
+
+  function runAppAction(index: number) {
+    const offered = appActions[index];
+    if (offered === undefined || shareId === null) {
+      return;
+    }
+    void filesCall(app, 'internal.files.runAction', {
+      app: offered.app,
+      action: offered.action.id,
+      share: shareId,
+      folder: path,
+      names: chosen.map((entry) => entry.name),
+    }).catch(report);
+  }
+  // The recycle bin of the place on view, else of the user's home: one entry in the navigation (D394).
+  const binShare =
+    [...ownHomes, ...sharedFolders].find((candidate) => candidate.id === shareId) ?? ownHomes[0];
+  const detailName = view === 'folder' && !atHomes ? single(selection) : null;
+  const detailEntry =
+    detailName === null ? undefined : folder.entries.find((entry) => entry.name === detailName);
+  const hasSelection = view === 'folder' && selectedNames().length > 0;
   const cut =
     clipboard?.mode === 'cut' &&
     clipboard.share === shareId &&
@@ -714,6 +946,108 @@ export function FilesApp({ app }: { app: PithyxApp }) {
 
   return (
     <div className={styles.files}>
+      <Toolbar
+        aria-label={t('commands')}
+        variant="bar"
+        className={styles.commands}
+        end={
+          view === 'folder' && !atRecent ? (
+            <>
+              <Button
+                size="sm"
+                variant="quiet"
+                aria-label={layout === 'grid' ? t('layout.list') : t('layout.grid')}
+                onPress={() => {
+                  setLayout((current) => (current === 'grid' ? 'list' : 'grid'));
+                }}
+              >
+                {layout === 'grid' ? (
+                  <IconListDetails size={18} stroke={1.75} aria-hidden />
+                ) : (
+                  <IconLayoutGrid size={18} stroke={1.75} aria-hidden />
+                )}
+                <span className={styles.viewLabel}>
+                  {layout === 'grid' ? t('command.list') : t('command.tiles')}
+                </span>
+              </Button>
+              <ToggleButton
+                className={styles.detailsToggle}
+                isSelected={detailsOpen}
+                onChange={setDetailsOpen}
+              >
+                <IconLayoutSidebarRight size={18} stroke={1.75} aria-hidden />
+                <span className={styles.viewLabel}>{t('details')}</span>
+              </ToggleButton>
+            </>
+          ) : undefined
+        }
+      >
+        <ToolbarButton
+          variant="primary"
+          icon={<IconUpload size={18} stroke={1.75} aria-hidden />}
+          label={t('actions.upload')}
+          isDisabled={view !== 'folder' || !writable}
+          onPress={() => {
+            upload.current?.click();
+          }}
+        />
+        <ToolbarButton
+          icon={<IconFolderPlus size={18} stroke={1.75} aria-hidden />}
+          label={t('actions.newFolder')}
+          isDisabled={view !== 'folder' || !writable}
+          onPress={() => void createEntry('folder')}
+        />
+        <ToolbarSeparator />
+        <ToolbarButton
+          icon={<IconCopy size={18} stroke={1.75} aria-hidden />}
+          label={t('actions.copy')}
+          isDisabled={view !== 'folder' || !hasSelection}
+          onPress={() => {
+            act('copy');
+          }}
+        />
+        <ToolbarButton
+          icon={<IconScissors size={18} stroke={1.75} aria-hidden />}
+          label={t('actions.cut')}
+          isDisabled={view !== 'folder' || !hasSelection || !writable}
+          onPress={() => {
+            act('cut');
+          }}
+        />
+        <ToolbarButton
+          icon={<IconClipboard size={18} stroke={1.75} aria-hidden />}
+          label={t('actions.paste')}
+          isDisabled={view !== 'folder' || !writable || clipboard === null}
+          onPress={() => {
+            act('paste');
+          }}
+        />
+        <ToolbarButton
+          icon={<IconPencil size={18} stroke={1.75} aria-hidden />}
+          label={t('actions.rename')}
+          isDisabled={view !== 'folder' || selectedEntry() === undefined || !writable}
+          onPress={() => {
+            act('rename');
+          }}
+        />
+        <ToolbarButton
+          icon={<IconTrash size={18} stroke={1.75} aria-hidden />}
+          label={t('command.delete')}
+          isDisabled={view !== 'folder' || !hasSelection || !writable}
+          onPress={() => {
+            act('delete');
+          }}
+        />
+        <ToolbarSeparator />
+        <ToolbarButton
+          icon={<IconDownload size={18} stroke={1.75} aria-hidden />}
+          label={t('actions.download')}
+          isDisabled={view !== 'folder' || selectedEntry()?.kind !== 'file'}
+          onPress={() => {
+            act('download');
+          }}
+        />
+      </Toolbar>
       <div className={styles.toolbar}>
         <IconButton
           label={t('sidebar')}
@@ -751,6 +1085,11 @@ export function FilesApp({ app }: { app: PithyxApp }) {
           onDragLeave={onZoneDragLeave}
           onDrop={onZoneDrop}
         >
+          {atRecent && (
+            <span className={styles.crumb} aria-current="page">
+              {t('recent.title')}
+            </span>
+          )}
           {(atHomes || inUserHome) && (
             <button
               type="button"
@@ -804,45 +1143,30 @@ export function FilesApp({ app }: { app: PithyxApp }) {
             ))
           )}
         </nav>
-        {view === 'folder' && writable && (
-          <>
-            <IconButton
-              label={t('actions.newFolder')}
-              size="sm"
-              onPress={() => void createFolder()}
-            >
-              <IconFolderPlus size={18} stroke={1.75} />
-            </IconButton>
-            <IconButton
-              label={t('actions.upload')}
-              size="sm"
-              onPress={() => {
-                upload.current?.click();
-              }}
-            >
-              <IconUpload size={18} stroke={1.75} />
-            </IconButton>
-          </>
-        )}
-        {!writable && share !== undefined && (
-          <span className={styles.readOnly}>{t('readOnly')}</span>
-        )}
-        {view === 'folder' && (
-          <IconButton
-            label={layout === 'grid' ? t('layout.list') : t('layout.grid')}
-            size="sm"
-            onPress={() => {
-              setLayout((current) => (current === 'grid' ? 'list' : 'grid'));
-            }}
-          >
-            {layout === 'grid' ? (
-              <IconListDetails size={18} stroke={1.75} />
-            ) : (
-              <IconLayoutGrid size={18} stroke={1.75} />
-            )}
-          </IconButton>
+        <IconButton
+          label={t('refresh')}
+          size="sm"
+          isDisabled={view !== 'folder' || atRecent}
+          onPress={refresh}
+        >
+          <IconRefresh size={18} stroke={1.75} />
+        </IconButton>
+        {(atHomes || (view === 'folder' && !atRecent && share !== undefined)) && (
+          <SearchField
+            className={styles.search}
+            label={t('search', { folder: title })}
+            placeholder={t('search', { folder: title })}
+            value={search}
+            onChange={setSearch}
+          />
         )}
       </div>
+      {view === 'folder' && !writable && share !== undefined && (
+        <p className={styles.infoBar}>
+          <IconLock size={16} stroke={1.75} aria-hidden />
+          {t('readOnlyInfo', { name: share.name })}
+        </p>
+      )}
       <div className={styles.split} data-sidebar-open={sidebarOpen ? '' : undefined}>
         <nav
           className={styles.sidebar}
@@ -851,38 +1175,75 @@ export function FilesApp({ app }: { app: PithyxApp }) {
           onDragLeave={onZoneDragLeave}
           onDrop={onZoneDrop}
         >
-          <h3 className={styles.sideTitle}>{t('shares.title')}</h3>
+          {recent !== undefined && (
+            <>
+              <button
+                type="button"
+                className={styles.sideItem}
+                aria-current={atRecent ? 'page' : undefined}
+                onClick={() => {
+                  go({ share: RECENT_PLACE, path: '', view: 'folder' });
+                }}
+              >
+                <IconClock className={styles.sideIcon} size={16} stroke={1.75} aria-hidden />
+                <span className={styles.sideName}>{t('recent.title')}</span>
+              </button>
+              <hr className={styles.sideRule} />
+            </>
+          )}
           {[ownHomes, sharedFolders].map((section, index) => (
             <Fragment key={index}>
+              {index > 0 && section.length > 0 && <hr className={styles.sideRule} />}
               {section.map((candidate) => {
                 const Icon = candidate.kind === undefined ? IconServer2 : IconHome;
                 return (
-                  <button
-                    key={candidate.id}
-                    type="button"
-                    className={styles.sideItem}
-                    aria-current={
-                      candidate.id === shareId && view === 'folder' ? 'page' : undefined
-                    }
-                    {...dropAttributes(
-                      candidate.id,
-                      '',
-                      candidate.access === 'readWrite' && candidate.unavailable === undefined,
-                    )}
-                    onClick={() => {
-                      go({ share: candidate.id, path: '', view: 'folder' });
-                    }}
-                  >
-                    <Icon size={16} stroke={1.75} aria-hidden />
-                    {candidate.name}
-                    {candidate.unavailable !== undefined && (
-                      <span className={styles.sideNote}>{t('shares.unavailable')}</span>
-                    )}
-                  </button>
+                  <ul key={candidate.id} className={styles.tree}>
+                    <FolderTreeNode
+                      app={app}
+                      share={candidate.id}
+                      path=""
+                      depth={0}
+                      label={candidate.name}
+                      icon={
+                        <Icon className={styles.sideIcon} size={16} stroke={1.75} aria-hidden />
+                      }
+                      marker={
+                        candidate.unavailable !== undefined ? (
+                          <span className={styles.sideNote}>{t('shares.unavailable')}</span>
+                        ) : (
+                          candidate.access !== 'readWrite' && (
+                            <IconLock
+                              className={styles.sideLock}
+                              size={14}
+                              stroke={1.75}
+                              role="img"
+                              aria-label={t('readOnly')}
+                            />
+                          )
+                        )
+                      }
+                      available={candidate.unavailable === undefined}
+                      writable={
+                        candidate.access === 'readWrite' && candidate.unavailable === undefined
+                      }
+                      here={candidate.id === shareId && view === 'folder' ? path : null}
+                      toggled={toggled}
+                      onToggle={(folder, open) => {
+                        setToggled((current) =>
+                          new Map(current).set(treeKey(candidate.id, folder), open),
+                        );
+                      }}
+                      onGo={(folder) => {
+                        go({ share: candidate.id, path: folder, view: 'folder' });
+                      }}
+                      dropAttributes={dropAttributes}
+                    />
+                  </ul>
                 );
               })}
             </Fragment>
           ))}
+          <hr className={styles.sideRule} />
           {userHomes.length > 0 && (
             <button
               type="button"
@@ -892,34 +1253,42 @@ export function FilesApp({ app }: { app: PithyxApp }) {
                 go({ share: HOMES, path: '', view: 'folder' });
               }}
             >
-              <IconUsers size={16} stroke={1.75} aria-hidden />
-              {t('shares.homes')}
+              <IconUsers className={styles.sideIcon} size={16} stroke={1.75} aria-hidden />
+              <span className={styles.sideName}>{t('shares.homes')}</span>
             </button>
           )}
-          {shareList.length > 0 && <h3 className={styles.sideTitle}>{t('trash')}</h3>}
-          {[...ownHomes, ...sharedFolders].map((candidate) => (
+          {binShare !== undefined && (
             <button
-              key={candidate.id}
               type="button"
               className={styles.sideItem}
-              aria-current={candidate.id === shareId && view === 'trash' ? 'page' : undefined}
-              aria-label={t('bin.title', { share: candidate.name })}
+              aria-current={view === 'trash' ? 'page' : undefined}
+              aria-label={t('bin.title', { share: binShare.name })}
               onClick={() => {
-                go({ share: candidate.id, path: '', view: 'trash' });
+                go({ share: binShare.id, path: '', view: 'trash' });
               }}
             >
-              <IconTrash size={16} stroke={1.75} aria-hidden />
-              {candidate.name}
+              <IconTrash className={styles.sideIcon} size={16} stroke={1.75} aria-hidden />
+              <span className={styles.sideName}>{t('trash')}</span>
             </button>
-          ))}
+          )}
         </nav>
         <div className={styles.main}>
-          {shares.isSuccess && shareList.length === 0 ? (
+          {atRecent ? (
+            <RecentView
+              files={recent}
+              shares={shareList}
+              format={app.format}
+              onOpen={(file) => void openRecent(file)}
+              onShow={showRecent}
+            />
+          ) : shares.isSuccess && shareList.length === 0 ? (
             <p className={styles.empty}>{t('noShares')}</p>
           ) : atHomes ? (
             <FolderView
-              entries={homeEntries}
-              total={homeEntries.length}
+              entries={homeList}
+              total={homeList.length}
+              filtered={searching}
+              emptyText={searching ? t('searchEmpty', { query: search.trim() }) : undefined}
               loading={false}
               hasMore={false}
               loadMore={() => undefined}
@@ -977,6 +1346,8 @@ export function FilesApp({ app }: { app: PithyxApp }) {
             <FolderView
               entries={folder.entries}
               total={folder.total}
+              filtered={searching}
+              emptyText={searching ? t('searchEmpty', { query: search.trim() }) : undefined}
               loading={folder.loading}
               hasMore={folder.hasMore}
               loadMore={folder.loadMore}
@@ -1047,18 +1418,35 @@ export function FilesApp({ app }: { app: PithyxApp }) {
             />
           )}
         </div>
+        {detailsOpen && view === 'folder' && !atRecent && (
+          <DetailsPane
+            entry={detailEntry}
+            thumbnail={detailEntry === undefined ? null : thumbnailOf(detailEntry)}
+            format={app.format}
+            onAction={act}
+          />
+        )}
       </div>
       <StatusBar
         transfers={transfers}
+        readOnly={view === 'folder' && !writable && share !== undefined}
         text={
-          atHomes
-            ? count > 0
-              ? t('selected', { count })
-              : t('items', { count: userHomes.length })
-            : view === 'trash'
-              ? ''
-              : (announcement ??
-                (count > 0 ? t('selected', { count }) : t('items', { count: folder.total })))
+          atRecent
+            ? t('items', { count: recent.length })
+            : atHomes
+              ? count > 0
+                ? t('selected', { count })
+                : searching
+                  ? t('searchResults', { count: homeList.length })
+                  : t('items', { count: userHomes.length })
+              : view === 'trash'
+                ? ''
+                : (announcement ??
+                  (count > 0
+                    ? t('selected', { count })
+                    : searching
+                      ? t('searchResults', { count: folder.total })
+                      : t('items', { count: folder.total })))
         }
         onCancel={(job) => {
           void app.jobs.cancel(job).catch(report);
@@ -1088,6 +1476,11 @@ export function FilesApp({ app }: { app: PithyxApp }) {
           writable={writable}
           openOnly={atHomes}
           canPaste={clipboard !== null}
+          appActions={appActions.map((offered) => ({
+            label: manifestText(offered.action.label, i18n.language),
+            icon: installed?.find((candidate) => candidate.id === offered.app)?.icon ?? '',
+          }))}
+          onAppAction={runAppAction}
           onAction={act}
           onClose={() => {
             setMenu(null);
@@ -1127,32 +1520,87 @@ export function FilesApp({ app }: { app: PithyxApp }) {
           </Button>
         }
       >
-        <div className={styles.openWith}>
-          {openWith !== null &&
-            openWithChoices(openWith, installed ?? []).map((choice) => (
-              <Button
-                key={choice}
-                onPress={() => {
-                  const entry = openWith;
-                  const extension = choiceExtension(entry.name);
-                  setOpenWith(null);
-                  if (alwaysUse && extension !== null) {
-                    chooseFileDefault(extension, choice).catch(report);
-                  }
-                  void openIn(entry, choice);
-                }}
-              >
-                {choice === 'viewer' || choice === 'download'
-                  ? t(`openWith.${choice}`)
-                  : appName(choice.slice('app:'.length))}
-              </Button>
-            ))}
-          {openWith !== null && choiceExtension(openWith.name) !== null && (
-            <Checkbox isSelected={alwaysUse} onChange={setAlwaysUse}>
-              {t('openWith.always', { extension: choiceExtension(openWith.name) })}
-            </Checkbox>
-          )}
-        </div>
+        {openWith !== null && (
+          <div className={styles.openWith}>
+            <ul
+              className={styles.openWithList}
+              aria-label={t('openWith.choices')}
+              onKeyDown={(event) => {
+                // The arrow keys move between the choices, as in a menu.
+                if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') {
+                  return;
+                }
+                const buttons = [...event.currentTarget.querySelectorAll('button')];
+                const index = buttons.indexOf(document.activeElement as HTMLButtonElement);
+                const next =
+                  buttons[
+                    (index + (event.key === 'ArrowDown' ? 1 : -1) + buttons.length) % buttons.length
+                  ];
+                next?.focus();
+                event.preventDefault();
+              }}
+            >
+              {openWithChoices(openWith, installed ?? []).map((choice) => {
+                const appId = choice.startsWith('app:') ? choice.slice('app:'.length) : null;
+                const icon =
+                  appId === null
+                    ? ''
+                    : (installed?.find((candidate) => candidate.id === appId)?.icon ?? '');
+                const current = choice === currentChoice(openWith, installed ?? [], fileChoices);
+                return (
+                  <li key={choice}>
+                    <button
+                      type="button"
+                      className={styles.openWithChoice}
+                      onClick={() => {
+                        const entry = openWith;
+                        const extension = choiceExtension(entry.name);
+                        setOpenWith(null);
+                        if (alwaysUse && extension !== null) {
+                          chooseFileDefault(extension, choice).catch(report);
+                        }
+                        void openIn(entry, choice);
+                      }}
+                    >
+                      {appId === null ? (
+                        <span className={styles.openWithIcon} aria-hidden>
+                          {choice === 'viewer' ? (
+                            <IconEye size={20} stroke={1.75} />
+                          ) : (
+                            <IconDownload size={20} stroke={1.75} />
+                          )}
+                        </span>
+                      ) : (
+                        <img
+                          className={styles.openWithIcon}
+                          src={icon}
+                          alt=""
+                          width={28}
+                          height={28}
+                        />
+                      )}
+                      <span className={styles.openWithName}>
+                        {choice === 'viewer' || choice === 'download'
+                          ? t(`openWith.${choice}`)
+                          : appName(appId ?? '')}
+                      </span>
+                      {current && (
+                        <span className={styles.openWithCurrent}>{t('openWith.current')}</span>
+                      )}
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+            {choiceExtension(openWith.name) !== null && (
+              <div className={styles.openWithAlways}>
+                <Checkbox isSelected={alwaysUse} onChange={setAlwaysUse}>
+                  {t('openWith.always', { extension: choiceExtension(openWith.name) })}
+                </Checkbox>
+              </div>
+            )}
+          </div>
+        )}
       </Dialog>
       <Dialog
         isOpen={confirmPermanent !== null}
@@ -1235,10 +1683,12 @@ export function FilesApp({ app }: { app: PithyxApp }) {
 /** Items and selection, and the uploads and jobs of this window with their progress. */
 function StatusBar({
   transfers,
+  readOnly,
   text,
   onCancel,
 }: {
   transfers: Transfers;
+  readOnly: boolean;
   text: string;
   onCancel: (job: number) => void;
 }) {
@@ -1269,6 +1719,7 @@ function StatusBar({
       <span className={styles.statusText} role="status">
         {text}
       </span>
+      {readOnly && <span className={styles.statusEnd}>{t('readOnly')}</span>}
       {rows.length > 0 && (
         <ul className={styles.transfers} aria-label={t('job.title')}>
           {rows.map((row) => (
@@ -1305,5 +1756,207 @@ function StatusBar({
         </ul>
       )}
     </div>
+  );
+}
+
+/** The details pane of D394: a preview, the name, the facts and the actions of the selected item. */
+function DetailsPane({
+  entry,
+  thumbnail,
+  format,
+  onAction,
+}: {
+  entry: FileEntry | undefined;
+  thumbnail: string | null;
+  format: PithyxApp['format'];
+  onAction: (action: FilesAction) => void;
+}) {
+  const { t } = useTranslation('files');
+  return (
+    <SidePane className={styles.details} label={t('details')}>
+      {entry === undefined ? (
+        <p className={styles.detailsEmpty}>{t('detailsEmpty')}</p>
+      ) : (
+        <>
+          <div className={styles.preview}>
+            {thumbnail !== null ? (
+              <img src={thumbnail} alt="" />
+            ) : entry.kind === 'folder' ? (
+              <IconFolder size={56} stroke={1.25} aria-hidden />
+            ) : (
+              <IconFile size={56} stroke={1.25} aria-hidden />
+            )}
+          </div>
+          <h3 className={styles.detailsName}>{entry.name}</h3>
+          <dl className={styles.facts}>
+            {entry.kind !== 'folder' && (
+              <>
+                <dt>{t('columns.size')}</dt>
+                <dd>{format.bytes(entry.size)}</dd>
+              </>
+            )}
+            {entry.modified !== '' && (
+              <>
+                <dt>{t('columns.modified')}</dt>
+                <dd>{format.dateTime(entry.modified)}</dd>
+              </>
+            )}
+          </dl>
+          {entry.kind === 'file' && (
+            <div className={styles.detailsActions}>
+              <Button
+                size="sm"
+                onPress={() => {
+                  onAction('download');
+                }}
+              >
+                <IconDownload size={16} stroke={1.75} aria-hidden />
+                {t('actions.download')}
+              </Button>
+              <Button
+                size="sm"
+                onPress={() => {
+                  onAction('versions');
+                }}
+              >
+                <IconHistory size={16} stroke={1.75} aria-hidden />
+                {t('actions.versions')}
+              </Button>
+            </div>
+          )}
+        </>
+      )}
+    </SidePane>
+  );
+}
+
+function treeKey(share: string, folder: string): string {
+  return `${share}\n${folder}`;
+}
+
+/** The share root and every folder down to and including `path`. */
+function foldersDownTo(path: string): string[] {
+  const parts = path === '' ? [] : path.split('/');
+  return ['', ...parts.map((_, index) => parts.slice(0, index + 1).join('/'))];
+}
+
+/** Whether a folder is the folder or one of its parents; the share root holds every folder. */
+function holds(folder: string, path: string): boolean {
+  return folder === '' || path === folder || path.startsWith(`${folder}/`);
+}
+
+/**
+ * A folder of the tree in the navigation column (D394): a toggle that shows its subfolders, the folder as a place to
+ * go to and drop on, and its subfolders once open. A folder without subfolders loses the toggle once that is known.
+ */
+function FolderTreeNode({
+  app,
+  share,
+  path,
+  depth,
+  label,
+  icon,
+  marker = null,
+  available = true,
+  writable,
+  here,
+  toggled,
+  onToggle,
+  onGo,
+  dropAttributes,
+}: {
+  app: PithyxApp;
+  share: string;
+  path: string;
+  depth: number;
+  label: string;
+  icon: ReactNode;
+  marker?: ReactNode;
+  available?: boolean;
+  writable: boolean;
+  /** The folder on view when it is in this share, else null. */
+  here: string | null;
+  toggled: ReadonlyMap<string, boolean>;
+  onToggle: (folder: string, open: boolean) => void;
+  onGo: (folder: string) => void;
+  dropAttributes: (share: string, folder: string, writable: boolean) => Record<string, unknown>;
+}) {
+  const { t } = useTranslation('files');
+  const inside = here !== null && holds(path, here);
+  const open = available && (toggled.get(treeKey(share, path)) ?? inside);
+  const { folders, loaded, more } = useSubfolders(app, share, path, open);
+  // The folder on view, or the closest folder above it while the folder on view is hidden inside it.
+  const current = here !== null && (here === path || (inside && !open));
+  const leaf = open && loaded && folders.length === 0 && !more;
+  return (
+    <li>
+      <div className={styles.treeRow} style={{ '--depth': depth } as CSSProperties}>
+        {available && !leaf ? (
+          <button
+            type="button"
+            className={styles.twisty}
+            aria-expanded={open}
+            aria-label={t(open ? 'tree.collapse' : 'tree.expand', { name: label })}
+            onClick={() => {
+              onToggle(path, !open);
+            }}
+          >
+            <IconChevronRight size={14} stroke={2} aria-hidden />
+          </button>
+        ) : (
+          <span className={styles.twistySpace} />
+        )}
+        <button
+          type="button"
+          className={styles.sideItem}
+          aria-current={current ? 'page' : undefined}
+          {...dropAttributes(share, path, writable)}
+          onClick={() => {
+            onGo(path);
+          }}
+        >
+          {icon}
+          <span className={styles.sideName}>{label}</span>
+          {marker}
+        </button>
+      </div>
+      {open && folders.length + (more ? 1 : 0) > 0 && (
+        <ul className={styles.tree}>
+          {folders.map((folder) => (
+            <FolderTreeNode
+              key={folder.name}
+              app={app}
+              share={share}
+              path={joinPath(path, folder.name)}
+              depth={depth + 1}
+              label={folder.name}
+              icon={<IconFolder className={styles.sideIcon} size={16} stroke={1.75} aria-hidden />}
+              writable={writable}
+              here={here}
+              toggled={toggled}
+              onToggle={onToggle}
+              onGo={onGo}
+              dropAttributes={dropAttributes}
+            />
+          ))}
+          {more && (
+            <li>
+              <div className={styles.treeRow} style={{ '--depth': depth + 1 } as CSSProperties}>
+                <span className={styles.twistySpace} />
+                <button
+                  type="button"
+                  className={cx(styles.sideItem, styles.treeMore)}
+                  onClick={() => {
+                    onGo(path);
+                  }}
+                >
+                  <span className={styles.sideName}>{t('tree.more', { name: label })}</span>
+                </button>
+              </div>
+            </li>
+          )}
+        </ul>
+      )}
+    </li>
   );
 }

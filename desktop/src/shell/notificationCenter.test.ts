@@ -1,6 +1,6 @@
 import type { components } from '@pithyx/api-client';
 import { describe, expect, it } from 'vitest';
-import { jobProgress, kindKey, sourceApp } from './NotificationCenter';
+import { jobProgress, kindKey, messageParams, sourceApp } from './NotificationCenter';
 import { createdNotification } from './notificationFeed';
 
 type Job = components['schemas']['Job'];
@@ -47,6 +47,14 @@ describe('toasts for notifications', () => {
     ).toBe(created);
     expect(createdNotification({ items: [created] })).toBeUndefined();
     expect(
+      createdNotification({
+        change: 'created',
+        notification: { ...created, readAt: '2026-09-29T10:00:00Z' },
+        ids: [],
+        readAt: null,
+      }),
+    ).toBeUndefined();
+    expect(
       createdNotification({ change: 'read', notification: null, ids: [9], readAt: null }),
     ).toBeUndefined();
     expect(
@@ -63,9 +71,9 @@ describe('the app of a notification', () => {
     );
     expect(
       sourceApp({ app: null, code: 'jobs.job.succeeded', params: { kind: 'storage.pool.create' } }),
-    ).toBe('org.pithyx.storage');
+    ).toBe('org.pithyx.settings');
     expect(sourceApp({ app: null, code: 'storage.alert.resolved', params: {} })).toBe(
-      'org.pithyx.storage',
+      'org.pithyx.settings',
     );
     expect(
       sourceApp({ app: null, code: 'jobs.job.succeeded', params: { kind: 'test.work' } }),
@@ -101,5 +109,18 @@ describe('running jobs', () => {
       progress: 75,
     });
     expect(jobProgress(job('running'), 'Copy').progress).toBeNull();
+  });
+});
+
+describe('messageParams', () => {
+  it('keeps strings and numbers and names null and booleans for select', () => {
+    expect(
+      messageParams({ pool: 'tank', percent: 91, charge: null, official: true, nested: {} }),
+    ).toEqual({
+      pool: 'tank',
+      percent: 91,
+      charge: 'null',
+      official: 'true',
+    });
   });
 });

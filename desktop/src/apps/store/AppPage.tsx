@@ -1,5 +1,5 @@
 import type { PithyxApp } from '@pithyx/sdk';
-import { Badge, Button, Dialog, Switch } from '@pithyx/ui';
+import { Button, Dialog, StatusBadge, Switch } from '@pithyx/ui';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -19,6 +19,9 @@ import type { AdminAppList, AppDetails, AppUpdate, CatalogInfo, UpdatePolicy } f
 import { storeCall } from '../sdk/store';
 import { describeProblem, formatDate } from '../storage/shared';
 import { AccessSection } from './AccessSection';
+import { CatalogScreenshots, CatalogVersions, useCatalogDetails } from './CatalogAppPage';
+import { ManifestScreenshots, MaturityBadge, StoreInfoRows } from './StoreInfo';
+import { ElevatedBadge, ElevatedSection } from './ElevatedRights';
 import { InstallDialog } from './InstallDialog';
 import { JobProgress, useAppJob } from './jobs';
 import { iconUrl, manifestFacts } from './model';
@@ -63,12 +66,16 @@ export function useAppChange<T>(
   });
 }
 
-/** One installed app: open, update or remove it, and its permissions, folders, users, logging and details. */
+/**
+ * One installed app, whichever tab it was opened from: open, update or remove it, and its permissions, folders, users,
+ * logging and details, with the screenshots, source and versions of the catalog it came from.
+ */
 export function AppPage({
   app,
   details,
   update,
   catalogs,
+  backLabel,
   onBack,
   onUninstall,
 }: {
@@ -77,6 +84,8 @@ export function AppPage({
   /** A newer version a catalog offers, if any. */
   update: AppUpdate | undefined;
   catalogs: readonly CatalogInfo[];
+  /** The tab the page goes back to. */
+  backLabel: string;
   onBack: () => void;
   /** Opens the removal, which outlives this page: the page goes when the app does. */
   onUninstall: (name: string) => void;
@@ -91,6 +100,12 @@ export function AppPage({
   const description =
     facts.description === null ? null : manifestText(facts.description, i18n.language);
   const appId = details.id;
+  // A catalog that was switched off or removed since has no details; the page shows the app without them.
+  const catalog = useCatalogDetails(
+    app,
+    details.source === 'catalog' ? details.catalog : null,
+    appId,
+  );
   const enabled = useAppChange(
     appId,
     (value: boolean) => storeCall(app, 'internal.admin.apps.setEnabled', { appId, enabled: value }),
@@ -121,31 +136,31 @@ export function AppPage({
   );
 
   return (
-    <div className={styles.app}>
-      <nav className={styles.crumbs}>
-        <button type="button" className={styles.back} onClick={onBack}>
-          <IconArrowLeft size={16} stroke={1.75} aria-hidden />
-          {t('detail.back')}
-        </button>
-      </nav>
+    <>
+      <Button className={styles.back} variant="quiet" size="sm" onPress={onBack}>
+        <IconArrowLeft size={16} stroke={1.75} aria-hidden />
+        {backLabel}
+      </Button>
       <article className={styles.page} aria-labelledby="store-app-name">
         <header className={styles.appHeader}>
           <AppIcon app={{ icon: iconUrl(details), tone: 'graphite' }} size={64} />
           <div className={styles.headerText}>
-            <h2 id="store-app-name" className={styles.pageTitle}>
+            <h1 id="store-app-name" className={styles.appTitle}>
               {name}
-            </h2>
+            </h1>
             <p className={styles.muted}>
               {t('installed.version', { version: details.version })}
               {facts.author !== null && ` · ${facts.author}`}
             </p>
             <span className={styles.badges}>
-              <Badge tone="neutral">
+              <StatusBadge tone={details.source === 'sideload' ? 'warning' : 'info'}>
                 {details.source === 'catalog' && details.catalog !== null
                   ? t('detail.source.fromCatalog', { catalog: details.catalog })
                   : t('detail.source.sideload')}
-              </Badge>
-              {details.busy && <Badge tone="accent">{t('installed.busy')}</Badge>}
+              </StatusBadge>
+              {details.busy && <StatusBadge tone="info">{t('installed.busy')}</StatusBadge>}
+              <ElevatedBadge details={details} />
+              <MaturityBadge maturity={facts.maturity} />
             </span>
           </div>
           <div className={styles.buttons}>
@@ -205,6 +220,11 @@ export function AppPage({
         </header>
         {description !== null && description !== '' && <p>{description}</p>}
         {!details.available && <p className={styles.warning}>{t('detail.unavailable')}</p>}
+        {catalog.data !== undefined && catalog.data.screenshots.length > 0 ? (
+          <CatalogScreenshots details={catalog.data} name={name} />
+        ) : (
+          <ManifestScreenshots appId={appId} name={name} screenshots={facts.screenshots} />
+        )}
         <div className={styles.group}>
           <Switch
             isSelected={details.enabled}
@@ -220,9 +240,9 @@ export function AppPage({
         </div>
 
         <section className={styles.group} aria-labelledby="store-permissions">
-          <h3 id="store-permissions" className={styles.sectionTitle}>
+          <h2 id="store-permissions" className={styles.sectionTitle}>
             {t('detail.permissions.title')}
-          </h3>
+          </h2>
           {details.permissions.length === 0 ? (
             <p className={styles.muted}>{t('detail.permissions.none')}</p>
           ) : (
@@ -234,6 +254,8 @@ export function AppPage({
                     <PermissionText
                       permission={entry.permission}
                       id={`store-permission-${entry.permission}`}
+                      reason={facts.reasons[entry.permission]}
+                      hosts={facts.hosts}
                     />
                     <Switch
                       aria-labelledby={`store-permission-${entry.permission}`}
@@ -252,6 +274,8 @@ export function AppPage({
           {permission.isError && <ErrorNotice error={describeProblem(permission.error)} />}
         </section>
 
+        <ElevatedSection app={app} details={details} />
+
         {facts.storage.length > 0 && (
           <StorageSection app={app} details={details} requests={facts.storage} />
         )}
@@ -259,9 +283,9 @@ export function AppPage({
         <AccessSection app={app} appId={appId} />
 
         <section className={styles.group} aria-labelledby="store-policy">
-          <h3 id="store-policy" className={styles.sectionTitle}>
+          <h2 id="store-policy" className={styles.sectionTitle}>
             {t('detail.policy.title')}
-          </h3>
+          </h2>
           <label className={styles.fieldLabel} htmlFor="store-policy-select">
             {t('detail.policy.label')}
           </label>
@@ -282,13 +306,16 @@ export function AppPage({
             ))}
           </select>
           <p className={styles.muted}>{t('detail.policy.hint')}</p>
+          {details.elevated.some((entry) => entry.tier === 'critical') && (
+            <p className={styles.notice}>{t('settings.updates.criticalHint')}</p>
+          )}
           {policy.isError && <ErrorNotice error={describeProblem(policy.error)} />}
         </section>
 
         <section className={styles.group} aria-labelledby="store-logs">
-          <h3 id="store-logs" className={styles.sectionTitle}>
+          <h2 id="store-logs" className={styles.sectionTitle}>
             {t('detail.logs.title')}
-          </h3>
+          </h2>
           <Switch
             isSelected={details.logLevel === 'debug'}
             onChange={(debug) => {
@@ -302,9 +329,9 @@ export function AppPage({
         </section>
 
         <section className={styles.group} aria-labelledby="store-facts">
-          <h3 id="store-facts" className={styles.sectionTitle}>
+          <h2 id="store-facts" className={styles.sectionTitle}>
             {t('detail.facts.title')}
-          </h3>
+          </h2>
           <dl className={styles.facts}>
             <dt>{t('detail.facts.version')}</dt>
             <dd>{details.version}</dd>
@@ -326,6 +353,17 @@ export function AppPage({
                 <dd className={styles.breakable}>{facts.homepage}</dd>
               </>
             )}
+            <StoreInfoRows facts={facts} />
+            {catalog.data !== undefined && (
+              <>
+                <dt>{t('catalog.source')}</dt>
+                <dd className={styles.breakable}>
+                  <a href={catalog.data.source} target="_blank" rel="noreferrer">
+                    {t('catalog.sourceLink')}
+                  </a>
+                </dd>
+              </>
+            )}
             <dt>{t('detail.facts.installedAt')}</dt>
             <dd>{formatDate(details.installedAt, locale)}</dd>
             <dt>{t('detail.facts.updatedAt')}</dt>
@@ -336,6 +374,7 @@ export function AppPage({
             <dd className={styles.hash}>{details.sha256}</dd>
           </dl>
         </section>
+        {catalog.data !== undefined && <CatalogVersions details={catalog.data} />}
       </article>
       {updating === 'file' && (
         <InstallDialog
@@ -372,7 +411,7 @@ export function AppPage({
           }}
         />
       )}
-    </div>
+    </>
   );
 }
 

@@ -28,6 +28,7 @@ public sealed partial class HostProxy(
     RequestDelegate next,
     WebTransport transport,
     ProxyService proxy,
+    AcmeRuntime acme,
     ProxySignIn signIn,
     IHttpForwarder forwarder,
     PasswordHasher hasher,
@@ -54,6 +55,14 @@ public sealed partial class HostProxy(
         }
         var state = proxy.State;
         var request = context.Request;
+        // The ACME authority checks a domain on port 80 (HTTP-01) before any host, redirect or redirect to HTTPS.
+        if (!tls && request.Path.StartsWithSegments(AcmeRuntime.ChallengePath.TrimEnd('/'), StringComparison.Ordinal, out var token)
+            && acme.Answer(token.Value?.TrimStart('/') ?? "") is { } answer)
+        {
+            context.Response.ContentType = "application/octet-stream";
+            await context.Response.WriteAsync(answer, context.RequestAborted);
+            return;
+        }
         var route = state.Table.Resolve(request.Host.Host);
         switch (ProxyTable.Decide(route, tls, transport.ProxyTlsPort is not null, state.UnknownHosts, request.Path))
         {

@@ -71,8 +71,9 @@ public sealed class DockerIntegrationTests
         // The runtime looks up a catalog's registry token for the app; this app is a sideload without a row.
         var connections = new SqliteConnectionFactory(Path.Combine(staging, "pithyx.db"));
         await new MigrationRunner(connections, TimeProvider.System, NullLogger<MigrationRunner>.Instance).RunAsync(Migration.Embedded(), Token);
+        using var proxy = new DockerSocketProxy(options, engine, NullLogger<DockerSocketProxy>.Instance);
         var runtime = new AppBackendRuntime(host, engine, options, vdevs.Commands, storage, backends,
-            connections, pools, NullLogger<AppBackendRuntime>.Instance);
+            connections, pools, proxy, DeviceFs.Real, NullLogger<AppBackendRuntime>.Instance);
         string? imageId = null;
         try
         {
@@ -146,7 +147,30 @@ public sealed class DockerIntegrationTests
             await events.DisposeAsync();
             Assert.Equal("web", died!.Service);
 
+            // Version 3 adds a service with the host's network, the tun device and /dev/kvm, whose group exists only on the
+            // host (D311): it runs in the host's user namespace as the app uid with that group. Revoked, the same file runs
+            // the service on the app's network without the devices.
             await runtime.StopAsync(AppId, pool, Token);
+            var three = await InstallAsync(storage, runtime, pool, staging, imageId, imageBytes, "3.0.0", "three", update: true, elevated: true);
+            var granted = await ProbeAsync(http, backends);
+            Assert.Contains($"uid={Uid}", granted, StringComparison.Ordinal);
+            Assert.Contains("0          0 4294967295", granted, StringComparison.Ordinal);
+            Assert.Contains("lo", granted, StringComparison.Ordinal);
+            Assert.DoesNotContain("No such file", granted, StringComparison.Ordinal);
+            var kvmGroup = (await vdevs.RunAsync("stat", ["-c", "%g", "/dev/kvm"])).Trim();
+            var groups = granted.Split('\n').Single(line => line.StartsWith("uid=", StringComparison.Ordinal)).Split("groups=")[1].Split(',').Select(group => group.Split('(')[0].Trim());
+            Assert.Contains(kvmGroup, groups);
+            Assert.Contains("kvm opened", granted, StringComparison.Ordinal);
+            await runtime.StopAsync(AppId, pool, Token);
+            await runtime.StartAsync(pool, three with { Elevated = new HashSet<string>(StringComparer.Ordinal) }, null, Token);
+            var revoked = await ProbeAsync(http, backends);
+            Assert.DoesNotContain("0          0 4294967295", revoked, StringComparison.Ordinal);
+            Assert.Contains("/dev/kvm", revoked, StringComparison.Ordinal);
+            Assert.DoesNotContain("kvm opened", revoked, StringComparison.Ordinal);
+
+            await runtime.StopAsync(AppId, pool, Token);
+            await DockerSocketAsync(vdevs, storage, runtime, engine, backends, http, pool, staging, imageId, imageBytes);
+
             await runtime.ForgetAsync(ImagesLock.HostImages(Encoding.UTF8.GetBytes(Lock(imageId))), new HashSet<string>(), lastBackend: true, Token);
             Assert.False(await engine.PingAsync(Token));
             await host.EnsureRunningAsync(pool, Token);
@@ -166,16 +190,174 @@ public sealed class DockerIntegrationTests
         }
     }
 
+    /// <summary>
+    /// Version 4 holds the filtered Docker socket and the device classes tun (required) and serial adapters (optional,
+    /// none on the dev VM, D387): the backend starts without an adapter, finds the proxy's socket where it mounts the
+    /// Docker socket, and the socket answers only the app's uid and root, shows only what the app started, refuses what
+    /// reaches the box, and its containers stop with the backend and go with the app.
+    /// </summary>
+    private static async Task DockerSocketAsync(
+        FileVdevs vdevs, AppStorage storage, AppBackendRuntime runtime, DockerEngine engine, AppBackends backends, HttpClient http, string pool, string staging, string imageId, byte[] imageBytes)
+    {
+        Assert.Empty(DeviceNodes.Present("/dev/serial", DeviceFs.Real));
+        await InstallAsync(storage, runtime, pool, staging, imageId, imageBytes, "4.0.0", "four", update: true, socket: true);
+        var probe = await ProbeAsync(http, backends);
+        Assert.Contains("socket there", probe, StringComparison.Ordinal);
+        Assert.Contains("/dev/net/tun", probe, StringComparison.Ordinal);
+        var path = DockerSocketProxy.PathOf(AppId);
+        using var client = SocketClient(path);
+
+        Assert.Equal("OK", await client.GetStringAsync("_ping", Token));
+        Assert.Equal("[]", (await client.GetStringAsync("containers/json?all=1", Token)).Trim());
+        var backend = (await engine.ContainersAsync(AppId, Token))[0];
+        Assert.Equal(System.Net.HttpStatusCode.NotFound, (await client.GetAsync($"containers/{backend.Id}/json", Token)).StatusCode);
+        foreach (var refused in new[]
+        {
+            $$$"""{"Image":"{{{imageId}}}","HostConfig":{"Privileged":true}}""",
+            $$$"""{"Image":"{{{imageId}}}","HostConfig":{"Binds":["/etc:/host"]}}""",
+            $$$"""{"Image":"{{{imageId}}}","HostConfig":{"NetworkMode":"host"}}""",
+            $$$"""{"Image":"{{{imageId}}}","HostConfig":{"Devices":[{"PathOnHost":"/dev/sda","PathInContainer":"/dev/sda","CgroupPermissions":"rwm"}]}}""",
+            $$$"""{"Image":"{{{imageId}}}","HostConfig":{"CapAdd":["SYS_ADMIN"]}}""",
+            $$$"""{"Image":"{{{imageId}}}","HostConfig":{"PidMode":"host"}}""",
+            $$$"""{"Image":"{{{imageId}}}","Labels":{"com.pithyx.app":"{{{AppId}}}"}}""",
+        })
+        {
+            using var answer = await client.PostAsync("containers/create", Json(refused), Token);
+            Assert.Equal(System.Net.HttpStatusCode.Forbidden, answer.StatusCode);
+        }
+        Assert.Equal(System.Net.HttpStatusCode.Forbidden, (await client.PostAsync("images/create?fromImage=busybox&tag=latest", null, Token)).StatusCode);
+        Assert.Equal(System.Net.HttpStatusCode.Forbidden, (await client.PostAsync("build", Json("{}"), Token)).StatusCode);
+        Assert.Equal(System.Net.HttpStatusCode.Forbidden, (await client.PostAsync("containers/prune", null, Token)).StatusCode);
+
+        Assert.True((await client.PostAsync("volumes/create", Json("""{"Name":"pithyxci-spawned-cache"}"""), Token)).IsSuccessStatusCode);
+        using var created = await client.PostAsync("containers/create?name=pithyxci-spawned", Json(
+            $$$"""{"Image":"{{{imageId}}}","Cmd":["busybox","sleep","3600"],"HostConfig":{"Binds":["pithyxci-spawned-cache:/cache"],"Memory":0,"CapAdd":null}}"""), Token);
+        Assert.Equal(System.Net.HttpStatusCode.Created, created.StatusCode);
+        var spawned = JsonDocument.Parse(await created.Content.ReadAsStringAsync(Token)).RootElement.GetProperty("Id").GetString()!;
+        Assert.True((await client.PostAsync($"containers/pithyxci-spawned/start", null, Token)).IsSuccessStatusCode);
+        using (var inspected = JsonDocument.Parse(await client.GetStringAsync($"containers/{spawned}/json", Token)))
+        {
+            var hostConfig = inspected.RootElement.GetProperty("HostConfig");
+            Assert.Equal("pithyx-com_example_dockerprobe", hostConfig.GetProperty("NetworkMode").GetString());
+            Assert.Equal(1024, hostConfig.GetProperty("PidsLimit").GetInt32());
+            Assert.Equal(500, hostConfig.GetProperty("OomScoreAdj").GetInt32());
+            Assert.Contains("no-new-privileges:true", hostConfig.GetProperty("SecurityOpt").EnumerateArray().Select(option => option.GetString()));
+            Assert.Equal("journald", hostConfig.GetProperty("LogConfig").GetProperty("Type").GetString());
+        }
+        var listed = await client.GetStringAsync("containers/json", Token);
+        Assert.Contains(spawned, listed, StringComparison.Ordinal);
+        Assert.DoesNotContain(backend.Id, listed, StringComparison.Ordinal);
+        using (var exec = await client.PostAsync($"containers/{spawned}/exec", Json("""{"Cmd":["busybox","true"]}"""), Token))
+        {
+            Assert.Equal(System.Net.HttpStatusCode.Created, exec.StatusCode);
+        }
+        using (var privilegedExec = await client.PostAsync($"containers/{spawned}/exec", Json("""{"Cmd":["busybox","true"],"Privileged":true}"""), Token))
+        {
+            Assert.Equal(System.Net.HttpStatusCode.Forbidden, privilegedExec.StatusCode);
+        }
+
+        // Who may connect is the peer's uid: the app's, root, nobody else.
+        var asApp = await vdevs.RunAsync("setpriv", ["--reuid", Uid.ToString(System.Globalization.CultureInfo.InvariantCulture), "--regid", Uid.ToString(System.Globalization.CultureInfo.InvariantCulture), "--clear-groups", "python3", "-I", "-c", PingScript, path]);
+        Assert.Contains("OK", asApp, StringComparison.Ordinal);
+        var asOther = await vdevs.RunAsync("setpriv", ["--reuid", "65534", "--regid", "65534", "--clear-groups", "python3", "-I", "-c", PingScript, path]);
+        Assert.DoesNotContain("OK", asOther, StringComparison.Ordinal);
+
+        await runtime.StopAsync(AppId, pool, Token);
+        Assert.False(File.Exists(path));
+        using (var stopped = await engine.InspectAsync($"containers/{spawned}/json", Token))
+        {
+            Assert.False(stopped!.RootElement.GetProperty("State").GetProperty("Running").GetBoolean());
+        }
+        await runtime.RemoveSpawnedAsync(AppId, Token);
+        Assert.Null(await engine.InspectAsync($"containers/{spawned}/json", Token));
+        Assert.Null(await engine.InspectAsync("volumes/pithyxci-spawned-cache", Token));
+    }
+
+    /// <summary>Sends <c>GET /_ping</c> on the Unix socket in argv[1] and prints the answer; nothing when the socket hangs up.</summary>
+    private const string PingScript = """
+        import socket, sys
+        s = socket.socket(socket.AF_UNIX)
+        s.settimeout(5)
+        s.connect(sys.argv[1])
+        s.sendall(b"GET /_ping HTTP/1.1\r\nHost: docker\r\n\r\n")
+        try:
+            print(s.recv(4096).decode(errors="replace"))
+        except OSError:
+            pass
+        """;
+
+    private static StringContent Json(string text) => new(text, Encoding.UTF8, "application/json");
+
+    private static HttpClient SocketClient(string path) => new(new SocketsHttpHandler
+    {
+        ConnectCallback = async (_, token) =>
+        {
+            var socket = new System.Net.Sockets.Socket(System.Net.Sockets.AddressFamily.Unix, System.Net.Sockets.SocketType.Stream, System.Net.Sockets.ProtocolType.Unspecified);
+            await socket.ConnectAsync(new System.Net.Sockets.UnixDomainSocketEndPoint(path), token);
+            return new System.Net.Sockets.NetworkStream(socket, ownsSocket: true);
+        },
+        UseProxy = false,
+    })
+    {
+        BaseAddress = new Uri($"http://docker/{DockerEngine.ApiVersion}/"),
+        Timeout = TimeSpan.FromSeconds(30),
+    };
+
     private static string Lock(string imageId) =>
         $$"""
         { "lockVersion": 1, "images": { "localhost/pithyx-probe/web:1@sha256:{{new string('a', 64)}}": { "{{ImagesLock.HostArchitecture}}": { "manifest": "sha256:{{new string('b', 64)}}", "config": "{{imageId}}" } } } }
         """;
 
-    private static async Task<BackendApp> InstallAsync(
-        AppStorage storage, AppBackendRuntime runtime, string pool, string staging, string imageId, byte[] image, string version, string text, bool update, bool healthy = true)
+    /// <summary>What the elevated probe of version 3 wrote, once it is there.</summary>
+    private static async Task<string> ProbeAsync(HttpClient http, AppBackends backends)
     {
-        var manifest = TarBuilder.Manifest(AppId, version, "", TarBuilder.BackendManifest);
+        for (var attempt = 0; ; attempt++)
+        {
+            try
+            {
+                return await http.GetStringAsync(new Uri(backends.Find(AppId, "api")!, "probe.txt"), Token);
+            }
+            catch (HttpRequestException) when (attempt < 40)
+            {
+                await Task.Delay(250, Token);
+            }
+        }
+    }
+
+    private const string ElevatedRights = "\"host.network\", \"device:/dev/net/tun\", \"device:/dev/kvm\"";
+
+    private const string SocketRights = "\"docker.socket\", \"device:/dev/net/tun\", \"device:/dev/serial\"";
+
+    private static async Task<BackendApp> InstallAsync(
+        AppStorage storage, AppBackendRuntime runtime, string pool, string staging, string imageId, byte[] image, string version, string text, bool update, bool healthy = true,
+        bool elevated = false, bool socket = false)
+    {
+        var manifest = TarBuilder.Manifest(AppId, version, socket ? SocketRights : elevated ? ElevatedRights : "", TarBuilder.BackendManifest,
+            optionalDevices: socket ? "\"/dev/serial\"" : "");
         var check = healthy ? "hello.txt" : "missing.txt";
+        var probe = elevated
+            ? $$"""
+              probe:
+                image: localhost/pithyx-probe/web:1@sha256:{{new string('a', 64)}}
+                command: ["/bin/sh", "-c", "rm -f /data/probe.txt; { busybox cat /proc/self/uid_map; busybox id; busybox ls /sys/class/net; busybox ls /dev/net/tun /dev/kvm; ( exec 3<>/dev/kvm ) && echo kvm opened; } > /data/probe.tmp 2>&1; busybox mv /data/probe.tmp /data/probe.txt; exec busybox sleep 3600"]
+                network_mode: host
+                devices: ['/dev/net/tun', '/dev/kvm']
+                volumes:
+                  - data:/data
+
+            """
+            : socket
+            ? $$"""
+              probe:
+                image: localhost/pithyx-probe/web:1@sha256:{{new string('a', 64)}}
+                command: ["/bin/sh", "-c", "rm -f /data/probe.txt; { test -S /var/run/docker.sock && echo socket there; busybox ls /dev/net/tun; } > /data/probe.tmp 2>&1; busybox mv /data/probe.tmp /data/probe.txt; exec busybox sleep 3600"]
+                devices: ['/dev/net/tun', '/dev/serial']
+                volumes:
+                  - data:/data
+                  - /var/run/docker.sock:/var/run/docker.sock
+
+            """
+            : "";
         var compose = $$"""
             services:
               web:
@@ -188,7 +370,7 @@ public sealed class DockerIntegrationTests
                   interval: 1s
                   timeout: 2s
                   retries: 5
-            volumes:
+            {{probe}}volumes:
               data:
             """;
         var bytes = TarBuilder.MinimalPackage(AppId, version, manifest)
@@ -198,7 +380,10 @@ public sealed class DockerIntegrationTests
             .End().Gzip();
         var package = await PackageReader.UnpackAsync(new MemoryStream(bytes), Path.Combine(staging, "package-" + version + "-" + Guid.NewGuid().ToString("N")), PackageLimits.Default, Token);
         var (checkedManifest, _) = AppPackages.Check(package);
-        var app = new BackendApp(AppId, version, checkedManifest, Uid, false, false, []);
+        var app = new BackendApp(AppId, version, checkedManifest, Uid, false, false, [],
+            elevated ? new HashSet<string>(["host.network", "device:/dev/net/tun", "device:/dev/kvm"], StringComparer.Ordinal)
+            : socket ? new HashSet<string>(["docker.socket", "device:/dev/net/tun", "device:/dev/serial"], StringComparer.Ordinal)
+            : null);
         // As AppService does it: a backend that fails goes before the dataset rolls back.
         await AppVersions.InstallAsync(storage, pool, AppId, package, version, update, async (_, token) =>
         {

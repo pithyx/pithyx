@@ -1,0 +1,73 @@
+{
+  "trust": {
+    "title": "Trust this device",
+    "intro": "The box is its own certificate authority. Install its root certificate once on this device: the browser stops warning, reloads come from its cache, and you can sign in with a passkey.",
+    "download": "Download root certificate",
+    "devicesTitle": "Install it on",
+    "devices": {
+      "windows": {
+        "name": "Windows:",
+        "steps": "Open the file, choose Install Certificate, Local Machine, then the store Trusted Root Certification Authorities."
+      },
+      "macos": {
+        "name": "macOS:",
+        "steps": "Open the file in Keychain Access (keychain System), open the certificate and set Trust to Always Trust."
+      },
+      "ios": {
+        "name": "iPhone and iPad:",
+        "steps": "Open the file in Safari and install the profile under Settings, General, VPN and Device Management, then switch it on under Settings, General, About, Certificate Trust Settings."
+      },
+      "android": {
+        "name": "Android:",
+        "steps": "Settings, Security, Encryption and credentials, Install a certificate, CA certificate, then pick the file."
+      },
+      "linux": {
+        "name": "Linux:",
+        "steps": "Copy the file to /usr/local/share/ca-certificates/ and run sudo update-ca-certificates; browsers with their own store need the step below."
+      },
+      "firefox": {
+        "name": "Firefox:",
+        "steps": "Settings, Privacy and Security, Certificates, View Certificates, Authorities, Import, and trust it to identify websites."
+      }
+    },
+    "restart": "Afterwards restart the browser and open the box again by its name.",
+    "check": "Check again",
+    "checking": "Checking",
+    "trusted": "This device trusts the box.",
+    "untrusted": "This device does not trust the box yet.",
+    "unsupported": "This connection cannot be checked: the box was opened over plain HTTP.",
+    "hint": "This device does not trust the box yet, so the browser warns and passkeys stay off.",
+    "hintAction": "Trust this device",
+    "hintDismiss": "Do not show again on this device",
+    "close": "Close",
+    "continue": "Continue to the desktop"
+  },
+  "passkeys": {
+    "title": "Passkeys",
+    "intro": "A passkey signs you in to the desktop without your password and second factor; your device asks for its PIN, fingerprint or face instead. SMB, SFTP, WebDAV and FTP keep using your password.",
+    "empty": "You have no passkeys yet.",
+    "add": "Add a passkey",
+    "adding": "Waiting for the device",
+    "name": "Name",
+    "nameHint": "For example the device or the password manager it is kept in.",
+    "password": "Current password",
+    "cancel": "Cancel",
+    "save": "Add",
+    "remove": "Remove",
+    "removeConfirm": "Remove the passkey {name}? It no longer signs you in.",
+    "removed": "The passkey {name} was removed.",
+    "added": "The passkey {name} was added.",
+    "close": "Close",
+    "created": "Added {date}",
+    "lastUsed": "Last used {date}",
+    "neverUsed": "Not used yet",
+    "synced": "Synced",
+    "forName": "For {host}",
+    "cancelled": "The device did not create a passkey.",
+    "blocked": {
+      "untrusted": "Passkeys need a device that trusts the box.",
+      "address": "Passkeys need the box opened by its name, not by an address, for example {url}.",
+      "browser": "This browser does not support passkeys."
+    }
+  }
+}

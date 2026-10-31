@@ -1,0 +1,41 @@
+{
+  "compose": "valid/device-classes.yaml",
+  "manifest": "device-classes.json",
+  "host": {
+    "uid": 40001,
+    "appDirectory": "/tank/.pithyx/apps/com.example.chat",
+    "bridgeName": "px-1",
+    "imageIds": {
+      "ghcr.io/example/chat-server:1.2.0@sha256:a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5": "sha256:1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c"
+    },
+    "storage": {},
+    "elevated": [
+      "device:/dev/dri",
+      "device:/dev/serial",
+      "device:/dev/net/tun"
+    ],
+    "devices": {
+      "/dev/dri": [
+        {
+          "path": "/dev/dri/card0",
+          "gid": 44
+        },
+        {
+          "path": "/dev/dri/renderD128",
+          "gid": 105
+        }
+      ],
+      "/dev/serial": [
+        {
+          "path": "/dev/ttyACM0",
+          "gid": 20
+        }
+      ],
+      "/dev/net/tun": [
+        {
+          "path": "/dev/net/tun"
+        }
+      ]
+    }
+  }
+}

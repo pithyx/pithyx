@@ -5,19 +5,23 @@
 export const coreAppIds = {
   files: 'org.pithyx.files',
   viewer: 'org.pithyx.viewer',
+  // Storage was an app until D402; the id only names what was stored before (Log Center sources of that time).
   storage: 'org.pithyx.storage',
   settings: 'org.pithyx.settings',
   monitor: 'org.pithyx.monitor',
   logs: 'org.pithyx.logs',
   about: 'org.pithyx.about',
+  preferences: 'org.pithyx.preferences',
   store: 'org.pithyx.store',
 } as const;
 
 const PREFIX = 'org.pithyx.';
 
-// The short ids the core apps had before migration 0022 (files, viewer, ...).
+// The short ids the core apps had before migration 0022 (files, viewer, ...); later core apps never had one.
 const legacyIds: ReadonlySet<string> = new Set(
-  Object.values(coreAppIds).map((id) => id.slice(PREFIX.length)),
+  Object.values(coreAppIds)
+    .filter((id) => id !== coreAppIds.preferences)
+    .map((id) => id.slice(PREFIX.length)),
 );
 
 /**

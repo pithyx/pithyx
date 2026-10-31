@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Pithyx.Daemon.Apps.Compose;
+using Pithyx.Daemon.Apps.Docker;
 using Pithyx.Daemon.Tests.Apps.Manifest;
 using Pithyx.Daemon.Tests.Support;
 
@@ -32,7 +33,16 @@ public sealed class ComposeRewriterTests
                     mapping.Value.GetProperty("hostPath").GetString()!,
                     mapping.Value.GetProperty("readOnly").GetBoolean(),
                     mapping.Value.GetProperty("gid").ValueKind == JsonValueKind.Number ? mapping.Value.GetProperty("gid").GetInt32() : null)),
-            host.TryGetProperty("internetBridgeName", out var internet) ? internet.GetString() : null));
+            host.TryGetProperty("internetBridgeName", out var internet) ? internet.GetString() : null,
+            host.TryGetProperty("elevated", out var elevated) ? elevated.EnumerateArray().Select(right => right.GetString()!).ToHashSet(StringComparer.Ordinal) : null,
+            host.TryGetProperty("devices", out var devices)
+                ? devices.EnumerateObject().ToDictionary(
+                    device => device.Name,
+                    device => (IReadOnlyList<DeviceNode>)[.. device.Value.EnumerateArray().Select(node => new DeviceNode(
+                        node.GetProperty("path").GetString()!,
+                        node.TryGetProperty("gid", out var gid) ? gid.GetInt32() : null))])
+                : null,
+            host.TryGetProperty("dockerSocket", out var socket) ? socket.GetString() : null));
     }
 
     [Theory]

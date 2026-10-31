@@ -59,7 +59,7 @@
   },
   "disks": {
     "title": "Systemfestplatte",
-    "intro": "Pithyx wird auf einer Festplatte installiert. Deine Daten kommen später in Speicher auf andere Festplatten.",
+    "intro": "Pithyx wird auf einer Festplatte installiert. Deine Daten kommen später unter Einstellungen > Speicher auf andere Festplatten.",
     "first": "Festplatte",
     "mirror": "Auf zwei Festplatten spiegeln",
     "mirrorHint": "Das System wird auf beide Festplatten geschrieben; die Box läuft weiter, wenn eine davon ausfällt.",

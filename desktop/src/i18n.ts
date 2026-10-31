@@ -13,6 +13,7 @@ import type logs from '../../i18n/en/logs.json';
 import type monitor from '../../i18n/en/monitor.json';
 import type network from '../../i18n/en/network.json';
 import type notifications from '../../i18n/en/notifications.json';
+import type security from '../../i18n/en/security.json';
 import type settings from '../../i18n/en/settings.json';
 import type storage from '../../i18n/en/storage.json';
 import type store from '../../i18n/en/store.json';
@@ -29,6 +30,7 @@ export interface Resources {
   storage: typeof storage;
   store: typeof store;
   settings: typeof settings;
+  security: typeof security;
   notifications: typeof notifications;
   jobs: typeof jobs;
   logs: typeof logs;

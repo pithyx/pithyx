@@ -41,15 +41,17 @@ public sealed partial class NotificationService : IDisposable
     private readonly TopicHub _hub;
     private readonly TimeProvider _time;
     private readonly ILogger<NotificationService> _logger;
+    private readonly NotificationOutbox _outbox;
     private readonly JsonSerializerOptions _storage;
 
     // One writer at a time, so memory and the published events follow the order of the database writes.
     private readonly SemaphoreSlim _writes = new(1, 1);
 
-    public NotificationService(NotificationStore store, SqliteConnectionFactory connections, TopicHub hub, TimeProvider time, IOptions<JsonOptions> json, ILogger<NotificationService> logger)
+    public NotificationService(NotificationStore store, SqliteConnectionFactory connections, TopicHub hub, TimeProvider time, IOptions<JsonOptions> json, NotificationOutbox outbox, ILogger<NotificationService> logger)
     {
         ArgumentNullException.ThrowIfNull(json);
         _store = store;
+        _outbox = outbox;
         _connections = connections;
         _hub = hub;
         _time = time;
@@ -63,9 +65,10 @@ public sealed partial class NotificationService : IDisposable
 
     /// <summary>
     /// Creates a notification and, in the same write, deletes the user's notifications <paramref name="replaces"/>
-    /// picks, so two writers never both keep theirs.
+    /// picks, so two writers never both keep theirs. A <paramref name="muted"/> one is stored as read and goes to no
+    /// channel, so the desktop shows no toast for it (D390).
     /// </summary>
-    private async Task<Notification> CreateAsync(long userId, NotificationDraft draft, Func<Notification, bool>? replaces, CancellationToken cancellationToken)
+    private async Task<Notification> CreateAsync(long userId, NotificationDraft draft, Func<Notification, bool>? replaces, CancellationToken cancellationToken, bool muted = false)
     {
         ArgumentNullException.ThrowIfNull(draft);
         ArgumentException.ThrowIfNullOrEmpty(draft.Code);
@@ -88,11 +91,11 @@ public sealed partial class NotificationService : IDisposable
                 }
                 id = await connection.ExecuteScalarAsync<long>(
                     """
-                    INSERT INTO notifications (user_id, code, params, tone, app, created_at)
-                    VALUES (@userId, @Code, @parameters, @tone, @App, @createdAt)
+                    INSERT INTO notifications (user_id, code, params, tone, app, created_at, read_at)
+                    VALUES (@userId, @Code, @parameters, @tone, @App, @createdAt, @readAt)
                     RETURNING id
                     """,
-                    new { userId, draft.Code, parameters, tone = NotificationStore.ToneText(draft.Tone), draft.App, createdAt = SessionService.Format(now) },
+                    new { userId, draft.Code, parameters, tone = NotificationStore.ToneText(draft.Tone), draft.App, createdAt = SessionService.Format(now), readAt = muted ? SessionService.Format(now) : null },
                     transaction);
                 dropped = [.. await connection.QueryAsync<long>(
                     """
@@ -114,9 +117,14 @@ public sealed partial class NotificationService : IDisposable
                 Tone = NotificationStore.ToneText(draft.Tone),
                 App = draft.App,
                 CreatedAt = SessionService.Format(now),
+                ReadAt = muted ? SessionService.Format(now) : null,
             });
             _store.Add(userId, notification, dropped);
             _hub.Publish(NotificationStore.Topic, new UserEvent(userId, new NotificationEvent(NotificationChange.Created, notification, dropped, null)));
+            if (!muted)
+            {
+                _outbox.Post(new PendingDelivery(userId, draft.Code, notification.Params, draft.Tone, draft.App, now));
+            }
             LogCreated(id, draft.Code, userId);
             return notification;
         }
@@ -126,18 +134,32 @@ public sealed partial class NotificationService : IDisposable
         }
     }
 
-    /// <summary>Creates the same notification for every administrator. Returns how many there are.</summary>
-    public async Task<int> CreateForAdministratorsAsync(NotificationDraft draft, CancellationToken cancellationToken)
+    /// <summary>
+    /// Creates the same notification for every administrator but <paramref name="except"/> and hands it once to the box's
+    /// channels (D379). Returns how many administrators are told, also when the matrix keeps the event off their desktop
+    /// (D407), so a caller that waits for an administrator does not try again.
+    /// </summary>
+    public async Task<int> CreateForAdministratorsAsync(NotificationDraft draft, CancellationToken cancellationToken, long? except = null)
     {
+        ArgumentNullException.ThrowIfNull(draft);
+        var parameters = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(JsonSerializer.Serialize(draft.Params, _storage), _storage) ?? [];
+        _outbox.Post(new PendingDelivery(null, draft.Code, parameters, draft.Tone, draft.App, _time.GetUtcNow()));
         List<long> administrators;
+        bool desktop;
         await using (var connection = await _connections.OpenAsync(cancellationToken))
         {
             // Deactivated administrators too: they read it when they are back.
-            administrators = [.. (await Permissions.PermissionService.AllUsersAsync(connection, null, asIfActive: true)).Where(user => user.Permissions.IsAdmin).Select(user => user.Id).Order()];
+            administrators = [.. (await Permissions.PermissionService.AllUsersAsync(connection, null, asIfActive: true)).Where(user => user.Permissions.IsAdmin && user.Id != except).Select(user => user.Id).Order()];
+            desktop = await ChannelService.DesktopTakesAsync(connection, draft.Code, cancellationToken);
         }
-        foreach (var administrator in administrators)
+        // The matrix may keep an event off the administrators' desktop (D407); the box's channels decide for themselves
+        // above, and the count still says who would have been told.
+        if (desktop)
         {
-            await CreateAsync(administrator, draft, cancellationToken);
+            foreach (var administrator in administrators)
+            {
+                await CreateAsync(administrator, draft, cancellationToken);
+            }
         }
         return administrators.Count;
     }
@@ -168,9 +190,15 @@ public sealed partial class NotificationService : IDisposable
     /// it is kept in the params of <see cref="AppMessageCode"/> (<c>title</c>, <c>body</c>, <c>actions</c>, <c>data</c>,
     /// <c>tag</c>).
     /// </summary>
-    public async Task<Notification> CreateForAppAsync(long userId, string appId, AppNotifyRequest request, CancellationToken cancellationToken)
+    public async Task<Notification> CreateForAppAsync(long userId, string appId, AppNotifyRequest request, IReadOnlyCollection<string> categories, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
+        ArgumentNullException.ThrowIfNull(categories);
+        // A category must be one of the manifest's notifications.categories (D390).
+        if (request.Category is { } category && !categories.Contains(category))
+        {
+            throw Invalid("category", 0);
+        }
         var (title, body) = Texts(request.Title, request.Body);
         var actions = request.Actions ?? [];
         if (actions.Count > MaxActions)
@@ -203,6 +231,7 @@ public sealed partial class NotificationService : IDisposable
             ["actions"] = actions.Select(action => new Dictionary<string, string>(StringComparer.Ordinal) { ["id"] = action.Id, ["label"] = action.Label.Trim() }).ToList(),
             ["data"] = request.Data is { ValueKind: not JsonValueKind.Null } given ? given : null,
             ["tag"] = request.Tag,
+            ["category"] = request.Category,
         };
         var tone = request.Level switch
         {
@@ -214,7 +243,28 @@ public sealed partial class NotificationService : IDisposable
         Func<Notification, bool>? sameTag = request.Tag is not { } tagged
             ? null
             : entry => entry.App == appId && entry.Code == AppMessageCode && entry.Params.TryGetValue("tag", out var value) && value.ValueKind == JsonValueKind.String && value.GetString() == tagged;
-        return await CreateAsync(userId, new NotificationDraft(AppMessageCode, parameters, tone, appId), sameTag, cancellationToken);
+        var muted = request.Category is { } kind && (await MutedAsync(userId, cancellationToken)).Contains((appId, kind));
+        return await CreateAsync(userId, new NotificationDraft(AppMessageCode, parameters, tone, appId), sameTag, cancellationToken, muted);
+    }
+
+    /// <summary>The app notification categories the user muted, as app id and category (D390).</summary>
+    public async Task<IReadOnlySet<(string App, string Category)>> MutedAsync(long userId, CancellationToken cancellationToken)
+    {
+        await using var connection = await _connections.OpenAsync(cancellationToken);
+        var rows = await connection.QueryAsync<(string App, string Category)>(
+            "SELECT app_id, category FROM notification_mutes WHERE user_id = @userId", new { userId });
+        return rows.ToHashSet();
+    }
+
+    /// <summary>Mutes or unmutes one category of an app's notifications for the user; the caller checked both exist.</summary>
+    public async Task SetMutedAsync(long userId, string appId, string category, bool muted, CancellationToken cancellationToken)
+    {
+        await using var connection = await _connections.OpenAsync(cancellationToken);
+        await connection.ExecuteAsync(
+            muted
+                ? "INSERT INTO notification_mutes (user_id, app_id, category) VALUES (@userId, @appId, @category) ON CONFLICT DO NOTHING"
+                : "DELETE FROM notification_mutes WHERE user_id = @userId AND app_id = @appId AND category = @category",
+            new { userId, appId, category });
     }
 
     private static (string Title, string Body) Texts(string? requestTitle, string? requestBody)

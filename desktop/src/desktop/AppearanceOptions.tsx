@@ -14,7 +14,7 @@ import { Menu, MenuItem } from '@pithyx/ui';
 import styles from './Desktop.module.css';
 
 /** Applies a change at once and saves it for every device; a refused save puts the previous look back. */
-async function saveAppearance(change: Partial<Appearance>) {
+export async function saveAppearance(change: Partial<Appearance>) {
   const previous = currentAppearance();
   const next = { ...previous, ...change };
   applyAppearance(next);

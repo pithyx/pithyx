@@ -28,7 +28,7 @@ The words Pithyx uses in its interface and documentation, in alphabetical order.
 
 **Configuration backup.** A password-encrypted file with the box's database, Samba password database, certificates and SSH host keys, which can be restored on a fresh install.
 
-**Core app.** An app that ships with the system, such as Files, Storage, Settings, Resource Monitor, Log Center, Viewer, About Pithyx and Store. Its id starts with `org.pithyx.`.
+**Core app.** An app that ships with the system, such as Files, Settings, Resource Monitor, Log Center, Viewer, About Pithyx and Store. Its id starts with `org.pithyx.`.
 
 **Daemon.** `pithyxd`, the only privileged process on the box. It serves the desktop and the API.
 
@@ -48,6 +48,8 @@ The words Pithyx uses in its interface and documentation, in alphabetical order.
 
 **Job.** A long operation that runs in the background with progress. Jobs are not resumed after a restart.
 
+**Key vault.** A folder on the system disk, readable by root only, where the box keeps the keys of encrypted pools it unlocks at every start. It protects against stolen disks, not a stolen box, and is never part of a configuration backup. See [Encryption](/docs/admin/storage/#encryption).
+
 **Lifecycle.** How long a backend runs: `always`, or `onDemand` (while a window is open, plus an idle time).
 
 **Live system.** The environment on the installation USB stick that runs the web installer.
@@ -63,6 +65,8 @@ The words Pithyx uses in its interface and documentation, in alphabetical order.
 **Permission.** Something an app may do, such as read shared folders or reach the internet. An administrator confirms and can revoke each one. Not to be confused with a user's rights.
 
 **Pool.** A ZFS pool: disks combined into one storage area, as a mirror, RAID-Z or stripe.
+
+**Pool key.** The key of an encrypted pool (it starts with `PXPK`), shown once when the pool is created or its key changes. Without it the pool's data cannot be read. See [Encryption](/docs/admin/storage/#encryption).
 
 **Protocol.** A way to reach shared folders from other devices: SMB, SFTP, WebDAV or FTP. Access is set per user.
 
@@ -107,6 +111,8 @@ The words Pithyx uses in its interface and documentation, in alphabetical order.
 **Two-factor sign-in.** Sign-in with a password and a code from an authenticator app (TOTP). Optional for each user.
 
 **Update policy.** How the box handles app updates: automatic, notify or none.
+
+**USB key.** A USB stick or memory card holding the key file of an encrypted pool (`pithyx-keys/<pool GUID>.key`). While it is plugged in, the box unlocks the pool; it can be pulled afterwards, and the pool stays unlocked until the next start. See [USB stick](/docs/admin/storage/#usb-stick).
 
 **Vdev.** A group of disks inside a pool, such as one mirror.
 

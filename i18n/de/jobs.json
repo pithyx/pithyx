@@ -43,8 +43,6 @@
     "storage_pool_replace": "Laufwerk ersetzen",
     "storage_pool_spare_add": "Hot Spare hinzufügen",
     "storage_pool_spare_remove": "Hot Spare entfernen",
-    "storage_pool_offline": "Laufwerk offline nehmen",
-    "storage_pool_online": "Laufwerk online bringen",
     "storage_pool_import": "Pool importieren",
     "storage_pool_import_readonly": "Pool schreibgeschützt importieren",
     "storage_pool_export": "Pool exportieren",

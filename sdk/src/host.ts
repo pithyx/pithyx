@@ -269,7 +269,9 @@ function isNotification(p: unknown): boolean {
           (action) => isRecord(action) && isText(action.id, 64) && isText(action.label, 40),
         ))) &&
     isSmallJson(p.data, MAX_NOTIFICATION_DATA) &&
-    (p.tag === undefined || isText(p.tag, 64))
+    (p.tag === undefined || isText(p.tag, 64)) &&
+    (p.category === undefined ||
+      (typeof p.category === 'string' && /^[a-z][a-z0-9-]{0,31}$/.test(p.category)))
   );
 }
 
@@ -361,7 +363,8 @@ const validators: Record<MethodName, (params: unknown) => boolean> = {
     isRelativePath(p.path) &&
     isPage(p) &&
     isOneOf(p.sort, ['name', 'size', 'modified']) &&
-    isOneOf(p.order, ['asc', 'desc']),
+    isOneOf(p.order, ['asc', 'desc']) &&
+    (p.query === undefined || typeof p.query === 'string'),
   'files.open': (p) => isRecord(p) && isLocation(p.location) && isRelativePath(p.path),
   'files.shares': isRecord,
   'files.watch': (p) => inLocation(p) && isRelativePath(p.path),

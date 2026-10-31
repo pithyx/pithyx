@@ -1,6 +1,6 @@
 // Writes the generated parts of the reference pages, so they never drift from their sources: the pithyx commands from
 // packages/cli/src/cli.ts (its help text and its parseArgs options), the findings from packages/cli/src/issues.ts and
-// findings.ts, the manifest fields from sdk/schema/manifest.v1.schema.json and the Compose allowlist from
+// findings.ts, the manifest fields from sdk/schema/manifest.v2.schema.json and the Compose allowlist from
 // sdk/schema/compose.v1.rules.json. A page marks each part with `<!-- generated:<kind> [argument] -->` and
 // `<!-- /generated -->`; everything else on the page is written by hand. Run by build:site before the build.
 // Usage: node scripts/generate-cli-reference.ts [--check]   --check rewrites nothing and fails when a page is stale.
@@ -849,7 +849,7 @@ interface Field {
 let manifestCache: Schema | undefined;
 function manifestSchema(): Schema {
   manifestCache ??= JSON.parse(
-    readFileSync(join(repo, 'sdk', 'schema', 'manifest.v1.schema.json'), 'utf8'),
+    readFileSync(join(repo, 'sdk', 'schema', 'manifest.v2.schema.json'), 'utf8'),
   ) as Schema;
   return manifestCache;
 }
@@ -1042,10 +1042,18 @@ interface ComposeRules {
     reservedTargets: string[];
     dockerSockets: string[];
     dockerSocketRight: string;
+    dockerSocketRawRight: string;
   };
   dependsOn: { keys: Record<string, KeyRule> };
   dev: { service: Record<string, KeyRule>; build: { keys: Record<string, KeyRule> } };
   reservedLabelPrefixes: string[];
+  elevated: {
+    blockedCapabilities: string[];
+    hostNamespaceRights: string[];
+    namespacedDevices: string[];
+    deviceClasses: Record<string, { nodes?: string; links?: string } | string>;
+    tiers: { default: string; rights: Record<string, string> };
+  };
   refused: Record<string, Record<string, string>>;
   descriptions?: {
     types?: Record<string, string>;
@@ -1171,8 +1179,29 @@ function composePart(part: string, locale: Locale): string {
     case 'reserved':
       return [
         `- ${rules.mount.reservedTargets.map(code).join(', ')}`,
-        `- ${rules.mount.dockerSockets.map(code).join(', ')}: ${code(rules.mount.dockerSocketRight)}`,
+        `- ${rules.mount.dockerSockets.map(code).join(', ')}: ${code(rules.mount.dockerSocketRight)}, ${code(rules.mount.dockerSocketRawRight)}`,
         `- ${rules.reservedLabelPrefixes.map(code).join(', ')}`,
+      ].join('\n');
+    case 'elevated':
+      return [
+        `- ${rules.elevated.blockedCapabilities.map(code).join(', ')}`,
+        `- ${rules.elevated.hostNamespaceRights.map(code).join(', ')}`,
+        `- ${rules.elevated.namespacedDevices.map(code).join(', ')}`,
+        `- ${Object.keys(rules.elevated.deviceClasses)
+          .filter((name) => !name.startsWith('$'))
+          .map(code)
+          .join(', ')}`,
+        `- ${['elevated', 'high', 'critical']
+          .map((tier) => {
+            const rights = Object.entries(rules.elevated.tiers.rights)
+              .filter(([, of]) => of === tier)
+              .map(([right]) => code(right));
+            if (tier === rules.elevated.tiers.default) {
+              rights.push(code('*'));
+            }
+            return `${code(tier)}: ${rights.join(', ')}`;
+          })
+          .join('; ')}`,
       ].join('\n');
     case 'types':
       return table(

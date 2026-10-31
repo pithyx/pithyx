@@ -9,7 +9,12 @@
   },
   "entry": "frontend/index.html",
   "sdk": "^1.0.0",
-  "permissions": [],
+  "arch": [
+    "amd64",
+    "arm64"
+  ],
+  "source": "https://github.com/example/app",
+  "permissions": {},
   "window": {
     "instances": "multi",
     "defaultSize": {

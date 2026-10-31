@@ -1,6 +1,6 @@
 import { type Locator, type Page } from '@playwright/test';
 import { expect, test } from './fixtures';
-import { appWindow, openAccountMenu, openFromDesktop, signInAsAdmin } from './session';
+import { appWindow, choosePersonalSetting, openFromDesktop, signInAsAdmin } from './session';
 
 async function zIndex(window: Locator): Promise<number> {
   return Number(await window.evaluate((element) => getComputedStyle(element).zIndex));
@@ -15,23 +15,23 @@ test.beforeEach(async ({ page }) => {
 });
 
 test('opens, focuses, minimizes and closes windows', async ({ page }) => {
-  const disks = appWindow(page, 'Storage');
+  const disks = appWindow(page, 'Settings');
   const about = appWindow(page, 'About Pithyx');
 
   await test.step('open two apps from the desktop', async () => {
-    await openFromDesktop(page, 'Storage');
+    await openFromDesktop(page, 'Settings');
     await openFromDesktop(page, 'About Pithyx');
     await expect(disks).toBeVisible();
     await expect(about).toBeVisible();
     await expect(taskbarEntry(page, /^About Pithyx, active$/)).toBeVisible();
-    await expect(taskbarEntry(page, /^Storage$/)).toBeVisible();
+    await expect(taskbarEntry(page, /^Settings$/)).toBeVisible();
     expect(await zIndex(about)).toBeGreaterThan(await zIndex(disks));
   });
 
   await test.step('a click raises a window', async () => {
-    await disks.getByRole('heading', { name: 'Storage' }).click();
+    await disks.getByRole('heading', { name: 'Settings', exact: true }).click();
     expect(await zIndex(disks)).toBeGreaterThan(await zIndex(about));
-    await expect(taskbarEntry(page, /^Storage, active$/)).toBeVisible();
+    await expect(taskbarEntry(page, /^Settings, active$/)).toBeVisible();
   });
 
   await test.step('a single-instance app focuses its window instead of opening another', async () => {
@@ -48,7 +48,7 @@ test('opens, focuses, minimizes and closes windows', async ({ page }) => {
     await taskbarEntry(page, /^About Pithyx, active$/).click();
     await expect(about).toBeHidden();
     await expect(taskbarEntry(page, /^About Pithyx, minimized$/)).toBeVisible();
-    await expect(taskbarEntry(page, /^Storage, active$/)).toBeVisible();
+    await expect(taskbarEntry(page, /^Settings, active$/)).toBeVisible();
     await taskbarEntry(page, /^About Pithyx, minimized$/).click();
     await expect(about).toBeVisible();
     await expect(about).toBeFocused();
@@ -67,7 +67,7 @@ test('opens, focuses, minimizes and closes windows', async ({ page }) => {
     await about.getByRole('button', { name: 'Close' }).click();
     await expect(about).toHaveCount(0);
     await expect(taskbarEntry(page, /About Pithyx/)).toHaveCount(0);
-    await expect(taskbarEntry(page, /^Storage, active$/)).toBeVisible();
+    await expect(taskbarEntry(page, /^Settings, active$/)).toBeVisible();
   });
 });
 
@@ -89,11 +89,12 @@ test('the start menu searches and opens apps', async ({ page }) => {
   await expect(appWindow(page, 'About Pithyx')).toBeVisible();
 
   await start.click();
-  await menu.getByRole('row', { name: 'Storage' }).click();
-  await expect(appWindow(page, 'Storage')).toBeVisible();
+  await menu.getByRole('row', { name: 'Settings', exact: true }).click();
+  await expect(appWindow(page, 'Settings')).toBeVisible();
 
   await start.click();
-  await page.getByRole('main', { name: 'Desktop' }).click({ position: { x: 700, y: 400 } });
+  // Right of the menu, which is attached to the taskbar at the left and 760 px wide.
+  await page.getByRole('main', { name: 'Desktop' }).click({ position: { x: 1000, y: 300 } });
   await expect(menu).toBeHidden();
 });
 
@@ -222,9 +223,7 @@ test('keyboard shortcuts and the window menu', async ({ page }) => {
 test('the taskbar moves to the left and back', async ({ page }) => {
   const taskbar = page.getByRole('navigation', { name: 'Taskbar' });
   const moveTaskbar = async (position: string) => {
-    await openAccountMenu(page);
-    await page.getByRole('menuitem', { name: 'Taskbar position' }).click();
-    await page.getByRole('menuitemradio', { name: position }).click();
+    await choosePersonalSetting(page, 'Taskbar position', position);
   };
   await moveTaskbar('Left');
   const viewport = page.viewportSize();
@@ -239,8 +238,8 @@ test('the taskbar moves to the left and back', async ({ page }) => {
 test('signing out closes the windows, so the next sign-in starts with an empty desktop', async ({
   page,
 }) => {
-  await openFromDesktop(page, 'Storage');
-  await expect(page.getByRole('region', { name: 'Storage', exact: true })).toBeVisible();
+  await openFromDesktop(page, 'Settings');
+  await expect(page.getByRole('region', { name: 'Settings', exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Pithyx menu' }).click();
   const menu = page.getByRole('dialog', { name: 'Pithyx menu' });
   // Administrators may restart and shut down; nothing is pressed here.
@@ -249,5 +248,5 @@ test('signing out closes the windows, so the next sign-in starts with an empty d
   await expect(page.getByRole('heading', { name: 'Welcome back' })).toBeVisible();
 
   await signInAsAdmin(page);
-  await expect(page.getByRole('region', { name: 'Storage', exact: true })).toHaveCount(0);
+  await expect(page.getByRole('region', { name: 'Settings', exact: true })).toHaveCount(0);
 });

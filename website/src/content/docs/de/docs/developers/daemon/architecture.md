@@ -46,7 +46,7 @@ Parser für Befehlsausgaben sind reine statische Funktionen mit Fixture-Tests, z
 
 Darum herum liegen die Inventare für Festplatten und Pools, die Planer (`StoragePlanner`, `DatasetPlanner`, `PoolImportScanner`) und die Befehlspläne (`ZfsPlans`, `SnapshotPlans`, `ZfsScrubPlans`, `ImportPlans`), die dem Benutzer gezeigt werden, bevor sie laufen. `DiskGuard` lehnt zerstörerische Aktionen auf Festplatten mit Daten ab, solange der Benutzer nicht mit der Seriennummer der Festplatte bestätigt.
 
-Der Speicherzustand erreicht die Clients über die Topics `storage/disks`, `storage/pools`, `storage/alerts` und `storage/snapshots` (nur Administratoren; eine Revision und die Datasets, deren Snapshots sich geändert haben, damit die Speicher-App nur diese neu liest).
+Der Speicherzustand erreicht die Clients über die Topics `storage/disks`, `storage/pools`, `storage/alerts` und `storage/snapshots` (nur Administratoren; eine Revision und die Datasets, deren Snapshots sich geändert haben, damit die Einstellungen nur diese neu lesen).
 
 ## Datenbank und Migrationen
 

@@ -19,6 +19,13 @@
       },
       "expected": "No app with the id com.example.chat is installed."
     },
+    "app.arch.unsupported": {
+      "params": {
+        "arch": "arm64",
+        "supported": "amd64"
+      },
+      "expected": "This app runs only on amd64, not on this box (arm64)."
+    },
     "app.backend.endpoint_unknown": {
       "params": {
         "endpoint": "metrics"
@@ -73,10 +80,10 @@
     },
     "app.compose.right_unused": {
       "params": {
-        "path": "/backend/elevated/0",
+        "path": "/permissions/host.pid",
         "right": "host.pid"
       },
-      "expected": "The app's manifest declares the right host.pid at /backend/elevated/0, which its Compose file does not use."
+      "expected": "The app's manifest declares the right host.pid at /permissions/host.pid, which its Compose file does not use."
     },
     "app.compose.storage_mismatch": {
       "params": {
@@ -100,15 +107,51 @@
       },
       "expected": "The app's Compose file cannot be read: /services/server/init appears twice."
     },
+    "app.device.unavailable": {
+      "params": {
+        "path": "/dev/ttyUSB0"
+      },
+      "expected": "The device /dev/ttyUSB0 the app needs is not there or cannot be given to an app, so its background service does not start."
+    },
+    "app.device.missing": {
+      "params": {
+        "path": "/dev/serial"
+      },
+      "expected": "The app needs the device /dev/serial, and none is plugged in. Plug in the device and try again."
+    },
     "app.docker.unavailable": {
       "params": {},
       "expected": "The container service does not answer, so app backends cannot run right now."
+    },
+    "app.elevated.backend_missing": {
+      "params": {
+        "right": "host.network"
+      },
+      "expected": "The app asks for host.network, a right only a background service can use, but it has no background service."
+    },
+    "app.elevated.confirmation_required": {
+      "params": {
+        "right": "docker.socket.raw"
+      },
+      "expected": "docker.socket.raw gives the app full control of the box. Type the app's name in the install dialog to confirm it."
+    },
+    "app.elevated.root_conflict": {
+      "params": {
+        "right": "host.network"
+      },
+      "expected": "The app runs its background service as root and asks for host.network. That right runs the service directly on the box, where root would control the whole box, so Pithyx refuses the combination."
+    },
+    "app.elevated.root_required": {
+      "params": {
+        "right": "capability:NET_ADMIN"
+      },
+      "expected": "The app asks for capability:NET_ADMIN, but only a background service that runs as root can use a capability."
     },
     "app.elevated.unsupported": {
       "params": {
         "right": "docker.socket"
       },
-      "expected": "The app asks for the right docker.socket, which this version of Pithyx does not grant."
+      "expected": "The app asks for the right docker.socket, which Pithyx does not grant to any app."
     },
     "app.icon.invalid": {
       "params": {
@@ -165,6 +208,13 @@
       },
       "expected": "The Pithyx version range stable in the manifest is not valid."
     },
+    "app.manifest.permission_missing": {
+      "params": {
+        "path": "/fileActions",
+        "permission": "files.shares"
+      },
+      "expected": "The manifest uses /fileActions, which needs the permission files.shares. Add it to permissions."
+    },
     "app.manifest.reference_unknown": {
       "params": {
         "path": "/backend/health/endpoint",
@@ -187,10 +237,10 @@
     },
     "app.manifest.version_unsupported": {
       "params": {
-        "version": "2",
-        "supported": 1
+        "version": "1",
+        "supported": 2
       },
-      "expected": "This app needs a newer version of Pithyx (manifest version 2, this box reads version 1)."
+      "expected": "This app was made for an older version of Pithyx (manifest version 1, this box reads version 2). Ask its author for a new version."
     },
     "app.manifest.window_size_invalid": {
       "params": {},
@@ -326,6 +376,32 @@
       },
       "expected": "The display name can have at most 64 characters and no control characters."
     },
+    "auth.passkey.invalid": {
+      "params": {},
+      "expected": "The passkey was not accepted. It may have been removed or belong to another name of the box."
+    },
+    "auth.passkey.limit": {
+      "params": {
+        "max": 20
+      },
+      "expected": "You can have at most 20 passkeys. Remove one first."
+    },
+    "auth.passkey.name_invalid": {
+      "params": {
+        "maxLength": 64
+      },
+      "expected": "The name needs 1 to 64 characters and no control characters."
+    },
+    "auth.passkey.not_found": {
+      "params": {},
+      "expected": "This passkey does not exist (any more)."
+    },
+    "auth.passkey.unavailable": {
+      "params": {
+        "host": "192.168.1.20"
+      },
+      "expected": "Passkeys need the box opened by its name over HTTPS, not as 192.168.1.20."
+    },
     "auth.password.too_common": {
       "params": {},
       "expected": "This password is too well known. Choose one that is harder to guess."
@@ -363,6 +439,10 @@
     "auth.setup.already_done": {
       "params": {},
       "expected": "This system has already been set up."
+    },
+    "auth.step_up.required": {
+      "params": {},
+      "expected": "Confirm with your password first. The confirmation holds for five minutes."
     },
     "auth.totp.already_enabled": {
       "params": {},
@@ -906,6 +986,47 @@
       },
       "expected": "enp2s0 cannot carry the VLAN vlan7: choose a network card or a bond."
     },
+    "notifications.category.not_found": {
+      "params": {
+        "app": "com.example.chat",
+        "category": "mentions"
+      },
+      "expected": "No app you may open has the notification category mentions of com.example.chat."
+    },
+    "notifications.event.unknown": {
+      "params": {
+        "event": "storage.nothing"
+      },
+      "expected": "There is no notification event storage.nothing."
+    },
+    "notifications.channel.failed": {
+      "params": {
+        "detail": "HTTP 403"
+      },
+      "expected": "The channel could not deliver: HTTP 403"
+    },
+    "notifications.channel.invalid": {
+      "params": {
+        "field": "url"
+      },
+      "expected": "The channel was not saved: its address must start with http:// or https:// and may not be the box itself."
+    },
+    "notifications.channel.limit_reached": {
+      "params": {
+        "max": 10
+      },
+      "expected": "There are already 10 channels. Remove one first."
+    },
+    "notifications.channel.not_found": {
+      "params": {},
+      "expected": "This channel no longer exists."
+    },
+    "notifications.language.unsupported": {
+      "params": {
+        "language": "fr"
+      },
+      "expected": "The box cannot write in the language fr."
+    },
     "notifications.message.invalid": {
       "params": {
         "field": "title",
@@ -916,6 +1037,16 @@
     "notifications.notification.not_found": {
       "params": {},
       "expected": "This notification no longer exists."
+    },
+    "notifications.smtp.invalid": {
+      "params": {
+        "field": "from"
+      },
+      "expected": "The email server was not saved: the sender is not a valid email address."
+    },
+    "notifications.smtp.missing": {
+      "params": {},
+      "expected": "Email channels need an email server. An administrator sets it up in Settings > Notifications."
     },
     "permissions.grant.invalid": {
       "params": {
@@ -928,6 +1059,97 @@
         "host": "jellyfin.home.arpa"
       },
       "expected": "You may not open jellyfin.home.arpa. An administrator can let you in on the proxy host."
+    },
+    "proxy.acme.caa": {
+      "params": {
+        "name": "nas.example.com",
+        "detail": "CAA record prevents issuance"
+      },
+      "expected": "The DNS of nas.example.com does not allow this authority to issue certificates (CAA record). CAA record prevents issuance"
+    },
+    "proxy.acme.connection": {
+      "params": {
+        "name": "nas.example.com",
+        "detail": "Timeout during connect"
+      },
+      "expected": "The authority could not reach nas.example.com on port 80. Forward port 80 of your router to the box and check the firewall. Timeout during connect"
+    },
+    "proxy.acme.directory_invalid": {
+      "params": {},
+      "expected": "The ACME directory must be an https address."
+    },
+    "proxy.acme.dns": {
+      "params": {
+        "name": "nas.example.com",
+        "detail": "NXDOMAIN looking up A"
+      },
+      "expected": "nas.example.com has no public DNS record that points to the box. NXDOMAIN looking up A"
+    },
+    "proxy.acme.email_invalid": {
+      "params": {},
+      "expected": "Enter a valid email address, or leave the field empty."
+    },
+    "proxy.acme.failed": {
+      "params": {
+        "name": "nas.example.com",
+        "detail": "Order failed"
+      },
+      "expected": "The authority issued no certificate for nas.example.com. Order failed"
+    },
+    "proxy.acme.name_not_public": {
+      "params": {
+        "name": "nas.local"
+      },
+      "expected": "nas.local is not a public domain. Let's Encrypt only certifies names on the internet; use the box's own certificate for it."
+    },
+    "proxy.acme.name_rejected": {
+      "params": {
+        "name": "nas.example.com",
+        "detail": "Policy forbids issuing for name"
+      },
+      "expected": "The authority does not issue certificates for nas.example.com. Policy forbids issuing for name"
+    },
+    "proxy.acme.not_acme": {
+      "params": {},
+      "expected": "This host does not use a certificate from Let's Encrypt."
+    },
+    "proxy.acme.port_unavailable": {
+      "params": {},
+      "expected": "The box does not answer on port 80 here, where Let's Encrypt checks the domain."
+    },
+    "proxy.acme.rate_limited": {
+      "params": {
+        "name": "nas.example.com",
+        "detail": "too many failed authorizations recently"
+      },
+      "expected": "Too many requests for nas.example.com; the box tries again later. too many failed authorizations recently"
+    },
+    "proxy.acme.running": {
+      "params": {},
+      "expected": "The certificate of this host is being requested already."
+    },
+    "proxy.acme.terms_required": {
+      "params": {},
+      "expected": "Agree to the terms of service of Let's Encrypt first."
+    },
+    "proxy.acme.unauthorized": {
+      "params": {
+        "name": "nas.example.com",
+        "detail": "Invalid response"
+      },
+      "expected": "Another server answered for nas.example.com on port 80. Point the domain at the box and forward port 80 to it. Invalid response"
+    },
+    "proxy.acme.unreachable": {
+      "params": {
+        "detail": "https://acme-v02.api.letsencrypt.org/directory"
+      },
+      "expected": "The ACME authority does not answer (https://acme-v02.api.letsencrypt.org/directory). Check the box's internet connection."
+    },
+    "proxy.acme.wildcard": {
+      "params": {
+        "name": "*.example.com"
+      },
+      "expected": "*.example.com is a wildcard. Let's Encrypt certifies wildcards only through DNS, which the box does not do; list each name instead."
     },
     "proxy.address.denied": {
       "params": {},
@@ -1180,6 +1402,10 @@
       },
       "expected": "The app could not reach its backend (api). Check the connection to the box."
     },
+    "sdk.box.unreachable": {
+      "params": {},
+      "expected": "The box could not be reached. Check the connection and try again."
+    },
     "sdk.method.unknown": {
       "params": {
         "method": "storage.get"
@@ -1232,7 +1458,7 @@
         "command": "zpool destroy",
         "minutes": 5
       },
-      "expected": "zpool destroy did not finish within 5 minutes. A disk of the pool probably stopped answering and ZFS is waiting for it. Check the disks in Storage. If other pools stop responding too, restart the box."
+      "expected": "zpool destroy did not finish within 5 minutes. A disk of the pool probably stopped answering and ZFS is waiting for it. Check the disks in Settings > Storage. If other pools stop responding too, restart the box."
     },
     "storage.dataset.compression_invalid": {
       "params": {
@@ -1334,7 +1560,7 @@
     },
     "storage.encryption.unavailable": {
       "params": {},
-      "expected": "Encryption comes with the key vault in the next update. A pool can only be encrypted when it is created, so create it without encryption only if that is fine for its data."
+      "expected": "This box cannot encrypt pools. A pool can only be encrypted when it is created, so create it without encryption only if that is fine for its data."
     },
     "storage.import.device_unknown": {
       "params": {
@@ -1552,7 +1778,7 @@
     },
     "storage.zfs.unavailable": {
       "params": {},
-      "expected": "ZFS did not answer in time or reported an error, so Pithyx cannot show what this would change. Try again in a moment. If it keeps happening, a pool may be waiting for disks that are gone: see Storage."
+      "expected": "ZFS did not answer in time or reported an error, so Pithyx cannot show what this would change. Try again in a moment. If it keeps happening, a pool may be waiting for disks that are gone: see Settings > Storage."
     },
     "store.app.not_found": {
       "params": {
@@ -1745,6 +1971,16 @@
         "zone": "Mars/Olympus"
       },
       "expected": "The system does not know the time zone “Mars/Olympus”."
+    },
+    "system.ups.invalid": {
+      "params": {
+        "field": "batteryLow"
+      },
+      "expected": "The UPS setting “battery limit” is not valid."
+    },
+    "system.ups.unavailable": {
+      "params": {},
+      "expected": "This machine has no NUT server for a UPS on USB."
     },
     "tls.custom.expired": {
       "params": {
@@ -2013,6 +2249,78 @@
     "users.user.self": {
       "params": {},
       "expected": "You cannot delete your own account."
+    },
+    "storage.encryption.key_invalid": {
+      "params": {},
+      "expected": "This is not a pool key. A pool key starts with PXPK and has 56 more characters; check it for a typo."
+    },
+    "storage.encryption.key_wrong": {
+      "params": {
+        "name": "tank"
+      },
+      "expected": "This key does not unlock pool tank. It is a pool key, but of another pool or an older one."
+    },
+    "storage.encryption.key_required": {
+      "params": {
+        "name": "tank"
+      },
+      "expected": "Enter the key of pool tank."
+    },
+    "storage.pool.not_encrypted": {
+      "params": {
+        "name": "tank"
+      },
+      "expected": "Pool tank is not encrypted."
+    },
+    "storage.pool.locked": {
+      "params": {
+        "name": "tank"
+      },
+      "expected": "Pool tank is locked. Unlock it with its key first."
+    },
+    "storage.pool.not_locked": {
+      "params": {
+        "name": "tank"
+      },
+      "expected": "Pool tank is unlocked already. To keep its key in the key vault, type the key: it is checked and then kept."
+    },
+    "storage.encryption.vault_failed": {
+      "params": {
+        "name": "tank"
+      },
+      "expected": "The key of pool tank could not be stored in the key vault on the system disk. The pool is unlocked now; after the next start it waits for its key, so keep the key you stored. Check the system disk in the log, then unlock or change the key again to keep it in the vault."
+    },
+    "storage.encryption.not_in_vault": {
+      "params": {
+        "name": "tank"
+      },
+      "expected": "The key vault holds no key of pool tank. Only the key you stored yourself can open it."
+    },
+    "storage.usb.not_found": {
+      "params": {
+        "device": "/dev/sdh1"
+      },
+      "expected": "This USB stick cannot take a pool key (/dev/sdh1): it is gone, or nothing on it is a FAT, exFAT or ext file system that is free to use. Plug it in again, or use another stick."
+    },
+    "storage.usb.read_only": {
+      "params": {
+        "stick": "PXKEYS"
+      },
+      "expected": "The USB stick PXKEYS is write-protected. Switch its write protection off or use another stick."
+    },
+    "storage.usb.unreadable": {
+      "params": {
+        "stick": "PXKEYS",
+        "reason": "wrong fs type"
+      },
+      "expected": "The USB stick PXKEYS could not be opened (wrong fs type). Nothing on it was changed. Check the stick on a computer, or use another one."
+    },
+    "storage.usb.write_failed": {
+      "params": {
+        "stick": "PXKEYS",
+        "reason": "No space left on device"
+      },
+      "expected": "The key could not be written to the USB stick PXKEYS (No space left on device). Do not rely on this stick: check it on a computer, or use another one, and keep the key you stored."
     }
   },
   "cases": [

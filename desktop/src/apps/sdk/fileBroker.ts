@@ -84,13 +84,16 @@ export function fileBrokerFor(target: FileBrokerTarget): {
         ...(share.kind === 'home' || share.kind === 'userHome' ? { kind: share.kind } : {}),
       }));
     },
-    'files.list': async ({ location, path, cursor, limit, sort, order }) => {
+    'files.list': async ({ location, path, cursor, limit, sort, order, query }) => {
       require('files.shares');
       const shareId = shareIdOf(location);
       const page = await daemon(async () =>
         unwrap(
           await api.GET('/api/files/{shareId}/list', {
-            params: { path: { shareId }, query: defined({ path, cursor, limit, sort, order }) },
+            params: {
+              path: { shareId },
+              query: defined({ path, cursor, limit, sort, order, query }),
+            },
           }),
         ),
       );

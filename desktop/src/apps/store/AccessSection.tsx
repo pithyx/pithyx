@@ -68,9 +68,9 @@ export function AccessSection({ app, appId }: { app: PithyxApp; appId: string })
 
   return (
     <section className={styles.group} aria-labelledby="store-access">
-      <h3 id="store-access" className={styles.sectionTitle}>
+      <h2 id="store-access" className={styles.sectionTitle}>
         {t('detail.access.title')}
-      </h3>
+      </h2>
       <p className={styles.muted}>{t('detail.access.intro')}</p>
       {(grants.isPending || groups.isPending) && (
         <p className={styles.loading} role="status">
@@ -99,7 +99,7 @@ export function AccessSection({ app, appId }: { app: PithyxApp; appId: string })
           </fieldset>
           {shown === 'some' && (
             <>
-              <h4 className={styles.subTitle}>{t('detail.access.groups')}</h4>
+              <h3 className={styles.subTitle}>{t('detail.access.groups')}</h3>
               <ul className={styles.subjects}>
                 {groups.data
                   .filter((group) => !group.builtin)
@@ -116,7 +116,7 @@ export function AccessSection({ app, appId }: { app: PithyxApp; appId: string })
                     </li>
                   ))}
               </ul>
-              <h4 className={styles.subTitle}>{t('detail.access.users')}</h4>
+              <h3 className={styles.subTitle}>{t('detail.access.users')}</h3>
               <ul className={styles.subjects}>
                 {grants.data.users.map((user) => {
                   const label = user.displayName ?? user.username;

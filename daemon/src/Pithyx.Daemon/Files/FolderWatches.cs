@@ -219,8 +219,19 @@ public sealed class FolderWatches : IDisposable
         }
     }
 
-    private void Schedule(Watch watch) =>
-        watch.Timer ??= _time.CreateTimer(_ => Flush(watch), null, BatchDelay, Timeout.InfiniteTimeSpan);
+    private void Schedule(Watch watch)
+    {
+        if (watch.Timer is not null)
+        {
+            return;
+        }
+        // The timer is stored before it is armed: its callback can run before CreateTimer or Change returns (a fake
+        // clock runs a due callback inline), and Flush must find the timer to clear it, or later changes wait behind a
+        // timer that already fired (#243).
+        var timer = _time.CreateTimer(_ => Flush(watch), null, Timeout.InfiniteTimeSpan, Timeout.InfiniteTimeSpan);
+        watch.Timer = timer;
+        timer.Change(BatchDelay, Timeout.InfiniteTimeSpan);
+    }
 
     private void Flush(Watch watch)
     {

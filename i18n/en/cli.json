@@ -20,7 +20,8 @@
       "minimize": "Minimize",
       "starting": "Starting {name} ...",
       "storage": "{name} cannot start until an administrator picks a folder for it in the Store.",
-      "pool": "{name} cannot start because its pool is locked or missing."
+      "pool": "{name} cannot start because its pool is locked or missing.",
+      "device": "{name} cannot start until a device it needs is plugged in."
     },
     "events": {
       "invalidJson": "The data of {event} is not valid JSON.",

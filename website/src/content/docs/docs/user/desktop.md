@@ -23,7 +23,7 @@ You need the right **Sign in to the desktop**. If your account is deactivated or
 
 After five wrong attempts for the same user name from the same address within five minutes, sign-in pauses for a short time and tells you how many seconds to wait.
 
-To sign out, open the Pithyx menu and click the **Sign out** button at the bottom, next to the power button.
+To sign out, open the Pithyx menu and click the **Sign out** button in the narrow bar at its left edge, above the power button.
 
 Forgot your password? Click **Forgot password?** on the sign-in page. Pithyx cannot reset a password by email: ask an administrator to set a new one. Administrators can use the recovery key. See [Recovery and reinstall](/docs/install/recovery/).
 
@@ -48,7 +48,7 @@ On a wide screen:
 - Drag a window to the left or right edge to fill half of the screen, or to the top edge to maximize it. On very wide screens (2400 pixels or more) the edges give thirds.
 - Drag a maximized or snapped window away from the edge to get its free size back.
 - The title bar has **Minimize**, **Maximize** (or **Restore**) and **Close** buttons.
-- Click the app icon at the left of the title bar for the window menu: **Restore**, **Move**, **Size**, **Minimize**, **Maximize**, **Snap left**, **Snap right** and **Close**. **Move** and **Size** let you use the arrow keys (16 pixels per press, with Shift 1 pixel), **Enter** to confirm and **Escape** to cancel.
+- Click the app icon at the left of the title bar, or right-click the title bar, for the window menu: **Restore**, **Move**, **Size**, **Minimize**, **Maximize**, **Snap left**, **Snap right** and **Close**. **Move** and **Size** let you use the arrow keys (16 pixels per press, with Shift 1 pixel), **Enter** to confirm and **Escape** to cancel.
 
 New windows open slightly offset from each other. You can have at most 50 windows open. Beyond that, opening another app does nothing.
 
@@ -56,15 +56,16 @@ If an app does not answer for five seconds, a dialog says that the app is not re
 
 ## The taskbar
 
-![The Pithyx menu in the dark theme with the account menu of Anna Weber open: Two-factor authentication, Language, Appearance, Accent color, Wallpaper, Get desktop from and Taskbar position](../../../../assets/screenshots/desktop-account-menu.webp)
+![The Pithyx menu in the dark theme with the account menu of Alex Morgan open beside the initials: Personal settings, Appearance and Sign out](../../../../assets/screenshots/desktop-account-menu.webp)
 
-_The account menu opens when you click your name at the bottom of the Pithyx menu._
+_The account menu opens when you click your initials at the top of the Pithyx menu's left bar._
 
 By default the taskbar is at the bottom of the screen. From the left it has:
 
 - the Pithyx menu button,
-- one button per running app,
+- one button per open window with its icon and title; the active one is underlined in the accent color, the others with a thin line,
 - the app switcher, with the number of open apps,
+- for administrators, the box's state: the pool that needs the most attention, the processor load and the network traffic; each opens Settings > Pools or the Resource Monitor (on screens of 1024 pixels and wider),
 - the transfers button, while files are being uploaded or downloaded,
 - the running tasks button,
 - the notifications bell, with a badge for unread notifications,
@@ -74,43 +75,47 @@ When more apps run than fit, their buttons get narrower and then scroll: turn th
 
 Click a running app to bring it to the front. Click the active app again to minimize it. Right-click a running app (or press **Shift+F10** on it) for **Minimize** or **Restore**, **Add to desktop** and **Close**.
 
-To move the taskbar, open the Pithyx menu, click your name, choose **Taskbar position** and pick **Bottom**, **Top**, **Left** or **Right**. On phones the taskbar always stays at the bottom and the entry is missing.
+To move the taskbar, open **Personal settings** (in the Pithyx menu's left bar), go to **Appearance**, find **Taskbar position** and pick **Bottom**, **Top**, **Left** or **Right**. On phones the taskbar always stays at the bottom and the row is missing.
 
-**The Pithyx menu** opens with the button at the left of the taskbar, or by pressing and releasing the Windows or Command key. It lists your apps and has a search field. The search field finds apps by name only; settings and files are not found there, and the list of recent files stays empty. Your account menu (click your name) has:
+**The Pithyx menu** opens above the taskbar, attached to the button at its left, or by pressing and releasing the Windows or Command key. It has three parts:
 
-- **Two-factor authentication**
-- **Language**
-- **Appearance**, **Accent color** and **Wallpaper**
+- a narrow bar at the left: your initials (the account menu), your home folder, and at the bottom **Personal settings**, **Sign out** and, with the right, **Power options**,
+- the app list with a search field, grouped into **System** (only for administrators: the apps that come with Pithyx), **Apps** and **You**,
+- tiles: administrators see the state of each pool, the system (processor and memory) and the updates, each opening its app; everybody sees **Your folders**, the home folder and the shared folders with the access they have, each opening in Files.
+
+The search field finds apps by name, and administrators also find the pages of Settings by their name or by what they set ("quota", "time zone"); choosing one opens Settings on that page. Files are not found there. Your account menu (click your initials) has **Personal settings** and **Appearance**. Personal settings ([Your account](/docs/user/account/#personal-settings)) also has:
+
 - **Default apps**: the file types you chose to always open one way in Files, each with **Forget** ([Files](/docs/user/files/))
 - **Open at sign-in**: tick up to 10 apps that open each time you sign in, on every device, in the order you ticked them. A reload of the page only brings back your windows, and an app that is already open is not opened twice. An app may be marked **Suggested by the app**; it is never ticked for you.
-- **Get desktop from**
-- **Taskbar position** (not on phones)
+- **Notification channels**: send your notifications by email or to a push service such as ntfy or Gotify ([Account](/docs/user/account/#notifications-by-email-or-push))
 
-At the bottom of the Pithyx menu, next to your name, are the **Sign out** button and, for administrators and users with the right **Restart and shut down**, the **Power options** button with **Restart** and **Shut down**. Both sign every user out and stop file transfers.
+**Power options** (for administrators and users with the right **Restart and shut down**) has **Restart** and **Shut down**. Both sign every user out and stop file transfers.
 
 **Notifications.** The bell opens a panel with **Running tasks** and **Recent** notifications. Use **Dismiss**, **Mute** or **Clear all**. Press **Escape** to close the panel.
 
 ## Desktop items and notes
 
-![The desktop with the Files and Storage windows side by side, the shortcuts Files and Settings and a sticky note at the left and the taskbar at the bottom](../../../../assets/screenshots/desktop.webp)
+![The desktop with Files in front, Settings on the Pools page and the Log Center behind it, folders and the shortcuts Files and Settings on the left, a sticky note at the top right and the taskbar at the bottom](../../../../assets/screenshots/desktop.webp)
 
-_Two shortcuts and a sticky note next to two open windows._
+_Desktop items, two shortcuts and a sticky note next to three open windows._
 
-The desktop holds shortcuts to apps and sticky notes. They belong to your account and appear on every device.
+The desktop holds shortcuts to apps, files and folders, and sticky notes. They belong to your account and appear on every device. The desktop only holds links: removing a shortcut never touches the file.
 
 - To add a shortcut, right-click an empty spot and choose **New shortcut**, then an app. Or right-click a running app in the taskbar and choose **Add to desktop**.
+- To put a file or folder on the desktop, right-click it in Files and choose **Add to desktop**, or drag it from Files onto the desktop. Its shortcut opens it as a double click in Files does; its menu adds **Open with**, **Show in Files** (Files opens its folder with it selected) and, after a rename, **Use original name**. It follows renames and moves made in Files, apps, WebDAV and FTP. A change made over SMB or SFTP, a deleted file, or a shared folder you may no longer read leaves the shortcut greyed out with a broken link, and its menu only offers **Remove from desktop**.
 - To add a note, right-click an empty spot and choose **New note**. A note holds up to 4000 characters and saves itself shortly after you stop typing.
 - Open a shortcut with a double-click (a single tap on a touch screen), or select it and press **Enter**.
 - Right-click a shortcut for **Open**, **Rename**, **Move** and **Remove from desktop**. **F2** renames, **Del** removes.
 - Drag icons to move them. Drag on an empty spot to select several. Hold **Ctrl** or **Shift** to add to a selection.
 - On a touch screen, press and hold for about half a second to open the menu.
+- While a menu is open, a right-click on something else opens that thing's menu instead. The desktop never shows the browser's own menu, except in text fields such as a note's text.
 - To delete a note, click **Remove note**. A note with text asks **Delete this note?** first. The text is deleted on all your devices.
 
 The desktop holds at most 200 items. Icons snap to a grid. On small screens they flow in rows like a phone home screen.
 
 ## Keyboard shortcuts
 
-These window shortcuts work anywhere on the desktop except while you type in a text field:
+These window shortcuts work anywhere on the desktop except while you type in a text field, and except inside the window of an app from the Store or a file: such an app keeps its keys to itself, so click its title bar first.
 
 | Keys                                  | Action                                                        |
 | ------------------------------------- | ------------------------------------------------------------- |
@@ -133,7 +138,7 @@ The box remembers your windows for each browser you use: which apps are open, wh
 - Saved layouts expire 90 days after the last save.
 - A window of an app that was removed, or that you may no longer use, is skipped. A notification tells you how many.
 - Your desktop items, accent color and wallpaper are the same on all devices. The theme and the language belong to the device.
-- To copy the arrangement of another device, open your account menu, click **Get desktop from** and pick the device. If there is none, the list says **No other devices**. The desktop does not follow you between devices by itself.
+- To copy the arrangement of another device, open **Personal settings**, click **Get desktop from** and pick the device. If there is none, the list says **No other devices**. The desktop does not follow you between devices by itself.
 
 ## Phones and tablets
 

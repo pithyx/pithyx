@@ -1,7 +1,9 @@
-import { PithyxApiError, unwrap, type components } from '@pithyx/api-client';
+import { unwrap, type components } from '@pithyx/api-client';
 import type { MethodName, PithyxApp } from '@pithyx/sdk';
-import { PithyxError, type HostExtensions } from '@pithyx/sdk/host';
+import { type HostExtensions } from '@pithyx/sdk/host';
 import { api } from '../../api/client';
+import { realtime } from '../../realtime/connection';
+import { daemon } from './daemonError';
 
 /** The query of Settings > Reverse proxy. */
 export const proxyKey = ['settings', 'system', 'proxy'] as const;
@@ -17,6 +19,10 @@ export type ProxyOptionsRequest = components['schemas']['ProxyOptionsRequest'];
 export type ProxyTargetStatus = components['schemas']['ProxyTargetStatus'];
 export type ProxyTargetTls = components['schemas']['ProxyTargetTls'];
 export type ProxyHeader = components['schemas']['ProxyHeader'];
+export type AcmeAccount = components['schemas']['AcmeAccount'];
+export type AcmeAccountRequest = components['schemas']['AcmeAccountRequest'];
+export type AcmeCertificateStatus = components['schemas']['AcmeCertificateStatus'];
+export type Job = components['schemas']['Job'];
 
 /** The reverse proxy for administrators, outside the public SDK; the daemon checks the right on every request. */
 interface ProxyMethods {
@@ -38,6 +44,13 @@ interface ProxyMethods {
     result: ProxySettings;
   };
   'internal.admin.proxy.deleteStream': { params: { id: number }; result: ProxySettings };
+  'internal.admin.proxy.acme': { params: Record<string, never>; result: AcmeAccount };
+  'internal.admin.proxy.setAcme': { params: AcmeAccountRequest; result: AcmeAccount };
+  /** Asks the ACME authority for a host's certificate now and answers with the job once it ended. */
+  'internal.admin.proxy.renewCertificate': {
+    params: { kind: 'host' | 'redirect'; id: number };
+    result: Job;
+  };
 }
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -49,19 +62,25 @@ const hasId = (value: unknown): value is { id: number } =>
 const optionalId = (value: Record<string, unknown>) =>
   value.id === undefined || typeof value.id === 'number';
 
-async function daemon<T>(call: () => Promise<T>): Promise<T> {
-  try {
-    return await call();
-  } catch (error) {
-    throw error instanceof PithyxApiError
-      ? new PithyxError({
-          code: error.code,
-          params: error.params,
-          detail: error.message,
-          requestId: error.requestId,
-        })
-      : error;
+/** Follows a job on its topic until it succeeded or failed. */
+function ended(job: Job): Promise<Job> {
+  if (job.state !== 'queued' && job.state !== 'running') {
+    return Promise.resolve(job);
   }
+  return new Promise((resolve) => {
+    let done = false;
+    // The snapshot may arrive before listen returns, so the release waits until it does.
+    const stop = realtime.listen(`jobs/${String(job.id)}`, (data) => {
+      const next = data as Job | undefined;
+      if (!done && next !== undefined && next.state !== 'queued' && next.state !== 'running') {
+        done = true;
+        queueMicrotask(() => {
+          stop();
+        });
+        resolve(next);
+      }
+    });
+  });
 }
 
 /** The host side of the Reverse proxy page of the Settings app. */
@@ -168,6 +187,45 @@ export function proxyHost(): HostExtensions {
             }),
           ),
         ),
+    },
+    'internal.admin.proxy.acme': {
+      validate: isRecord,
+      handle: () => daemon(async () => unwrap(await api.GET('/api/system/proxy/acme'))),
+    },
+    'internal.admin.proxy.setAcme': {
+      validate: (value) =>
+        isRecord(value) &&
+        ['directory', 'email'].every(
+          (key) =>
+            value[key] === undefined || value[key] === null || typeof value[key] === 'string',
+        ) &&
+        (value.agreeToTerms === undefined || typeof value.agreeToTerms === 'boolean'),
+      handle: (params) =>
+        daemon(async () =>
+          unwrap(await api.PUT('/api/system/proxy/acme', { body: params as AcmeAccountRequest })),
+        ),
+    },
+    'internal.admin.proxy.renewCertificate': {
+      validate: (value) =>
+        hasId(value) &&
+        ((value as { kind?: unknown }).kind === 'host' ||
+          (value as { kind?: unknown }).kind === 'redirect'),
+      handle: (params) => {
+        const { kind, id } = params as { kind: 'host' | 'redirect'; id: number };
+        return daemon(async () =>
+          ended(
+            unwrap(
+              kind === 'host'
+                ? await api.POST('/api/system/proxy/hosts/{id}/certificate', {
+                    params: { path: { id } },
+                  })
+                : await api.POST('/api/system/proxy/redirects/{id}/certificate', {
+                    params: { path: { id } },
+                  }),
+            ),
+          ),
+        );
+      },
     },
   };
 }

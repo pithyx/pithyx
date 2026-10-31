@@ -231,6 +231,9 @@ export function SandboxApp({
             <p className={styles.text}>{t('appHost.loading.storage', { name })}</p>
           )}
           {phase === 'pool' && <p className={styles.text}>{t('appHost.loading.pool', { name })}</p>}
+          {phase === 'device' && (
+            <p className={styles.text}>{t('appHost.loading.device', { name })}</p>
+          )}
         </div>
       )}
     </div>

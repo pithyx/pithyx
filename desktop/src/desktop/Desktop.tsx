@@ -1,15 +1,4 @@
-import {
-  IconApps,
-  IconLogin,
-  IconColorSwatch,
-  IconDeviceDesktop,
-  IconDevices,
-  IconLanguage,
-  IconLayoutBottombar,
-  IconPalette,
-  IconShieldLock,
-  IconWallpaper,
-} from '../ui/icons';
+import { IconPalette, IconUserCog } from '../ui/icons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { unwrap, type components } from '@pithyx/api-client';
 import {
@@ -34,11 +23,10 @@ import { setInstalledApps, useInstalledApps } from '../apps/installed';
 import { AppHostLayer } from '../apps/host/AppHostLayer';
 import { resetHost, useHost } from '../apps/host/store';
 import { appsFor, findApp } from '../apps/registry';
+import { coreAppIds } from '../apps/ids';
 import { initialsOf } from '../auth/parts';
 import { clearSessionHint } from '../auth/sessionHint';
-import { LanguageOptions } from './LanguageOptions';
-import { ThemeOptions } from './ThemeOptions';
-import { AccentOptions, WallpaperOptions } from './AppearanceOptions';
+import { ThemeOptions, useSubmenuPlacement } from './ThemeOptions';
 import { useDaemonStatus } from '../daemonStatus';
 import { showError } from '../errors/errorStore';
 import { useRealtime } from '../realtime/connection';
@@ -47,10 +35,14 @@ import { DesktopShell } from '../shell/DesktopShell';
 import { itemsQuery, settleItemWrites } from '../items/query';
 import { listenForMetaTap } from '../shell/metaTap';
 import { bannerAlert, useStorageAlerts } from '../shell/storageAlerts';
+import { useReportLanguage } from '../notifications/language';
+import { BoxStatus } from '../shell/BoxStatus';
 import { StartMenu } from '../shell/StartMenu';
+import { StartTiles } from '../shell/StartTiles';
+import { openTarget, showInFiles, showRecentInFiles } from '../items/fileTargets';
 import { Taskbar } from '../shell/Taskbar';
-import type { RunningApp, TaskbarPosition } from '../shell/types';
-import { notify, setNotificationPanelOpen } from '../shell/toasts';
+import type { RunningApp } from '../shell/types';
+import { setNotificationPanelOpen } from '../shell/toasts';
 import {
   followNotifications,
   markAllRead,
@@ -59,8 +51,9 @@ import {
 } from '../shell/notificationFeed';
 import { useDismiss } from '../shell/useDismiss';
 import { cx, Menu, MenuItem, MenuPopover, MenuTrigger, UiProvider } from '@pithyx/ui';
+import { keepsBrowserMenu } from '@pithyx/sdk/host';
 import { useBackGesture } from '../wm/backGesture';
-import { applySavedLayout, saveLayoutBeforeSignOut, useLayoutPersistence } from '../wm/persistence';
+import { saveLayoutBeforeSignOut, useLayoutPersistence } from '../wm/persistence';
 import { useSizeClass } from '../wm/sizeClass';
 import { dispatch, openApp, useDesktop } from '../wm/store';
 import { useTopic } from '../realtime/useTopic';
@@ -69,143 +62,44 @@ import { announce } from '../wm/announce';
 import { requestClose, requestCloseAll } from '../wm/commands';
 import { WindowLayer } from '../wm/WindowLayer';
 import { useMinuteClock } from './clock';
+import { settingsMatches } from './settingsSearch';
 import styles from './Desktop.module.css';
-import { useFormatLocale } from '../i18n';
+import i18next from 'i18next';
+import { loadTranslations, useFormatLocale } from '../i18n';
+import { trustHintDismissed, trustQuery } from '../security/trust';
 
 type User = components['schemas']['UserInfo'];
 
-const TASKBAR_POSITIONS: readonly TaskbarPosition[] = ['bottom', 'top', 'left', 'right'];
-
 /** Where a popover opens from the status area, so it never covers the taskbar. */
 // The account menu opens from the profile in the start menu, which sits next to the taskbar.
-const POPOVER_PLACEMENT = {
-  bottom: 'top start',
-  top: 'bottom start',
-  left: 'top start',
-  right: 'top start',
-} as const;
+/** The id of a menu search result that opens a page of Settings: the prefix and the page. */
+const SETTINGS_RESULT = 'settings:';
 
-type DeviceLayout = components['schemas']['DeviceLayout'];
-
-function useDeviceLabel(): (device: Pick<DeviceLayout, 'browser' | 'os'>) => string {
-  const { t } = useTranslation();
-  return (device) =>
-    t('menu.device', {
-      browser: device.browser ?? t('menu.unknownBrowser'),
-      os: device.os ?? t('menu.unknownOs'),
-    });
-}
-
-function ago(iso: string, locale: string): string {
-  const format = new Intl.RelativeTimeFormat(locale, { numeric: 'auto' });
-  const minutes = Math.round((new Date(iso).getTime() - Date.now()) / 60_000);
-  if (Math.abs(minutes) < 60) {
-    return format.format(minutes, 'minute');
-  }
-  const hours = Math.round(minutes / 60);
-  return Math.abs(hours) < 48
-    ? format.format(hours, 'hour')
-    : format.format(Math.round(hours / 24), 'day');
-}
-
-/** "Get desktop from ...": the user's other devices with a saved layout, loaded when the submenu opens. */
-function DevicesMenu({ onPick }: { onPick: (device: DeviceLayout) => void }) {
-  const { t } = useTranslation();
-  const locale = useFormatLocale();
-  const label = useDeviceLabel();
-  const devices = useQuery({
-    queryKey: ['desktop', 'devices'],
-    queryFn: async ({ signal }) => unwrap(await api.GET('/api/desktop/devices', { signal })),
-    staleTime: 0,
-  });
-  return (
-    <Menu
-      aria-label={t('menu.getDesktop')}
-      onAction={(key) => {
-        const device = devices.data?.find((entry) => entry.deviceId === key);
-        if (device !== undefined) {
-          onPick(device);
-        }
-      }}
-    >
-      {devices.data?.length === 0 && (
-        <MenuItem id="none" isDisabled>
-          {t('menu.noDevices')}
-        </MenuItem>
-      )}
-      {devices.data?.map((device) => (
-        <MenuItem
-          key={device.deviceId}
-          id={device.deviceId}
-          textValue={label(device)}
-          icon={<IconDeviceDesktop size={18} stroke={1.75} />}
-        >
-          <span className={styles.deviceName}>{label(device)}</span>
-          <span className={styles.deviceDetail}>
-            {device.screenWidth === null || device.screenHeight === null
-              ? t('menu.deviceDetail', {
-                  count: device.windowCount,
-                  time: ago(device.updatedAt, locale),
-                })
-              : t('menu.deviceDetailScreen', {
-                  // Strings, so the size is not formatted with thousands separators.
-                  width: String(device.screenWidth),
-                  height: String(device.screenHeight),
-                  count: device.windowCount,
-                  time: ago(device.updatedAt, locale),
-                })}
-          </span>
-        </MenuItem>
-      ))}
-    </Menu>
-  );
-}
-
+/**
+ * The account menu: who is signed in, Personal settings (D392) and the appearance, which people switch often. It opens
+ * beside the account button in the menu's rail, so it stays attached to the Pithyx menu wherever the taskbar is.
+ */
 function UserMenu({
   trigger,
   name,
-  position,
-  canMoveTaskbar,
-  onTwoFactor,
-  onFileDefaults,
-  onStartupApps,
-  onDone,
+  onPreferences,
 }: {
   trigger: ReactNode;
   name: string;
-  position: TaskbarPosition;
-  canMoveTaskbar: boolean;
-  onTwoFactor: () => void;
-  onFileDefaults: () => void;
-  onStartupApps: () => void;
-  /** After a choice that changes the desktop (another layout, a taskbar position). */
-  onDone: () => void;
+  onPreferences: () => void;
 }) {
   const { t } = useTranslation();
   const status = useDaemonStatus();
-  const label = useDeviceLabel();
-  const copy = useMutation({
-    mutationFn: async (device: DeviceLayout) =>
-      unwrap(await api.POST('/api/desktop/layout/copy', { body: { deviceId: device.deviceId } })),
-    onSuccess: (saved, device) => {
-      applySavedLayout(saved);
-      notify({ code: 'desktop.copied', params: { device: label(device) } });
-    },
-    onError: showError,
-  });
+  const submenuPlacement = useSubmenuPlacement();
   return (
     <MenuTrigger>
       {trigger}
-      <MenuPopover placement={POPOVER_PLACEMENT[position]}>
+      <MenuPopover placement="end top">
         <Menu
           aria-label={t('start.userMenu', { name })}
           onAction={(key) => {
-            if (key === 'two-factor') {
-              onTwoFactor();
-            } else if (key === 'file-defaults') {
-              onFileDefaults();
-            } else if (key === 'startup-apps') {
-              onStartupApps();
+            if (key === 'preferences') {
+              onPreferences();
             }
           }}
         >
@@ -214,87 +108,17 @@ function UserMenu({
               <span className={styles.menuName}>{t('menu.signedInAs', { name })}</span>
               <span>{status}</span>
             </Header>
-            <MenuItem id="two-factor" icon={<IconShieldLock size={18} stroke={1.75} />}>
-              {t('menu.twoFactor')}
+            <MenuItem id="preferences" icon={<IconUserCog size={18} stroke={1.75} />}>
+              {t('menu.preferences')}
             </MenuItem>
-            <SubmenuTrigger>
-              <MenuItem id="language" icon={<IconLanguage size={18} stroke={1.75} />}>
-                {t('menu.language')}
-              </MenuItem>
-              <MenuPopover>
-                <LanguageOptions />
-              </MenuPopover>
-            </SubmenuTrigger>
             <SubmenuTrigger>
               <MenuItem id="theme" icon={<IconPalette size={18} stroke={1.75} />}>
                 {t('menu.theme')}
               </MenuItem>
-              <MenuPopover>
+              <MenuPopover placement={submenuPlacement}>
                 <ThemeOptions />
               </MenuPopover>
             </SubmenuTrigger>
-            <SubmenuTrigger>
-              <MenuItem id="accent" icon={<IconColorSwatch size={18} stroke={1.75} />}>
-                {t('menu.accent')}
-              </MenuItem>
-              <MenuPopover>
-                <AccentOptions />
-              </MenuPopover>
-            </SubmenuTrigger>
-            <SubmenuTrigger>
-              <MenuItem id="wallpaper" icon={<IconWallpaper size={18} stroke={1.75} />}>
-                {t('menu.wallpaper')}
-              </MenuItem>
-              <MenuPopover>
-                <WallpaperOptions />
-              </MenuPopover>
-            </SubmenuTrigger>
-            <MenuItem id="file-defaults" icon={<IconApps size={18} stroke={1.75} />}>
-              {t('menu.fileDefaults')}
-            </MenuItem>
-            <MenuItem id="startup-apps" icon={<IconLogin size={18} stroke={1.75} />}>
-              {t('menu.startupApps')}
-            </MenuItem>
-            <SubmenuTrigger>
-              <MenuItem id="devices" icon={<IconDevices size={18} stroke={1.75} />}>
-                {t('menu.getDesktop')}
-              </MenuItem>
-              <MenuPopover>
-                <DevicesMenu
-                  onPick={(device) => {
-                    copy.mutate(device);
-                    onDone();
-                  }}
-                />
-              </MenuPopover>
-            </SubmenuTrigger>
-            {canMoveTaskbar && (
-              <SubmenuTrigger>
-                <MenuItem id="taskbar" icon={<IconLayoutBottombar size={18} stroke={1.75} />}>
-                  {t('menu.taskbar')}
-                </MenuItem>
-                <MenuPopover>
-                  <Menu
-                    aria-label={t('menu.taskbar')}
-                    selectionMode="single"
-                    selectedKeys={[position]}
-                    onAction={(key) => {
-                      const next = TASKBAR_POSITIONS.find((entry) => entry === key);
-                      if (next !== undefined) {
-                        dispatch({ type: 'setTaskbar', position: next });
-                        onDone();
-                      }
-                    }}
-                  >
-                    {TASKBAR_POSITIONS.map((entry) => (
-                      <MenuItem key={entry} id={entry}>
-                        {t(`taskbar.position.${entry}`)}
-                      </MenuItem>
-                    ))}
-                  </Menu>
-                </MenuPopover>
-              </SubmenuTrigger>
-            )}
           </MenuSection>
         </Menu>
       </MenuPopover>
@@ -304,8 +128,7 @@ function UserMenu({
 
 // The desktop items (icons, notes, their menus and gestures) are a chunk of their own that starts loading together with
 // this one and shows once it and the items query are there; the taskbar and windows never wait for it.
-// Setting up two-factor sign-in is rare; its dialog loads when it is opened, not with the desktop. So does the
-// confirmation of a restart or shutdown.
+// The confirmation of a restart or shutdown loads when it is opened, not with the desktop.
 // The storage alert banner loads when an administrator has a critical alert. The toasts and the notification panel
 // are a chunk of their own that starts loading with the first render, so the toasts' live region is in the page
 // before the first toast; the taskbar and windows never wait for it.
@@ -322,18 +145,16 @@ const NotificationToasts = lazy(() =>
     default: NotificationToasts,
   })),
 );
-const TotpSetup = lazy(() =>
-  import('../auth/TotpSetup').then(({ TotpSetup }) => ({ default: TotpSetup })),
+// The trust steps load with their texts when opened; the hint only on a device that does not trust the box.
+const TrustDialog = lazy(() =>
+  Promise.all([import('../security/TrustDialog'), loadTranslations('security')]).then(
+    ([{ TrustDialog }]) => ({ default: TrustDialog }),
+  ),
 );
-const StartupAppsDialog = lazy(() =>
-  import('./StartupAppsDialog').then(({ StartupAppsDialog }) => ({
-    default: StartupAppsDialog,
-  })),
-);
-const FileDefaultsDialog = lazy(() =>
-  import('./FileDefaultsDialog').then(({ FileDefaultsDialog }) => ({
-    default: FileDefaultsDialog,
-  })),
+const TrustHint = lazy(() =>
+  Promise.all([import('../security/TrustHint'), loadTranslations('security')]).then(
+    ([{ TrustHint }]) => ({ default: TrustHint }),
+  ),
 );
 const PowerDialog = lazy(() =>
   import('./PowerDialog').then(({ PowerDialog }) => ({ default: PowerDialog })),
@@ -457,12 +278,14 @@ export function Desktop({ user, entering }: { user: User; entering: boolean }) {
   const locale = useFormatLocale();
   const queryClient = useQueryClient();
   const permissions = user.permissions;
+  useReportLanguage(user.id, i18n.language);
   const status = useRealtime((state) => state.status);
   const now = useMinuteClock();
   const appName = useAppName();
-  const [totpOpen, setTotpOpen] = useState(false);
-  const [fileDefaultsOpen, setFileDefaultsOpen] = useState(false);
-  const [startupAppsOpen, setStartupAppsOpen] = useState(false);
+  const [trustOpen, setTrustOpen] = useState(false);
+  const trust = useQuery(trustQuery);
+  const untrusted = trust.data === 'untrusted';
+  const [showTrustHint] = useState(() => !trustHintDismissed());
   const [startOpen, setStartOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [switcherOpen, setSwitcherOpen] = useState(false);
@@ -553,6 +376,19 @@ export function Desktop({ user, entering }: { user: User; entering: boolean }) {
   });
 
   useEffect(() => followNotifications(), []);
+  // The desktop is one surface with its own menus: a right-click never opens the browser's menu, except in text
+  // fields. Popovers render in portals on the body, so the listener sits on the document.
+  useEffect(() => {
+    const onContextMenu = (event: MouseEvent) => {
+      if (!keepsBrowserMenu(event.target)) {
+        event.preventDefault();
+      }
+    };
+    document.addEventListener('contextmenu', onContextMenu);
+    return () => {
+      document.removeEventListener('contextmenu', onContextMenu);
+    };
+  }, []);
 
   // Like the Windows key opens Start, a tap on the Meta key opens and closes the Pithyx menu.
   const toggleStart = useEffectEvent(() => {
@@ -612,10 +448,44 @@ export function Desktop({ user, entering }: { user: User; entering: boolean }) {
     icon: app.icon,
     tone: app.tone,
   }));
+  // The menu's app list (D394): System only for administrators, then the other apps, then what is the user's own.
+  const coreIds: ReadonlySet<string> = new Set(Object.values(coreAppIds));
+  const own = (id: string) => id === coreAppIds.preferences;
+  const system = (id: string) => permissions.admin && coreIds.has(id) && !own(id);
+  const startGroups = [
+    { id: 'system', title: t('start.system'), apps: apps.filter((app) => system(app.id)) },
+    {
+      id: 'apps',
+      title: t('start.apps'),
+      apps: apps.filter((app) => !system(app.id) && !own(app.id)),
+    },
+    { id: 'you', title: t('start.you'), apps: apps.filter((app) => own(app.id)) },
+  ];
   const needle = query.trim().toLocaleLowerCase(i18n.language);
   const matches = apps
     .filter((app) => needle !== '' && app.name.toLocaleLowerCase(i18n.language).includes(needle))
     .map((app) => ({ id: app.id, name: app.name, detail: t('start.appDetail'), app }));
+  // Administrators also find the pages of Settings; their texts load with the first search.
+  const searchesSettings = startOpen && permissions.admin && needle !== '';
+  const settingsTexts = useQuery({
+    queryKey: ['translations', 'settings', i18n.language],
+    queryFn: () => loadTranslations('settings').then(() => true),
+    enabled: searchesSettings,
+    staleTime: Infinity,
+  });
+  const settingsApp = apps.find((app) => app.id === coreAppIds.settings);
+  const settingsText = i18next.getFixedT(i18n.language, 'settings') as unknown as (
+    key: string,
+  ) => string;
+  const settingsFound =
+    searchesSettings && settingsTexts.data === true
+      ? settingsMatches(query, settingsText, i18n.language).map(({ page, group, title }) => ({
+          id: `${SETTINGS_RESULT}${page}`,
+          name: title,
+          detail: t('start.settingsPath', { section: settingsText(`groups.${group}`) }),
+          ...(settingsApp === undefined ? {} : { app: settingsApp }),
+        }))
+      : [];
 
   return (
     <UiProvider locale={locale}>
@@ -676,6 +546,23 @@ export function Desktop({ user, entering }: { user: User; entering: boolean }) {
             }}
             now={now}
             locale={locale}
+            {...(permissions.admin
+              ? {
+                  boxStatus: (
+                    <BoxStatus
+                      locale={locale}
+                      onOpen={(app) => {
+                        closeStart(false);
+                        if (app === 'storage') {
+                          openApp(coreAppIds.settings, { args: { page: 'pools' } });
+                        } else {
+                          openApp(coreAppIds.monitor);
+                        }
+                      }}
+                    />
+                  ),
+                }
+              : {})}
           />
         }
         overlays={
@@ -686,9 +573,36 @@ export function Desktop({ user, entering }: { user: User; entering: boolean }) {
                 position={taskbarPosition}
                 query={query}
                 onQueryChange={setQuery}
-                apps={apps}
-                recent={[]}
-                results={{ apps: matches, settings: [], files: [] }}
+                groups={startGroups}
+                results={{ apps: matches, settings: settingsFound, files: [] }}
+                tiles={
+                  <StartTiles
+                    isAdmin={permissions.admin}
+                    locale={locale}
+                    onOpen={(app) => {
+                      open(coreAppIds[app]);
+                    }}
+                    onFolder={(share) => {
+                      closeStart(false);
+                      showInFiles(share, '');
+                    }}
+                    onFile={(file) => {
+                      closeStart(false);
+                      void openTarget(file.share, file.path);
+                    }}
+                    onRecent={() => {
+                      closeStart(false);
+                      showRecentInFiles();
+                    }}
+                  />
+                }
+                onHome={() => {
+                  closeStart(false);
+                  openApp(coreAppIds.files);
+                }}
+                onPreferences={() => {
+                  open(coreAppIds.preferences);
+                }}
                 user={{
                   name,
                   initials: initialsOf(name),
@@ -698,22 +612,8 @@ export function Desktop({ user, entering }: { user: User; entering: boolean }) {
                   <UserMenu
                     trigger={trigger}
                     name={name}
-                    position={taskbarPosition}
-                    canMoveTaskbar={sizeClass !== 'compact'}
-                    onTwoFactor={() => {
-                      closeStart(false);
-                      setTotpOpen(true);
-                    }}
-                    onFileDefaults={() => {
-                      closeStart(false);
-                      setFileDefaultsOpen(true);
-                    }}
-                    onStartupApps={() => {
-                      closeStart(false);
-                      setStartupAppsOpen(true);
-                    }}
-                    onDone={() => {
-                      closeStart(false);
+                    onPreferences={() => {
+                      open(coreAppIds.preferences);
                     }}
                   />
                 )}
@@ -722,7 +622,16 @@ export function Desktop({ user, entering }: { user: User; entering: boolean }) {
                   closeStart(false);
                   setPowerAction(action);
                 }}
-                onOpen={open}
+                onOpen={(id) => {
+                  if (id.startsWith(SETTINGS_RESULT)) {
+                    closeStart(false);
+                    openApp(coreAppIds.settings, {
+                      args: { page: id.slice(SETTINGS_RESULT.length) },
+                    });
+                  } else {
+                    open(id);
+                  }
+                }}
                 {...(addToDesktop === undefined ? {} : { onAddToDesktop: addToDesktop })}
                 onSignOut={() => {
                   closeStart(false);
@@ -795,31 +704,20 @@ export function Desktop({ user, entering }: { user: User; entering: boolean }) {
                 {t('realtime.stopped')}
               </p>
             )}
-            {startupAppsOpen && (
+            {untrusted && showTrustHint && !trustOpen && (
               <Suspense>
-                <StartupAppsDialog
-                  onClose={() => {
-                    setStartupAppsOpen(false);
+                <TrustHint
+                  onTrust={() => {
+                    setTrustOpen(true);
                   }}
                 />
               </Suspense>
             )}
-            {fileDefaultsOpen && (
+            {trustOpen && (
               <Suspense>
-                <FileDefaultsDialog
+                <TrustDialog
                   onClose={() => {
-                    setFileDefaultsOpen(false);
-                  }}
-                />
-              </Suspense>
-            )}
-            {totpOpen && (
-              <Suspense>
-                <TotpSetup
-                  user={user}
-                  isOpen
-                  onClose={() => {
-                    setTotpOpen(false);
+                    setTrustOpen(false);
                   }}
                 />
               </Suspense>

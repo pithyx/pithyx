@@ -1,13 +1,6 @@
-import {
-  IconAlertTriangle,
-  IconLanguage,
-  IconLogout,
-  IconNetwork,
-  IconPalette,
-  IconShieldLock,
-} from '../ui/icons';
+import { IconAlertTriangle, IconPalette, IconUserCog } from '../ui/icons';
 import type { ReactNode } from 'react';
-import { Header, MenuSection } from 'react-aria-components';
+import { Header, MenuSection, SubmenuTrigger } from 'react-aria-components';
 import { useTranslation } from 'react-i18next';
 import { AppSwitcher } from '../shell/AppSwitcher';
 import { DesktopIcon } from '../shell/DesktopIcon';
@@ -16,22 +9,18 @@ import { JobList } from '../shell/JobList';
 import { NotificationPanel } from '../shell/NotificationPanel';
 import { ToastStack } from '../shell/Notifications';
 import { StartMenu, type StartResults } from '../shell/StartMenu';
+import { FolderTiles, RecentTiles, StatusTiles } from '../shell/StartTiles';
 import { StickyNote } from '../shell/StickyNote';
 import { Taskbar } from '../shell/Taskbar';
 import type { RunningApp, TaskbarPosition } from '../shell/types';
 import { Window, type WindowProps } from '../shell/Window';
-import {
-  Button,
-  cx,
-  Dialog,
-  Menu,
-  MenuItem,
-  MenuPopover,
-  MenuSeparator,
-  MenuTrigger,
-} from '@pithyx/ui';
+import { Button, cx, Dialog, Menu, MenuItem, MenuPopover, MenuTrigger } from '@pithyx/ui';
 import styles from './DesktopScreens.module.css';
-import { FilesContent, LogsContent, SettingsContent, StorageContent } from './SampleApps';
+import { settingsMatches } from '../desktop/settingsSearch';
+import { ThemeOptions, useSubmenuPlacement } from '../desktop/ThemeOptions';
+import { WindowMenu } from '../wm/WindowMenu';
+import { Scripted, type ScriptStep } from './CoreAppScene';
+import { LiveFiles, LiveLogs, LiveSettings } from './LiveApps';
 import {
   currentFolder,
   desktopItems,
@@ -41,7 +30,11 @@ import {
   notifications,
   now,
   startApps,
-  recent,
+  startPools,
+  startRecent,
+  startSample,
+  startShares,
+  startUpdates,
   searchFiles,
   searchQuery,
   useApps,
@@ -66,13 +59,16 @@ interface SceneProps {
   notificationsOpen?: boolean;
   switcherOpen?: boolean;
   entering?: boolean;
+  /** The focused Files window gets its window menu, which `script` can open. */
+  windowMenu?: boolean;
+  script?: readonly ScriptStep[];
 }
 
 function runningApps(windows: WindowSet, apps: Apps): RunningApp[] {
   if (windows === 'three') {
     return [
       { ...apps.files, state: 'focused' },
-      { ...apps.storage, state: 'open' },
+      { ...apps.settings, state: 'open' },
       { ...apps.logs, state: 'open' },
     ];
   }
@@ -100,26 +96,26 @@ function windowsFor(set: WindowSet, apps: Apps, filesTitle: string): WindowProps
         geometry: { x: 8, y: 40, width: 38, height: 50 },
         medium: 'hidden',
         layer: 1,
-        children: <LogsContent />,
+        children: <LiveLogs />,
       },
       {
-        app: apps.storage,
-        title: apps.storage.name,
+        app: apps.settings,
+        title: apps.settings.name,
         focused: false,
-        geometry: { x: 60, y: 34, width: 37, height: 58 },
+        geometry: { x: 52, y: 25, width: 46, height: 70 },
         medium: 'right',
         layer: 2,
-        children: <StorageContent />,
+        children: <LiveSettings />,
       },
       {
         app: apps.files,
         title: filesTitle,
         focused: true,
-        geometry: { x: 14, y: 5, width: 46, height: 64 },
+        geometry: { x: 7, y: 3, width: 58, height: 70 },
         medium: 'left',
         compactActive: true,
         layer: 3,
-        children: <FilesContent />,
+        children: <LiveFiles />,
       },
     ];
   }
@@ -132,7 +128,7 @@ function windowsFor(set: WindowSet, apps: Apps, filesTitle: string): WindowProps
         minimized: true,
         geometry: { x: 10, y: 10, width: 50, height: 60 },
         layer: 1,
-        children: <FilesContent />,
+        children: <LiveFiles />,
       },
       {
         app: apps.settings,
@@ -142,7 +138,7 @@ function windowsFor(set: WindowSet, apps: Apps, filesTitle: string): WindowProps
         geometry: { x: 0, y: 0, width: 100, height: 100 },
         compactActive: true,
         layer: 2,
-        children: <SettingsContent />,
+        children: <LiveSettings page="users" />,
       },
     ];
   }
@@ -154,29 +150,30 @@ function useUser() {
   return { ...user, role: t('roles.administrator') };
 }
 
+// The account menu as the desktop draws it (Desktop.tsx), with the box always reachable.
 function UserMenu({ trigger, open }: { trigger: ReactNode; open: boolean }) {
   const { t } = useTranslation();
+  const submenuPlacement = useSubmenuPlacement();
   return (
     <MenuTrigger defaultOpen={open}>
       {trigger}
-      <MenuPopover placement="top start">
+      <MenuPopover placement="end top">
         <Menu aria-label={t('start.userMenu', { name: user.name })}>
           <MenuSection>
             <Header className={styles.menuHeader}>
-              {t('menu.signedInAs', { name: user.name })}
+              <span className={styles.menuName}>{t('menu.signedInAs', { name: user.name })}</span>
+              <span>{t('status.connected', { mode: 'real' })}</span>
             </Header>
-            <MenuItem icon={<IconPalette size={18} stroke={1.75} />}>
-              {t('menu.personalization')}
+            <MenuItem icon={<IconUserCog size={18} stroke={1.75} />}>
+              {t('menu.preferences')}
             </MenuItem>
-            <MenuItem icon={<IconShieldLock size={18} stroke={1.75} />}>
-              {t('menu.twoFactor')}
-            </MenuItem>
-            <MenuItem icon={<IconLanguage size={18} stroke={1.75} />}>
-              {t('menu.language')}
-            </MenuItem>
+            <SubmenuTrigger>
+              <MenuItem icon={<IconPalette size={18} stroke={1.75} />}>{t('menu.theme')}</MenuItem>
+              <MenuPopover placement={submenuPlacement}>
+                <ThemeOptions />
+              </MenuPopover>
+            </SubmenuTrigger>
           </MenuSection>
-          <MenuSeparator />
-          <MenuItem icon={<IconLogout size={18} stroke={1.75} />}>{t('menu.signOut')}</MenuItem>
         </Menu>
       </MenuPopover>
     </MenuTrigger>
@@ -192,109 +189,158 @@ export function DesktopScene({
   notificationsOpen = false,
   switcherOpen = false,
   entering = false,
+  windowMenu = false,
+  script = [],
 }: SceneProps) {
   const apps = useApps();
   const filesTitle = useFilesTitle();
   return (
-    <DesktopShell
-      taskbarPosition={context.taskbar}
-      entering={entering}
-      taskbar={
-        <Taskbar
-          position={context.taskbar}
-          apps={runningApps(windows, apps)}
-          startOpen={startOpen}
-          jobs={windows === 'none' ? 0 : jobs.length}
-          unread={windows === 'none' ? 0 : 2}
-          notificationsOpen={notificationsOpen}
-          switcherOpen={switcherOpen}
-          now={now}
-          locale={context.locale}
-        />
-      }
-      overlays={overlays}
-    >
-      {items && (
-        <>
-          <DesktopItems>
-            {desktopItems.map((entry, index) => (
-              <DesktopIcon
-                key={entry.name}
-                name={entry.name}
-                item={entry.item}
-                selected={index === 1}
-              />
-            ))}
-            {desktopShortcuts.map((id) => (
-              <DesktopIcon
-                key={id}
-                name={apps[id].name}
-                item={{ kind: 'shortcut', app: apps[id] }}
-              />
-            ))}
-          </DesktopItems>
-          <div className={styles.noteSlot}>
-            <StickyNote text={noteText} x={76} y={6} />
-          </div>
-        </>
-      )}
-      {windowsFor(windows, apps, filesTitle).map((props) => (
-        <Window key={props.title} {...props} />
-      ))}
-    </DesktopShell>
+    <Scripted steps={script}>
+      <DesktopShell
+        taskbarPosition={context.taskbar}
+        entering={entering}
+        taskbar={
+          <Taskbar
+            position={context.taskbar}
+            apps={runningApps(windows, apps)}
+            startOpen={startOpen}
+            jobs={windows === 'none' ? 0 : jobs.length}
+            unread={windows === 'none' ? 0 : 2}
+            notificationsOpen={notificationsOpen}
+            switcherOpen={switcherOpen}
+            now={now}
+            locale={context.locale}
+          />
+        }
+        overlays={overlays}
+      >
+        {items && (
+          <>
+            <DesktopItems>
+              {desktopItems.map((entry, index) => (
+                <DesktopIcon
+                  key={entry.name}
+                  name={entry.name}
+                  item={entry.item}
+                  selected={index === 1}
+                />
+              ))}
+              {desktopShortcuts.map((id) => (
+                <DesktopIcon
+                  key={id}
+                  name={apps[id].name}
+                  item={{ kind: 'shortcut', app: apps[id] }}
+                />
+              ))}
+            </DesktopItems>
+            <div className={styles.noteSlot}>
+              <StickyNote text={noteText} x={76} y={6} />
+            </div>
+          </>
+        )}
+        {windowsFor(windows, apps, filesTitle).map((props) => (
+          <Window
+            key={props.title}
+            {...props}
+            {...(windowMenu && props.app === apps.files
+              ? {
+                  icon: (
+                    <WindowMenu
+                      id="files"
+                      app={apps.files}
+                      title={filesTitle}
+                      placement={{ kind: 'free' }}
+                      free
+                    />
+                  ),
+                }
+              : {})}
+          />
+        ))}
+      </DesktopShell>
+    </Scripted>
   );
 }
 
-function useSearchResults(apps: Apps): StartResults {
-  const { t } = useTranslation();
-  const { t: settings } = useTranslation('settings');
+function useSearchResults(apps: Apps, query: string): StartResults {
+  const { t, i18n } = useTranslation();
+  const settingsText = i18n.getFixedT(i18n.language, 'settings') as unknown as (
+    key: string,
+  ) => string;
+  const needle = query.toLocaleLowerCase(i18n.language);
   return {
-    apps: [
-      { id: 's-photos', name: apps.photos.name, detail: t('start.appDetail'), app: apps.photos },
-    ],
-    settings: [
-      {
-        id: 's-network',
-        name: settings('pages.network.title'),
-        detail: t('start.settingsPath', { section: settings('categories.system') }),
-        icon: IconNetwork,
-      },
-      {
-        id: 's-users',
-        name: settings('pages.users.title'),
-        detail: t('start.settingsPath', { section: settings('categories.accounts') }),
-        icon: IconShieldLock,
-      },
-    ],
+    apps: Object.values(apps)
+      .filter((app) => app.name.toLocaleLowerCase(i18n.language).includes(needle))
+      .map((app) => ({ id: `s-${app.id}`, name: app.name, detail: t('start.appDetail'), app })),
+    // The same search as the desktop's, over the real page texts.
+    settings: settingsMatches(query, settingsText, i18n.language).map(({ page, group, title }) => ({
+      id: `s-${page}`,
+      name: title,
+      detail: t('start.settingsPath', { section: settingsText(`groups.${group}`) }),
+      app: apps.settings,
+    })),
     files: searchFiles,
   };
 }
+
+// The gallery's buttons do nothing.
+const ignore = () => undefined;
 
 export function StartMenuScene({
   context,
   search,
   userMenuOpen = false,
+  script = [],
 }: {
   context: SceneContext;
   search: boolean;
   userMenuOpen?: boolean;
+  script?: readonly ScriptStep[];
 }) {
   const apps = useApps();
-  const results = useSearchResults(apps);
   const currentUser = useUser();
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const query = search ? searchQuery[i18n.language === 'de' ? 'de' : 'en'] : '';
+  const results = useSearchResults(apps, query);
   return (
     <DesktopScene
       context={context}
       startOpen
+      script={script}
       overlays={
         <StartMenu
           position={context.taskbar}
           query={query}
-          apps={startApps.map((id) => apps[id])}
-          recent={recent}
+          groups={[
+            {
+              id: 'system',
+              title: t('start.system'),
+              apps: startApps.system.map((id) => apps[id]),
+            },
+            { id: 'apps', title: t('start.apps'), apps: startApps.apps.map((id) => apps[id]) },
+            { id: 'you', title: t('start.you'), apps: startApps.you.map((id) => apps[id]) },
+          ]}
           results={results}
+          tiles={
+            <>
+              <StatusTiles
+                pools={startPools}
+                sample={startSample}
+                updates={startUpdates}
+                locale={context.locale}
+                onOpen={ignore}
+              />
+              <RecentTiles
+                files={startRecent}
+                locale={context.locale}
+                onFile={ignore}
+                onAll={ignore}
+              />
+              <FolderTiles shares={startShares} onFolder={ignore} />
+            </>
+          }
+          onHome={ignore}
+          onPreferences={ignore}
           user={currentUser}
           userMenu={(trigger) => <UserMenu trigger={trigger} open={userMenuOpen} />}
         />
@@ -361,14 +407,14 @@ export function SwitcherScene({ context }: { context: SceneContext }) {
         <AppSwitcher
           position={context.taskbar}
           cards={[
-            { id: 'files', app: apps.files, title: filesTitle, preview: <FilesContent /> },
+            { id: 'files', app: apps.files, title: filesTitle, preview: <LiveFiles /> },
             {
-              id: 'storage',
-              app: apps.storage,
-              title: apps.storage.name,
-              preview: <StorageContent />,
+              id: 'settings',
+              app: apps.settings,
+              title: apps.settings.name,
+              preview: <LiveSettings />,
             },
-            { id: 'logs', app: apps.logs, title: apps.logs.name, preview: <LogsContent /> },
+            { id: 'logs', app: apps.logs, title: apps.logs.name, preview: <LiveLogs /> },
           ]}
         />
       }
@@ -407,7 +453,7 @@ export function WindowStatesScene({
               compactActive
               layer={1}
             >
-              <FilesContent density={specimen.maximized === true ? 'compact' : 'comfortable'} />
+              <LiveFiles />
             </Window>
           </div>
           <figcaption className={styles.caption}>{captions[index]?.caption}</figcaption>
@@ -419,8 +465,8 @@ export function WindowStatesScene({
             position="bottom"
             apps={[
               { ...apps.files, state: 'focused' },
-              { ...apps.storage, state: 'open' },
-              { ...apps.settings, state: 'minimized' },
+              { ...apps.settings, state: 'open' },
+              { ...apps.logs, state: 'minimized' },
             ]}
             jobs={1}
             unread={3}

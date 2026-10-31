@@ -1,0 +1,21 @@
+{
+  "$comment": "The risk tier of each elevated right (D388), from elevated.tiers of compose.v1.rules.json. The daemon (ElevatedRightsTests) and the CLI (corpus.test.ts) must give the same tier for every right here.",
+  "cases": {
+    "device:/dev/net/tun": "elevated",
+    "device:/dev/dri": "elevated",
+    "device:/dev/dri/renderD128": "elevated",
+    "device:/dev/serial": "elevated",
+    "device:/dev/serial/by-id/usb-FTDI_FT232R-if00-port0": "elevated",
+    "device:/dev/ttyUSB0": "high",
+    "device:/dev/video0": "high",
+    "device:/dev/net": "high",
+    "device:/dev/drift": "high",
+    "host.network": "high",
+    "host.pid": "high",
+    "capability:NET_ADMIN": "high",
+    "capability:SYS_NICE": "high",
+    "docker.socket": "high",
+    "docker.socket.raw": "critical",
+    "host.full": "critical"
+  }
+}

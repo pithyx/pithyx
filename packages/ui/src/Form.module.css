@@ -1,0 +1,285 @@
+.section {
+  container: pithyx-form / inline-size;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  background: var(--color-surface-1);
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 44px;
+  padding: var(--space-2) var(--space-4);
+}
+
+.section:has(.rows) .sectionHeader {
+  border-bottom: 1px solid var(--color-border);
+}
+
+.sectionTitle {
+  display: flex;
+  flex: 1;
+  align-items: baseline;
+  gap: var(--space-2);
+  margin: 0;
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
+}
+
+.sectionNote {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-regular);
+}
+
+.sectionEnd {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.rows {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4);
+}
+
+.row {
+  display: grid;
+  grid-template-columns: var(--form-label-width) minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-1) var(--space-5);
+  font-size: var(--font-size-md);
+}
+
+.rowLabel {
+  display: grid;
+}
+
+.hint {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+}
+
+.control {
+  display: grid;
+  max-width: var(--form-control-width);
+  min-width: 0;
+}
+
+/* A wide section puts the control at its right edge and gives the label and its hint the room in between, so a
+   maximized window shows no empty half (D406). */
+@container pithyx-form (width >= 900px) {
+  .row {
+    grid-template-columns: minmax(var(--form-label-width), 1fr) var(--form-control-width);
+  }
+}
+
+@container pithyx-form (width < 600px) {
+  .row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .control {
+    max-width: none;
+  }
+}
+
+.actionBar {
+  display: flex;
+  flex: none;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-4);
+  padding: var(--space-2) var(--space-6);
+  border-top: 1px solid var(--color-border);
+  background: var(--color-surface-2);
+}
+
+.actionMessage {
+  display: flex;
+  flex: 1 1 280px;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+
+.actionIcon {
+  flex: none;
+  color: var(--color-accent);
+}
+
+.actions {
+  display: flex;
+  gap: var(--space-2);
+  margin-left: auto;
+}
+
+.label {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+}
+
+.description {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+}
+
+.radioGroup {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.radios {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1) var(--space-5);
+}
+
+.radioGroup[data-orientation='horizontal'] .radios {
+  flex-flow: row wrap;
+}
+
+.radioField {
+  position: relative;
+  display: inline-flex;
+}
+
+.radio {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 28px;
+  cursor: pointer;
+}
+
+.circle {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  border: 1.5px solid var(--color-border-strong);
+  border-radius: var(--radius-full);
+  background: var(--color-surface-1);
+  transition: border-width var(--duration-instant) var(--ease-standard);
+}
+
+.radio[data-selected] .circle {
+  border: 5px solid var(--color-accent);
+}
+
+.radio[data-focus-visible] .circle {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.radio[data-disabled] {
+  color: var(--color-text-disabled);
+  cursor: default;
+}
+
+.radio[data-disabled] .circle {
+  opacity: 0.5;
+}
+
+.select {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.selectButton {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  min-height: 32px;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-control);
+  background: var(--color-surface-1);
+  color: var(--color-text);
+  font: inherit;
+  font-size: var(--font-size-md);
+  text-align: start;
+  cursor: pointer;
+}
+
+.selectButton[data-hovered] {
+  background: var(--color-surface-hover);
+}
+
+.selectButton[data-focus-visible] {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.selectButton[data-disabled] {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.selectValue {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.selectValue[data-placeholder] {
+  color: var(--color-text-muted);
+}
+
+.monospace {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-sm);
+}
+
+.popover {
+  min-width: var(--trigger-width);
+  max-height: 320px;
+  padding: var(--space-1);
+  overflow: auto;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+  background: var(--color-menu-solid);
+  box-shadow: var(--shadow-3);
+}
+
+.listBox {
+  display: grid;
+  outline: none;
+}
+
+.option {
+  display: flex;
+  align-items: center;
+  min-height: var(--row-height-md);
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-control);
+  color: var(--color-text);
+  cursor: default;
+  outline: none;
+}
+
+.option[data-focused] {
+  background: var(--color-surface-hover);
+}
+
+.option[data-selected] {
+  background: var(--color-selection-strong);
+  font-weight: var(--font-weight-medium);
+}
+
+.option[data-focus-visible] {
+  outline: 2px solid var(--color-focus);
+  outline-offset: -2px;
+}
+
+@media (pointer: coarse) {
+  .radio,
+  .selectButton {
+    min-height: var(--touch-target);
+  }
+}

@@ -1,4 +1,9 @@
-import { useInfiniteQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
+import {
+  useInfiniteQuery,
+  useQueryClient,
+  type Query,
+  type QueryClient,
+} from '@tanstack/react-query';
 import type { FolderChange, FolderPage, SortKey, SortOrder, PithyxApp } from '@pithyx/sdk';
 import { useEffect, useEffectEvent } from 'react';
 import { applyChange, loadedEntries, type FolderPages } from './pages';
@@ -10,8 +15,14 @@ export function folderKey(share: string, path: string) {
   return ['files', share, 'folder', path] as const;
 }
 
-function pagesKey(share: string, path: string, sort: SortKey, order: SortOrder) {
-  return [...folderKey(share, path), sort, order] as const;
+function pagesKey(share: string, path: string, sort: SortKey, order: SortOrder, query: string) {
+  return [...folderKey(share, path), sort, order, query] as const;
+}
+
+/** Whether a name is kept by a search, as the box decides it: the name contains the query, ignoring case. */
+export function matchesQuery(name: string, query: string): boolean {
+  const wanted = query.trim().toLowerCase();
+  return wanted === '' || name.toLowerCase().includes(wanted);
 }
 
 /** A prefetched folder younger than this is not read again when the pointer rests on it once more. */
@@ -23,6 +34,7 @@ function listPage(
   path: string,
   sort: SortKey,
   order: SortOrder,
+  query: string,
   cursor: string | null,
 ): Promise<FolderPage> {
   return app.files.list({ share }, path, {
@@ -30,6 +42,7 @@ function listPage(
     sort,
     order,
     ...(cursor === null ? {} : { cursor }),
+    ...(query.trim() === '' ? {} : { query: query.trim() }),
   });
 }
 
@@ -48,15 +61,19 @@ export function prefetchFolder(
   // A failed read ahead changes nothing: opening the folder reads it again and shows the error there.
   client
     .infiniteQuery({
-      queryKey: pagesKey(share, path, sort, order),
-      queryFn: ({ pageParam }) => listPage(app, share, path, sort, order, pageParam),
+      queryKey: pagesKey(share, path, sort, order, ''),
+      queryFn: ({ pageParam }) => listPage(app, share, path, sort, order, '', pageParam),
       initialPageParam: null as string | null,
       staleTime: PREFETCH_FRESH,
     })
     .catch(() => undefined);
 }
 
-/** Applies a change to every cached order of a folder, so switching the sort column shows it too. */
+/**
+ * Applies a change to every cached order and search of a folder, so switching the sort column shows it too. A search
+ * takes in only the entries whose name matches it. A removed name past the loaded pages cannot be counted, so such a
+ * cache is read again (a deletion within a search often removes names the folder's own list has not loaded yet).
+ */
 export function changeFolder(
   client: QueryClient,
   share: string,
@@ -64,14 +81,36 @@ export function changeFolder(
   change: Omit<FolderChange, 'watch' | 'resync' | 'gone'>,
 ): void {
   const full: FolderChange = { ...change, watch: '', resync: false, gone: false };
+  // A first page still loading may have been read before this change (a folder created right after Files opened):
+  // read it again, so the change is not lost when it arrives. Invalidating would only wait for the old read.
+  const loading = {
+    queryKey: folderKey(share, path),
+    predicate: (query: Query) => query.state.data === undefined,
+  };
+  void client.cancelQueries(loading).then(() => client.refetchQueries(loading));
   for (const [key, data] of client.getQueriesData<FolderPages>({
     queryKey: folderKey(share, path),
   })) {
     if (data !== undefined) {
-      const [, , , , sort, order] = key as ReturnType<typeof pagesKey>;
-      client.setQueryData(key, applyChange(data, full, sort, order));
+      const [, , , , sort, order, query] = key as ReturnType<typeof pagesKey>;
+      const kept =
+        query === ''
+          ? full
+          : { ...full, changed: full.changed.filter((entry) => matchesQuery(entry.name, query)) };
+      client.setQueryData(key, applyChange(data, kept, sort, order));
+      if (removesUnloaded(data, kept, query)) {
+        void client.invalidateQueries({ queryKey: key, exact: true });
+      }
     }
   }
+}
+
+function removesUnloaded(data: FolderPages, change: FolderChange, query: string): boolean {
+  if (data.pages.at(-1)?.nextCursor === null) {
+    return false;
+  }
+  const loaded = new Set(loadedEntries(data).map((entry) => entry.name));
+  return change.removed.some((name) => matchesQuery(name, query) && !loaded.has(name));
 }
 
 /**
@@ -89,9 +128,11 @@ export function keepOnly(
     queryKey: folderKey(share, path),
   })) {
     if (data !== undefined) {
+      const [, , , , , , query] = key as ReturnType<typeof pagesKey>;
+      const total = [...kept].filter((name) => matchesQuery(name, query)).length;
       const pages = data.pages.map((page) => ({
         ...page,
-        total: kept.size,
+        total,
         entries: page.entries.filter((entry) => kept.has(entry.name)),
       }));
       client.setQueryData(key, { ...data, pages });
@@ -109,6 +150,7 @@ export function useFolder(
   path: string,
   sort: SortKey,
   order: SortOrder,
+  search: string,
   handlers: { onRemoved: (names: string[]) => void; onGone: () => void },
 ) {
   const client = useQueryClient();
@@ -119,10 +161,16 @@ export function useFolder(
     ReturnType<typeof pagesKey>,
     string | null
   >({
-    queryKey: pagesKey(share ?? '', path, sort, order),
-    queryFn: ({ pageParam }) => listPage(app, share ?? '', path, sort, order, pageParam),
+    queryKey: pagesKey(share ?? '', path, sort, order, search.trim()),
+    queryFn: ({ pageParam }) =>
+      listPage(app, share ?? '', path, sort, order, search.trim(), pageParam),
     initialPageParam: null as string | null,
     getNextPageParam: (page) => page.nextCursor,
+    // While a search in this folder changes, the rows of the last one stay until the new ones arrive.
+    placeholderData: (previous, previousQuery) =>
+      previousQuery?.queryKey[1] === share && previousQuery.queryKey[3] === path
+        ? previous
+        : undefined,
     enabled: share !== null,
   });
 
@@ -190,5 +238,31 @@ export function useFolder(
     refetch: () => {
       void query.refetch();
     },
+  };
+}
+
+/**
+ * The subfolders of a folder for the tree in the navigation column, from the first pages of its name order: the same
+ * cache as the folder itself, so a folder seen in the list shows its subfolders at once, and the other way round.
+ */
+export function useSubfolders(app: PithyxApp, share: string, path: string, enabled: boolean) {
+  const query = useInfiniteQuery<
+    FolderPage,
+    Error,
+    FolderPages,
+    ReturnType<typeof pagesKey>,
+    string | null
+  >({
+    queryKey: pagesKey(share, path, 'name', 'asc', ''),
+    queryFn: ({ pageParam }) => listPage(app, share, path, 'name', 'asc', '', pageParam),
+    initialPageParam: null as string | null,
+    getNextPageParam: (page) => page.nextCursor,
+    staleTime: PREFETCH_FRESH,
+    enabled,
+  });
+  return {
+    folders: loadedEntries(query.data).filter((entry) => entry.kind === 'folder'),
+    loaded: query.data !== undefined,
+    more: query.hasNextPage,
   };
 }

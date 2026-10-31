@@ -46,7 +46,7 @@ Parsers of command output are pure static functions with fixture tests, for exam
 
 Around it sit the disk and pool inventories, the planners (`StoragePlanner`, `DatasetPlanner`, `PoolImportScanner`) and the command plans (`ZfsPlans`, `SnapshotPlans`, `ZfsScrubPlans`, `ImportPlans`) that are shown to the user before they run. `DiskGuard` refuses destructive actions on disks that hold data unless the user confirms with the disk serial.
 
-Storage state reaches clients through the topics `storage/disks`, `storage/pools`, `storage/alerts` and `storage/snapshots` (administrators only; a revision and the datasets whose snapshots changed, so the Storage app reads only those again).
+Storage state reaches clients through the topics `storage/disks`, `storage/pools`, `storage/alerts` and `storage/snapshots` (administrators only; a revision and the datasets whose snapshots changed, so the Settings reads only those again).
 
 ## Database and migrations
 

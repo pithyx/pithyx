@@ -62,7 +62,7 @@ Wähle die Festplatte für das System. Jede Festplatte wird mit Modell, Größe 
 - Um auf zwei Festplatten als Spiegel zu installieren, schalte **Auf zwei Festplatten spiegeln** ein und wähle eine **Zweite Festplatte**. Das System wird auf beide Festplatten geschrieben, und die Box läuft weiter, wenn eine ausfällt. Die Option erscheint nur, wenn zwei nutzbare Festplatten vorhanden sind.
 - Mit einer Festplatte wird das System trotzdem als Spiegel mit einem Mitglied gebaut.
 
-Deine Daten kommen nicht auf die Systemfestplatte. Pools legst du später auf anderen Festplatten im Speicher an.
+Deine Daten kommen nicht auf die Systemfestplatte. Pools legst du später auf anderen Festplatten unter Einstellungen > Pools an.
 
 ## Administratorkonto (Schritt 4)
 

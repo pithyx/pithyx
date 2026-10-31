@@ -1,7 +1,8 @@
-import { PithyxApiError, unwrap, type components } from '@pithyx/api-client';
+import { unwrap, type components } from '@pithyx/api-client';
 import type { MethodName, PithyxApp } from '@pithyx/sdk';
-import { PithyxError, type HostExtensions } from '@pithyx/sdk/host';
+import { type HostExtensions } from '@pithyx/sdk/host';
 import { api } from '../../api/client';
+import { daemon } from './daemonError';
 
 export type BackupCategory = components['schemas']['BackupCategory'];
 export type BackupSummary = components['schemas']['BackupSummary'];
@@ -32,21 +33,6 @@ const CATEGORIES: readonly BackupCategory[] = [
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
-
-async function daemon<T>(call: () => Promise<T>): Promise<T> {
-  try {
-    return await call();
-  } catch (error) {
-    throw error instanceof PithyxApiError
-      ? new PithyxError({
-          code: error.code,
-          params: error.params,
-          detail: error.message,
-          requestId: error.requestId,
-        })
-      : error;
-  }
-}
 
 /** The file name from `Content-Disposition`, as the daemon suggests it. */
 function fileNameOf(response: Response): string {

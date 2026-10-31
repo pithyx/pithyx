@@ -8,7 +8,7 @@ sidebar:
   order: 10
 ---
 
-The box speaks HTTPS on port 7484 with a certificate from its own certificate authority; ports 80 and 443 redirect there, except for the domains of the [reverse proxy](/docs/admin/reverse-proxy/), which present certificates of their own. Install the authority's root once on each device and the browser trusts the box, its reloads come from the cache and FTPS clients accept it. Everything on this page is in Settings > **Certificates** (administrators only).
+The box speaks HTTPS on port 7484 with a certificate from its own certificate authority; ports 80 and 443 redirect there, except for the domains of the [reverse proxy](/docs/admin/reverse-proxy/), which present certificates of their own. Install the authority's root once on each device and the browser trusts the box, its reloads come from the cache, passkeys work and FTPS clients accept it. Everything on this page is in Settings > **Certificates** (administrators only).
 
 ## Why the browser warns
 
@@ -16,7 +16,7 @@ The first time you open `https://<box-address>:7484`, the browser warns that the
 
 ## Trusting the box on a device
 
-In **Trust this box**, choose **Download root certificate** (the file `pithyx-root-ca.crt`; anyone may download it, also before signing in, from `/api/system/tls/root-ca.crt`). Before you trust it, compare its SHA-256 fingerprint with the one the page shows. Then:
+In **Trust this box**, the page first says whether the device you are using trusts the box. Choose **Download root certificate** (the file `pithyx-root-ca.crt`; anyone may download it, also before signing in, from `/api/system/tls/root-ca.crt`). Before you trust it, compare its SHA-256 fingerprint with the one the page shows. Then:
 
 - **Windows**: open the file, choose **Install Certificate**, **Local Machine**, then the store **Trusted Root Certification Authorities**.
 - **macOS**: open the file in Keychain Access (keychain **System**), open the certificate and set **Trust** to **Always Trust**.
@@ -24,6 +24,10 @@ In **Trust this box**, choose **Download root certificate** (the file `pithyx-ro
 - **Android**: Settings, Security, Encryption and credentials, Install a certificate, CA certificate, then pick the file.
 - **Linux**: copy the file to `/usr/local/share/ca-certificates/` and run `sudo update-ca-certificates`.
 - **Firefox** keeps its own store: Settings, Privacy and Security, Certificates, View Certificates, Authorities, Import, and trust it to identify websites.
+
+Afterwards restart the browser, open the box again by its name and choose **Check again**. Every user sees the same steps without the fingerprint: after signing in on a device that does not trust the box, the desktop shows a hint with **Trust this device**, and **Personal settings** has the row **Trust this device** ([Your account](/docs/user/account/#trusting-the-box-on-this-device)).
+
+The box tells a trusting device from another by registering its service worker: browsers refuse service workers on a connection with a certificate warning. Once the device trusts the box, the worker runs and keeps the desktop's files of the current version in the browser, and [passkeys](/docs/user/account/#passkeys) can be used. Over plain HTTP, such as the installer's live system, nothing is checked and no hint appears.
 
 ## The certificate authority
 

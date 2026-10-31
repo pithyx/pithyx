@@ -53,14 +53,14 @@ Während ein Entwicklungs-Build läuft, liegt die interaktive API-Referenz unter
 
 ## Design-Galerie
 
-`pnpm design` startet einen Vite-Server auf Port 5174 (alle Schnittstellen) mit jedem Bildschirm des Desktops unter `/design.html`: Handy-, Tablet- und Laptopbreite, hell und dunkel, mit Schaltern für Akzentfarbe, Position der Taskleiste und Sprache. Sie ist ein Entwicklungswerkzeug; der Produktions-Build enthält nur `index.html`. `pnpm design:shots` rendert jeden Bildschirm als `<screen>_<viewport>_<theme>_<lang>.png` nach `tools/design-shots/out/` (`--screens login,tokens` begrenzt den Lauf, `--base-url` nutzt einen laufenden Server).
+`pnpm design` startet einen Vite-Server auf Port 5174 (alle Schnittstellen) mit jedem Bildschirm des Desktops unter `/design.html`: Handy-, Tablet- und Laptopbreite, hell und dunkel, mit Schaltern für Akzentfarbe, Position der Taskleiste und Sprache. Sie ist ein Entwicklungswerkzeug; der Produktions-Build enthält nur `index.html`. `pnpm design:shots` rendert jeden Bildschirm als `<screen>_<viewport>_<theme>_<lang>.png` nach `tools/design-shots/out/` (`--screens login,tokens` begrenzt den Lauf, `--base-url` nutzt einen laufenden Server). Die Kern-Apps laufen dort echt mit erfundenen Beispieldaten (`desktop/src/design/storageSample.ts` und `appSamples.ts`), und `pnpm design:docs` rendert daraus die Screenshots der Website (`tools/design-shots/docs.ts`, D405).
 
 ## Tests
 
 - **Daemon:** `dotnet test --solution daemon/Pithyx.slnx` (xUnit). Die Ordner unter `daemon/tests/Pithyx.Daemon.Tests` spiegeln die Module. `DaemonFactory` startet den Daemon im Speicher mit einem temporären Datenordner, eingeschalteter Simulation und einem `FakeTimeProvider`; `CreateApiClient()` fügt den CSRF-Header hinzu.
 - **Frontend:** `pnpm lint`, `pnpm typecheck`, `pnpm test` (Vitest).
 - **Ende zu Ende:** `pnpm --filter @pithyx/e2e exec playwright install chromium`, dann `pnpm build && pnpm e2e`. Das startet einen eigenen Daemon in der Simulation mit einer frischen Datenbank.
-- **Layout-Prüfungen:** `pnpm design:test` prüft jeden Bildschirm auf Überlauf in den Größen Smartphone, Tablet und Laptop in Englisch und Deutsch.
+- **Design-Prüfungen:** `pnpm design:test` prüft jeden Bildschirm auf Überlauf in den Größen Smartphone, Tablet, Laptop und Ultrawide in Englisch und Deutsch und mit axe auf Barrierefreiheit und Kontrast in Hell und Dunkel. `DESIGN_PORT` legt seinen Server auf einen anderen Port als 5176.
 - **Gemeinsame Korpora:** Die Fixtures für Manifest, Compose und Katalog in `sdk/schema/fixtures/` laufen in Vitest und xUnit, sodass das CLI und der Daemon gleich urteilen.
 
 Teste Parser, Entscheidungslogik, Berechtigungsprüfungen, Manifest-Validierung und Zustandsautomaten. Teste keine Getter, DTOs, durchreichenden Controller oder einzelne React-Komponenten.

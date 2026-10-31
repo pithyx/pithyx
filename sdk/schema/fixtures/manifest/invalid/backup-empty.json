@@ -1,0 +1,229 @@
+{
+  "$schema": "./node_modules/@pithyx/sdk/schema/manifest.v2.schema.json",
+  "manifestVersion": 2,
+  "id": "com.mueller.chat",
+  "version": "1.2.0",
+  "name": {
+    "en": "Chat",
+    "de": "Chat"
+  },
+  "description": {
+    "en": "Team chat on your box.",
+    "de": "Team-Chat auf deiner Box."
+  },
+  "author": {
+    "name": "Jan Mueller",
+    "url": "https://mueller.com"
+  },
+  "license": "MIT",
+  "homepage": "https://github.com/janmueller/pithyx-chat",
+  "entry": "frontend/index.html",
+  "pithyx": ">=0.1.0 <2.0.0 || ^2.1.0-beta.1",
+  "dataVersion": 3,
+  "sdk": "^1.0.0",
+  "arch": [
+    "amd64",
+    "arm64"
+  ],
+  "source": "https://github.com/janmueller/pithyx-chat",
+  "privacy": {
+    "sends": "optional",
+    "note": {
+      "en": "Sends messages to your email only when you switch it on.",
+      "de": "Sendet Nachrichten nur an deine E-Mail, wenn du es einschaltest."
+    }
+  },
+  "security": "mailto:security@mueller.com",
+  "maturity": "beta",
+  "categories": [
+    "communication",
+    "productivity"
+  ],
+  "keywords": [
+    "messenger",
+    "team",
+    "Nachrichten"
+  ],
+  "locales": [
+    "en",
+    "de",
+    "pt-BR"
+  ],
+  "screenshots": [
+    {
+      "file": "frontend/screenshots/chat.png",
+      "caption": {
+        "en": "A conversation",
+        "de": "Ein Gespräch"
+      }
+    },
+    {
+      "file": "frontend/screenshots/dark.webp"
+    }
+  ],
+  "releaseNotes": {
+    "en": "Threads and reactions.",
+    "de": "Threads und Reaktionen."
+  },
+  "requirements": {
+    "memory": 256,
+    "disk": 1024
+  },
+  "audience": "everyone",
+  "permissions": {
+    "notifications": {
+      "reason": {
+        "en": "Tells you about new messages."
+      }
+    },
+    "notifications.external": {
+      "reason": {
+        "en": "Sends messages to your email."
+      }
+    },
+    "directory.read": {
+      "reason": {
+        "en": "Lists the users to share with."
+      }
+    },
+    "network.internet": {
+      "reason": {
+        "en": "Fetches updates from the internet.",
+        "de": "Lädt Neuigkeiten aus dem Internet."
+      },
+      "hosts": [
+        "api.example.org",
+        "*.tiles.example.org"
+      ]
+    },
+    "network.lan": {
+      "reason": {
+        "en": "Talks to devices in your network."
+      }
+    },
+    "files.read": {
+      "reason": {
+        "en": "Opens the files you choose."
+      }
+    },
+    "files.shares": {
+      "reason": {
+        "en": "Browses your shared folders."
+      }
+    }
+  },
+  "window": {
+    "instances": "single",
+    "suggestAtSignIn": true,
+    "defaultSize": {
+      "width": 900,
+      "height": 640
+    },
+    "minSize": {
+      "width": 320,
+      "height": 400
+    },
+    "loading": {
+      "text": {
+        "en": "Opening your notes ...",
+        "de": "Deine Notizen werden geöffnet ..."
+      },
+      "untilReady": true
+    }
+  },
+  "storage": [
+    {
+      "id": "attachments",
+      "name": {
+        "en": "Chat attachments",
+        "de": "Chat-Anhänge"
+      },
+      "access": "readWrite",
+      "required": false,
+      "services": [
+        "server"
+      ]
+    }
+  ],
+  "fileHandlers": [
+    {
+      "extensions": [
+        "chatlog"
+      ],
+      "mimeTypes": [
+        "application/x-chatlog"
+      ]
+    }
+  ],
+  "fileActions": [
+    {
+      "id": "export-log",
+      "label": {
+        "en": "Export as chat log",
+        "de": "Als Chat-Verlauf exportieren"
+      },
+      "extensions": [
+        "txt",
+        "md"
+      ],
+      "folders": true,
+      "multiple": true,
+      "writes": true
+    }
+  ],
+  "notifications": {
+    "categories": [
+      {
+        "id": "messages",
+        "name": {
+          "en": "New messages",
+          "de": "Neue Nachrichten"
+        },
+        "description": {
+          "en": "A message in a chat you are in."
+        }
+      },
+      {
+        "id": "mentions",
+        "name": {
+          "en": "Mentions",
+          "de": "Erwähnungen"
+        }
+      }
+    ]
+  },
+  "backend": {
+    "compose": "backend/compose.yaml",
+    "endpoints": {
+      "api": {
+        "service": "server",
+        "port": 8080
+      },
+      "metrics": {
+        "service": "server",
+        "port": 9090
+      }
+    },
+    "lifecycle": "onDemand",
+    "idleTimeout": 600,
+    "root": false,
+    "network": {
+      "services": [
+        "server"
+      ]
+    },
+    "health": {
+      "endpoint": "api",
+      "path": "/healthz"
+    },
+    "schedules": [
+      {
+        "id": "cleanup",
+        "cron": "0 3 * * *",
+        "endpoint": "api",
+        "path": "/jobs/cleanup"
+      }
+    ],
+    "backup": {}
+  }
+}

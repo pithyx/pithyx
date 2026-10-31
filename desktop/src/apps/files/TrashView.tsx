@@ -1,19 +1,30 @@
 import { useInfiniteQuery } from '@tanstack/react-query';
 import type { JobInfo, TrashEntry, PithyxApp } from '@pithyx/sdk';
-import { useState } from 'react';
-import { ListBox, ListBoxItem, type Selection as AriaSelection } from 'react-aria-components';
+import { useLayoutEffect, useRef, useState } from 'react';
+import { type Selection as AriaSelection } from 'react-aria-components';
 import { useTranslation } from 'react-i18next';
-import { Button, Dialog } from '@pithyx/ui';
-import { IconFile, IconFolder, IconRestore, IconTrashX } from '../../ui/icons';
+import {
+  Button,
+  DataTable,
+  Dialog,
+  Toolbar,
+  ToolbarSeparator,
+  type DataTableColumn,
+} from '@pithyx/ui';
+import { IconFile, IconFolder, IconRestore, IconTrash, IconTrashX } from '../../ui/icons';
 import styles from './FilesApp.module.css';
+
+/** Below this width in pixels the bin leaves out where an item was, who deleted it and how long it is kept. */
+const NARROW = 720;
 
 export function trashKey(share: string) {
   return ['files', share, 'trash'] as const;
 }
 
 /**
- * The recycle bin of one share: what was deleted, from where, when, and when it goes for good. Restoring, deleting
- * for good and emptying run as jobs; the last two ask first.
+ * The recycle bin of one share as a table (D394): what was deleted, from where, when and by whom, and when it goes for
+ * good. Restoring is the primary action; restoring, deleting for good and emptying run as jobs, and the last two ask
+ * first.
  */
 export function TrashView({
   app,
@@ -54,20 +65,106 @@ export function TrashView({
     }
   }
 
+  // A narrow window keeps the name, the size and when it was deleted: syncing with the DOM.
+  const scroll = useRef<HTMLDivElement>(null);
+  const [width, setWidth] = useState(Infinity);
+  useLayoutEffect(() => {
+    const element = scroll.current;
+    if (element === null) {
+      return;
+    }
+    setWidth(element.clientWidth);
+    const observer = new ResizeObserver(() => {
+      setWidth(element.clientWidth);
+    });
+    observer.observe(element);
+    return () => {
+      observer.disconnect();
+    };
+  }, []);
+
+  const allColumns: DataTableColumn<TrashEntry>[] = [
+    {
+      id: 'name',
+      label: t('columns.name'),
+      sortValue: (item) => item.name.toLocaleLowerCase(),
+      cell: (item) => (
+        <span className={styles.name}>
+          {item.kind === 'folder' ? (
+            <IconFolder size={18} stroke={1.75} className={styles.folderIcon} aria-hidden />
+          ) : (
+            <IconFile size={18} stroke={1.75} className={styles.fileIcon} aria-hidden />
+          )}
+          <span>{item.name}</span>
+        </span>
+      ),
+    },
+    {
+      id: 'from',
+      label: t('bin.columns.from'),
+      muted: true,
+      sortValue: (item) => item.originalPath,
+      cell: (item) => `/${item.originalPath}`,
+    },
+    {
+      id: 'size',
+      label: t('columns.size'),
+      align: 'end',
+      width: 96,
+      sortValue: (item) => item.size,
+      cell: (item) => app.format.bytes(item.size),
+    },
+    {
+      id: 'deleted',
+      label: t('bin.columns.deleted'),
+      width: 184,
+      sortValue: (item) => item.deletedAt,
+      cell: (item) => app.format.dateTime(item.deletedAt),
+    },
+    {
+      id: 'by',
+      label: t('bin.columns.by'),
+      muted: true,
+      width: 120,
+      sortValue: (item) => item.deletedBy ?? '',
+      cell: (item) => item.deletedBy ?? '',
+    },
+    {
+      id: 'expires',
+      label: t('bin.columns.expires'),
+      muted: true,
+      width: 184,
+      sortValue: (item) => item.expiresAt ?? '',
+      cell: (item) =>
+        item.expiresAt === null ? t('bin.never') : app.format.dateTime(item.expiresAt),
+    },
+  ];
+
+  const columns =
+    width < NARROW
+      ? allColumns.filter((column) => ['name', 'size', 'deleted'].includes(column.id))
+      : allColumns;
+
   return (
     <div className={styles.bin}>
-      <div className={styles.binBar}>
-        <p className={styles.binNote}>
-          {retention === undefined
-            ? t('loading')
-            : retention === 0
-              ? t('bin.retentionForever')
-              : t('bin.retention', { days: retention })}
-        </p>
+      <Toolbar
+        aria-label={t('bin.title', { share: shareName })}
+        className={styles.binBar}
+        end={
+          <p className={styles.binNote}>
+            {retention === undefined
+              ? t('loading')
+              : retention === 0
+                ? t('bin.retentionForever')
+                : t('bin.retention', { days: retention })}
+          </p>
+        }
+      >
         {writable && (
           <>
             <Button
               size="sm"
+              variant="primary"
               isDisabled={ids.length === 0}
               onPress={() => {
                 void run(() => app.trash.restore({ share }, ids));
@@ -76,9 +173,10 @@ export function TrashView({
               <IconRestore size={16} stroke={1.75} aria-hidden />
               {t('bin.restore')}
             </Button>
+            <ToolbarSeparator />
             <Button
               size="sm"
-              variant="danger"
+              variant="quiet"
               isDisabled={ids.length === 0}
               onPress={() => {
                 setConfirm('purge');
@@ -89,51 +187,30 @@ export function TrashView({
             </Button>
             <Button
               size="sm"
-              variant="danger"
+              variant="quiet"
               isDisabled={items.length === 0}
               onPress={() => {
                 setConfirm('empty');
               }}
             >
+              <IconTrash size={16} stroke={1.75} aria-hidden />
               {t('bin.emptyBin')}
             </Button>
           </>
         )}
-      </div>
-      <div className={styles.scroll}>
-        <ListBox
+      </Toolbar>
+      <div ref={scroll} className={styles.scroll}>
+        <DataTable
           aria-label={t('bin.title', { share: shareName })}
-          selectionMode="multiple"
+          columns={columns}
+          items={items}
+          getKey={(item) => item.id}
+          selectionMode={writable ? 'multiple' : 'none'}
           selectedKeys={selected}
           onSelectionChange={setSelected}
-          className={styles.binList}
-          renderEmptyState={() => (
-            <p className={styles.empty}>{query.isPending ? t('loading') : t('bin.empty')}</p>
-          )}
-          items={items}
-        >
-          {(item: TrashEntry) => (
-            <ListBoxItem id={item.id} textValue={item.name} className={styles.binRow}>
-              <span className={styles.name}>
-                {item.kind === 'folder' ? (
-                  <IconFolder size={18} stroke={1.75} className={styles.folderIcon} aria-hidden />
-                ) : (
-                  <IconFile size={18} stroke={1.75} className={styles.fileIcon} aria-hidden />
-                )}
-                <span>{item.name}</span>
-              </span>
-              <span className={styles.binMeta}>
-                <span>{t('bin.fromPath', { path: `/${item.originalPath}` })}</span>
-                <span>{t('bin.deletedOn', { date: app.format.dateTime(item.deletedAt) })}</span>
-                <span className={styles.optional}>
-                  {item.expiresAt === null
-                    ? t('bin.never')
-                    : t('bin.expiresOn', { date: app.format.dateTime(item.expiresAt) })}
-                </span>
-              </span>
-            </ListBoxItem>
-          )}
-        </ListBox>
+          defaultSort={{ column: 'deleted', direction: 'descending' }}
+          emptyState={query.isPending ? t('loading') : t('bin.empty')}
+        />
         {query.hasNextPage && (
           <Button
             size="sm"

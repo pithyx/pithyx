@@ -16,15 +16,16 @@ import {
 import { isFinished, JobStatus, PlanPreview, RunButton, RunError, useRunPlan } from './PlanRun';
 import styles from './Storage.module.css';
 import { describeProblem, guardReason } from './shared';
+import { PoolKeyCard } from './PoolEncryption';
 import { useFormatLocale } from '../../i18n';
 
-type Step = 'disks' | 'layout' | 'encryption' | 'review';
-const steps: Step[] = ['disks', 'layout', 'encryption', 'review'];
+type Step = 'disks' | 'layout' | 'encryption' | 'key' | 'review';
 
 /**
  * Creating a pool: choose the disks, compare every layout that works with them, answer the encryption question (it
- * can only be decided now), name the pool, see the exact commands, and run them. Disks that are not empty need their
- * serial typed; the daemon checks every disk again before each command.
+ * can only be decided now), store the new pool's key and choose how it unlocks (D384), name the pool, see the exact
+ * commands, and run them. Disks that are not empty need their serial typed; the daemon checks every disk again before
+ * each command.
  */
 export function PoolWizard({
   app,
@@ -41,8 +42,18 @@ export function PoolWizard({
   const [selected, setSelected] = useState<readonly string[]>([]);
   const [confirmations, setConfirmations] = useState<Record<string, string>>({});
   const [layout, setLayout] = useState<Layout | null>(null);
-  const [encryption, setEncryption] = useState<'none' | null>(null);
+  const [encryption, setEncryption] = useState<'none' | 'key' | null>(null);
+  const [unlock, setUnlock] = useState<'vault' | 'manual'>('vault');
+  const [keyStored, setKeyStored] = useState(false);
   const [name, setName] = useState('');
+  const steps: Step[] =
+    encryption === 'key'
+      ? ['disks', 'layout', 'encryption', 'key', 'review']
+      : ['disks', 'layout', 'encryption', 'review'];
+  const newKey = useMutation({
+    mutationFn: () => internalCall(app, 'internal.admin.storage.newKey', {}),
+  });
+  const poolKey = encryption === 'key' ? newKey.data : undefined;
   const usable = disks.filter(({ guard }) => guard.decision !== 'refused');
   const refused = disks.filter(({ guard }) => guard.decision === 'refused');
   const chosen = selected
@@ -60,7 +71,9 @@ export function PoolWizard({
         pool: name.trim(),
         layout: effectiveLayout,
         diskIds: [...selected],
-        encryption: 'none',
+        ...(poolKey === undefined
+          ? { encryption: 'none' }
+          : { encryption: 'key', encryptionKey: poolKey.key, keepKeyInVault: unlock === 'vault' }),
         confirmations: Object.fromEntries(
           Object.entries(confirmations).filter(([id]) => selected.includes(id)),
         ),
@@ -81,7 +94,9 @@ export function PoolWizard({
         ? true
         : step === 'encryption'
           ? encryption !== null
-          : false;
+          : step === 'key'
+            ? poolKey !== undefined && keyStored
+            : false;
 
   return (
     <Dialog
@@ -132,7 +147,16 @@ export function PoolWizard({
                 variant="primary"
                 isDisabled={!canContinue}
                 onPress={() => {
-                  setStep(steps[index + 1] ?? 'review');
+                  const next = steps[index + 1] ?? 'review';
+                  // One key per wizard: going back and forth never replaces a key the user may have stored already.
+                  if (next === 'key' && newKey.data === undefined && !newKey.isPending) {
+                    newKey.mutate();
+                  }
+                  // The card asks for the two groups again each time the step opens.
+                  if (next === 'key') {
+                    setKeyStored(false);
+                  }
+                  setStep(next);
                 }}
               >
                 {t('wizard.next')}
@@ -243,17 +267,80 @@ export function PoolWizard({
                 checked={encryption === 'none'}
                 onChange={() => {
                   setEncryption('none');
+                  plan.reset();
                 }}
               />
               <span>{t('wizard.encryption.none')}</span>
             </label>
             <p className={cx(styles.muted, styles.indent)}>{t('wizard.encryption.noneHint')}</p>
-            <label className={cx(styles.check, styles.disabled)}>
-              <input type="radio" name="encryption" disabled />
+            <label className={styles.check}>
+              <input
+                type="radio"
+                name="encryption"
+                checked={encryption === 'key'}
+                onChange={() => {
+                  setEncryption('key');
+                  plan.reset();
+                }}
+              />
               <span>{t('wizard.encryption.key')}</span>
             </label>
-            <p className={cx(styles.muted, styles.indent)}>{t('wizard.encryption.keyLater')}</p>
+            <p className={cx(styles.muted, styles.indent)}>{t('wizard.encryption.keyHint')}</p>
+            {encryption === 'key' && (
+              <fieldset className={cx(styles.diskChoice, styles.indent)}>
+                <legend className={styles.fieldLabel}>{t('wizard.encryption.unlock')}</legend>
+                <label className={styles.check}>
+                  <input
+                    type="radio"
+                    name="unlock"
+                    checked={unlock === 'vault'}
+                    onChange={() => {
+                      setUnlock('vault');
+                      plan.reset();
+                    }}
+                  />
+                  <span>{t('wizard.encryption.vault')}</span>
+                </label>
+                <p className={cx(styles.muted, styles.indent)}>{t('vault.hint')}</p>
+                <label className={styles.check}>
+                  <input
+                    type="radio"
+                    name="unlock"
+                    checked={unlock === 'manual'}
+                    onChange={() => {
+                      setUnlock('manual');
+                      plan.reset();
+                    }}
+                  />
+                  <span>{t('wizard.encryption.manual')}</span>
+                </label>
+                <p className={cx(styles.muted, styles.indent)}>
+                  {t('wizard.encryption.manualHint')}
+                </p>
+              </fieldset>
+            )}
           </fieldset>
+        )}
+
+        {step === 'key' && (
+          <>
+            {/* Named here already, so the downloaded or printed key says which pool it opens. */}
+            <TextField
+              label={t('create.name')}
+              description={t('create.nameHint')}
+              value={name}
+              onChange={(value) => {
+                setName(value);
+                plan.reset();
+              }}
+              autoCapitalize="none"
+              autoComplete="off"
+            />
+            {newKey.isError && <ErrorNotice error={describeProblem(newKey.error)} />}
+            {poolKey !== undefined && (
+              <PoolKeyCard poolKey={poolKey} pool={name.trim()} onStoredChange={setKeyStored} />
+            )}
+          </>
         )}
 
         {step === 'review' && (
@@ -279,6 +366,15 @@ export function PoolWizard({
                   locale,
                 ),
               })}
+            </p>
+            <p className={styles.muted}>
+              {t(
+                poolKey === undefined
+                  ? 'wizard.encryption.summaryNone'
+                  : unlock === 'vault'
+                    ? 'wizard.encryption.summaryVault'
+                    : 'wizard.encryption.summaryManual',
+              )}
             </p>
             {plan.isError && <ErrorNotice error={describeProblem(plan.error)} />}
             {plan.data !== undefined && <PlanPreview preview={plan.data} disks={disks} />}

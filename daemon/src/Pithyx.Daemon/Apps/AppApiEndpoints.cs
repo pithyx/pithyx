@@ -229,7 +229,7 @@ public static class AppApiEndpoints
     {
         var (grant, app) = Caller(context, registry);
         AppFiles.Require(app, NotificationsPermission);
-        var notification = await notifications.CreateForAppAsync(grant.UserId, app.Id, request, cancellationToken);
+        var notification = await notifications.CreateForAppAsync(grant.UserId, app.Id, request, NotificationCategories.Of(app.Manifest).Select(category => category.Id).ToList(), cancellationToken);
         return TypedResults.Created($"/api/notifications/{notification.Id}", notification);
     }
 
@@ -260,6 +260,7 @@ public static class AppApiEndpoints
         [FromQuery] string? order,
         [FromQuery] int? limit,
         [FromQuery] string? cursor,
+        [FromQuery] string? query,
         AppFiles files,
         AppRegistry registry,
         HttpContext context,
@@ -273,6 +274,7 @@ public static class AppApiEndpoints
             Parse(order, SortOrder.Asc),
             limit,
             cursor,
+            query,
             cancellationToken));
 
     private static T Parse<T>(string? value, T fallback) where T : struct, Enum =>

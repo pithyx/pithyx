@@ -1,5 +1,7 @@
 import type { MethodName, PithyxApp } from '@pithyx/sdk';
+import { unreachableError } from '@pithyx/api-client';
 import { PithyxError, type HostExtensions } from '@pithyx/sdk/host';
+import { toPithyxError } from './daemonError';
 
 /** Text files are shown up to this size; the rest is cut off with a note. */
 export const MAX_TEXT_BYTES = 1024 * 1024;
@@ -38,6 +40,8 @@ export function viewerHost(): { extensions: HostExtensions; close: () => void } 
           const response = await fetch(contentUrl(share, folder, name), {
             headers: { Range: `bytes=0-${String(MAX_TEXT_BYTES - 1)}` },
             credentials: 'same-origin',
+          }).catch((error: unknown) => {
+            throw toPithyxError(unreachableError(error));
           });
           if (!response.ok) {
             const problem = (await response.json().catch(() => null)) as {

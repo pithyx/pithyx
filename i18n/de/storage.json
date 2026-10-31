@@ -22,7 +22,22 @@
     "readOnly": "Schreibgeschützt (Vorschau)",
     "readOnlyHint": "Schreibgeschützt zur Vorschau importiert: Nichts ist eingehängt und nichts daran ändert sich. Prüf seine Datasets, dann importiere ihn zur Nutzung oder exportiere ihn wieder.",
     "deleting": "Wird gelöscht",
-    "deletingHint": "Der Pool wird gelöscht. Die Benachrichtigungen sagen dir, wenn es fertig ist."
+    "deletingHint": "Der Pool wird gelöscht. Die Benachrichtigungen sagen dir, wenn es fertig ist.",
+    "toolbar": "Aktionen für Pools",
+    "space": "Platz von {pool}",
+    "usedShort": "{used} belegt",
+    "free": "{free} frei"
+  },
+  "summary": {
+    "capacity": "Kapazität",
+    "pools": "{count, plural, one {# Pool} other {# Pools}}",
+    "used": "Belegt",
+    "disks": "Platten",
+    "allHealthy": "alle in Ordnung",
+    "problems": "{count, plural, one {# mit einem Problem} other {# mit Problemen}}",
+    "lastScrub": "Letzter Scrub",
+    "never": "Nie",
+    "errors": "{count, plural, =0 {keine Fehler} one {# Fehler} other {# Fehler}}"
   },
   "state": {
     "online": "Intakt",
@@ -63,7 +78,9 @@
     "serial": "Seriennummer",
     "size": "Größe",
     "status": "Für einen neuen Pool",
-    "intro": "Jede Platte mit ihrem Zustand und ob ein neuer Pool sie verwenden darf."
+    "intro": "Jede Platte mit ihrem Zustand und ob ein neuer Pool sie verwenden darf.",
+    "path": "Gerät",
+    "details": "Details der Platte"
   },
   "decision": {
     "allowed": "Verfügbar",
@@ -117,6 +134,7 @@
       "disks": "Platten",
       "layout": "Aufbau",
       "encryption": "Verschlüsselung",
+      "key": "Schlüssel",
       "review": "Name und Prüfung"
     },
     "recommend": {
@@ -152,7 +170,14 @@
       "none": "Keine Verschlüsselung",
       "noneHint": "Wer die Platten hat, kann die Daten lesen. In Ordnung für Medien und Sicherungen von bereits verschlüsselten Daten.",
       "key": "Mit einem Schlüssel verschlüsseln",
-      "keyLater": "Kommt mit dem Schlüsseltresor im nächsten Update. Wenn dieser Pool verschlüsselt sein soll, warte darauf: Ein jetzt angelegter Pool bleibt unverschlüsselt."
+      "keyHint": "Ohne den Schlüssel kann niemand die Daten auf den Platten lesen, auch du nicht: Die Box zeigt den Schlüssel einmal, und du bewahrst ihn auf, ausgedruckt oder in einem Passwortmanager.",
+      "unlock": "Wie soll der Pool entsperrt werden?",
+      "vault": "Automatisch bei jedem Start, aus dem Schlüsseltresor",
+      "manual": "Von Hand nach jedem Start",
+      "manualHint": "Nach jedem Start bleibt der Pool gesperrt, bis ein Administrator seinen Schlüssel unter Einstellungen > Speicher eingibt. Bis dahin sind seine freigegebenen Ordner, Home-Ordner und Apps nicht verfügbar. Das schützt die Daten auch, wenn die ganze Box gestohlen wird.",
+      "summaryNone": "Nicht verschlüsselt.",
+      "summaryVault": "Verschlüsselt; die Box entsperrt ihn bei jedem Start mit dem Schlüssel aus ihrem Schlüsseltresor.",
+      "summaryManual": "Verschlüsselt; er bleibt nach jedem Start gesperrt, bis sein Schlüssel eingegeben wird."
     },
     "layouts": {
       "single": {
@@ -213,18 +238,6 @@
       "title": "Spare {device} entfernen",
       "explain": "{device} ist dann kein Hot Spare von {pool} mehr.",
       "run": "Entfernen"
-    },
-    "offline": {
-      "button": "Offline nehmen",
-      "title": "{device} offline nehmen",
-      "explain": "{pool} verwendet {device} nicht mehr, zum Beispiel zum Tauschen. Der Pool bleibt nutzbar, solange Schutz übrig ist.",
-      "run": "Offline nehmen"
-    },
-    "online": {
-      "button": "Online bringen",
-      "title": "{device} online bringen",
-      "explain": "{pool} verwendet {device} wieder und stellt nach, was gefehlt hat.",
-      "run": "Online bringen"
     },
     "destroy": {
       "button": "Pool löschen…",
@@ -320,36 +333,6 @@
     "raidz2": "RAID-Z2 (zwei Platten dürfen ausfallen)",
     "raidz3": "RAID-Z3 (drei Platten dürfen ausfallen)",
     "stripe": "Stripe (eine ausgefallene Platte kostet alles)"
-  },
-  "snapshots": {
-    "title": "Snapshots",
-    "intro": "Ein Snapshot hält den Stand eines Datasets zu einem Zeitpunkt fest. Benutzer stellen daraus in Dateien unter Frühere Versionen Dateien wieder her. Zeitpläne löschen nur die Snapshots, die sie selbst angelegt haben.",
-    "noDatasets": "Noch keine Datasets.",
-    "dataset": "Dataset",
-    "take": "Snapshot anlegen",
-    "empty": "Dieses Dataset hat noch keine Snapshots.",
-    "name": "Name",
-    "created": "Angelegt",
-    "used": "Platz",
-    "actions": "Aktionen",
-    "foreign": "Fremd",
-    "held": "Festgehalten",
-    "hold": "Festhalten",
-    "release": "Freigeben",
-    "rollback": "Zurücksetzen",
-    "delete": "Löschen",
-    "kinds": {
-      "hourly": "Stündlich",
-      "daily": "Täglich",
-      "weekly": "Wöchentlich",
-      "monthly": "Monatlich",
-      "manual": "Von Hand",
-      "update": "Vor einem App-Update"
-    },
-    "schedules": "Zeitpläne",
-    "keep": "Behalten",
-    "save": "Zeitpläne speichern",
-    "schedulesHint": "Zeitpläne legen pro Stunde, Tag, Woche (ab Montag) oder Monat in UTC einen Snapshot an und behalten die angegebene Zahl ihrer eigenen Snapshots. Festgehaltene Snapshots und solche, die von Hand oder von anderen Programmen angelegt wurden, werden nie gelöscht."
   },
   "health": {
     "title": "Zustand",
@@ -545,5 +528,109 @@
       "explain": "Grenzen, Komprimierung und Namen der Datasets hinter deinen freigegebenen Ordnern und Volumes, und von Datasets, die Pithyx nicht angelegt hat.",
       "button": "Datasets anzeigen"
     }
+  },
+  "vault": {
+    "hint": "Die Box bewahrt den Schlüssel in einem Tresor auf ihrer Systemplatte auf und entsperrt den Pool bei jedem Start. Das schützt die Daten auf Platten, die gestohlen oder weggeworfen werden, aber nicht, wenn die ganze Box gestohlen wird. Der Tresor ist nie Teil einer Konfigurationssicherung; bewahre also eine eigene Kopie des Schlüssels auf."
+  },
+  "key": {
+    "intro": "Das ist der Schlüssel des Pools. Er wird nur jetzt angezeigt. Ohne ihn kann nach einer Neuinstallation, auf einer anderen Box oder wenn der Schlüsseltresor verloren geht, niemand die Daten des Pools lesen. Lade ihn herunter oder drucke ihn aus und bewahre ihn getrennt von der Box auf.",
+    "label": "Pool-Schlüssel",
+    "copy": "Schlüssel kopieren",
+    "copied": "Kopiert",
+    "copyManually": "Der Schlüssel ist markiert. Kopiere ihn mit Strg+C oder über das Kontextmenü.",
+    "download": "Herunterladen",
+    "print": "Drucken",
+    "confirm": "Ich habe den Schlüssel sicher und getrennt von der Box aufbewahrt.",
+    "sheet": {
+      "title": "Pithyx-Pool-Schlüssel",
+      "pool": "Pool: {pool}",
+      "date": "Erstellt: {date}",
+      "hint": "Dieser Schlüssel entsperrt die Daten des Pools. Bewahre ihn sicher und getrennt von der Box auf; wer ihn und die Platten hat, kann die Daten lesen. Gib ihn unter Einstellungen > Speicher ein, um den Pool zu entsperren.",
+      "emergency": "Ohne Pithyx: Schließe auf einem beliebigen Linux mit OpenZFS 2.x alle Platten des Pools an und führe diese Befehle als root aus. Füge diesen Hex-Schlüssel ein, wenn zfs load-key danach fragt:",
+      "emergencyHint": "Danach liegen die Daten des Pools unter den Einhängepunkten, die zfs list zeigt. -f ist nötig, wenn der Pool zuletzt von einem anderen System benutzt wurde."
+    },
+    "introShown": "Das ist der Schlüssel des Pools aus dem Schlüsseltresor. Lade ihn herunter oder drucke ihn aus und bewahre ihn getrennt von der Box auf.",
+    "verify": "Damit sicher ist, dass die aufbewahrte Kopie vollständig ist, gib diese zwei Vierergruppen daraus ein.",
+    "group": "Gruppe {number}",
+    "groupWrong": "Diese Gruppe passt nicht zum Schlüssel."
+  },
+  "unlock": {
+    "title": "{pool} entsperren",
+    "intro": "Gib den Schlüssel des Pools ein, den du beim Anlegen des Pools oder beim Ändern seines Schlüssels heruntergeladen oder ausgedruckt hast.",
+    "introVaultFailed": "Der Schlüssel im Schlüsseltresor hat den Pool nicht entsperrt, zum Beispiel weil der Schlüssel auf einer anderen Box geändert wurde. Gib den Schlüssel des Pools ein.",
+    "key": "Schlüssel",
+    "keyHint": "Beginnt mit PXPK. Bindestriche, Leerzeichen und Groß- oder Kleinschreibung spielen keine Rolle.",
+    "keep": "Schlüssel im Schlüsseltresor aufbewahren und den Pool bei jedem Start automatisch entsperren",
+    "cancel": "Abbrechen",
+    "submit": "Entsperren",
+    "mountFailed": "Der Schlüssel hat den Pool geöffnet, aber nicht jedes Dataset ließ sich einhängen (Details im Protokoll). Drücke erneut auf Entsperren, um den Rest einzuhängen.",
+    "introUsbFailed": "Die Schlüsseldatei auf dem USB-Stick hat diesen Pool nicht entsperrt. Gib den Schlüssel ein, den du aufbewahrt hast."
+  },
+  "changeKey": {
+    "title": "Schlüssel von {pool} ändern",
+    "intro": "Der Pool bekommt einen neuen Schlüssel, und der alte funktioniert sofort nicht mehr. Die Daten bleiben, wie sie sind. Bewahre zuerst den neuen Schlüssel auf; erst dann übernimmt ihn der Pool.",
+    "create": "Neuen Schlüssel erzeugen",
+    "submit": "Schlüssel ändern",
+    "cancel": "Abbrechen",
+    "keep": "Neuen Schlüssel im Schlüsseltresor aufbewahren und den Pool bei jedem Start automatisch entsperren",
+    "usbOld": "Der USB-Stick {stick} enthält den aktuellen Schlüssel. Nach dem Ändern öffnet er nichts mehr; schreibe den neuen Schlüssel danach auf den Stick."
+  },
+  "forgetKey": {
+    "title": "Schlüssel von {pool} aus dem Schlüsseltresor entfernen?",
+    "intro": "Der Pool bleibt entsperrt, bis die Box neu startet. Danach bleibt er gesperrt, bis ein Administrator seinen Schlüssel unter Einstellungen > Speicher eingibt, und bis dahin sind seine freigegebenen Ordner, Home-Ordner und Apps nicht verfügbar.",
+    "warning": "Stell sicher, dass du den Schlüssel des Pools hast. Ohne ihn lassen sich die Daten des Pools nie wieder lesen.",
+    "cancel": "Abbrechen",
+    "submit": "Aus dem Tresor entfernen"
+  },
+  "encryption": {
+    "encrypted": "Verschlüsselt",
+    "locked": "Gesperrt",
+    "lockedHint": "Dieser Pool ist gesperrt. Seine freigegebenen Ordner, Home-Ordner und Apps sind nicht verfügbar, bis er mit seinem Schlüssel entsperrt wird.",
+    "lockedVaultHint": "Dieser Pool ist gesperrt: Der Schlüssel im Schlüsseltresor hat ihn nicht entsperrt. Seine freigegebenen Ordner, Home-Ordner und Apps sind nicht verfügbar, bis er mit seinem Schlüssel entsperrt wird.",
+    "unlock": "Entsperren…",
+    "inVault": "Verschlüsselt; wird bei jedem Start mit dem Schlüssel aus dem Schlüsseltresor entsperrt.",
+    "byHand": "Verschlüsselt; bleibt nach jedem Start gesperrt, bis sein Schlüssel eingegeben wird.",
+    "change": "Schlüssel ändern…",
+    "forget": "Schlüssel aus dem Tresor entfernen…",
+    "opening": "Dieser Pool wird mit dem Schlüssel aus dem Schlüsseltresor entsperrt.",
+    "reveal": "Schlüssel anzeigen…",
+    "lockedUsbHint": "Dieser Pool ist gesperrt und wartet auf seinen USB-Stick {stick}. Stecke den Stick ein oder entsperre den Pool mit seinem Schlüssel.",
+    "lockedUsbFailedHint": "Dieser Pool ist gesperrt: Die Schlüsseldatei auf dem USB-Stick hat ihn nicht entsperrt (ein älterer Schlüssel oder eine beschädigte Datei). Entsperre ihn mit seinem Schlüssel und schreibe den Schlüssel danach erneut auf den Stick.",
+    "unlockedFromUsb": "Vom USB-Stick entsperrt. Du kannst den Stick jetzt abziehen und sicher aufbewahren: Der Pool bleibt entsperrt, bis die Box neu startet, und braucht dann wieder den Stick.",
+    "onStick": "Verschlüsselt; entsperrt sich, sobald der USB-Stick {stick} mit seinem Schlüssel steckt, oder mit dem eingegebenen Schlüssel.",
+    "alsoOnStick": "Sein Schlüssel liegt auch auf dem USB-Stick {stick}.",
+    "writeUsb": "Schlüssel auf USB-Stick schreiben…"
+  },
+  "reveal": {
+    "title": "Schlüssel von {pool} anzeigen",
+    "intro": "Die Box zeigt den Schlüssel aus ihrem Schlüsseltresor, nachdem du bestätigt hast, dass du es bist. Nutze das, wenn die aufbewahrte Kopie verloren ist, und bewahre den Schlüssel erneut auf.",
+    "vaultFailed": "Der Schlüssel im Tresor hat diesen Pool beim letzten Mal nicht entsperrt. Er ist vielleicht beschädigt oder ein älterer Schlüssel.",
+    "password": "Dein Passwort",
+    "code": "Code aus deiner Authenticator-App",
+    "cancel": "Abbrechen",
+    "submit": "Schlüssel anzeigen",
+    "close": "Schließen"
+  },
+  "usb": {
+    "title": "Schlüssel von {pool} auf einen USB-Stick schreiben",
+    "intro": "Pithyx schreibt den Schlüssel in den Ordner pithyx-keys auf dem Stick und lässt alles andere darauf, wie es ist. Sobald der Stick steckt, entsperrt die Box den Pool. Danach kann der Stick abgezogen werden: Der Pool bleibt bis zum nächsten Neustart entsperrt.",
+    "warning": "Wer diesen Stick und die Platten des Pools hat, kann seine Daten lesen. Bewahre den Stick getrennt von der Box auf, wenn er nicht gebraucht wird, und bewahre auch den Schlüssel weiter auf: Ein Stick kann kaputtgehen.",
+    "stick": "USB-Stick",
+    "stickOption": "{name} · {size} · {fileSystem}",
+    "readOnly": "schreibgeschützt",
+    "none": "Kein USB-Stick gefunden. Stecke einen Stick mit FAT-, exFAT- oder ext-Dateisystem ein; Pithyx formatiert ihn nie. Ein Stick, der anderweitig benutzt wird, wird nicht angeboten.",
+    "source": "Schlüssel",
+    "sourceVault": "Der Schlüssel aus dem Schlüsseltresor",
+    "sourceTyped": "Schlüssel eingeben",
+    "vaultHint": "Der Schlüssel aus dem Tresor verlässt die Box auf dem Stick, deshalb wird dein Passwort erneut abgefragt.",
+    "password": "Dein Passwort",
+    "code": "Code aus deiner Authenticator-App",
+    "key": "Pool-Schlüssel",
+    "keyHint": "Der Schlüssel, den du aufbewahrt hast, beginnend mit PXPK. Er wird am Pool geprüft, bevor er geschrieben wird.",
+    "removeFromVault": "Schlüssel danach aus dem Schlüsseltresor entfernen, sodass nur der Stick oder der eingegebene Schlüssel den Pool beim Start entsperrt",
+    "cancel": "Abbrechen",
+    "submit": "Schlüssel schreiben",
+    "close": "Schließen",
+    "done": "Der Schlüssel liegt auf {stick}. Du kannst den Stick jetzt abziehen. Stecke ihn nach einem Neustart ein, um {pool} zu entsperren."
   }
 }

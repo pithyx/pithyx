@@ -118,6 +118,33 @@ public sealed class FileApiTests : IAsyncLifetime
         Assert.Equal("fs.cursor.invalid", await wrongSort.ErrorCodeAsync());
     }
 
+    [Fact]
+    public async Task AQueryKeepsTheMatchingNamesOfTheFolderInEveryOrderAndPage()
+    {
+        Directory.CreateDirectory(Path.Combine(_root, "Holiday photos"));
+        File.WriteAllText(Path.Combine(_root, "Holiday photos", "beach holiday.jpg"), "");
+        foreach (var name in new[] { "holiday3.jpg", "HOLIDAY10.jpg", "Ärger.txt", "notes.txt", "holiday1.jpg" })
+        {
+            File.WriteAllText(Path.Combine(_root, name), name);
+        }
+
+        var page = await ListAsync(_admin, "", "&query=Holiday");
+        Assert.Equal(["Holiday photos", "holiday1.jpg", "holiday3.jpg", "HOLIDAY10.jpg"], Names(page));
+        Assert.Equal(4, page.GetProperty("total").GetInt32());
+
+        var first = await ListAsync(_admin, "", "&query=%20holiday%20&limit=2&sort=size&order=desc");
+        Assert.Equal(["HOLIDAY10.jpg", "holiday3.jpg"], Names(first));
+        var second = await ListAsync(_admin, "", $"&query=holiday&limit=2&sort=size&order=desc&cursor={Q(first.GetProperty("nextCursor").GetString()!)}");
+        Assert.Equal(["holiday1.jpg", "Holiday photos"], Names(second));
+        Assert.Equal(JsonValueKind.Null, second.GetProperty("nextCursor").ValueKind);
+
+        Assert.Equal(["Ärger.txt"], Names(await ListAsync(_admin, "", "&query=%C3%A4rg")));
+        var none = await ListAsync(_admin, "", "&query=missing");
+        Assert.Empty(Names(none));
+        Assert.Equal(0, none.GetProperty("total").GetInt32());
+        Assert.Equal(6, (await ListAsync(_admin, "", "&query=%20")).GetProperty("total").GetInt32());
+    }
+
     [Theory]
     [InlineData("../secret/passwords.txt", "fs.path.invalid")]
     [InlineData("a/../../secret/passwords.txt", "fs.path.invalid")]

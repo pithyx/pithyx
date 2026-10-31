@@ -71,15 +71,16 @@ public static class ErrorCodes
 
     /// <summary>
     /// A name refers to something that is not declared: a volume missing from the Compose file's top-level
-    /// <c>volumes</c>, a service in <c>depends_on</c>, or a service of the manifest's <c>backend.endpoints</c> or
-    /// <c>storage[].services</c> missing from the Compose file; <c>params.path</c> is the reference (in the Compose file for
+    /// <c>volumes</c>, a service in <c>depends_on</c>, a service of the manifest's <c>backend.endpoints</c>,
+    /// <c>backend.network.services</c> or <c>storage[].services</c> missing from the Compose file, or a volume of
+    /// <c>backend.backup.exclude</c> it does not declare; <c>params.path</c> is the reference (in the Compose file for
     /// <c>/services/...</c>, in the manifest for <c>/backend/...</c> and <c>/storage/...</c>), <c>params.name</c> the name.
     /// </summary>
     [ErrorStatus(HttpStatusCode.BadRequest)]
     public const string AppComposeReferenceUnknown = "app.compose.reference_unknown";
 
     /// <summary>
-    /// The Compose file uses a key that needs an elevated right the manifest's <c>backend.elevated</c> does not declare
+    /// The Compose file uses a key that needs an elevated right the manifest's <c>permissions</c> do not declare
     /// (<c>devices</c>, <c>cap_add</c>, <c>network_mode: host</c>, <c>pid: host</c>); <c>params.path</c> is the use,
     /// <c>params.right</c> the right it needs.
     /// </summary>
@@ -125,12 +126,59 @@ public static class ErrorCodes
     public const string AppComposeYamlInvalid = "app.compose.yaml_invalid";
 
     /// <summary>
-    /// The manifest asks for an elevated right this version of Pithyx does not grant: <c>docker.socket</c>, <c>host.full</c>
-    /// or a capability that reaches the host's secrets; <c>params.right</c> names it. When the Compose file needs it
-    /// (<c>privileged</c>, a mount of the Docker socket, <c>cap_add</c>), <c>params.path</c> is the use.
+    /// The manifest asks for an elevated right this version of Pithyx does not grant (D311): <c>docker.socket</c>,
+    /// <c>host.full</c>, a blocked capability or a blocked device node; <c>params.right</c> names it. When the Compose file
+    /// needs it (<c>privileged</c>, a mount of the Docker socket, <c>cap_add</c>, <c>devices</c>), <c>params.path</c> is the use.
     /// </summary>
     [ErrorStatus(HttpStatusCode.BadRequest)]
     public const string AppElevatedUnsupported = "app.elevated.unsupported";
+
+    /// <summary>
+    /// The manifest runs its backend as root (<c>backend.root</c>) and asks for <c>params.right</c>, which runs a service
+    /// in the host's user namespace (the host network, the host processes or a device other than <c>/dev/net/tun</c>):
+    /// root there would be root on the box (D311).
+    /// </summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string AppElevatedRootConflict = "app.elevated.root_conflict";
+
+    /// <summary>The manifest asks for the capability <c>params.right</c> without <c>backend.root</c>; only root can use a capability (D311).</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string AppElevatedRootRequired = "app.elevated.root_required";
+
+    /// <summary>
+    /// The device node <c>params.path</c> the app holds the right for is missing, is no character device, or is a link to
+    /// a node no app gets (D311), so its backend does not start.
+    /// </summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string AppDeviceUnavailable = "app.device.unavailable";
+
+    /// <summary>
+    /// The app needs the device <c>params.path</c> (a node or a device class, D387), and no such device is plugged in, so it
+    /// cannot be installed now; plugging it in and trying again helps.
+    /// </summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string AppDeviceMissing = "app.device.missing";
+
+    /// <summary>
+    /// The manifest asks for the elevated right <c>params.right</c>, which only a backend can use, and the app has no
+    /// <c>backend</c> (D388).
+    /// </summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string AppElevatedBackendMissing = "app.elevated.backend_missing";
+
+    /// <summary>
+    /// Granting the critical right <c>params.right</c> (root on the box) needs the administrator to type the app's name in
+    /// the critical step; the request carries <c>confirmCritical</c> with the app's id once that is done (D388).
+    /// </summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string AppElevatedConfirmationRequired = "app.elevated.confirmation_required";
+
+    /// <summary>
+    /// The app runs only on the architectures in <c>params.supported</c> (its manifest's <c>arch</c>), not on this box's
+    /// <c>params.arch</c>, so it cannot be installed here (D388).
+    /// </summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string AppArchUnsupported = "app.arch.unsupported";
 
     /// <summary>Docker did not start or does not answer, so no app backend can run now.</summary>
     [ErrorStatus(HttpStatusCode.ServiceUnavailable)]
@@ -164,11 +212,15 @@ public static class ErrorCodes
     public const string AppManifestCronInvalid = "app.manifest.cron_invalid";
 
     /// <summary>
-    /// A value that must be unique in the manifest appears twice (storage ids, schedule ids, file extensions);
+    /// A value that must be unique in the manifest appears twice (storage ids, schedule ids, file extensions, file action ids);
     /// <c>params.path</c> is the second one, <c>params.value</c> the value.
     /// </summary>
     [ErrorStatus(HttpStatusCode.BadRequest)]
     public const string AppManifestDuplicate = "app.manifest.duplicate";
+
+    /// <summary>A part of the manifest needs a permission the manifest does not request; <c>params.path</c> names the part, <c>params.permission</c> the permission.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string AppManifestPermissionMissing = "app.manifest.permission_missing";
 
     /// <summary>The manifest's <c>id</c> is not an app id of D302; <c>params.id</c> is the value.</summary>
     [ErrorStatus(HttpStatusCode.BadRequest)]
@@ -191,7 +243,7 @@ public static class ErrorCodes
     public const string AppManifestReferenceUnknown = "app.manifest.reference_unknown";
 
     /// <summary>
-    /// The manifest breaks its JSON Schema (<c>sdk/schema/manifest.v1.schema.json</c>); <c>params.path</c> is the JSON
+    /// The manifest breaks its JSON Schema (<c>sdk/schema/manifest.v2.schema.json</c>); <c>params.path</c> is the JSON
     /// Pointer of the value (of the missing or unknown field for <c>required</c> and <c>additionalProperties</c>),
     /// <c>params.keyword</c> the schema keyword it fails.
     /// </summary>
@@ -352,6 +404,24 @@ public static class ErrorCodes
     [ErrorStatus(HttpStatusCode.BadRequest)]
     public const string AuthDisplayNameInvalid = "auth.display_name.invalid";
 
+    /// <summary>The passkey or the answer of the authenticator was not accepted (unknown, removed, or a failed check).</summary>
+    [ErrorStatus(HttpStatusCode.Unauthorized)]
+    public const string AuthPasskeyInvalid = "auth.passkey.invalid";
+
+    /// <summary>A user has at most this many passkeys (<c>max</c>).</summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string AuthPasskeyLimit = "auth.passkey.limit";
+
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string AuthPasskeyNameInvalid = "auth.passkey.name_invalid";
+
+    [ErrorStatus(HttpStatusCode.NotFound)]
+    public const string AuthPasskeyNotFound = "auth.passkey.not_found";
+
+    /// <summary>Passkeys need the box opened by name over HTTPS, not by address (<c>host</c>).</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string AuthPasskeyUnavailable = "auth.passkey.unavailable";
+
     [ErrorStatus(HttpStatusCode.BadRequest)]
     public const string AuthPasswordTooCommon = "auth.password.too_common";
 
@@ -375,6 +445,13 @@ public static class ErrorCodes
 
     [ErrorStatus(HttpStatusCode.Conflict)]
     public const string AuthSetupAlreadyDone = "auth.setup.already_done";
+
+    /// <summary>
+    /// The action needs a step-up first (D311): the password again and, with two-factor sign-in on, an authenticator
+    /// code. A step-up holds for five minutes in the session that made it.
+    /// </summary>
+    [ErrorStatus(HttpStatusCode.Forbidden)]
+    public const string AuthStepUpRequired = "auth.step_up.required";
 
     [ErrorStatus(HttpStatusCode.Conflict)]
     public const string AuthTotpAlreadyEnabled = "auth.totp.already_enabled";
@@ -785,9 +862,45 @@ public static class ErrorCodes
     [ErrorStatus(HttpStatusCode.BadRequest)]
     public const string NetworkVlanParentInvalid = "network.vlan.parent_invalid";
 
-    /// <summary>An app notification is invalid; <c>params.field</c> names the field (app, title, body), <c>params.maxLength</c> its limit.</summary>
+    /// <summary>A notification channel is invalid; <c>params.field</c> names the field (name, kind, recipients, url, format, headers, categories).</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string NotificationsChannelInvalid = "notifications.channel.invalid";
+
+    /// <summary>A notification channel could not deliver; <c>params.detail</c> has the server's words or <c>timeout</c>.</summary>
+    [ErrorStatus(HttpStatusCode.BadGateway)]
+    public const string NotificationsChannelFailed = "notifications.channel.failed";
+
+    /// <summary>There are already <c>params.max</c> channels.</summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string NotificationsChannelLimitReached = "notifications.channel.limit_reached";
+
+    /// <summary>No channel with this id belongs to the user (or to the box, for the system's channels).</summary>
+    [ErrorStatus(HttpStatusCode.NotFound)]
+    public const string NotificationsChannelNotFound = "notifications.channel.not_found";
+
+    /// <summary>The box speaks no such language; <c>params.language</c> is the one asked for.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string NotificationsLanguageUnsupported = "notifications.language.unsupported";
+
+    /// <summary>The SMTP settings are invalid; <c>params.field</c> names the field (host, port, security, username, password, from).</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string NotificationsSmtpInvalid = "notifications.smtp.invalid";
+
+    /// <summary>An email channel needs the SMTP server an administrator sets up in Settings &gt; Notifications.</summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string NotificationsSmtpMissing = "notifications.smtp.missing";
+
+    /// <summary>An app notification is invalid; <c>params.field</c> names the field (app, title, body, actions, data, tag, category), <c>params.maxLength</c> its limit.</summary>
     [ErrorStatus(HttpStatusCode.BadRequest)]
     public const string NotificationsMessageInvalid = "notifications.message.invalid";
+
+    /// <summary>No app the user may open has this notification category (D390); <c>params.app</c> and <c>params.category</c> name it.</summary>
+    [ErrorStatus(HttpStatusCode.NotFound)]
+    public const string NotificationsCategoryNotFound = "notifications.category.not_found";
+
+    /// <summary>A cell of the notification matrix names an event the box does not report (D407); <c>params.event</c> names it.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string NotificationsEventUnknown = "notifications.event.unknown";
 
     /// <summary>The signed-in user has no notification with this id (it was deleted, or belongs to someone else).</summary>
     [ErrorStatus(HttpStatusCode.NotFound)]
@@ -800,6 +913,70 @@ public static class ErrorCodes
     /// <summary>The signed-in user may not use the proxy host <c>params.host</c>, which lets in only some users and groups.</summary>
     [ErrorStatus(HttpStatusCode.Forbidden)]
     public const string ProxyAccessDenied = "proxy.access.denied";
+
+    /// <summary>The domain's CAA records forbid the ACME authority; <c>params.name</c> is the domain, <c>params.detail</c> the authority's words.</summary>
+    [ErrorStatus(HttpStatusCode.BadGateway)]
+    public const string ProxyAcmeCaa = "proxy.acme.caa";
+
+    /// <summary>The ACME authority could not reach the box on port 80 for a domain; <c>params.name</c>, <c>params.detail</c>.</summary>
+    [ErrorStatus(HttpStatusCode.BadGateway)]
+    public const string ProxyAcmeConnection = "proxy.acme.connection";
+
+    /// <summary>The ACME directory is not an <c>https</c> URL.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string ProxyAcmeDirectoryInvalid = "proxy.acme.directory_invalid";
+
+    /// <summary>The ACME authority found no DNS record of a domain; <c>params.name</c>, <c>params.detail</c>.</summary>
+    [ErrorStatus(HttpStatusCode.BadGateway)]
+    public const string ProxyAcmeDns = "proxy.acme.dns";
+
+    /// <summary>The contact address for the ACME authority is not an email address.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string ProxyAcmeEmailInvalid = "proxy.acme.email_invalid";
+
+    /// <summary>The ACME authority refused a certificate for another reason; <c>params.name</c>, <c>params.detail</c>.</summary>
+    [ErrorStatus(HttpStatusCode.BadGateway)]
+    public const string ProxyAcmeFailed = "proxy.acme.failed";
+
+    /// <summary>A public ACME authority never certifies the domain: an address, a single label or a local name; <c>params.name</c> is it.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string ProxyAcmeNameNotPublic = "proxy.acme.name_not_public";
+
+    /// <summary>The ACME authority does not certify the domain by its policy; <c>params.name</c>, <c>params.detail</c>.</summary>
+    [ErrorStatus(HttpStatusCode.BadGateway)]
+    public const string ProxyAcmeNameRejected = "proxy.acme.name_rejected";
+
+    /// <summary>The host does not use a certificate from the ACME authority.</summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string ProxyAcmeNotAcme = "proxy.acme.not_acme";
+
+    /// <summary>The box serves no plain HTTP port for proxy hosts, where the ACME authority checks a domain.</summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string ProxyAcmePortUnavailable = "proxy.acme.port_unavailable";
+
+    /// <summary>The certificate of the host is being requested from the ACME authority already.</summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string ProxyAcmeRunning = "proxy.acme.running";
+
+    /// <summary>The ACME authority's rate limit was reached; <c>params.name</c>, <c>params.detail</c>. The box tries again later.</summary>
+    [ErrorStatus(HttpStatusCode.BadGateway)]
+    public const string ProxyAcmeRateLimited = "proxy.acme.rate_limited";
+
+    /// <summary>Hosts use the ACME authority only after an administrator agreed to its terms of service.</summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string ProxyAcmeTermsRequired = "proxy.acme.terms_required";
+
+    /// <summary>Another server than the box answered the ACME authority's check of a domain; <c>params.name</c>, <c>params.detail</c>.</summary>
+    [ErrorStatus(HttpStatusCode.BadGateway)]
+    public const string ProxyAcmeUnauthorized = "proxy.acme.unauthorized";
+
+    /// <summary>The ACME authority's directory could not be read; <c>params.detail</c> is the address or the reason.</summary>
+    [ErrorStatus(HttpStatusCode.BadGateway)]
+    public const string ProxyAcmeUnreachable = "proxy.acme.unreachable";
+
+    /// <summary>A wildcard domain needs a DNS-01 check, which the box does not do; <c>params.name</c> is it.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string ProxyAcmeWildcard = "proxy.acme.wildcard";
 
     /// <summary>The proxy host does not let the client's address in (its allowed or denied addresses).</summary>
     [ErrorStatus(HttpStatusCode.Forbidden)]
@@ -1053,9 +1230,76 @@ public static class ErrorCodes
     [ErrorStatus(HttpStatusCode.Conflict)]
     public const string StorageDiskRefused = "storage.disk.refused";
 
-    /// <summary>Encryption is chosen when a pool is created, and becomes available with the key vault.</summary>
+    /// <summary>
+    /// Encryption is chosen when a pool is created, and becomes available with the key vault. Pithyx 1.2 encrypts pools
+    /// (D384) and no longer answers with it; the code stays, as every published code does.
+    /// </summary>
     [ErrorStatus(HttpStatusCode.Conflict)]
     public const string StorageEncryptionUnavailable = "storage.encryption.unavailable";
+
+    /// <summary>The text is not a pool key: a key has 56 characters after <c>PXPK</c>, and its last characters check the others, so a typo shows here.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string StorageEncryptionKeyInvalid = "storage.encryption.key_invalid";
+
+    /// <summary>The key is a pool key, but not the one of this pool; <c>params.name</c> is the pool.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string StorageEncryptionKeyWrong = "storage.encryption.key_wrong";
+
+    /// <summary>The action needs the pool's key: an encrypted new pool, or a pool to unlock whose key is not in the key vault. <c>params.name</c> is the pool.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string StorageEncryptionKeyRequired = "storage.encryption.key_required";
+
+    /// <summary>
+    /// The pool's key could not be written to the key vault on the system disk (full, read-only or broken). The pool is
+    /// unlocked; at the next start it waits for its key to be typed. <c>params.name</c> is the pool.
+    /// </summary>
+    [ErrorStatus(HttpStatusCode.InternalServerError)]
+    public const string StorageEncryptionVaultFailed = "storage.encryption.vault_failed";
+
+    /// <summary>The key vault holds no key of this pool, so there is nothing to show; <c>params.name</c> is the pool.</summary>
+    [ErrorStatus(HttpStatusCode.NotFound)]
+    public const string StorageEncryptionNotInVault = "storage.encryption.not_in_vault";
+
+    /// <summary>
+    /// The USB stick is gone, or it is not one a pool key can be written to: a stick or other removable disk with a FAT,
+    /// exFAT or ext file system that nothing has mounted. <c>params.device</c> names it.
+    /// </summary>
+    [ErrorStatus(HttpStatusCode.NotFound)]
+    public const string StorageUsbNotFound = "storage.usb.not_found";
+
+    /// <summary>The USB stick is write-protected, so the key cannot be written to it; <c>params.stick</c> names it.</summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string StorageUsbReadOnly = "storage.usb.read_only";
+
+    /// <summary>
+    /// The USB stick could not be mounted (a damaged file system, or the stick was pulled); <c>params.stick</c> names it and
+    /// <c>params.reason</c> is what <c>mount</c> said. Nothing on the stick was changed.
+    /// </summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string StorageUsbUnreadable = "storage.usb.unreadable";
+
+    /// <summary>
+    /// The key could not be written to the USB stick, or not read back the same (the stick is full, write-protected by its
+    /// file system, broken or was pulled). Do not rely on this stick; <c>params.stick</c> names it and
+    /// <c>params.reason</c> says what failed.
+    /// </summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string StorageUsbWriteFailed = "storage.usb.write_failed";
+
+    /// <summary>The pool is not encrypted by Pithyx (its <c>&lt;pool&gt;/pithyx</c> has no key of its own); <c>params.name</c> is the pool.</summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string StoragePoolNotEncrypted = "storage.pool.not_encrypted";
+
+    /// <summary>The pool is locked: unlock it with its key first. <c>params.name</c> is the pool.</summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string StoragePoolLocked = "storage.pool.locked";
+
+    /// <summary>
+    /// The pool is unlocked already and no key was given to keep in the key vault: type the key to keep it there (it is
+    /// checked first), or change the key, which stores the new one. <c>params.name</c> is the pool.
+    /// </summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string StoragePoolNotLocked = "storage.pool.not_locked";
 
     /// <summary>A device of the pool is on no disk the daemon knows, so the disk guard cannot check it; <c>params.device</c> names it.</summary>
     [ErrorStatus(HttpStatusCode.Conflict)]
@@ -1382,6 +1626,14 @@ public static class ErrorCodes
     /// <summary>The system does not know the time zone; <c>params.zone</c> is the name that was sent.</summary>
     [ErrorStatus(HttpStatusCode.BadRequest)]
     public const string SystemTimeZoneInvalid = "system.time.zone_invalid";
+
+    /// <summary>A UPS setting is out of range or malformed; <c>params.field</c> names it (mode, host, port, name, username, password, batteryLow or runtimeLow).</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string SystemUpsInvalid = "system.ups.invalid";
+
+    /// <summary>A UPS on USB needs the NUT server, which is not installed on this machine.</summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string SystemUpsUnavailable = "system.ups.unavailable";
 
     /// <summary>The uploaded certificate has not started yet or has ended; <c>params.notAfter</c> is its end.</summary>
     [ErrorStatus(HttpStatusCode.BadRequest)]

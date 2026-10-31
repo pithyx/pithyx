@@ -1,5 +1,5 @@
 {
-  "inputsHash": "3c35b9f403bfeddedb2a67359a3e4fbaece51249160c5e4d0ca686fd4fd9b9d3",
+  "inputsHash": "0b3a237feb5e415f9147c740e85328a7c9b6d13a61393027ea1453abf0197dc6",
   "entries": [
     {
       "name": "@babel/runtime",
@@ -212,11 +212,39 @@
       "licenseFile": "licenses/generated/c1e6e2665635.txt"
     },
     {
+      "name": "BouncyCastle.Cryptography",
+      "version": "2.7.0",
+      "license": "MIT",
+      "source": "https://www.bouncycastle.org/stable/nuget/csharp/website",
+      "licenseFile": "licenses/generated/be0592a6c76f.txt"
+    },
+    {
+      "name": "Certes",
+      "version": "4.1.0",
+      "license": "MIT",
+      "source": "https://github.com/fszlin/certes",
+      "licenseFile": "licenses/generated/cb4b2e6d2533.txt"
+    },
+    {
       "name": "Dapper",
       "version": "2.1.89",
       "license": "Apache-2.0",
       "source": "https://dapperlib.dev/",
       "licenseFile": "licenses/generated/94e43ffa7562.txt"
+    },
+    {
+      "name": "Fido2",
+      "version": "4.3.1",
+      "license": "MIT",
+      "source": "https://github.com/passwordless-lib/fido2-net-lib",
+      "licenseFile": "licenses/generated/6a65e771170f.txt"
+    },
+    {
+      "name": "Fido2.Models",
+      "version": "4.3.1",
+      "license": "MIT",
+      "source": "https://github.com/passwordless-lib/fido2-net-lib",
+      "licenseFile": "licenses/generated/e0c250c8de68.txt"
     },
     {
       "name": "Humanizer.Core",
@@ -254,11 +282,32 @@
       "licenseFile": "licenses/generated/508a76d18635.txt"
     },
     {
+      "name": "MailKit",
+      "version": "4.18.2",
+      "license": "MIT",
+      "source": "http://www.mimekit.net/",
+      "licenseFile": "licenses/generated/857ffbd94c5c.txt"
+    },
+    {
       "name": "Microsoft.AspNetCore.OpenApi",
       "version": "10.0.12",
       "license": "MIT",
       "source": "https://asp.net/",
       "licenseFile": "licenses/generated/fcc7466b3a24.txt"
+    },
+    {
+      "name": "Microsoft.Bcl.Memory",
+      "version": "9.0.14",
+      "license": "MIT",
+      "source": "https://dot.net/",
+      "licenseFile": "licenses/generated/d7a68596ab69.txt"
+    },
+    {
+      "name": "Microsoft.Bcl.TimeProvider",
+      "version": "8.0.1",
+      "license": "MIT",
+      "source": "https://dot.net/",
+      "licenseFile": "licenses/generated/d7a68596ab69.txt"
     },
     {
       "name": "Microsoft.Data.Sqlite",
@@ -282,11 +331,46 @@
       "licenseFile": "licenses/generated/fcc7466b3a24.txt"
     },
     {
+      "name": "Microsoft.IdentityModel.Abstractions",
+      "version": "8.2.0",
+      "license": "MIT",
+      "source": "https://github.com/AzureAD/azure-activedirectory-identitymodel-extensions-for-dotnet",
+      "licenseFile": "licenses/generated/fcc7466b3a24.txt"
+    },
+    {
+      "name": "Microsoft.IdentityModel.JsonWebTokens",
+      "version": "8.2.0",
+      "license": "MIT",
+      "source": "https://github.com/AzureAD/azure-activedirectory-identitymodel-extensions-for-dotnet",
+      "licenseFile": "licenses/generated/fcc7466b3a24.txt"
+    },
+    {
+      "name": "Microsoft.IdentityModel.Logging",
+      "version": "8.2.0",
+      "license": "MIT",
+      "source": "https://github.com/AzureAD/azure-activedirectory-identitymodel-extensions-for-dotnet",
+      "licenseFile": "licenses/generated/fcc7466b3a24.txt"
+    },
+    {
+      "name": "Microsoft.IdentityModel.Tokens",
+      "version": "8.2.0",
+      "license": "MIT",
+      "source": "https://github.com/AzureAD/azure-activedirectory-identitymodel-extensions-for-dotnet",
+      "licenseFile": "licenses/generated/fcc7466b3a24.txt"
+    },
+    {
       "name": "Microsoft.OpenApi",
       "version": "2.12.0",
       "license": "MIT",
       "source": "https://github.com/Microsoft/OpenAPI.NET",
       "licenseFile": "licenses/generated/fcc7466b3a24.txt"
+    },
+    {
+      "name": "MimeKit",
+      "version": "4.18.2",
+      "license": "MIT",
+      "source": "https://www.mimekit.net/",
+      "licenseFile": "licenses/generated/857ffbd94c5c.txt"
     },
     {
       "name": "NSec.Cryptography",
@@ -413,6 +497,13 @@
       "license": "MIT",
       "source": "https://dot.net/",
       "licenseFile": "licenses/generated/d7a68596ab69.txt"
+    },
+    {
+      "name": "System.Security.Cryptography.Pkcs",
+      "version": "10.0.13",
+      "license": "MIT",
+      "source": "https://dot.net/",
+      "licenseFile": "licenses/generated/fcc7466b3a24.txt"
     },
     {
       "name": "YamlDotNet",

@@ -1,13 +1,13 @@
 ---
 title: 'Security'
-description: 'Transport, open ports, physical access, SSH, two-factor sign-in, the recovery key and what leaves the box.'
+description: 'Transport, open ports, physical access, SSH, two-factor sign-in, passkeys, the recovery key, apps with root access and what leaves the box.'
 status: ready
 audience: admin
 sidebar:
   order: 9
 ---
 
-Pithyx keeps everything on the box: no telemetry, no cloud account, no phone-home. The web desktop speaks HTTPS with a certificate from the box's own certificate authority. This page covers transport, open ports, physical access, SSH, two-factor sign-in, the recovery key and the few connections the box makes on its own.
+Pithyx keeps everything on the box: no telemetry, no cloud account, no phone-home. The web desktop speaks HTTPS with a certificate from the box's own certificate authority. This page covers transport, open ports, physical access, SSH, two-factor sign-in, passkeys, the recovery key, apps with root access and the few connections the box makes on its own.
 
 ## HTTPS and certificates
 
@@ -29,7 +29,7 @@ Whoever can use the box's console, in person or through remote management (BMC, 
 
 Each box writes its own ZFS host id during the installation, so two boxes installed from the same stick never claim to be the same system. A pool from before a reinstall therefore counts as used by another system and needs the forced import (see [Recovery](/docs/install/recovery/#importing-the-pools-again)).
 
-Pool encryption is not available in this version; the storage wizard says it comes with the key vault. A key kept in a vault on the system disk protects only against stolen disks, not against someone who has the whole box or its console.
+A pool can be encrypted when it is created ([Encryption](/docs/admin/storage/#encryption)). With its key in the key vault on the system disk, the box unlocks it at every start: that protects only against stolen disks, not against someone who has the whole box or its console. A pool unlocked by hand after every start also protects the data on a stolen box.
 
 ## SSH
 
@@ -44,13 +44,28 @@ The administrator you created in the installer is in the group `sudo` and gets r
 
 ## Two-factor sign-in
 
-Every user can turn on two-factor sign-in (TOTP) in the account menu under **Two-factor authentication**: scan the QR code or enter the key, enter a code, choose **Turn on**, and keep the 10 recovery codes shown once; each works once. The codes use SHA-1, 6 digits and 30 seconds. At sign-in, enter the code or choose "Use a recovery code instead"; the challenge is valid for 5 minutes. Turning it off needs the password. After 5 failed attempts for one user from one address, or 30 from one address, in 5 minutes, further attempts are refused for a while. Sessions end after 7 days without use or 30 days in total.
+Every user can turn on two-factor sign-in (TOTP) in **Personal settings** under **Two-factor authentication**: scan the QR code or enter the key, enter a code, choose **Turn on**, and keep the 10 recovery codes shown once; each works once. The codes use SHA-1, 6 digits and 30 seconds. At sign-in, enter the code or choose "Use a recovery code instead"; the challenge is valid for 5 minutes. Turning it off needs the password. After 5 failed attempts for one user from one address, or 30 from one address, in 5 minutes, further attempts are refused for a while. Sessions end after 7 days without use or 30 days in total.
 
 SMB, SFTP, WebDAV and FTP use the password only.
 
+## Passkeys
+
+Every user can add passkeys in **Personal settings** under **Passkeys** ([Your account](/docs/user/account/#passkeys)). A passkey replaces both the password and the second factor at the desktop sign-in; file services keep the password. Pithyx asks for discoverable credentials with user verification required (the device's PIN, fingerprint or face) and no attestation. It never asks a metadata service, so nothing leaves the box. Adding one needs the current password; each user has up to 20.
+
+A passkey is bound to the name the box was opened under (the WebAuthn relying party), so it works only there and only over HTTPS on a device that trusts the box; the box refuses passkeys for an address with `auth.passkey.unavailable`. Each sign-in uses a one-time challenge valid for 5 minutes and checks the signature counter. Failed passkey sign-ins count towards the limit of 30 per address in 5 minutes. A deactivated account or one without the desktop sign-in right is refused after the passkey check, as with the password. Resetting a password with the recovery key removes that administrator's passkeys. Passkeys are part of the configuration backup (part **Users and groups**).
+
 ## The recovery key
 
-First setup shows the recovery key once (`PTHX-` followed by 26 characters). It is the only way to reset the administrator password. To use it, choose "Forgot password?" on the sign-in page, then enter the key, the user name of an administrator and a new password. This signs that user out everywhere, turns off two-factor sign-in for that user and issues a new recovery key; the old one stops working. There is one key for the whole box and it is part of the configuration backup. Without the key and the password, the system has to be reinstalled. Other users ask an administrator for a new password.
+First setup shows the recovery key once (`PTHX-` followed by 26 characters). It is the only way to reset the administrator password. To use it, choose "Forgot password?" on the sign-in page, then enter the key, the user name of an administrator and a new password. This signs that user out everywhere, turns off two-factor sign-in and removes the passkeys of that user and issues a new recovery key; the old one stops working. There is one key for the whole box and it is part of the configuration backup. Without the key and the password, the system has to be reinstalled. Other users ask an administrator for a new password.
+
+## Apps with root access
+
+Some apps need a right that is root on the box, today the unfiltered container service `docker.socket.raw` (for example a container manager). Pithyx does not refuse them; granting such a right takes its own red step in the install dialog, the app's name typed in and your password ([Special rights](/docs/admin/apps-and-store/#special-rights)). Once granted:
+
+- The app carries the badge **Root access** in the Store and on its page.
+- **Settings > Security** lists every app with root access and its rights. **Revoke root access** takes the right away at once, without a password; the app's background service restarts without it. Granting it again asks for the full consent.
+- Every other administrator gets the notification "<app> has root access now", also by email or webhook where set up.
+- The app never updates by itself, whatever the update policy says. Read the release notes and install its update with one click on the Store's page **Updates**.
 
 ## What leaves the box
 
@@ -60,6 +75,9 @@ The box sends no data to the Pithyx project. These are the outbound connections 
 - **App catalogs**: git over HTTPS or SSH to each enabled catalog repository (the official and the community catalog are on and fetched from GitHub by default), once a day at the set time with a random delay of up to an hour, when you add a catalog, and on **Check now**. Switch a catalog off to stop it.
 - **Container images** of catalog apps from the registry the catalog names, unless the package carries them.
 - **Time**: with **Time servers** in Settings > **Regional settings** empty, the box uses the Debian defaults through systemd-timesyncd, which contacts public time servers.
+- **Notification channels**: the email server and the webhook addresses set up as [notification channels](/docs/admin/notifications/), when there is something to send or on **Send test**.
+- **Let's Encrypt**: the ACME authority of reverse proxy hosts with a certificate from it, to get and renew the certificate ([Reverse proxy](/docs/admin/reverse-proxy/#lets-encrypt)).
+- **UPS**: the NUT server of a UPS in the network, every 5 seconds ([UPS](/docs/admin/ups/)).
 - **Apps** that you allow the permission "Internet" get a second network with outbound access to the internet; other apps have none. Devices in your local network are reachable only for apps with the permission "Local network".
 
 Logs stay on the box under `/var/log/pithyx/`. Secrets are masked in logs. Passwords are stored as Argon2id hashes.

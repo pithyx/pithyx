@@ -12,7 +12,8 @@ using Pithyx.Daemon.Errors;
 namespace Pithyx.Daemon.Layouts;
 
 /// <summary>
-/// Desktop items per user, shared across devices: app shortcuts and sticky notes on a grid of cells. A change can name
+/// Desktop items per user, shared across devices: shortcuts to apps, files and folders and sticky notes on a grid of
+/// cells. A change can name
 /// the item's version it builds on (If-Match), so a change made on another device in between is refused instead of
 /// overwritten.
 /// </summary>
@@ -29,20 +30,24 @@ public sealed class DesktopItemService(SqliteConnectionFactory connections, Time
     /// <summary>The shortcuts every new user starts with, one below the other in the first column.</summary>
     public static readonly IReadOnlyList<string> DefaultShortcuts = [CoreApps.Files, CoreApps.About];
 
-    /// <summary>New administrators also get Storage and Settings, which only administrators can open.</summary>
-    public static readonly IReadOnlyList<string> DefaultAdminShortcuts = [CoreApps.Files, CoreApps.Storage, CoreApps.Settings, CoreApps.About];
+    /// <summary>
+    /// New administrators also get Settings and the Resource Monitor, which only administrators can open. Storage is a
+    /// group of Settings since D402; the desktop hides shortcuts to it that were placed before.
+    /// </summary>
+    public static readonly IReadOnlyList<string> DefaultAdminShortcuts = [CoreApps.Files, CoreApps.Settings, CoreApps.Monitor, CoreApps.About];
 
     private const string SelectColumns =
         """
         SELECT id AS Id, kind AS Kind, json_extract(data, '$.app') AS App, json_extract(data, '$.name') AS Name,
-            json_extract(data, '$.text') AS Text, grid_column AS GridColumn, grid_row AS GridRow, version AS Version
+            json_extract(data, '$.text') AS Text, json_extract(data, '$.share') AS Share, json_extract(data, '$.path') AS Path,
+            grid_column AS GridColumn, grid_row AS GridRow, version AS Version
         FROM desktop_items
         """;
 
     public async Task<IReadOnlyList<DesktopItem>> ListAsync(long userId, CancellationToken cancellationToken)
     {
         await using var connection = await connections.OpenAsync(cancellationToken);
-        var rows = await connection.QueryAsync<ItemRow>($"{SelectColumns} WHERE user_id = @userId AND kind IN ('shortcut', 'note') ORDER BY grid_column, grid_row, id", new { userId });
+        var rows = await connection.QueryAsync<ItemRow>($"{SelectColumns} WHERE user_id = @userId AND kind IN ('shortcut', 'note', 'file') ORDER BY grid_column, grid_row, id", new { userId });
         return [.. rows.Select(ToItem)];
     }
 
@@ -51,6 +56,10 @@ public sealed class DesktopItemService(SqliteConnectionFactory connections, Time
         ArgumentNullException.ThrowIfNull(item);
         CheckCell(item.Column, item.Row);
         string data;
+        if (item.Kind is not DesktopItemKind.File && (item.Share is not null || item.Path is not null))
+        {
+            throw new PithyxException(ErrorCodes.DesktopItemInvalid);
+        }
         if (item.Kind == DesktopItemKind.Shortcut)
         {
             if (item.Text is not null || !AppId.IsValid(item.App))
@@ -58,6 +67,14 @@ public sealed class DesktopItemService(SqliteConnectionFactory connections, Time
                 throw new PithyxException(ErrorCodes.DesktopItemInvalid);
             }
             data = ShortcutData(item.App!, CheckName(item.Name));
+        }
+        else if (item.Kind == DesktopItemKind.File)
+        {
+            if (item.App is not null || item.Text is not null || item.Share is not { } share)
+            {
+                throw new PithyxException(ErrorCodes.DesktopItemInvalid);
+            }
+            data = FileData(share, CheckPath(item.Path), CheckName(item.Name));
         }
         else
         {
@@ -102,7 +119,7 @@ public sealed class DesktopItemService(SqliteConnectionFactory connections, Time
         await using var connection = await connections.OpenAsync(cancellationToken);
         await using var transaction = await connection.BeginTransactionAsync(IsolationLevel.Serializable, cancellationToken);
         var current = await connection.QuerySingleOrDefaultAsync<ItemRow>(
-            $"{SelectColumns} WHERE id = @id AND user_id = @userId AND kind IN ('shortcut', 'note')",
+            $"{SelectColumns} WHERE id = @id AND user_id = @userId AND kind IN ('shortcut', 'note', 'file')",
             new { id, userId },
             transaction)
             ?? throw new PithyxException(ErrorCodes.DesktopItemNotFound);
@@ -124,6 +141,14 @@ public sealed class DesktopItemService(SqliteConnectionFactory connections, Time
             }
             data = ShortcutData(item.App!, change.Name is null ? item.Name : CheckName(change.Name));
         }
+        else if (item.Kind == DesktopItemKind.File)
+        {
+            if (change.Text is not null || item.Share is not { } share || item.Path is null)
+            {
+                throw new PithyxException(ErrorCodes.DesktopItemInvalid);
+            }
+            data = FileData(share, item.Path, change.Name is null ? item.Name : CheckName(change.Name));
+        }
         else
         {
             if (change.Name is not null)
@@ -138,7 +163,8 @@ public sealed class DesktopItemService(SqliteConnectionFactory connections, Time
             UPDATE desktop_items SET data = @data, grid_column = @column, grid_row = @row, version = version + 1, updated_at = @now
             WHERE id = @id
             RETURNING id AS Id, kind AS Kind, json_extract(data, '$.app') AS App, json_extract(data, '$.name') AS Name,
-                json_extract(data, '$.text') AS Text, grid_column AS GridColumn, grid_row AS GridRow, version AS Version
+                json_extract(data, '$.text') AS Text, json_extract(data, '$.share') AS Share, json_extract(data, '$.path') AS Path,
+                grid_column AS GridColumn, grid_row AS GridRow, version AS Version
             """,
             new { id, data, column, row, now },
             transaction);
@@ -178,7 +204,22 @@ public sealed class DesktopItemService(SqliteConnectionFactory connections, Time
         }
     }
 
-    /// <summary>Trims the label; an empty one means the app's own name.</summary>
+    /// <summary>A target's path in its share, normalized; the share itself cannot be a target.</summary>
+    private static string CheckPath(string? path)
+    {
+        string normalized;
+        try
+        {
+            normalized = Files.FsPath.Normalize(path);
+        }
+        catch (PithyxException error)
+        {
+            throw new PithyxException(ErrorCodes.DesktopItemInvalid, null, error);
+        }
+        return normalized.Length > 0 ? normalized : throw new PithyxException(ErrorCodes.DesktopItemInvalid);
+    }
+
+    /// <summary>Trims the label; an empty one means the app's or the target's own name.</summary>
     private static string? CheckName(string? name)
     {
         var trimmed = name?.Trim();
@@ -201,19 +242,41 @@ public sealed class DesktopItemService(SqliteConnectionFactory connections, Time
     private static string ShortcutData(string app, string? name) =>
         JsonSerializer.Serialize(name is null ? new Dictionary<string, string> { ["app"] = app } : new Dictionary<string, string> { ["app"] = app, ["name"] = name }, _dataOptions);
 
+    private static string FileData(long share, string path, string? name)
+    {
+        var data = new Dictionary<string, object> { ["share"] = share, ["path"] = path };
+        if (name is not null)
+        {
+            data["name"] = name;
+        }
+        return JsonSerializer.Serialize(data, _dataOptions);
+    }
+
     private static string NoteData(string text) => JsonSerializer.Serialize(new Dictionary<string, string> { ["text"] = text }, _dataOptions);
 
-    private static string KindName(DesktopItemKind kind) => kind == DesktopItemKind.Shortcut ? "shortcut" : "note";
+    private static string KindName(DesktopItemKind kind) => kind switch
+    {
+        DesktopItemKind.Shortcut => "shortcut",
+        DesktopItemKind.File => "file",
+        _ => "note",
+    };
 
     private static DesktopItem ToItem(ItemRow row) => new(
         row.Id,
-        row.Kind == "shortcut" ? DesktopItemKind.Shortcut : DesktopItemKind.Note,
+        row.Kind switch
+        {
+            "shortcut" => DesktopItemKind.Shortcut,
+            "file" => DesktopItemKind.File,
+            _ => DesktopItemKind.Note,
+        },
         row.App,
         row.Name,
         row.Text,
         (int)row.GridColumn,
         (int)row.GridRow,
-        row.Version);
+        row.Version,
+        row.Share,
+        row.Path);
 
     // Properties instead of a constructor: json_extract reports no column type when it yields null.
     private sealed class ItemRow
@@ -223,6 +286,8 @@ public sealed class DesktopItemService(SqliteConnectionFactory connections, Time
         public string? App { get; init; }
         public string? Name { get; init; }
         public string? Text { get; init; }
+        public long? Share { get; init; }
+        public string? Path { get; init; }
         public long GridColumn { get; init; }
         public long GridRow { get; init; }
         public long Version { get; init; }

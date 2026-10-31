@@ -5,5 +5,31 @@
   },
   "search": {
     "clear": "Suche leeren"
+  },
+  "frame": {
+    "back": "Zurück"
+  },
+  "nav": {
+    "search": "Suchen",
+    "noResults": "Nichts passt zur Suche."
+  },
+  "select": {
+    "placeholder": "Auswählen"
+  },
+  "actionBar": {
+    "apply": "Übernehmen",
+    "discard": "Verwerfen"
+  },
+  "card": {
+    "details": "Details"
+  },
+  "attention": {
+    "title": "Braucht Aufmerksamkeit",
+    "warning": "Warnung",
+    "danger": "Fehler",
+    "info": "Hinweis"
+  },
+  "details": {
+    "resize": "Breite der Details"
   }
 }

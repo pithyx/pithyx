@@ -15,11 +15,11 @@ A shared folder is a ZFS dataset of its own on a pool, with its own space, right
 2. Enter a **Name**, pick the **Pool** and, if you like, a **Description (optional)**.
 3. Check **Show commands** if you want to see what runs, then choose **Create shared folder**.
 
-If no pool exists, the dialog says "No pool is ready for shared folders yet. Create a pool in Storage first."
+If no pool exists, the dialog says "No pool is ready for shared folders yet. Create a pool under Storage first." **Go to the pools…** opens Settings > **Pools**.
 
 The name has 1 to 64 characters: letters, digits, spaces, dots, dashes and underscores, not starting with a dot, unique without regard to case ([`fs.share.invalid`](/docs/reference/errors/#fs.share.invalid), [`fs.share.exists`](/docs/reference/errors/#fs.share.exists)). The description has at most 200 characters on one line. The names `global`, `home`, `homes`, `printers`, `print$` and `ipc$` are reserved ([`fs.share.name_reserved`](/docs/reference/errors/#fs.share.name_reserved)); `home` and `homes` are the [home folders](/docs/admin/home-folders/). The dataset gets a name derived from the folder name (lowercase, accents folded, other characters turned into `-`) at `<pool>/pithyx/shares/<name>`, mounted at `/<pool>/<dataset-name>`.
 
-New folders start with restore points on. To limit the size of a shared folder, set a quota on its dataset in Storage (**Limits…**); the dialog has no size field.
+New folders start with restore points on. To limit the size of a shared folder, set a quota on its dataset under Settings > **Advanced storage** > **Show datasets** (**Limits…**); the dialog has no size field.
 
 :::note
 Registering an existing folder as a shared folder works only on development machines ([`fs.share.folder_dev_only`](/docs/reference/errors/#fs.share.folder_dev_only)). On a normal box every shared folder is a new dataset.
@@ -27,20 +27,20 @@ Registering an existing folder as a shared folder works only on development mach
 
 ## Rules for folders
 
-![The dialog Edit Photos with the network access switches and the rights: the group family with Read and write, the users with the access they end up with](../../../../assets/screenshots/shared-folders-edit.webp)
+![The dialog Edit Family with its name and description, the network access switches and the rights of the groups](../../../../assets/screenshots/shared-folders-edit.webp)
 
 _The edit dialog of a shared folder: network access per protocol and rights per group and user._
 
 The edit dialog has three parts.
 
-- **Name and description.** Renaming changes only the name users see; the dataset keeps its name.
+- **Name and description.** Renaming changes only the name users see; the dataset keeps its name. Like everything else in the dialog, they apply at once: when you leave the field or press Enter.
 - **Rights.** Per user and per group: no access, read, or read and write. A user gets the most that it or one of its groups is given, and administrators can always read and change everything. Every user is in the group users, shown as "every user". Changes apply right away. See [Permissions](/docs/admin/permissions/).
 - **Network access.** Switches **Offer over SMB**, **Show over SFTP**, **Offer over WebDAV** and **Offer over FTP**, all on by default, and **Require encryption over SMB** (off by default; older clients without SMB encryption cannot connect then). A user needs both the protocol right and the folder switch. See [File services](/docs/admin/file-services/).
 
-The overview table shows Name, Pool, Used, Description, Rights and Restore points. A user without any right does not see the folder at all ([`fs.share.not_found`](/docs/reference/errors/#fs.share.not_found)). If its pool is not connected, stopped or not mounted, the folder is unavailable ([`fs.share.unavailable`](/docs/reference/errors/#fs.share.unavailable)).
+The table shows each folder's name with its path and description, its pool with the space it uses, its rights and the restore points, and sorts by a click on a heading. Select a folder for **Edit** and **Delete…** in the toolbar, or double-click it to edit it. A user without any right does not see the folder at all ([`fs.share.not_found`](/docs/reference/errors/#fs.share.not_found)). If its pool is not connected, stopped or not mounted, the folder is unavailable ([`fs.share.unavailable`](/docs/reference/errors/#fs.share.unavailable)).
 
 :::danger[Deleting a shared folder]
-Deleting asks you to type the folder name and to choose: **Keep the data** (the dataset and files stay and remain visible in Storage) or **Delete the data for good** (dataset, files and every snapshot, no undo).
+Deleting asks you to type the folder name and to choose: **Keep the data** (the dataset and files stay and remain visible under Storage) or **Delete the data for good** (dataset, files and every snapshot, no undo).
 :::
 
 ## Recycle bin and retention
@@ -55,4 +55,4 @@ Restore points are daily snapshots; the newest 7 are kept (a box that was off fo
 
 ## Encryption over SMB
 
-The per-folder switch **Require encryption over SMB** sets `server smb encrypt = required` for that folder; otherwise a connection is encrypted when the client asks for it. The server always requires SMB 3 and signing. This is separate from pool encryption, which is not available (see [Storage](/docs/admin/storage/#encryption)).
+The per-folder switch **Require encryption over SMB** sets `server smb encrypt = required` for that folder; otherwise a connection is encrypted when the client asks for it. The server always requires SMB 3 and signing. This is separate from pool encryption, which encrypts the data on the disks (see [Storage](/docs/admin/storage/#encryption)).

@@ -186,9 +186,9 @@ export function contextChanges(
 
 /**
  * What the loading placeholder of an app window shows: nothing, the app's icon and name, also the backend's start, or
- * why the backend cannot start (D360).
+ * why the backend cannot start (D360, D387).
  */
-export type LoadingPhase = 'ready' | 'loading' | 'starting' | 'storage' | 'pool';
+export type LoadingPhase = 'ready' | 'loading' | 'starting' | 'storage' | 'pool' | 'device';
 
 /**
  * The placeholder stays until the app connected, or with the manifest's `window.loading.untilReady` until it called
@@ -208,7 +208,9 @@ export function loadingPhase(state: {
   }
   if (
     state.backendStatus === 'unavailable' &&
-    (state.backendReason === 'storage' || state.backendReason === 'pool')
+    (state.backendReason === 'storage' ||
+      state.backendReason === 'pool' ||
+      state.backendReason === 'device')
   ) {
     return state.backendReason;
   }

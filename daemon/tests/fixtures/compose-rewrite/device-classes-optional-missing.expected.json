@@ -1,0 +1,55 @@
+{
+  "name": "pithyx-com_example_chat",
+  "services": {
+    "server": {
+      "image": "sha256:1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c",
+      "devices": [
+        "/dev/ttyUSB0:/dev/ttyUSB0:rw",
+        "/dev/net/tun:/dev/net/tun:rw"
+      ],
+      "pull_policy": "never",
+      "user": "40001:40001",
+      "userns_mode": "host",
+      "group_add": [
+        "20"
+      ],
+      "networks": [
+        "app"
+      ],
+      "restart": "no",
+      "logging": {
+        "driver": "journald",
+        "options": {
+          "labels": "com.pithyx.app,com.pithyx.service",
+          "tag": "{{.Name}}"
+        }
+      },
+      "pids_limit": 1024,
+      "oom_score_adj": 500,
+      "security_opt": [
+        "no-new-privileges:true"
+      ],
+      "cap_drop": [
+        "ALL"
+      ],
+      "labels": {
+        "com.pithyx.app": "com.example.chat",
+        "com.pithyx.service": "server",
+        "com.pithyx.version": "1.2.0"
+      }
+    }
+  },
+  "networks": {
+    "app": {
+      "name": "pithyx-com_example_chat",
+      "driver": "bridge",
+      "internal": true,
+      "driver_opts": {
+        "com.docker.network.bridge.name": "px-1"
+      },
+      "labels": {
+        "com.pithyx.app": "com.example.chat"
+      }
+    }
+  }
+}

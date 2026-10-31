@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.IO.Compression;
 using System.Text;
+using System.Text.Json;
 
 namespace Pithyx.Daemon.Tests.Apps.Packages;
 
@@ -179,18 +180,30 @@ internal sealed class TarBuilder
         return withLock ? builder.File("backend/images.lock.json", lockJson ?? BackendLock()) : builder;
     }
 
-    public static string Manifest(string id = "com.example.probe", string version = "1.0.0", string permissions = "\"notifications\"", string extra = "") =>
-        $$"""
-        {
-          "manifestVersion": 1,
-          "id": "{{id}}",
-          "version": "{{version}}",
-          "name": { "en": "Probe", "de": "Sonde" },
-          "author": { "name": "Example" },
-          "entry": "frontend/index.html",
-          "sdk": "^1.0.0",
-          "permissions": [{{permissions}}],
-          "window": { "instances": "single", "defaultSize": { "width": 800, "height": 600 }, "minSize": { "width": 320, "height": 240 } }{{extra}}
-        }
-        """;
+    /// <summary>
+    /// A manifest of version 2 whose <c>permissions</c> map has an entry with a reason for every name of
+    /// <paramref name="permissions"/> (quoted names, comma-separated, elevated rights too), <c>optional</c> on the devices
+    /// of <paramref name="optionalDevices"/>.
+    /// </summary>
+    public static string Manifest(string id = "com.example.probe", string version = "1.0.0", string permissions = "\"notifications\"", string extra = "", string optionalDevices = "")
+    {
+        var optional = JsonSerializer.Deserialize<string[]>($"[{optionalDevices}]")!;
+        var map = string.Join(", ", JsonSerializer.Deserialize<string[]>($"[{permissions}]")!.Select(name =>
+            $$"""{{JsonSerializer.Serialize(name)}}: { "reason": { "en": "Needed by the probe." }{{(name.StartsWith("device:", StringComparison.Ordinal) && optional.Contains(name["device:".Length..]) ? ", \"optional\": true" : "")}} }"""));
+        return $$"""
+            {
+              "manifestVersion": 2,
+              "id": "{{id}}",
+              "version": "{{version}}",
+              "name": { "en": "Probe", "de": "Sonde" },
+              "author": { "name": "Example" },
+              "entry": "frontend/index.html",
+              "sdk": "^1.0.0",
+              "arch": ["amd64", "arm64"],
+              "source": "private",
+              "permissions": { {{map}} },
+              "window": { "instances": "single", "defaultSize": { "width": 800, "height": 600 }, "minSize": { "width": 320, "height": 240 } }{{extra}}
+            }
+            """;
+    }
 }

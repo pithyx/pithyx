@@ -26,6 +26,7 @@ const chat: InstalledApp = {
   permissions: [],
   logLevel: 'info',
   fileHandlers: [],
+  fileActions: [],
 };
 
 afterEach(() => {
@@ -34,7 +35,7 @@ afterEach(() => {
 
 describe('isAppAllowed', () => {
   it('gives administration apps to administrators only', () => {
-    expect(isAppAllowed(coreAppIds.storage, user)).toBe(false);
+    expect(isAppAllowed(coreAppIds.monitor, user)).toBe(false);
     expect(isAppAllowed(coreAppIds.settings, admin)).toBe(true);
     expect(isAppAllowed(coreAppIds.store, user)).toBe(false);
     expect(isAppAllowed(coreAppIds.store, admin)).toBe(true);
@@ -59,6 +60,7 @@ describe('isAppAllowed', () => {
   it('gives the rest to everybody and nothing unknown', () => {
     expect(isAppAllowed(coreAppIds.about, user)).toBe(true);
     expect(isAppAllowed(coreAppIds.about, undefined)).toBe(true);
+    expect(isAppAllowed(coreAppIds.preferences, user)).toBe(true);
     expect(isAppAllowed(coreAppIds.files, undefined)).toBe(false);
     expect(isAppAllowed('nope', admin)).toBe(false);
   });

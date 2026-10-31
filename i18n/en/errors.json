@@ -5,6 +5,9 @@
       "not_found": "No app with the id {id} is installed.",
       "no_previous": "{id} has no version before its last update to go back to."
     },
+    "arch": {
+      "unsupported": "This app runs only on {supported}, not on this box ({arch})."
+    },
     "backend": {
       "endpoint_unknown": "The app has no backend endpoint named {endpoint}.",
       "missing": "The app has no backend.",
@@ -22,11 +25,19 @@
       "value_invalid": "The app's Compose file has a value Pithyx refuses at {path}: {reason, select, required {it is missing} type {it has the wrong type} format {its format is not valid} range {it is out of range} unpinned {the image is not pinned with @sha256} interpolation {it uses $ for a variable (write $$ for a dollar sign)} no_value {the variable has no value} duplicate {it appears twice} reserved {it is reserved for Pithyx} host_path {it mounts a folder of the host} anonymous {the volume has no name} cycle {the services depend on each other in a circle} image_and_build {the service has both image and build, use one of them} other {it is not valid}}.",
       "yaml_invalid": "The app's Compose file cannot be read: {reason, select, too_large {it is larger than 64 KB} not_utf8 {it is not UTF-8} character {it contains a tab or another character that is not allowed} syntax {it is not valid YAML} documents {it must contain exactly one document} too_deep {it is nested too deeply} directive {it contains a YAML directive} anchor {it uses anchors or aliases} tag {it uses YAML tags} duplicate_key {{path} appears twice} merge_key {it uses a merge key at {path}} key_not_string {a key at {path} is not text} other {it breaks a rule for Compose files}}."
     },
+    "device": {
+      "unavailable": "The device {path} the app needs is not there or cannot be given to an app, so its background service does not start.",
+      "missing": "The app needs the device {path}, and none is plugged in. Plug in the device and try again."
+    },
     "docker": {
       "unavailable": "The container service does not answer, so app backends cannot run right now."
     },
     "elevated": {
-      "unsupported": "The app asks for the right {right}, which this version of Pithyx does not grant."
+      "unsupported": "The app asks for the right {right}, which Pithyx does not grant to any app.",
+      "root_conflict": "The app runs its background service as root and asks for {right}. That right runs the service directly on the box, where root would control the whole box, so Pithyx refuses the combination.",
+      "root_required": "The app asks for {right}, but only a background service that runs as root can use a capability.",
+      "backend_missing": "The app asks for {right}, a right only a background service can use, but it has no background service.",
+      "confirmation_required": "{right} gives the app full control of the box. Type the app's name in the install dialog to confirm it."
     },
     "icon": {
       "invalid": "The app's icon cannot be used: {reason, select, too_large {it is larger than 64 KB} malformed {it is not a valid SVG file} not_svg {it is not an SVG image} viewbox {its viewBox is missing or not square} doctype {it contains a DOCTYPE} processing_instruction {it contains a processing instruction} element_forbidden {it contains the element {element}} event_attribute {it contains the event attribute {attribute}} external_href {it links to something outside the file} style_import {its styles use @import} style_url {it loads something outside the file with url()} style_escape {its styles contain escapes} other {it breaks a rule for icons}}."
@@ -41,11 +52,12 @@
       "id_invalid": "The app id {id} is not valid. It is the author's domain reversed plus the app name, for example com.example.chat.",
       "id_reserved": "The app id {id} is reserved for the apps that come with Pithyx.",
       "invalid_json": "The app's manifest (pithyx.json) is not valid JSON.",
+      "permission_missing": "The manifest uses {path}, which needs the permission {permission}. Add it to permissions.",
       "pithyx_invalid": "The Pithyx version range {pithyx} in the manifest is not valid.",
       "reference_unknown": "The manifest refers to {name} at {path}, which it does not declare.",
       "schema_violation": "The app's manifest is not valid at {path} ({keyword}).",
       "sdk_invalid": "The SDK version range {sdk} in the manifest is not valid.",
-      "version_unsupported": "This app needs a newer version of Pithyx (manifest version {version}, this box reads version {supported}).",
+      "version_unsupported": "{version, select, 1 {This app was made for an older version of Pithyx (manifest version 1, this box reads version {supported}). Ask its author for a new version.} other {This app needs a newer version of Pithyx (manifest version {version}, this box reads version {supported}).}}",
       "window_size_invalid": "The app's smallest window size is larger than its default size."
     },
     "mapping": {
@@ -53,7 +65,7 @@
     },
     "package": {
       "invalid": "The file is not a valid app package: {reason, select, gzip {it is not gzip-compressed or it is damaged} format {it is not a tar archive this box reads} checksum {a header is damaged} truncated {it ends too early} trailing_data {there is data after its end} entry_type {{path} is a link or a special file} extended_header {it has an extended header that is not allowed} name_mismatch {the long name of {path} does not match its own name} other {it cannot be read}}.",
-      "layout_invalid": "The app package is not valid: {reason, select, missing {{path} is missing} unsafe {the path {path} is not allowed} duplicate {{path} is in it twice} unexpected {{path} does not belong in an app package} reserved {{path} uses a name reserved for the backend} other {{path} is not allowed}}.",
+      "layout_invalid": "The app package is not valid: {reason, select, missing {{path} is missing} unsafe {the path {path} is not allowed} duplicate {{path} is in it twice} unexpected {{path} does not belong in an app package} reserved {{path} uses a name reserved for the backend} too_large {{path} is larger than 1 MiB} other {{path} is not allowed}}.",
       "lock_invalid": "The app's list of backend images does not fit ({reason, select, missing {it is missing} invalid {it is not valid} stale {it does not match the backend} other {nothing for {architecture}}}).",
       "not_found": "The checked package is no longer there. Upload the file again.",
       "too_large": "The app package is too large: {reason, select, size {the file may have at most {limit} MB} unpacked {its files may have at most {limit} MB together} files {it may have at most {limit} files} manifest {pithyx.json may have at most {limit} KB} other {it exceeds a limit}}.",
@@ -97,6 +109,13 @@
     "display_name": {
       "invalid": "The display name can have at most {maxLength} characters and no control characters."
     },
+    "passkey": {
+      "invalid": "The passkey was not accepted. It may have been removed or belong to another name of the box.",
+      "limit": "You can have at most {max} passkeys. Remove one first.",
+      "name_invalid": "The name needs 1 to {maxLength} characters and no control characters.",
+      "not_found": "This passkey does not exist (any more).",
+      "unavailable": "Passkeys need the box opened by its name over HTTPS, not as {host}."
+    },
     "password": {
       "too_common": "This password is too well known. Choose one that is harder to guess.",
       "too_long": "The password can have at most {maxLength} characters.",
@@ -116,6 +135,9 @@
     },
     "setup": {
       "already_done": "This system has already been set up."
+    },
+    "step_up": {
+      "required": "Confirm with your password first. The confirmation holds for five minutes."
     },
     "totp": {
       "already_enabled": "Two-factor authentication is already enabled.",
@@ -205,7 +227,7 @@
       "path_taken": "Something else is already mounted at {path}. Choose another name.",
       "pool_not_prepared": "The pool {pool} has no place for shared folders (pithyx/shares), so none can be created on it.",
       "read_only": "You can only read in this share.",
-      "unavailable": "{name} cannot be opened right now: {reason, select, pool_missing {its pool is not connected} pool_unavailable {its pool stopped because disks are missing} other {its folder is not mounted}}. It comes back on its own once its disks are back."
+      "unavailable": "{name} cannot be opened right now: {reason, select, pool_missing {its pool is not connected. It comes back on its own once its disks are back} pool_unavailable {its pool stopped because disks are missing. It comes back on its own once its disks are back} locked {its pool is locked. An administrator unlocks it in Settings > Storage with the pool's key} other {its folder is not mounted}}."
     },
     "thumbnail": {
       "not_found": "There is no preview of this file yet.",
@@ -358,11 +380,30 @@
     }
   },
   "notifications": {
+    "channel": {
+      "invalid": "The channel was not saved: {field, select, name {its name is empty or longer than 60 characters} kind {its kind or level is unknown} recipients {it needs 1 to 10 valid email addresses} url {its address must start with http:// or https:// and may not be the box itself} format {its format is unknown} headers {a header is invalid, reserved or given twice, or there are more than 10} categories {it needs at least one kind of event} other {a value is invalid}}.",
+      "failed": "The channel could not deliver: {detail}",
+      "limit_reached": "There are already {max} channels. Remove one first.",
+      "not_found": "This channel no longer exists."
+    },
+    "language": {
+      "unsupported": "The box cannot write in the language {language}."
+    },
     "message": {
-      "invalid": "The notification was not sent: its {field, select, app {app id is not valid} title {title is empty or longer than {maxLength} characters} other {text is longer than {maxLength} characters}}."
+      "invalid": "The notification was not sent: its {field, select, app {app id is not valid} title {title is empty or longer than {maxLength} characters} category {category is not one the app declares} other {text is longer than {maxLength} characters}}."
     },
     "notification": {
       "not_found": "This notification no longer exists."
+    },
+    "smtp": {
+      "invalid": "The email server was not saved: {field, select, host {its name is empty or invalid} port {the port must be between 1 and 65535} security {the encryption is unknown} username {the user name is too long} password {the password is too long} from {the sender is not a valid email address} to {the address for the test is not a valid email address} other {a value is invalid}}.",
+      "missing": "Email channels need an email server. An administrator sets it up in Settings > Notifications."
+    },
+    "category": {
+      "not_found": "No app you may open has the notification category {category} of {app}."
+    },
+    "event": {
+      "unknown": "There is no notification event {event}."
     }
   },
   "permissions": {
@@ -373,6 +414,24 @@
   "proxy": {
     "access": {
       "denied": "You may not open {host}. An administrator can let you in on the proxy host."
+    },
+    "acme": {
+      "caa": "The DNS of {name} does not allow this authority to issue certificates (CAA record). {detail}",
+      "connection": "The authority could not reach {name} on port 80. Forward port 80 of your router to the box and check the firewall. {detail}",
+      "directory_invalid": "The ACME directory must be an https address.",
+      "dns": "{name} has no public DNS record that points to the box. {detail}",
+      "email_invalid": "Enter a valid email address, or leave the field empty.",
+      "failed": "The authority issued no certificate for {name}. {detail}",
+      "name_not_public": "{name} is not a public domain. Let's Encrypt only certifies names on the internet; use the box's own certificate for it.",
+      "name_rejected": "The authority does not issue certificates for {name}. {detail}",
+      "not_acme": "This host does not use a certificate from Let's Encrypt.",
+      "port_unavailable": "The box does not answer on port 80 here, where Let's Encrypt checks the domain.",
+      "rate_limited": "Too many requests for {name}; the box tries again later. {detail}",
+      "running": "The certificate of this host is being requested already.",
+      "terms_required": "Agree to the terms of service of Let's Encrypt first.",
+      "unauthorized": "Another server answered for {name} on port 80. Point the domain at the box and forward port 80 to it. {detail}",
+      "unreachable": "The ACME authority does not answer ({detail}). Check the box's internet connection.",
+      "wildcard": "{name} is a wildcard. Let's Encrypt certifies wildcards only through DNS, which the box does not do; list each name instead."
     },
     "address": {
       "denied": "Your address may not open this page.",
@@ -477,6 +536,9 @@
       "endpoint_unknown": "The app asked for a backend connection it does not have ({endpoint}).",
       "unreachable": "The app could not reach its backend ({endpoint}). Check the connection to the box."
     },
+    "box": {
+      "unreachable": "The box could not be reached. Check the connection and try again."
+    },
     "method": {
       "unknown": "This version of Pithyx does not support what the app asked for ({method})."
     },
@@ -500,7 +562,7 @@
     },
     "command": {
       "failed": "The storage command {command} failed (exit code {exitCode}). Nothing after it was run; the log has the details.",
-      "timed_out": "{command} did not finish within {minutes, plural, one {# minute} other {# minutes}}. A disk of the pool probably stopped answering and ZFS is waiting for it. Check the disks in Storage. If other pools stop responding too, restart the box."
+      "timed_out": "{command} did not finish within {minutes, plural, one {# minute} other {# minutes}}. A disk of the pool probably stopped answering and ZFS is waiting for it. Check the disks in Settings > Storage. If other pools stop responding too, restart the box."
     },
     "dataset": {
       "compression_invalid": "Pithyx does not set the compression {compression}. Choose off, lz4, zle, zstd (levels 1 to 19) or gzip (levels 1 to 9).",
@@ -523,7 +585,18 @@
       "refused": "The disk may not be used: {reason, select, system_disk {it holds the system} mounted {a file system on it is in use} pool_member {it belongs to a pool} not_test_disk {it is not a declared test disk} other {it is not safe to use}}."
     },
     "encryption": {
-      "unavailable": "Encryption comes with the key vault in the next update. A pool can only be encrypted when it is created, so create it without encryption only if that is fine for its data."
+      "unavailable": "This box cannot encrypt pools. A pool can only be encrypted when it is created, so create it without encryption only if that is fine for its data.",
+      "key_invalid": "This is not a pool key. A pool key starts with PXPK and has 56 more characters; check it for a typo.",
+      "key_wrong": "This key does not unlock pool {name}. It is a pool key, but of another pool or an older one.",
+      "key_required": "Enter the key of pool {name}.",
+      "vault_failed": "The key of pool {name} could not be stored in the key vault on the system disk. The pool is unlocked now; after the next start it waits for its key, so keep the key you stored. Check the system disk in the log, then unlock or change the key again to keep it in the vault.",
+      "not_in_vault": "The key vault holds no key of pool {name}. Only the key you stored yourself can open it."
+    },
+    "usb": {
+      "not_found": "This USB stick cannot take a pool key ({device}): it is gone, or nothing on it is a FAT, exFAT or ext file system that is free to use. Plug it in again, or use another stick.",
+      "read_only": "The USB stick {stick} is write-protected. Switch its write protection off or use another stick.",
+      "unreadable": "The USB stick {stick} could not be opened ({reason}). Nothing on it was changed. Check the stick on a computer, or use another one.",
+      "write_failed": "The key could not be written to the USB stick {stick} ({reason}). Do not rely on this stick: check it on a computer, or use another one, and keep the key you stored."
     },
     "plan": {
       "action_invalid": "Unknown storage action.",
@@ -543,7 +616,10 @@
       "expanding": "Pool {name} is being expanded already. The next disk can be added when that is done.",
       "read_only": "Pool {name} is imported read-only and cannot be changed. Import it for use first.",
       "disks_missing": "Disks of {name} are not connected, so it cannot be destroyed or exported now: the command would stop the pool and hang until the box restarts. Connect the disks again first, or restart the box to forget the pool.",
-      "suspended": "{name} has stopped all reads and writes because too many of its disks are gone. Destroying or exporting it now would hang until the box restarts. Connect the disks again; Pithyx then resumes the pool on its own."
+      "suspended": "{name} has stopped all reads and writes because too many of its disks are gone. Destroying or exporting it now would hang until the box restarts. Connect the disks again; Pithyx then resumes the pool on its own.",
+      "not_encrypted": "Pool {name} is not encrypted.",
+      "locked": "Pool {name} is locked. Unlock it with its key first.",
+      "not_locked": "Pool {name} is unlocked already. To keep its key in the key vault, type the key: it is checked and then kept."
     },
     "schedule": {
       "invalid": "This schedule cannot be set. Choose Off, Weekly or Monthly for an existing pool."
@@ -578,7 +654,7 @@
       "preview_required": "Import pool {name} read-only first and check its datasets, then import it for use."
     },
     "zfs": {
-      "unavailable": "ZFS did not answer in time or reported an error, so Pithyx cannot show what this would change. Try again in a moment. If it keeps happening, a pool may be waiting for disks that are gone: see Storage."
+      "unavailable": "ZFS did not answer in time or reported an error, so Pithyx cannot show what this would change. Try again in a moment. If it keeps happening, a pool may be waiting for disks that are gone: see Settings > Storage."
     }
   },
   "store": {
@@ -629,6 +705,10 @@
       "server_invalid": "“{server}” is neither a host name nor an address.",
       "servers_too_many": "Enter at most {max} time servers.",
       "zone_invalid": "The system does not know the time zone “{zone}”."
+    },
+    "ups": {
+      "invalid": "The UPS setting “{field, select, mode {mode} host {server} port {port} name {UPS name} username {user} password {password} batteryLow {battery limit} runtimeLow {runtime limit} other {{field}}}” is not valid.",
+      "unavailable": "This machine has no NUT server for a UPS on USB."
     }
   },
   "tls": {

@@ -121,6 +121,20 @@ public sealed partial class LogService(
         return new LogPage(entries[..query.Limit], new LogCursor(LogDatabase.Micros(last.Time), last.Id).ToString());
     }
 
+    /// <summary>
+    /// Warnings and errors per source since <paramref name="from"/>, from the current logs; core apps' entries from
+    /// before migration 0022 count under their current source.
+    /// </summary>
+    public async Task<IReadOnlyList<LogCount>> CountsAsync(DateTimeOffset from, CancellationToken cancellationToken)
+    {
+        await using var connection = await store.OpenAsync(cancellationToken);
+        var counts = await LogDatabase.CountsAsync(connection, from);
+        return [.. counts
+            .GroupBy(count => CurrentSource(count.Source), StringComparer.Ordinal)
+            .Select(group => new LogCount(group.Key, group.Sum(count => count.Warnings), group.Sum(count => count.Errors)))
+            .OrderBy(count => count.Source, StringComparer.Ordinal)];
+    }
+
     public async Task<IReadOnlyList<string>> SourcesAsync(CancellationToken cancellationToken)
     {
         var settings = await SettingsAsync(cancellationToken);

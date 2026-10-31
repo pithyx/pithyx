@@ -14,7 +14,7 @@ sidebar:
 <!-- generated:cli-synopsis validate -->
 
 ```sh
-pithyx validate [project folder] [--frontend <folder>]
+pithyx validate [project folder] [--frontend <folder>] [--allow-reserved-id]
 ```
 
 <!-- /generated -->
@@ -23,9 +23,10 @@ pithyx validate [project folder] [--frontend <folder>]
 
 <!-- generated:cli-options validate -->
 
-| Option       | Value      | Type   | Default | Description        |
-| ------------ | ---------- | ------ | ------- | ------------------ |
-| `--frontend` | `<folder>` | string | `dist`  | The built frontend |
+| Option                | Value      | Type    | Default | Description                                                                                                                                                                                                                                  |
+| --------------------- | ---------- | ------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `--frontend`          | `<folder>` | string  | `dist`  | The built frontend                                                                                                                                                                                                                           |
+| `--allow-reserved-id` | –          | boolean | off     | Let an id start with org.pithyx., which is reserved for the system apps and the official catalog: the app's id (validate, lock, build, pack, dev; a box still refuses it in a package from a file) or the id of catalog.json (catalog check) |
 
 <!-- /generated -->
 
@@ -60,7 +61,7 @@ A folder without `pithyx.json` fails with the error `cli.manifest.missing` and e
 
 ## Findings
 
-Errors with the box's codes `app.manifest.*`, `app.icon.invalid`, `app.package.invalid`, `app.package.layout_invalid`, `app.compose.*` and `app.elevated.unsupported`, plus the CLI's own `cli.manifest.missing`, `cli.frontend.*`, `cli.icon.template` and `cli.lock.*`. Each one with its message is listed under [Findings](/docs/reference/cli/findings/).
+Errors with the box's codes `app.manifest.*`, `app.icon.invalid`, `app.package.invalid`, `app.package.layout_invalid`, `app.compose.*` and `app.elevated.*`, plus the CLI's own `cli.manifest.missing`, `cli.frontend.*`, `cli.icon.template` and `cli.lock.*`. Each one with its message is listed under [Findings](/docs/reference/cli/findings/).
 
 ## Examples
 

@@ -43,7 +43,11 @@
     "deviceDetail": "{count, plural, one {# Fenster} other {# Fenster}}, {time}",
     "deviceDetailScreen": "{width} × {height}, {count, plural, one {# Fenster} other {# Fenster}}, {time}",
     "fileDefaults": "Standard-Apps",
-    "startupApps": "Beim Anmelden öffnen"
+    "startupApps": "Beim Anmelden öffnen",
+    "channels": "Benachrichtigungskanäle",
+    "passkeys": "Passkeys",
+    "trust": "Diesem Gerät vertrauen",
+    "preferences": "Persönliche Einstellungen"
   },
   "error": {
     "title": "Etwas ist schiefgelaufen",
@@ -72,7 +76,12 @@
     },
     "appMenu": "Menü für {name}",
     "addToDesktop": "Zum Desktop hinzufügen",
-    "shortcutAdded": "{name} zum Desktop hinzugefügt"
+    "shortcutAdded": "{name} zum Desktop hinzugefügt",
+    "poolState": "{state, select, ONLINE {intakt} DEGRADED {beeinträchtigt} other {braucht Aufmerksamkeit}}",
+    "poolStatus": "Pool {name}, {state}. Speicher öffnen",
+    "cpuStatus": "Prozessor zu {value} ausgelastet. Ressourcenmonitor öffnen",
+    "networkStatus": "Netzwerk {value}. Ressourcenmonitor öffnen",
+    "rate": "{size}/s"
   },
   "start": {
     "label": "Pithyx-Menü",
@@ -95,7 +104,29 @@
     "appDetail": "App",
     "userMenu": "Kontomenü von {name}",
     "appMenu": "Menü für {name}",
-    "open": "Öffnen"
+    "open": "Öffnen",
+    "rail": "Konto und Sitzung",
+    "home": "Persönlicher Ordner",
+    "status": "Status",
+    "folders": "Deine Ordner",
+    "openStorage": "Speicher öffnen",
+    "openFiles": "Dateien öffnen",
+    "system": "System",
+    "you": "Du",
+    "onlyYou": "Nur du",
+    "access": {
+      "readWrite": "Lesen und schreiben",
+      "read": "Nur lesen",
+      "none": "Kein Zugriff"
+    },
+    "systemFacts": "CPU {cpu}, RAM {used} von {total}",
+    "updates": "Updates",
+    "poolFacts": "{free} frei",
+    "updatesCurrent": "Pithyx {version} ist aktuell",
+    "updatesAvailable": "Pithyx {version} ist verfügbar",
+    "systemTile": "System",
+    "poolState": "{state, select, ONLINE {Intakt} DEGRADED {Beeinträchtigt} other {Braucht Aufmerksamkeit}}",
+    "recentEmpty": "Dateien, die du öffnest, erscheinen hier."
   },
   "window": {
     "minimize": "Minimieren",
@@ -150,6 +181,16 @@
     "desktop": "Desktop",
     "label": "Desktop-Objekte",
     "shortcut": "{name}, Verknüpfung",
+    "fileShortcut": "{name}, Verknüpfung zu einer Datei oder einem Ordner",
+    "missingShortcut": "{name}, Verknüpfung, deren Ziel fehlt",
+    "targetMissing": "{name} gibt es nicht mehr oder du kannst es nicht mehr öffnen. Entferne die Verknüpfung über ihr Menü.",
+    "openWith": "Öffnen mit …",
+    "viewer": "Betrachter",
+    "download": "Herunterladen",
+    "showInFiles": "In Dateien zeigen",
+    "originalName": "Ursprünglichen Namen verwenden",
+    "nameHintFile": "Lass das Feld leer, um den Namen der Datei oder des Ordners zu verwenden: {app}.",
+    "added": "{count, plural, one {Verknüpfung zum Desktop hinzugefügt} other {# Verknüpfungen zum Desktop hinzugefügt}}",
     "note": "Notizzettel",
     "removeNote": "Notiz entfernen",
     "desktopMenu": "Desktop",
@@ -186,13 +227,11 @@
         "monitor": "Ressourcenmonitor",
         "logs": "Protokoll-Center",
         "about": "Über Pithyx",
-        "store": "Store"
+        "store": "Store",
+        "preferences": "Persönliche Einstellungen"
       }
     },
-    "photos": "Fotos",
-    "users": "Benutzer",
-    "containers": "Container",
-    "terminal": "Terminal"
+    "users": "Benutzer"
   },
   "roles": {
     "administrator": "Administrator",
@@ -270,19 +309,31 @@
       "failed": "Die Dateien konnten nicht geladen werden.",
       "noShares": "Es gibt keine Freigaben, die du nutzen kannst.",
       "shares": "Freigaben",
+      "home": "Persönlicher Ordner",
+      "homes": "homes",
       "location": "Ort",
       "entries": "Dateien und Ordner",
       "empty": "Dieser Ordner ist leer.",
       "more": "Mehr laden",
       "name": "Dateiname",
       "readOnly": "Diese Freigabe kannst du nur lesen. Wähle eine andere, um hier zu speichern.",
-      "exists": "Eine Datei mit diesem Namen gibt es schon. Speichern ersetzt sie."
+      "exists": "Eine Datei mit diesem Namen gibt es schon. Speichern ersetzt sie.",
+      "places": "Orte",
+      "up": "Eine Ebene nach oben",
+      "readOnlyPlace": "Nur lesen",
+      "types": "Zeigt nur Dateien der Typen {types}.",
+      "columns": {
+        "name": "Name",
+        "modified": "Geändert",
+        "size": "Größe"
+      }
     },
     "loading": {
       "label": "{name} wird geladen",
       "starting": "{name} wird gestartet ...",
       "storage": "{name} kann erst starten, wenn ein Administrator im Store einen Ordner dafür wählt.",
-      "pool": "{name} kann nicht starten, weil sein Pool gesperrt ist oder fehlt."
+      "pool": "{name} kann nicht starten, weil sein Pool gesperrt ist oder fehlt.",
+      "device": "{name} kann erst starten, wenn ein Gerät eingesteckt ist, das es braucht. Sobald das Gerät wieder da ist, startet es von selbst."
     }
   },
   "fileDefaults": {
@@ -301,5 +352,131 @@
     "intro": "Diese Apps öffnen sich, wenn du dich anmeldest, auf jedem Gerät, in der Reihenfolge, in der du sie angehakt hast. Fenster, die du offen gelassen hast, bleiben, wie sie waren. Höchstens {max} Apps.",
     "suggested": "Von der App empfohlen",
     "close": "Schließen"
+  },
+  "channels": {
+    "title": "Benachrichtigungskanäle",
+    "intro": "Bekomm deine Benachrichtigungen per E-Mail oder über einen Push-Dienst wie ntfy oder Gotify, auch wenn kein Desktop offen ist. Jeder Kanal wählt seine Arten von Ereignissen und wie ernst sie sein müssen.",
+    "none": "Noch keine Kanäle.",
+    "add": "Kanal hinzufügen",
+    "edit": "Bearbeiten",
+    "test": "Test senden",
+    "tested": "Der Test wurde gesendet.",
+    "remove": "Entfernen",
+    "removeTitle": "{name} entfernen?",
+    "removeExplain": "Der Kanal bekommt nichts mehr. Die Benachrichtigungen im Desktop bleiben.",
+    "close": "Schließen",
+    "save": "Speichern",
+    "cancel": "Abbrechen",
+    "newTitle": "Neuer Kanal",
+    "editTitle": "{name} bearbeiten",
+    "name": "Name",
+    "kind": "Art",
+    "kinds": {
+      "email": "E-Mail",
+      "webhook": "Webhook"
+    },
+    "emailMissing": "E-Mail braucht einen E-Mail-Server, den ein Administrator unter Einstellungen > Benachrichtigungen einrichtet.",
+    "recipients": "E-Mail-Adressen",
+    "recipientsHint": "Bis zu 10, durch Kommas getrennt.",
+    "url": "Adresse",
+    "urlHint": "Die Box schickt dorthin einen HTTP-POST, zum Beispiel https://ntfy.example.com/mein-thema.",
+    "format": "Format",
+    "formats": {
+      "json": "JSON (auch für Gotify)",
+      "ntfy": "ntfy"
+    },
+    "headers": "Header",
+    "headersHint": "Zum Beispiel ein Token. Ihre Werte verlassen die Box nie; lass einen Wert leer, um den gespeicherten zu behalten.",
+    "headerName": "Header-Name",
+    "headerValue": "Wert",
+    "headerSaved": "Gespeichert",
+    "addHeader": "Header hinzufügen",
+    "removeHeader": "Header {name} entfernen",
+    "categories": "Ereignisse",
+    "categoryNames": {
+      "storage": "Speicher",
+      "updates": "Updates",
+      "backups": "Backups",
+      "security": "Sicherheit",
+      "apps": "Apps",
+      "system": "System"
+    },
+    "minLevel": "Mindestens",
+    "levels": {
+      "info": "Alles",
+      "warning": "Warnungen und Fehler",
+      "error": "Nur Fehler"
+    },
+    "enabled": "Benachrichtigungen senden",
+    "off": "Aus",
+    "lastSent": "Zuletzt gesendet {date}",
+    "never": "Noch nichts gesendet",
+    "apps": {
+      "title": "Benachrichtigungen von Apps",
+      "intro": "Schalte eine Art von Benachrichtigung aus, um sie stummzuschalten: Sie landet weiter als gelesen in deiner Liste, aber ohne Toast, E-Mail oder Webhook.",
+      "none": "Keine deiner Apps sortiert ihre Benachrichtigungen nach Arten."
+    },
+    "matrixHint": "Was dieser Kanal bekommt, legst du pro Ereignis unter Ereignisse fest."
+  },
+  "preferences": {
+    "apps": "Apps",
+    "notifications": "Benachrichtigungen",
+    "on": "An",
+    "off": "Aus",
+    "twoFactorHint": "Ein Code aus einer Authenticator-App bei der Anmeldung.",
+    "passkeysHint": "Mit einem Passkey statt dem Passwort anmelden, auf Geräten, die der Box vertrauen.",
+    "trustHint": "Installiere das Stammzertifikat der Box auf diesem Gerät: keine Warnungen mehr, und Passkeys funktionieren.",
+    "languageAuto": "Automatisch ({language})",
+    "thisDevice": "Auf diesem Gerät.",
+    "getDesktopHint": "Übernimm die Fenster eines anderen deiner Geräte.",
+    "fileDefaultsHint": "Welche App einen Dateityp in Dateien öffnet.",
+    "startupAppsHint": "Apps, die sich bei der Anmeldung öffnen.",
+    "channelsHint": "E-Mail und Push-Dienste für deine Benachrichtigungen, und welche Arten von App-Benachrichtigungen du bekommst.",
+    "navigation": "Persönliche Einstellungen",
+    "search": "Suchen",
+    "pages": {
+      "account": "Konto",
+      "security": "Anmeldung und Sicherheit",
+      "appearance": "Darstellung",
+      "language": "Sprache und Region",
+      "notifications": "Benachrichtigungen",
+      "apps": "Apps",
+      "access": "Was ich nutzen darf"
+    },
+    "accountNote": "Ein Administrator ändert sie",
+    "name": "Name",
+    "username": "Anmeldename",
+    "role": "Rolle",
+    "groups": "Gruppen",
+    "noGroups": "Keine Gruppen",
+    "signIn": "Anmeldung",
+    "appearanceNote": "Das Farbschema gilt für dieses Gerät, Akzentfarbe und Hintergrundbild für alle Geräte.",
+    "desktopAndTaskbar": "Desktop und Taskleiste",
+    "otherDevices": "Andere Geräte",
+    "regionNote": "Datum, Uhrzeit und Zahlenformate folgen der Region und Zeitzone, die ein Administrator in den Einstellungen gesetzt hat.",
+    "adminHasAll": "Als Administrator darfst du alles nutzen.",
+    "shares": "Freigegebene Ordner",
+    "noShares": "Dir ist kein freigegebener Ordner offen.",
+    "loading": "Wird geladen...",
+    "read": "Lesen",
+    "readWrite": "Lesen und schreiben",
+    "services": "Dateidienste",
+    "protocol": {
+      "smb": "SMB (Netzlaufwerke)",
+      "webdav": "WebDAV",
+      "sftp": "SFTP",
+      "ftp": "FTP"
+    },
+    "appsYouOpen": "Apps, die du öffnen darfst",
+    "noApps": "Nur die Apps für alle",
+    "rights": "Besondere Rechte",
+    "right": {
+      "desktopLogin": "Am Desktop anmelden",
+      "sshLogin": "Über SSH anmelden",
+      "power": "Neu starten und herunterfahren"
+    },
+    "yes": "Ja",
+    "no": "Nein",
+    "theme": "Farbschema"
   }
 }

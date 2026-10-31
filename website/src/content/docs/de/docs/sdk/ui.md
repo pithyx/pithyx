@@ -46,15 +46,48 @@ Für dein eigenes CSS neben den Komponenten nimmst du dieselben Tokens aus `toke
 
 - Buttons: `Button` (mit `ButtonVariant`) und `IconButton`.
 - Felder: `TextField`, `PasswordField`, `SearchField` und `OtpField`.
-- Steuerelemente: `Checkbox`, `Switch`, `ProgressBar` und `Badge`.
+- Steuerelemente: `Checkbox`, `Switch`, `ProgressBar`, `Badge`, `RadioGroup` mit `Radio` und `Select`.
 - Überlagerungen: `Dialog`, `Menu`, `MenuItem`, `MenuTrigger`, `MenuPopover`, `MenuSeparator`, `ContextMenuPopover`, `Tooltip` und `TooltipTrigger`.
 - Helfer: `UiProvider`, `useDeliberatePress`, `cx` und `uiTexts`.
 
-Eine Auswahl- oder Listenkomponente gibt es noch nicht. Für eine Auswahl aus einer Liste nimm ein natives `<select>`, gestaltet mit den Tokens (`min-height: var(--control-height)`, `border: 1px solid var(--color-border)`, `border-radius: var(--radius-sm)`, `background: var(--color-surface-1)`, `color: var(--color-text)`), oder eine Liste von `Button variant="quiet"` für Einträge, die etwas öffnen.
+Nimm `RadioGroup` für zwei bis vier Möglichkeiten und `Select` (mit `options` aus `id` und `label`) für mehr.
 
 `Checkbox` und `Switch` bekommen ihre Beschriftung als Kinder (`<Checkbox isSelected={done} onChange={setDone}>Erledigt</Checkbox>`), `ProgressBar` als `label`.
 
 Die [API-Referenz](/de/docs/reference/sdk/) hat eine Seite pro Komponente, erzeugt aus ihrem TSDoc (zum Beispiel [Button](/de/docs/reference/sdk/ui/button/) und [Dialog](/de/docs/reference/sdk/ui/dialog/)), und jedes Token mit seinem Wert unter [Tokens](/de/docs/reference/sdk/ui/tokens/).
+
+## Muster
+
+Die Muster bauen ganze Ansichten nach den [Gestaltungsregeln](/de/docs/developers/apps/design/). Sie richten sich nach der Breite ihres Containers, nicht des Bildschirms, und funktionieren deshalb auch in einem schmalen App-Fenster.
+
+- `AppFrame`: der Rahmen einer App mit mehr als einer Ansicht. Links eine Spalte `navigation`, dann der Seitentitel `title`, eine optionale `toolbar`, der Inhalt, ein optionaler `footer` (fest unter dem scrollenden Inhalt) und eine `statusBar`. Unter 600 px wird die Navigation zu einer Listenseite: Ein Eintrag öffnet die Seite, ein Button **Zurück** führt zurück. `scroll="content"` hält Titel und Werkzeugleiste fest, für eine Tabelle, die selbst scrollt.
+- `NavList`: die Navigationsspalte. `groups` aus Einträgen mit `icon`, `label` und optionalem `count`, ein Suchfeld, das sie filtert (`searchable`), der aktuelle Eintrag aus `selectedId` mit Akzentbalken, angesagt als aktuelle Seite.
+- `Toolbar`, `ToolbarButton` und `ToolbarSeparator`: die Hauptaktion zuerst, die anderen Aktionen in Gruppen, Ansichtsoptionen und Suche in `end`. Die Pfeiltasten wechseln zwischen den Elementen. `variant="bar"` zeichnet einen Streifen über die ganze Breite. Ein `ToolbarButton` hat ein `icon` und ein `label`; ist der Größen-Container der App schmaler als 760 px, zeigt er nur das Symbol und die Beschriftung als Tooltip, damit eine Toolbar mit vielen Aktionen in einer Zeile bleibt.
+- `Tabs`, `TabList`, `Tab` (mit optionalem `count`) und `TabPanel`: Tabs unter dem Seitentitel, jedes Panel mit eigener Werkzeugleiste.
+- `DataTable`: `columns` mit einer Funktion `cell`, einem `sortValue`, der die Spalte sortierbar macht, `align="end"` für Zahlen, `muted` für Nebenspalten und `hideWhenNarrow` für eine Spalte, die der Detailbereich wiederholt und die unter 600 px wegfällt. Einfach- oder Mehrfachauswahl (ein Klick wählt, Strg oder Umschalt erweitern), `onRowAction` für Doppelklick oder Enter, ein `emptyState`, `density="comfortable"` für zweizeilige Zeilen (52 px), ein Detailbereich `details` rechts, den Benutzer breiter ziehen können, und `virtualized` für lange Listen in einem Container mit begrenzter Höhe.
+- `DetailsPane`: derselbe Bereich für eine Liste, die keine `DataTable` ist, mit dem Griff an seinem linken Rand (ziehen, die Pfeiltasten, Pos1 und Ende; ein Doppelklick stellt die Standardbreite wieder her). Seine Breite ist `var(--details-pane-width, <Standard>)` in deiner Klasse; ein Layout, das ihn unter die Liste setzt, setzt `--details-handle: none`.
+- `FormSection` und `FormRow`: ein Einstellungsabschnitt mit Titelzeile und Zeilen aus Beschriftung (mit optionalem Hinweis) und Steuerelement. Ein `TextField`, `Select` oder `RadioGroup` in einer `FormRow` übernimmt die Beschriftung der Zeile als Namen; lass sein eigenes `label` weg.
+- `ActionBar`: **Verwerfen** und **Übernehmen** mit einer Zeile dazu, was das Übernehmen bewirkt, für den `footer` eines `AppFrame`. Nur für Seiten, deren Änderungen übernommen werden müssen.
+- `Card` und `Meter`: ein Objekt mit Zustand: `icon`, `title`, ein `badge`, eine Zeile `facts`, ein optionales `meter` und hinter einem Pfeil die Details (Kinder) und `actions`. `Meter` zeigt eine Menge mit Texten über beiden Enden; gib ihm ein `valueLabel` für Screenreader.
+- `StatusBadge`: ein Zustand in Worten mit dem Ton `success`, `warning`, `danger`, `info` oder `neutral`.
+- `AttentionList`: **Braucht Aufmerksamkeit** auf einer Übersicht, eine Zeile pro Problem mit der einen Aktion, die es behebt. Ohne Problem zeigt sie nichts.
+- `SummaryTiles` und `SummaryTile`: höchstens vier Kennzahlen oben auf einer Übersicht.
+
+```tsx
+<AppFrame
+  navigation={
+    <NavList aria-label="Einstellungen" groups={groups} selectedId={page} onSelect={setPage} />
+  }
+  title="Netzwerk"
+  footer={<ActionBar message="Gilt für jedes Gerät." onApply={apply} onDiscard={reset} />}
+>
+  <FormSection title="IPv4">
+    <FormRow label="IP-Adresse">
+      <TextField value={address} onChange={setAddress} />
+    </FormRow>
+  </FormSection>
+</AppFrame>
+```
 
 ## Icons
 

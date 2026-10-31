@@ -1,0 +1,33 @@
+{
+  "compose": "valid/elevated.yaml",
+  "manifest": "elevated.json",
+  "host": {
+    "uid": 40001,
+    "appDirectory": "/tank/.pithyx/apps/com.example.chat",
+    "bridgeName": "px-1",
+    "imageIds": {
+      "ghcr.io/example/chat-server:1.2.0@sha256:a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5": "sha256:1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c"
+    },
+    "storage": {},
+    "elevated": [
+      "host.network",
+      "host.pid",
+      "device:/dev/dri/renderD128",
+      "device:/dev/ttyUSB0"
+    ],
+    "devices": {
+      "/dev/dri/renderD128": [
+        {
+          "path": "/dev/dri/renderD128",
+          "gid": 105
+        }
+      ],
+      "/dev/ttyUSB0": [
+        {
+          "path": "/dev/ttyUSB0",
+          "gid": 20
+        }
+      ]
+    }
+  }
+}

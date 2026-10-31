@@ -1,5 +1,5 @@
 {
-  "manifestVersion": 1,
+  "manifestVersion": 2,
   "id": "com.example.chat",
   "version": "1.2.0",
   "name": {
@@ -10,7 +10,33 @@
   },
   "entry": "frontend/index.html",
   "sdk": "^1.0.0",
-  "permissions": [],
+  "arch": [
+    "amd64",
+    "arm64"
+  ],
+  "source": "https://github.com/example/app",
+  "permissions": {
+    "host.network": {
+      "reason": {
+        "en": "Needs host.network for its background service."
+      }
+    },
+    "host.pid": {
+      "reason": {
+        "en": "Needs host.pid for its background service."
+      }
+    },
+    "device:/dev/dri/renderD128": {
+      "reason": {
+        "en": "Needs device:/dev/dri/renderD128 for its background service."
+      }
+    },
+    "device:/dev/ttyUSB0": {
+      "reason": {
+        "en": "Needs device:/dev/ttyUSB0 for its background service."
+      }
+    }
+  },
   "window": {
     "instances": "single",
     "defaultSize": {
@@ -31,6 +57,6 @@
       }
     },
     "lifecycle": "onDemand",
-    "root": true
+    "root": false
   }
 }

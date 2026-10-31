@@ -71,6 +71,22 @@ function resolve(value: string, theme: Theme, vars: Map<string, string>): Rgba {
     const [light = '', dark = ''] = splitArguments(lightDark[1]);
     return resolve(theme === 'light' ? light : dark, theme, vars);
   }
+  const mix = /^color-mix\(in srgb, (.*)\)$/s.exec(value);
+  if (mix?.[1] !== undefined) {
+    const [first = '', second = ''] = splitArguments(mix[1]);
+    const share = /^(.*) (\d+)%$/s.exec(first);
+    if (share?.[1] === undefined) {
+      throw new Error(`Cannot evaluate color ${value}`);
+    }
+    const weight = Number(share[2]) / 100;
+    const a = resolve(share[1], theme, vars);
+    const b = resolve(second, theme, vars);
+    const blend = (x: number, y: number) => x * weight + y * (1 - weight);
+    return { r: blend(a.r, b.r), g: blend(a.g, b.g), b: blend(a.b, b.b), a: blend(a.a, b.a) };
+  }
+  if (value === 'transparent') {
+    return { r: 0, g: 0, b: 0, a: 0 };
+  }
   const hex = /^#([0-9a-f]{6})$/i.exec(value);
   if (hex?.[1] !== undefined) {
     const n = Number.parseInt(hex[1], 16);
@@ -128,6 +144,14 @@ const pairs: [string, string, number][] = [
   ['--color-text', '--color-accent-subtle', TEXT],
   ['--color-text', '--color-selection', TEXT],
   ['--color-text-muted', '--color-accent-subtle', TEXT],
+  ['--color-text', '--color-selection-strong', TEXT],
+  ['--color-text-muted', '--color-selection-strong', TEXT],
+  ['--color-accent', '--color-selection-strong', GRAPHIC],
+  ['--color-text', '--color-shell-bar', TEXT],
+  ['--color-text-muted', '--color-shell-bar', TEXT],
+  ['--color-text', '--color-shell-menu', TEXT],
+  ['--color-text-muted', '--color-shell-menu', TEXT],
+  ['--color-accent', '--color-shell-menu', TEXT],
   ['--color-text', '--color-taskbar-solid', TEXT],
   ['--color-text-muted', '--color-taskbar-solid', TEXT],
   ['--color-text', '--color-menu-solid', TEXT],
@@ -151,9 +175,12 @@ const pairs: [string, string, number][] = [
   ['--color-danger', '--color-danger-surface', TEXT],
   ['--color-danger-contrast', '--color-danger', TEXT],
   ['--color-text', '--color-danger-surface', TEXT],
+  ['--color-info', '--color-info-surface', TEXT],
+  ['--color-neutral-state', '--color-neutral-state-surface', TEXT],
   ['--color-note-text', '--color-note', TEXT],
   ['--color-note-text', '--color-note-bar', TEXT],
   ['--color-highlight-contrast', '--color-highlight', TEXT],
+  ['--color-desktop-label', '--color-desktop', TEXT],
 ];
 
 describe.each(accents)('accent %s', (accent) => {

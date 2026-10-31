@@ -28,7 +28,7 @@ Die Wörter, die Pithyx in seiner Oberfläche und Dokumentation verwendet, in de
 
 **Konfigurationsbackup (Configuration backup).** Eine mit Passwort verschlüsselte Datei mit der Datenbank der Box, der Samba-Passwortdatenbank, Zertifikaten und SSH-Host-Schlüsseln, die bei einer frischen Installation wiederhergestellt werden kann.
 
-**Core-App (Core app).** Eine App, die mit dem System ausgeliefert wird, wie Dateien, Speicher, Einstellungen, Ressourcenmonitor, Protokoll-Center, Betrachter, Info und Store. Ihre ID beginnt mit `org.pithyx.`.
+**Core-App (Core app).** Eine App, die mit dem System ausgeliefert wird, wie Dateien, Einstellungen, Ressourcenmonitor, Protokoll-Center, Betrachter, Info und Store. Ihre ID beginnt mit `org.pithyx.`.
 
 **Daemon.** `pithyxd`, der einzige privilegierte Prozess auf der Box. Er liefert den Desktop und die API aus.
 
@@ -48,6 +48,8 @@ Die Wörter, die Pithyx in seiner Oberfläche und Dokumentation verwendet, in de
 
 **Job.** Ein lang laufender Vorgang, der im Hintergrund mit Fortschritt läuft. Jobs werden nach einem Neustart nicht fortgesetzt.
 
+**Schlüsseltresor (Key vault).** Ein Ordner auf der Systemplatte, nur für root lesbar, in dem die Box die Schlüssel verschlüsselter Pools aufbewahrt, die sie bei jedem Start entsperrt. Er schützt gegen gestohlene Platten, nicht gegen eine gestohlene Box, und ist nie Teil einer Konfigurationssicherung. Siehe [Verschlüsselung](/de/docs/admin/storage/#verschlüsselung).
+
 **Lifecycle.** Wie lange ein Backend läuft: `always` oder `onDemand` (solange ein Fenster offen ist, plus eine Leerlaufzeit).
 
 **Live-System (Live system).** Die Umgebung auf dem Installations-USB-Stick, die den Web-Installer ausführt.
@@ -63,6 +65,8 @@ Die Wörter, die Pithyx in seiner Oberfläche und Dokumentation verwendet, in de
 **Berechtigung (Permission).** Etwas, das eine App tun darf, etwa freigegebene Ordner lesen oder das Internet erreichen. Ein Administrator bestätigt und kann jede widerrufen. Nicht zu verwechseln mit den Rechten eines Benutzers.
 
 **Pool.** Ein ZFS-Pool: Platten, zu einem Speicherbereich zusammengefasst, als Spiegel, RAID-Z oder Stripe.
+
+**Pool-Schlüssel (Pool key).** Der Schlüssel eines verschlüsselten Pools (er beginnt mit `PXPK`), einmal angezeigt, wenn der Pool angelegt oder sein Schlüssel geändert wird. Ohne ihn lassen sich die Daten des Pools nicht lesen. Siehe [Verschlüsselung](/de/docs/admin/storage/#verschlüsselung).
 
 **Protokoll (Protocol).** Ein Weg, freigegebene Ordner von anderen Geräten zu erreichen: SMB, SFTP, WebDAV oder FTP. Der Zugriff wird pro Benutzer festgelegt.
 
@@ -107,6 +111,8 @@ Die Wörter, die Pithyx in seiner Oberfläche und Dokumentation verwendet, in de
 **Zwei-Faktor-Anmeldung (Two-factor sign-in).** Anmeldung mit einem Passwort und einem Code aus einer Authenticator-App (TOTP). Für jeden Benutzer optional.
 
 **Update-Regel (Update policy).** Wie die Box mit App-Updates umgeht: automatisch, benachrichtigen oder nichts.
+
+**USB-Schlüssel (USB key).** Ein USB-Stick oder eine Speicherkarte mit der Schlüsseldatei eines verschlüsselten Pools (`pithyx-keys/<Pool-GUID>.key`). Steckt er, entsperrt die Box den Pool; danach kann er abgezogen werden, und der Pool bleibt bis zum nächsten Start entsperrt. Siehe [USB-Stick](/de/docs/admin/storage/#usb-stick).
 
 **Vdev.** Eine Gruppe von Platten innerhalb eines Pools, etwa ein Spiegel.
 

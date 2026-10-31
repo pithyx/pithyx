@@ -57,6 +57,19 @@ describe('the release plan', () => {
     expect(() => plan('iso', [], { version: 'one' }, facts)).toThrow(/not a version/);
   });
 
+  it('signs a file of the build machine here and publishes it only when asked', () => {
+    const key = { from: 'dev01:/srv/out', key: '/k.pem', 'key-id': 'pithyx-release-1' };
+    expect(commands(plan('sign-remote', [], { ...key, version: '1.1.0' }, facts))).toEqual([
+      '/repo/tools/release/sign-remote.sh --from dev01:/srv/out --version 1.1.0 --key /k.pem --key-id pithyx-release-1',
+    ]);
+    expect(
+      commands(plan('sign-remote', [], { ...key, sequence: '4', publish: true, yes: true }, facts)),
+    ).toEqual([
+      '/repo/tools/release/sign-remote.sh --from dev01:/srv/out --version 1.1.0-beta.1 --key /k.pem --key-id pithyx-release-1 --sequence 4 --publish --yes',
+    ]);
+    expect(() => plan('sign-remote', [], { from: 'dev01:/srv/out' }, facts)).toThrow(/--key-id/);
+  });
+
   it('moves latest of every npm package only when asked and never in a dry run of npm', () => {
     expect(commands(plan('publish-sdk', [], { latest: true, otp: '123456' }, facts))).toEqual([
       '/repo/tools/release/publish-sdk.sh --otp 123456',
@@ -67,6 +80,15 @@ describe('the release plan', () => {
     expect(commands(plan('publish-sdk', [], { latest: true, 'npm-dry-run': true }, facts))).toEqual(
       ['/repo/tools/release/publish-sdk.sh --dry-run'],
     );
+  });
+
+  it('publishes a stable version straight to latest', () => {
+    const stable = { ...facts, sdkVersion: '1.0.1' };
+    expect(commands(plan('publish-sdk', [], { latest: true, otp: '123456' }, stable))).toEqual([
+      '/repo/tools/release/publish-sdk.sh --otp 123456 --latest',
+    ]);
+    expect(() => plan('publish-sdk', [], { otp: '123456' }, stable)).toThrow(/--latest/);
+    expect(() => plan('publish-sdk', [], { 'npm-dry-run': true }, stable)).toThrow(/--latest/);
   });
 
   it('keeps a baseline only of an image that was built', () => {

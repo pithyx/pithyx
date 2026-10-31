@@ -1,5 +1,6 @@
 import { execFileSync } from 'node:child_process';
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { expect, request } from '@playwright/test';
 import { admin } from './session';
@@ -16,6 +17,21 @@ export function probePackage(): string {
     execFileSync('pnpm', ['--filter', '@pithyx/e2e-sdk-probe...', 'build'], { stdio: 'inherit' });
   }
   return packagePath;
+}
+
+/**
+ * The package of the root probe (e2e/apps/root-probe), an app whose backend asks for the unfiltered container service,
+ * root on the box (D388). It has a static frontend, so `pithyx pack` builds it straight from its folder.
+ */
+export function rootProbePackage(): string {
+  const project = join(import.meta.dirname, '..', 'apps', 'root-probe');
+  const target = join(mkdtempSync(join(tmpdir(), 'pithyx-root-probe-')), 'root-probe.pithyxapp');
+  execFileSync(
+    join(probeDirectory, 'node_modules', '.bin', 'pithyx'),
+    ['pack', project, '--frontend', 'frontend', '--out', target],
+    { stdio: 'inherit' },
+  );
+  return target;
 }
 
 /** An API client signed in as the administrator, with the CSRF header; dispose it when done. */

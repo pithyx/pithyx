@@ -1,16 +1,14 @@
-import { PithyxApiError, unwrap, type components } from '@pithyx/api-client';
+import { unwrap, type components } from '@pithyx/api-client';
 import type { MethodName, PithyxApp } from '@pithyx/sdk';
-import { PithyxError, type HostExtensions } from '@pithyx/sdk/host';
+import { type HostExtensions } from '@pithyx/sdk/host';
 import { api } from '../../api/client';
+import { daemon } from './daemonError';
 
 export type TlsSettings = components['schemas']['TlsSettings'];
 export type CertificateInfo = components['schemas']['CertificateInfo'];
 export type IssuedCertificate = components['schemas']['IssuedCertificate'];
 export type CertificateKeyType = components['schemas']['CertificateKeyType'];
 export type IssueCertificateRequest = components['schemas']['IssueCertificateRequest'];
-
-/** The address any device downloads the box's root from, also before signing in. */
-export const rootCertificateUrl = '/api/system/tls/root-ca.crt';
 
 /** Certificates for administrators, outside the public SDK; the daemon checks the right on every request. */
 interface TlsMethods {
@@ -35,21 +33,6 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 
 const isStrings = (value: unknown): value is string[] =>
   Array.isArray(value) && value.every((item) => typeof item === 'string');
-
-async function daemon<T>(call: () => Promise<T>): Promise<T> {
-  try {
-    return await call();
-  } catch (error) {
-    throw error instanceof PithyxApiError
-      ? new PithyxError({
-          code: error.code,
-          params: error.params,
-          detail: error.message,
-          requestId: error.requestId,
-        })
-      : error;
-  }
-}
 
 function save(text: string, fileName: string) {
   const url = URL.createObjectURL(new Blob([text], { type: 'application/x-pem-file' }));

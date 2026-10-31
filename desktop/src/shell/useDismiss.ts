@@ -1,8 +1,8 @@
 import { useEffect, type RefObject } from 'react';
 
 /**
- * Closes a non-modal overlay (start menu, app switcher, notification panel) on Escape, on a pointer press outside
- * it and when focus moves out of it. Presses on the element that toggles it are ignored; it handles them itself.
+ * Closes a non-modal overlay (start menu, app switcher, notification panel) on Escape, on a pointer press or a
+ * right-click outside it and when focus moves out of it. Presses on the element that toggles it are ignored; it handles them itself.
  */
 export function useDismiss(
   overlay: RefObject<HTMLElement | null>,
@@ -26,8 +26,12 @@ export function useDismiss(
         onDismiss('escape');
       }
     };
-    const onPointerDown = (event: PointerEvent) => {
-      if (!inside(event.target)) {
+    // An open context menu is modal and takes presses and right-clicks itself: it closes, and a right-click is
+    // handed on to the element under the pointer as a new event, which is judged here once the menu is gone.
+    const outside = (event: Event) =>
+      document.querySelector('[data-trigger="ContextMenu"]') === null && !inside(event.target);
+    const onPress = (event: Event) => {
+      if (outside(event)) {
         onDismiss('outside');
       }
     };
@@ -37,11 +41,13 @@ export function useDismiss(
       }
     };
     document.addEventListener('keydown', onKeyDown);
-    document.addEventListener('pointerdown', onPointerDown, true);
+    document.addEventListener('pointerdown', onPress, true);
+    document.addEventListener('contextmenu', onPress, true);
     document.addEventListener('focusin', onFocusIn);
     return () => {
       document.removeEventListener('keydown', onKeyDown);
-      document.removeEventListener('pointerdown', onPointerDown, true);
+      document.removeEventListener('pointerdown', onPress, true);
+      document.removeEventListener('contextmenu', onPress, true);
       document.removeEventListener('focusin', onFocusIn);
     };
   }, [overlay, trigger, open, onDismiss]);

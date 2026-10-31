@@ -1,6 +1,6 @@
 import type { PithyxApp } from '@pithyx/sdk';
 import { Badge, Button, Dialog } from '@pithyx/ui';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useId, useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { formatBytes } from '../../desktop/format';
@@ -10,11 +10,30 @@ import { AppIcon } from '../../shell/AppIcon';
 import { manifestText } from '../installed';
 import { storeCall, type AppAccess, type AppPackagePreview } from '../sdk/store';
 import { describeProblem } from '../storage/shared';
+import {
+  CriticalConfirm,
+  ElevatedRightText,
+  nameConfirmed,
+  StepUpFields,
+  stepUpKey,
+  stepUpParams,
+  stepUpReady,
+  useStepUp,
+  type StepUpInput,
+} from './ElevatedRights';
 import { JobProgress, useAppJob } from './jobs';
-import { appPools, manifestFacts } from './model';
+import {
+  appPools,
+  deviceNote,
+  manifestFacts,
+  requirementHints,
+  tierOf,
+  type RequirementHint,
+} from './model';
 import { PermissionText } from './PermissionText';
 import { StorageSection } from './StorageSection';
 import { useInstalled } from './StoreApp';
+import { MaturityBadge, ReleaseNotes, RequirementHints, StoreInfoRows } from './StoreInfo';
 import styles from './Store.module.css';
 
 /** A version of a catalog app to install instead of a package file. */
@@ -29,8 +48,10 @@ export interface CatalogVersion {
 /**
  * Installs an app from its package file or a catalog, or updates an installed one: the daemon checks the upload (or
  * the catalog's package) and answers what
- * installing does; the dialog shows it (permissions with their meaning, folders, background service, root, special
- * rights), asks who may use a new app (prefilled after D304) and, for the first app, the pool for app data. The
+ * installing does; the dialog shows it (permissions with their meaning and the author's reasons, folders, background
+ * service, root, special rights in their risk tiers), asks who may use a new app (prefilled after D304) and, for the
+ * first app, the pool for app data. New special rights need the consent of their tiers (D388): a checkbox for devices,
+ * a checkbox and the step-up for high risk, and a red step of its own with the typed app name for root access. The
  * install or update runs as a job.
  */
 export function InstallDialog({
@@ -52,6 +73,13 @@ export function InstallDialog({
   const [file, setFile] = useState<File | null>(null);
   const [access, setAccess] = useState<AppAccess | null>(null);
   const [pool, setPool] = useState<string | null>(null);
+  // New special rights are granted with the install unless the administrator leaves them revoked (D311).
+  const [grant, setGrant] = useState(true);
+  const [consent, setConsent] = useState({ elevated: false, high: false });
+  const [step, setStep] = useState<'review' | 'critical'>('review');
+  const [typed, setTyped] = useState('');
+  const [stepUpInput, setStepUpInput] = useState<StepUpInput>({ password: '', code: '' });
+  const queryClient = useQueryClient();
   const { job, start } = useAppJob(app);
   const upload = useMutation({
     mutationFn: (chosen: File) =>
@@ -76,22 +104,53 @@ export function InstallDialog({
   const pools = useQuery({
     queryKey: ['store', 'pools'],
     queryFn: () => storeCall(app, 'internal.admin.apps.pools', {}),
-    enabled: needsPool,
+    enabled: preview !== undefined,
+  });
+  const memory = useQuery({
+    queryKey: ['store', 'memory'],
+    queryFn: () => storeCall(app, 'internal.admin.apps.memory', {}),
+    enabled: preview !== undefined,
   });
   const choices = pools.data === undefined ? [] : appPools(pools.data);
   const chosenPool = pool ?? choices[0] ?? null;
+  const targetPool = needsPool ? chosenPool : (preview?.pool ?? null);
+  const hints =
+    preview === undefined
+      ? []
+      : requirementHints(
+          manifestFacts(preview.manifest).requirements,
+          memory.data ?? null,
+          pools.data?.pools.find((entry) => entry.name === targetPool)?.freeBytes ?? null,
+        );
   const chosenAccess = access ?? preview?.suggestedAccess ?? 'everybody';
+  const addedElevated = preview?.addedElevated ?? [];
+  const addedTiers = new Set(addedElevated.map(tierOf));
+  const stepUp = useStepUp(app);
+  const stepUpUntil = stepUp.data ?? null;
+  const needsStepUp = grant && (addedTiers.has('high') || addedTiers.has('critical'));
+  const critical = grant && addedTiers.has('critical');
+  const consented =
+    !grant ||
+    ((!addedTiers.has('elevated') || consent.elevated) &&
+      (!addedTiers.has('high') || consent.high));
   const install = useMutation({
     mutationFn: (checked: AppPackagePreview) =>
       storeCall(app, 'internal.admin.apps.install', {
         packageId: checked.packageId,
         ...(needsPool && chosenPool !== null ? { pool: chosenPool } : {}),
         ...(checked.action === 'install' ? { access: chosenAccess } : {}),
+        ...(addedElevated.length > 0 && !grant ? { elevated: false } : {}),
+        ...(needsStepUp ? stepUpParams(app, stepUpUntil, stepUpInput) : {}),
+        ...(critical ? { confirmCritical: checked.id } : {}),
       }),
     onSuccess: start,
+    // A step-up that ran out meanwhile asks for the password again.
+    onSettled: () => queryClient.invalidateQueries({ queryKey: stepUpKey }),
   });
   const facts = preview === undefined ? undefined : manifestFacts(preview.manifest);
   const name = facts === undefined ? '' : manifestText(facts.name, i18n.language);
+  const stepUpDone =
+    !needsStepUp || (stepUp.data !== undefined && stepUpReady(app, stepUpUntil, stepUpInput));
   const isUpdate = preview !== undefined && preview.action !== 'install';
   // Once installed, the folders it asks for are mapped here; a backend waits for its required ones (D360).
   const installed = useInstalled(app);
@@ -127,12 +186,37 @@ export function InstallDialog({
           {t('install.openApp')}
         </Button>
       )}
+      {job === null && step === 'critical' && (
+        <Button
+          onPress={() => {
+            setStep('review');
+          }}
+        >
+          {t('elevated.critical.back')}
+        </Button>
+      )}
       <Button onPress={close}>{job === null ? t('install.cancel') : t('install.close')}</Button>
-      {job === null && (
+      {job === null && critical && step === 'review' && (
         <Button
           variant="primary"
+          isDisabled={preview === undefined || (needsPool && chosenPool === null) || !consented}
+          onPress={() => {
+            setStep('critical');
+          }}
+        >
+          {t('elevated.critical.continue')}
+        </Button>
+      )}
+      {job === null && (!critical || step === 'critical') && (
+        <Button
+          variant={critical ? 'danger' : 'primary'}
           isDisabled={
-            preview === undefined || install.isPending || (needsPool && chosenPool === null)
+            preview === undefined ||
+            install.isPending ||
+            (needsPool && chosenPool === null) ||
+            !consented ||
+            !stepUpDone ||
+            (critical && !nameConfirmed(typed, name))
           }
           onPress={() => {
             if (preview !== undefined) {
@@ -140,7 +224,13 @@ export function InstallDialog({
             }
           }}
         >
-          {isUpdate ? t('install.update') : t('install.install')}
+          {critical
+            ? isUpdate
+              ? t('elevated.critical.update')
+              : t('elevated.critical.install')
+            : isUpdate
+              ? t('install.update')
+              : t('install.install')}
         </Button>
       )}
     </>
@@ -212,11 +302,28 @@ export function InstallDialog({
         )}
         {upload.isError && <ErrorNotice error={describeProblem(upload.error)} />}
         {staged.isError && <ErrorNotice error={describeProblem(staged.error)} />}
-        {preview !== undefined && (
+        {preview !== undefined && job === null && step === 'critical' && (
+          <div className={styles.form}>
+            <CriticalConfirm
+              name={name}
+              rights={addedElevated.filter((right) => tierOf(right) === 'critical')}
+              typed={typed}
+              onType={setTyped}
+            />
+            <StepUpFields
+              app={app}
+              until={stepUpUntil}
+              value={stepUpInput}
+              onChange={setStepUpInput}
+            />
+          </div>
+        )}
+        {preview !== undefined && step === 'review' && (
           <Preview
             preview={preview}
             verified={catalog?.verified ?? false}
             storage={details === undefined}
+            hints={hints}
           >
             {job === null && preview.action === 'install' && (
               <fieldset className={styles.choices}>
@@ -235,8 +342,68 @@ export function InstallDialog({
                   </label>
                 ))}
                 {preview.suggestedAccess === 'admins' && (
-                  <p className={styles.muted}>{t('install.accessSuggested')}</p>
+                  <p className={styles.muted}>
+                    {suggestedForRisk(preview)
+                      ? t('install.accessSuggested')
+                      : t('install.accessAudience')}
+                  </p>
                 )}
+              </fieldset>
+            )}
+            {job === null && addedElevated.length > 0 && (
+              <fieldset className={styles.choices}>
+                <legend className={styles.fieldLabel}>{t('elevated.section')}</legend>
+                {([true, false] as const).map((choice) => (
+                  <label key={String(choice)} className={styles.check}>
+                    <input
+                      type="radio"
+                      name={`${ids}-grant`}
+                      checked={grant === choice}
+                      onChange={() => {
+                        setGrant(choice);
+                      }}
+                    />
+                    <span>
+                      {choice ? t('elevated.consent.grant') : t('elevated.consent.later')}
+                    </span>
+                  </label>
+                ))}
+                {grant && addedTiers.has('elevated') && (
+                  <label className={`${styles.check} ${styles.consent}`}>
+                    <input
+                      type="checkbox"
+                      checked={consent.elevated}
+                      onChange={(event) => {
+                        setConsent({ ...consent, elevated: event.target.checked });
+                      }}
+                    />
+                    <span>{t('elevated.consent.elevated')}</span>
+                  </label>
+                )}
+                {grant && addedTiers.has('high') && (
+                  <label className={`${styles.check} ${styles.consent} ${styles.consentHigh}`}>
+                    <input
+                      type="checkbox"
+                      checked={consent.high}
+                      onChange={(event) => {
+                        setConsent({ ...consent, high: event.target.checked });
+                      }}
+                    />
+                    <span>{t('elevated.consent.high')}</span>
+                  </label>
+                )}
+                {grant && critical && (
+                  <p className={styles.muted}>{t('elevated.consent.critical')}</p>
+                )}
+                {grant && needsStepUp && !critical && (
+                  <StepUpFields
+                    app={app}
+                    until={stepUpUntil}
+                    value={stepUpInput}
+                    onChange={setStepUpInput}
+                  />
+                )}
+                {!grant && <p className={styles.muted}>{t('elevated.grantLater')}</p>}
               </fieldset>
             )}
             {job === null && needsPool && (
@@ -300,16 +467,25 @@ export function InstallDialog({
 }
 
 /** What installing the checked package does: the app, its permissions and folders, and what deserves a warning. */
+/** Whether the risk of an app makes it suggested for administrators (D304), rather than only its `audience` (D389). */
+function suggestedForRisk(preview: AppPackagePreview): boolean {
+  const facts = manifestFacts(preview.manifest);
+  return facts.root || facts.elevated.length > 0 || facts.permissions.includes('directory.read');
+}
+
 function Preview({
   preview,
   verified,
   storage,
+  hints,
   children,
 }: {
   preview: AppPackagePreview;
   verified: boolean;
   /** Lists the folders it asks for; once installed, the dialog maps them instead. */
   storage: boolean;
+  /** Where the box may be too small for the app. */
+  hints: RequirementHint[];
   children: ReactNode;
 }) {
   const { t, i18n } = useTranslation('store');
@@ -319,13 +495,16 @@ function Preview({
   const description =
     facts.description === null ? null : manifestText(facts.description, i18n.language);
   const added = new Set(preview.addedPermissions);
+  const addedElevated = new Set(preview.addedElevated ?? []);
   const isUpdate = preview.action !== 'install';
   return (
     <div className={styles.preview}>
       <div className={styles.previewHead}>
         <AppIcon app={{ icon: null, tone: 'graphite' }} size={48} />
         <div className={styles.headerText}>
-          <h3 className={styles.previewTitle}>{name}</h3>
+          <h3 className={styles.previewTitle}>
+            {name} <MaturityBadge maturity={facts.maturity} />
+          </h3>
           <p className={styles.muted}>
             {t(`install.action.${preview.action}`, {
               version: preview.version,
@@ -342,6 +521,8 @@ function Preview({
         </div>
       </div>
       {description !== null && description !== '' && <p>{description}</p>}
+      {isUpdate && <ReleaseNotes notes={facts.releaseNotes} version={preview.version} />}
+      <RequirementHints hints={hints} />
       <p className={styles.notice}>
         {preview.catalog == null
           ? t('install.unverified')
@@ -351,10 +532,35 @@ function Preview({
       </p>
       {preview.keptData && <p className={styles.notice}>{t('install.keptData')}</p>}
       {facts.root && <p className={styles.warning}>{t('install.root')}</p>}
+      {facts.permissions.includes('network.internet') && (
+        <p className={styles.notice}>{t('install.internet')}</p>
+      )}
       {facts.elevated.length > 0 && (
-        <p className={styles.warning}>
-          {t('install.elevated', { rights: facts.elevated.join(', ') })}
-        </p>
+        <section className={styles.group} aria-labelledby="install-elevated">
+          <h4 id="install-elevated" className={styles.subTitle}>
+            {t('elevated.section')}
+          </h4>
+          <p className={styles.warning}>{t('elevated.warning')}</p>
+          <ul className={styles.permissions}>
+            {facts.elevated.map((right) => (
+              <li key={right} className={styles.permission}>
+                <ElevatedRightText
+                  right={right}
+                  note={deviceNote(right, preview.devices, 'install')}
+                  reason={facts.reasons[right]}
+                />
+                {isUpdate && addedElevated.has(right) && (
+                  <Badge tone="highlight">{t('install.newPermission')}</Badge>
+                )}
+              </li>
+            ))}
+          </ul>
+          {(preview.removedElevated ?? []).length > 0 && (
+            <p className={styles.muted}>
+              {t('install.dropped', { permissions: (preview.removedElevated ?? []).join(', ') })}
+            </p>
+          )}
+        </section>
       )}
       <p className={styles.muted}>
         {facts.backend ? t('install.backend.yes') : t('install.backend.no')}
@@ -369,7 +575,11 @@ function Preview({
           <ul className={styles.permissions}>
             {facts.permissions.map((permission) => (
               <li key={permission} className={styles.permission}>
-                <PermissionText permission={permission} />
+                <PermissionText
+                  permission={permission}
+                  reason={facts.reasons[permission]}
+                  hosts={facts.hosts}
+                />
                 {isUpdate && added.has(permission) && (
                   <Badge tone="highlight">{t('install.newPermission')}</Badge>
                 )}
@@ -406,6 +616,9 @@ function Preview({
           <p className={styles.muted}>{t('install.storageHint')}</p>
         </section>
       )}
+      <dl className={styles.facts}>
+        <StoreInfoRows facts={facts} />
+      </dl>
       {children}
     </div>
   );

@@ -14,19 +14,18 @@ import {
 import { useTranslation } from 'react-i18next';
 import { cx } from '@pithyx/ui';
 import { IconArrowDown, IconArrowUp, IconFile, IconFolder, IconLink } from '../../ui/icons';
+import { ENTRIES_TYPE } from './drop';
 import styles from './FilesApp.module.css';
 import {
   isSelected,
   selectAll,
+  selectNames,
   selectOnly,
   selectRange,
   toItems,
   toggle,
   type Selection,
 } from './selection';
-
-/** Drag data of entries dragged inside the Files app. */
-export const ENTRIES_TYPE = 'application/x-pithyx-files';
 
 /** Whether a drag carries entries of a Files window, files of the device, or neither. */
 export function dragKindOf(transfer: DataTransfer): 'files' | 'entries' | null {
@@ -70,6 +69,10 @@ export interface FolderViewProps {
   onVisible: (entries: FileEntry[]) => void;
   /** Entries that are neither dragged nor dropped on: the homes of every user, which are shares of their own. */
   fixed?: boolean;
+  /** The entries are a part of the folder (a search): select all takes the loaded ones, not the whole folder. */
+  filtered?: boolean;
+  /** What an empty list says instead of the empty folder's text. */
+  emptyText?: string | undefined;
   /** The mouse rested on a folder, so it can be read ahead of a double click. */
   onRest?: (entry: FileEntry) => void;
 }
@@ -77,8 +80,9 @@ export interface FolderViewProps {
 /** How long the mouse rests on a folder before it is read ahead: passing over a folder reads nothing. */
 const REST_DELAY = 150;
 
-const ROW_HEIGHT = 36;
-const COARSE_ROW_HEIGHT = 52;
+// Rows of D394: 28 px with a fine pointer, 44 px on touch (the --row-height token).
+const ROW_HEIGHT = 28;
+const COARSE_ROW_HEIGHT = 44;
 const PAGE_ROWS = 10;
 const TILE_WIDTH = 136;
 const TILE_HEIGHT = 156;
@@ -156,6 +160,15 @@ export function FolderView(props: FolderViewProps) {
       onVisible(entries.slice(visibleFrom, visibleTo));
     }
   }, [entries, onVisible, visibleFrom, visibleTo]);
+
+  // The entry being named is scrolled into view, so its field shows (a new folder lands where the order puts it):
+  // syncing with the virtualizer, not deriving state.
+  const renamingIndex = props.renaming === null ? -1 : names.indexOf(props.renaming);
+  useEffect(() => {
+    if (renamingIndex >= 0) {
+      virtualizer.scrollToIndex(Math.floor(renamingIndex / columns), { align: 'auto' });
+    }
+  }, [renamingIndex, columns, virtualizer]);
 
   const { onShown, folderKey } = props;
   const shownKey = useRef<string | null>(null);
@@ -270,7 +283,11 @@ export function FolderView(props: FolderViewProps) {
       if (control) {
         switch (event.key.toLowerCase()) {
           case 'a':
-            onSelect(selectAll());
+            onSelect(
+              props.filtered === true
+                ? selectNames(props.entries.map((candidate) => candidate.name))
+                : selectAll(),
+            );
             return true;
           case 'c':
             props.onKey('copy');
@@ -380,7 +397,8 @@ export function FolderView(props: FolderViewProps) {
           onSelect(dragged);
         }
         event.dataTransfer.setData(ENTRIES_TYPE, props.dragData(toItems(dragged)));
-        event.dataTransfer.effectAllowed = 'copyMove';
+        // Link: the desktop takes a drop as shortcuts.
+        event.dataTransfer.effectAllowed = 'all';
       },
       onDragOver: isFolder
         ? (event: DragEvent) => {
@@ -596,7 +614,9 @@ export function FolderView(props: FolderViewProps) {
           })}
         </div>
       </div>
-      {!props.loading && count === 0 && <p className={styles.empty}>{t('emptyFolder')}</p>}
+      {!props.loading && count === 0 && (
+        <p className={styles.empty}>{props.emptyText ?? t('emptyFolder')}</p>
+      )}
     </div>
   );
 }

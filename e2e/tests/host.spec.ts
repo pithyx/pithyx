@@ -50,8 +50,8 @@ test('a single app gets new launch arguments in its open window instead of a sec
   await signInAsAdmin(page);
   const { app } = await openDemo(page);
   await expect(app.locator('[data-fact="launch"]')).toHaveText('null');
-  await openFromDesktop(page, 'Storage');
-  await expect(appWindow(page, 'Storage')).toBeVisible();
+  await openFromDesktop(page, 'Settings');
+  await expect(appWindow(page, 'Settings')).toBeVisible();
 
   await openFromStart(page, 'SDK demo');
   await expect(app.getByRole('list', { name: 'Events' })).toContainText('launch');
@@ -145,12 +145,12 @@ test('a badge and a request for attention show on the taskbar and never take the
   await expect(taskbarEntry(page)).toHaveAccessibleName(/3 new/);
 
   await app.getByRole('checkbox', { name: 'Ask for attention when I leave the window' }).check();
-  await openFromDesktop(page, 'Storage');
-  await expect(appWindow(page, 'Storage')).toBeVisible();
+  await openFromDesktop(page, 'Settings');
+  await expect(appWindow(page, 'Settings')).toBeVisible();
   await expect(taskbarEntry(page)).toHaveAccessibleName(/needs attention/);
   await expect(taskbarEntry(page)).toHaveAttribute('data-attention', 'true');
   await expect(
-    page.getByRole('navigation', { name: 'Taskbar' }).getByRole('button', { name: /^Storage/ }),
+    page.getByRole('navigation', { name: 'Taskbar' }).getByRole('button', { name: /^Settings/ }),
   ).toHaveAccessibleName(/active/);
   expect(await violations(page)).toEqual([]);
 
@@ -314,7 +314,7 @@ test.describe('phone', () => {
     page,
   }) => {
     await signInAsAdmin(page);
-    await page.getByRole('option', { name: 'Storage, shortcut' }).tap();
+    await page.getByRole('option', { name: 'Settings, shortcut' }).tap();
     const { app } = await openDemo(page);
     await app.getByRole('checkbox', { name: 'Keep the window open when it is closed' }).check();
 
@@ -326,7 +326,7 @@ test.describe('phone', () => {
     await expect(switcher).toBeVisible();
     await switcher.getByRole('button', { name: 'Close all' }).tap();
     await expect(page.locator(FRAME)).toHaveCount(1);
-    await expect(appWindow(page, 'Storage')).toHaveCount(0);
+    await expect(appWindow(page, 'Settings')).toHaveCount(0);
     expect(await violations(page)).toEqual([]);
   });
 });

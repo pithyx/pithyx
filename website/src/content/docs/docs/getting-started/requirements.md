@@ -40,7 +40,7 @@ The reference machine is an Intel N100 or N305 with 8 GB of memory. The daemon i
 - A disk that already holds data is shown with a warning. Installing erases it.
 - With one disk the system is still built as a mirror with one member. Adding the second disk later is not possible in the interface yet.
 
-**Data pools.** After the installation you create pools in the Storage app, on disks other than the system disk.
+**Data pools.** After the installation you create pools in Settings > Pools, on disks other than the system disk.
 
 | Layout       | Minimum disks      |
 | ------------ | ------------------ |
@@ -52,7 +52,7 @@ The reference machine is an Intel N100 or N305 with 8 GB of memory. The daemon i
 | RAID-Z2      | 4                  |
 | RAID-Z3      | 5                  |
 
-New pools are created with 4 KiB sectors (`ashift=12`), `lz4` compression and `atime=off`. A pool name starts with a lowercase letter and may contain lowercase letters, digits, hyphens and underscores, up to 32 characters. Pools are not encrypted. See [Storage](/docs/admin/storage/).
+New pools are created with 4 KiB sectors (`ashift=12`), `lz4` compression and `atime=off`. A pool name starts with a lowercase letter and may contain lowercase letters, digits, hyphens and underscores, up to 32 characters. A pool can be encrypted when it is created. See [Storage](/docs/admin/storage/#encryption).
 
 ## Network
 

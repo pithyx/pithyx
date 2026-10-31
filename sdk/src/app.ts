@@ -243,6 +243,7 @@ export interface PithyxApp {
    * @returns The id of the notification, which `notificationAction` carries.
    * @throws `app.permission.denied` without the `notifications` permission.
    * @throws `sdk.request.invalid` when a text, the buttons or the data exceed their limits.
+   * @throws `notifications.message.invalid` when `category` is not one of the manifest's categories.
    */
   notify(notification: NotificationRequest): Promise<{
     /** The id of the notification. */
@@ -605,6 +606,11 @@ export interface PithyxApp {
         sort?: SortKey;
         /** Ascending or descending; `asc` when left out. */
         order?: SortOrder;
+        /**
+         * Keeps only the entries of this folder whose name contains it, ignoring case; `total` then counts the matches.
+         * Subfolders are not searched.
+         */
+        query?: string;
       },
     ): Promise<FolderPage>;
     /**

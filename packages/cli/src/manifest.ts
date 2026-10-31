@@ -1,10 +1,12 @@
 import type { AppManifest } from '@pithyx/sdk';
-import schema from '@pithyx/sdk/schema/manifest.v1.schema.json' with { type: 'json' };
+import composeRules from '@pithyx/sdk/schema/compose.v1.rules.json' with { type: 'json' };
+import schema from '@pithyx/sdk/schema/manifest.v2.schema.json' with { type: 'json' };
 import { isValidCron } from './cron';
 import type { Issue } from './issues';
 import { compileSchema, display, isObject, parseStrictJson, schemaViolations } from './json-schema';
+import { DEVICE_PREFIX, elevatedRightsOf } from './rights';
 
-export const SUPPORTED_MANIFEST_VERSION = 1;
+export const SUPPORTED_MANIFEST_VERSION = 2;
 
 /** The namespace of the system apps and the official catalog; the box never accepts it from a sideload. */
 export const RESERVED_ID_PREFIX = 'org.pithyx.';
@@ -18,11 +20,60 @@ export interface ManifestValidation {
   manifest?: AppManifest;
 }
 
-/** Whether this version of Pithyx can grant an elevated right the schema accepts: none (D345, A16 follows). */
-// The parameter stays for the day A16 grants rights again.
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-export function isSupportedElevatedRight(_right: string): boolean {
-  return false;
+const CAPABILITY_PREFIX = 'capability:';
+const elevatedRules = composeRules.elevated;
+const blockedDevice = new RegExp(composeRules.patterns.blockedDevice);
+
+/**
+ * Whether this version of Pithyx can grant an elevated right the schema accepts (D311, D387): `host.network`,
+ * `host.pid`, `docker.socket`, `docker.socket.raw`, a device node or class outside the block list and a capability
+ * outside the block list. `host.full` stays refused.
+ */
+export function isSupportedElevatedRight(right: string): boolean {
+  if (
+    elevatedRules.hostNamespaceRights.includes(right) ||
+    right === composeRules.mount.dockerSocketRight ||
+    right === composeRules.mount.dockerSocketRawRight
+  ) {
+    return true;
+  }
+  if (right.startsWith(DEVICE_PREFIX)) {
+    return !blockedDevice.test(right.slice(DEVICE_PREFIX.length));
+  }
+  return (
+    right.startsWith(CAPABILITY_PREFIX) &&
+    !elevatedRules.blockedCapabilities.includes(right.slice(CAPABILITY_PREFIX.length))
+  );
+}
+
+/**
+ * Whether a granted right runs its service in the host's user namespace: the host's network or processes, or a device
+ * whose group exists only on the host. Root there would be root on the box, so `backend.root` refuses it.
+ */
+export function needsHostNamespace(right: string): boolean {
+  return (
+    elevatedRules.hostNamespaceRights.includes(right) ||
+    (right.startsWith(DEVICE_PREFIX) &&
+      !elevatedRules.namespacedDevices.includes(right.slice(DEVICE_PREFIX.length)))
+  );
+}
+
+/** How much an elevated right can do on the box, and so how much granting it asks (D388). */
+export type RiskTier = 'elevated' | 'high' | 'critical';
+
+/** The tier of an elevated right, from `elevated.tiers` of the compose rules, as the box reads it. */
+export function tierOf(right: string): RiskTier {
+  const tiers = elevatedRules.tiers.rights as Record<string, string | undefined>;
+  // A device below a listed folder has its tier: device:/dev/dri/renderD128 is one node of device:/dev/dri.
+  for (let name = right; ; name = name.slice(0, name.lastIndexOf('/'))) {
+    const tier = tiers[name];
+    if (tier !== undefined) {
+      return tier as RiskTier;
+    }
+    if (!name.startsWith(DEVICE_PREFIX) || name.lastIndexOf('/') <= DEVICE_PREFIX.length) {
+      return elevatedRules.tiers.default as RiskTier;
+    }
+  }
 }
 
 /**
@@ -144,6 +195,41 @@ function semanticIssues(
     });
   });
 
+  const actionIds = new Set<string>();
+  manifest.fileActions?.forEach((action, index) => {
+    if (actionIds.has(action.id)) {
+      issues.push(duplicate(`/fileActions/${String(index)}/id`, action.id));
+    }
+    actionIds.add(action.id);
+    // An action applies to files with these extensions, to folders, or to both.
+    if (action.extensions === undefined && action.folders !== true) {
+      issues.push({
+        code: 'app.manifest.schema_violation',
+        params: { path: `/fileActions/${String(index)}`, keyword: 'required' },
+      });
+    }
+  });
+  if (manifest.fileActions !== undefined && !('files.shares' in manifest.permissions)) {
+    issues.push({
+      code: 'app.manifest.permission_missing',
+      params: { path: '/fileActions', permission: 'files.shares' },
+    });
+  }
+
+  const categoryIds = new Set<string>();
+  manifest.notifications?.categories.forEach((category, index) => {
+    if (categoryIds.has(category.id)) {
+      issues.push(duplicate(`/notifications/categories/${String(index)}/id`, category.id));
+    }
+    categoryIds.add(category.id);
+  });
+  if (manifest.notifications !== undefined && !('notifications' in manifest.permissions)) {
+    issues.push({
+      code: 'app.manifest.permission_missing',
+      params: { path: '/notifications', permission: 'notifications' },
+    });
+  }
+
   const backend = manifest.backend;
   if (backend !== undefined) {
     const endpoints = new Set(Object.keys(backend.endpoints));
@@ -168,10 +254,17 @@ function semanticIssues(
         );
       }
     });
-    for (const right of backend.elevated ?? []) {
-      if (!isSupportedElevatedRight(right)) {
-        issues.push({ code: 'app.elevated.unsupported', params: { right } });
-      }
+  }
+  const root = backend?.root === true;
+  for (const right of elevatedRightsOf(manifest)) {
+    if (!isSupportedElevatedRight(right)) {
+      issues.push({ code: 'app.elevated.unsupported', params: { right } });
+    } else if (backend === undefined) {
+      issues.push({ code: 'app.elevated.backend_missing', params: { right } });
+    } else if (root && needsHostNamespace(right)) {
+      issues.push({ code: 'app.elevated.root_conflict', params: { right } });
+    } else if (!root && right.startsWith(CAPABILITY_PREFIX)) {
+      issues.push({ code: 'app.elevated.root_required', params: { right } });
     }
   }
   return issues;

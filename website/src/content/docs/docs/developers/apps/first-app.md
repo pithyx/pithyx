@@ -13,7 +13,7 @@ This page takes an app from an empty project to a package you can install: build
 
 The `pithyx` command has no command that creates a project. Start from any frontend project (the examples use Vite) and add the files the CLI expects at the project root:
 
-- `pithyx.json`, the [manifest](/docs/developers/apps/manifest/). Add `"$schema": "./node_modules/@pithyx/sdk/schema/manifest.v1.schema.json"` for editor support.
+- `pithyx.json`, the [manifest](/docs/developers/apps/manifest/). Add `"$schema": "./node_modules/@pithyx/sdk/schema/manifest.v2.schema.json"` for editor support.
 - `icon.svg`. The CLI package ships a `template-icon.svg`; `pithyx validate` warns while `icon.svg` is still that icon.
 - The built frontend in `dist/` (change the folder with `--frontend <folder>`). Your `entry` must be `frontend/<file>.html`; the content of `dist/` becomes `frontend/` in the package.
 
@@ -75,10 +75,10 @@ _Install from file shows the package before it installs: the unverified warning,
 
 Only an administrator can install a package.
 
-1. Open the Store and the **Installed** tab, and choose **Install from file**.
+1. Open the Store, then **Installed**, and choose **Install from file**.
 2. Choose the `.pithyxapp` file. The dialog **Install an app** shows the version and whether this is an install, update, reinstall or downgrade, the author, the file count and size, and the warning "This package comes from a file and is not verified."
 3. Review the permissions the app asks for, the folders it wants, whether it has a backend, whether it runs as root, and who may use it.
-4. On the first app install of the box, choose the pool for app data; every app keeps its files there. Without a pool the dialog says to create one in Storage first.
+4. On the first app install of the box, choose the pool for app data; every app keeps its files there. Without a pool the dialog says to create one in Settings > Pools first.
 5. Confirm. Installing runs as a job.
 
 After the install, an administrator maps the app's storage requests to shared folders and can revoke permissions. An update that asks for a new permission waits for the administrator's confirmation and the old version keeps running. An update takes a snapshot of the app's data; a rollback returns to the previous version with its data. See [Apps and the Store](/docs/admin/apps-and-store/).
@@ -93,7 +93,7 @@ curl -sS --cacert root-ca.crt -c cookies -H 'X-Pithyx-Request: 1' -H 'Content-Ty
   -d '{"username":"admin","password":"..."}' "$BOX/api/auth/login"
 curl -sS --cacert root-ca.crt -b cookies -H 'X-Pithyx-Request: 1' -H 'Content-Type: application/gzip' \
   -X PUT --data-binary @com.example.notes-1.0.0.pithyxapp "$BOX/api/apps/packages"
-# The answer is the preview: packageId, action, permissions, keptData, suggestedAccess, pool.
+# The answer is the preview: packageId, action, manifest (with its permissions), addedPermissions, keptData, suggestedAccess, pool.
 curl -sS --cacert root-ca.crt -b cookies -H 'X-Pithyx-Request: 1' -H 'Content-Type: application/json' \
   -d '{"pool":"tank","access":"everybody"}' "$BOX/api/apps/packages/<packageId>/install"
 # 202 with the job; follow it with GET /api/jobs/<id> until its state is succeeded or failed.

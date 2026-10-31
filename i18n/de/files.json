@@ -5,6 +5,8 @@
   "path": "Pfad",
   "search": "In {folder} suchen",
   "searchPlaceholder": "Suchen",
+  "searchResults": "{count, plural, one {# Treffer} other {# Treffer}}",
+  "searchEmpty": "Nichts in diesem Ordner hat „{query}“ im Namen.",
   "places": {
     "title": "Orte",
     "home": "Persönlicher Ordner",
@@ -46,6 +48,7 @@
     "download": "Herunterladen",
     "upload": "Hochladen",
     "newFolder": "Neuer Ordner",
+    "newFile": "Neue Datei",
     "rename": "Umbenennen",
     "copy": "Kopieren",
     "cut": "Ausschneiden",
@@ -54,7 +57,8 @@
     "deletePermanent": "Endgültig löschen",
     "selectAll": "Alles auswählen",
     "versions": "Frühere Versionen",
-    "openWith": "Öffnen mit …"
+    "openWith": "Öffnen mit …",
+    "addToDesktop": "Zum Desktop hinzufügen"
   },
   "dialog": {
     "cancel": "Abbrechen",
@@ -71,6 +75,7 @@
     "purgeBody": "{count, plural, one {# Element wird} other {# Elemente werden}} endgültig gelöscht. Das lässt sich nicht rückgängig machen.",
     "purgeConfirm": "Endgültig löschen",
     "newFolderName": "Neuer Ordner",
+    "newFileName": "Neue Datei",
     "conflict": {
       "skip": "Überspringen",
       "overwrite": "Ersetzen",
@@ -80,16 +85,19 @@
   "bin": {
     "title": "Papierkorb von {share}",
     "empty": "Leer. Nur die Hoffnung ist geblieben.",
-    "never": "Bleibt bis zum Leeren",
+    "never": "Bis zum Leeren",
     "restore": "Wiederherstellen",
     "delete": "Endgültig löschen",
     "emptyBin": "Papierkorb leeren",
     "retention": "Gelöschte Elemente bleiben {days, plural, one {# Tag} other {# Tage}} erhalten.",
     "retentionForever": "Gelöschte Elemente bleiben erhalten, bis der Papierkorb geleert wird.",
-    "fromPath": "Aus {path}",
-    "deletedOn": "Gelöscht am {date}",
-    "expiresOn": "Endgültig gelöscht am {date}",
-    "more": "Mehr anzeigen"
+    "more": "Mehr anzeigen",
+    "columns": {
+      "from": "Ursprünglicher Ort",
+      "deleted": "Gelöscht",
+      "by": "Gelöscht von",
+      "expires": "Bleibt bis"
+    }
   },
   "job": {
     "cancel": "Abbrechen",
@@ -109,7 +117,8 @@
   },
   "announce": {
     "copied": "{count, plural, one {# Element} other {# Elemente}} in die Zwischenablage kopiert",
-    "cut": "{count, plural, one {# Element} other {# Elemente}} ausgeschnitten"
+    "cut": "{count, plural, one {# Element} other {# Elemente}} ausgeschnitten",
+    "addedToDesktop": "{count, plural, one {# Verknüpfung} other {# Verknüpfungen}} zum Desktop hinzugefügt"
   },
   "loadFailed": "Dieser Ordner konnte nicht geladen werden.",
   "details": "Details",
@@ -145,6 +154,29 @@
     "title": "{name} öffnen mit",
     "viewer": "Betrachter",
     "download": "Herunterladen",
-    "always": ".{extension}-Dateien immer so öffnen"
+    "always": ".{extension}-Dateien immer so öffnen",
+    "choices": "Möglichkeiten, die Datei zu öffnen",
+    "current": "Standard"
+  },
+  "commands": "Befehle",
+  "refresh": "Aktualisieren",
+  "readOnlyInfo": "In {name} kannst du Dateien öffnen, kopieren und herunterladen, aber nicht ändern.",
+  "command": {
+    "delete": "Löschen",
+    "list": "Liste",
+    "tiles": "Kacheln"
+  },
+  "detailsEmpty": "Wähle ein Element aus, um seine Details zu sehen.",
+  "recent": {
+    "title": "Zuletzt verwendet",
+    "empty": "Dateien, die du öffnest, erscheinen hier.",
+    "location": "Ort",
+    "opened": "Geöffnet",
+    "show": "In {location} zeigen"
+  },
+  "tree": {
+    "expand": "Ordner in {name} zeigen",
+    "collapse": "Ordner in {name} ausblenden",
+    "more": "Mehr in {name}"
   }
 }

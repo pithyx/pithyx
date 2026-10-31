@@ -24,6 +24,7 @@ import {
 import { serveApp, type AppConnection, type MethodHandlers } from '@pithyx/sdk/host';
 import { createI18n } from '@pithyx/sdk/i18n';
 import type { DevConfig } from '../src/dev/config';
+import { permissionsOf } from '../src/rights';
 import type { MockUser } from '../src/dev/users';
 import de from '../../../i18n/de/cli.json';
 import en from '../../../i18n/en/cli.json';
@@ -68,6 +69,7 @@ const BACKEND_STATES: ShellBackend[] = [
   'unavailable',
   'unavailable:storage',
   'unavailable:pool',
+  'unavailable:device',
 ];
 const STORAGE_STATES: StorageState[] = ['ready', 'unmapped', 'locked', 'unavailable'];
 const UNLOAD_REASONS: UnloadReason[] = ['logout', 'shutdown', 'restart', 'update'];
@@ -107,7 +109,7 @@ const state: State = {
   locale: navigator.language.startsWith('de') ? 'de-DE' : 'en-US',
   timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
   sizeClass: 'expanded',
-  permissions: new Set(manifest.permissions),
+  permissions: new Set(permissionsOf(manifest)),
   online: true,
   logLevel: 'info',
   backend: 'running',
@@ -483,6 +485,16 @@ const methods: MethodHandlers = {
     if (!state.permissions.has('notifications')) {
       throw denied('notifications');
     }
+    // The box accepts only the categories of the manifest (D390).
+    if (
+      request.category !== undefined &&
+      !(manifest.notifications?.categories ?? []).some((entry) => entry.id === request.category)
+    ) {
+      throw new PithyxError({
+        code: 'notifications.message.invalid',
+        params: { field: 'category', maxLength: 0 },
+      });
+    }
     const id = `n${String(Date.now())}`;
     toast(id, { ...request, notification: id, action: null, data: request.data ?? null });
     addLog('method', `notify ${request.title}`);
@@ -632,12 +644,14 @@ function openWindow(): void {
               : (text[state.locale] ?? text[language] ?? text.en),
           ),
         ]
-      : state.backend === 'unavailable:storage' || state.backend === 'unavailable:pool'
+      : state.backend === 'unavailable:storage' ||
+          state.backend === 'unavailable:pool' ||
+          state.backend === 'unavailable:device'
         ? [
             h(
               'span',
               {},
-              t(state.backend === 'unavailable:storage' ? 'window.storage' : 'window.pool', {
+              t(`window.${state.backend.slice('unavailable:'.length)}`, {
                 name: appName(),
               }),
             ),
@@ -841,7 +855,7 @@ function eventRow<E extends EventName>(event: E, sample: Events[E]) {
 }
 
 function renderPanel(): void {
-  const permissions = [...new Set([...manifest.permissions, ...state.permissions])];
+  const permissions = [...new Set([...permissionsOf(manifest), ...state.permissions])];
   const all = samples();
   panel.replaceChildren(
     ...present([

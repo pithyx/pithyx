@@ -2,6 +2,7 @@ import { describe, expect, expectTypeOf, it } from 'vitest';
 import packageJson from '../package.json';
 import * as host from './host';
 import * as sdk from './index';
+import schema from '../schema/manifest.v2.schema.json';
 import type { Permission } from './manifest';
 import type { EventName, MethodName, QueryName } from './protocol';
 
@@ -18,6 +19,21 @@ describe('the public SDK', () => {
   it('has no internal or administrative methods or permissions', () => {
     expectTypeOf<Extract<MethodName, `internal.${string}` | `admin.${string}`>>().toBeNever();
     expectTypeOf<Extract<Permission, `internal.${string}` | `admin.${string}`>>().toBeNever();
+  });
+
+  it('names the permissions of the manifest schema', () => {
+    const permissions = [
+      'files.read',
+      'files.write',
+      'files.shares',
+      'notifications',
+      'notifications.external',
+      'directory.read',
+      'network.internet',
+      'network.lan',
+    ] as const satisfies readonly Permission[];
+    expectTypeOf<(typeof permissions)[number]>().toEqualTypeOf<Permission>();
+    expect(schema.$defs.Permission.enum).toEqual(permissions);
   });
 
   it('takes its version from package.json', () => {

@@ -32,12 +32,12 @@
       "name": "Name",
       "nameHint": "Buchstaben, Ziffern, Leerzeichen, Punkte, Bindestriche und Unterstriche.",
       "pool": "Pool",
-      "noPools": "Noch kein Pool ist für freigegebene Ordner bereit. Lege zuerst in Speicher einen Pool an.",
+      "noPools": "Noch kein Pool ist für freigegebene Ordner bereit. Lege zuerst unter Speicher einen Pool an.",
       "description": "Beschreibung (optional)",
       "preview": "Befehle anzeigen",
       "dataset": "Der freigegebene Ordner wird zum Dataset {dataset}.",
       "run": "Freigegebenen Ordner anlegen",
-      "openStorage": "Pool in Speicher anlegen…"
+      "openStorage": "Zu den Pools…"
     },
     "editDialog": {
       "title": "{name} bearbeiten",
@@ -45,7 +45,7 @@
       "name": "Name",
       "description": "Beschreibung",
       "datasetKept": "Umbenennen ändert nur den Namen, den Benutzer sehen; das Dataset behält seinen Namen.",
-      "save": "Speichern",
+      "atOnce": "Jede Änderung hier gilt sofort: Name und Beschreibung, sobald du das Feld verlässt oder Enter drückst.",
       "saved": "Gespeichert.",
       "rights": "Rechte",
       "rightsIntro": "Änderungen gelten sofort. Ein Benutzer bekommt das Meiste, was ihm selbst oder einer seiner Gruppen gegeben ist; Administratoren können immer alles lesen und ändern.",
@@ -74,7 +74,7 @@
       "title": "{name} löschen",
       "choice": "Was passiert mit den Daten?",
       "keep": "Daten behalten",
-      "keepDataset": "Der freigegebene Ordner verschwindet. Das Dataset {dataset} und seine Dateien bleiben und sind weiter in Speicher zu sehen.",
+      "keepDataset": "Der freigegebene Ordner verschwindet. Das Dataset {dataset} und seine Dateien bleiben und sind weiter unter Speicher zu sehen.",
       "keepFolder": "Der freigegebene Ordner verschwindet. Die Dateien bleiben im Ordner {path}.",
       "destroy": "Daten endgültig löschen",
       "destroyHint": "Das Dataset, alle seine Dateien und jeder Snapshot werden gelöscht. Das lässt sich nicht rückgängig machen.",
@@ -84,14 +84,42 @@
       "nothingRuns": "Es läuft kein Befehl. {location} und seine Dateien bleiben.",
       "gone": "Das wird endgültig gelöscht:",
       "run": "Freigegebenen Ordner löschen"
-    }
+    },
+    "toolbar": "Aktionen für freigegebene Ordner"
   },
   "overview": {
     "title": "Einstellungen",
-    "search": "Einstellungen durchsuchen",
+    "search": "Suchen",
     "noMatch": "Keine Einstellung passt zu deiner Suche.",
     "all": "Alle Einstellungen",
-    "navigation": "Navigation der Einstellungen"
+    "navigation": "Navigation der Einstellungen",
+    "allSettings": "Alle Einstellungen",
+    "box": {
+      "label": "Diese Box",
+      "version": "Pithyx {version}",
+      "runningFor": "Läuft seit",
+      "updates": "Updates",
+      "upToDate": "Aktuell",
+      "updateReady": "Pithyx {version} ist bereit"
+    },
+    "attention": {
+      "openStorage": "Speicher öffnen",
+      "update": {
+        "title": "Pithyx {version} ist bereit zur Installation",
+        "description": "Installiere es unter Updates; die Box startet einmal neu.",
+        "action": "Updates öffnen"
+      },
+      "apps": {
+        "title": "{count, plural, one {Ein Update für # App ist bereit} other {Updates für # Apps sind bereit}}",
+        "action": "Store öffnen"
+      },
+      "trust": {
+        "title": "Dieses Gerät vertraut der Box noch nicht",
+        "description": "Vertraue ihr einmal, um Passkeys einzuschalten und die Warnungen des Browsers loszuwerden.",
+        "action": "Diesem Gerät vertrauen"
+      }
+    },
+    "page": "Übersicht"
   },
   "categories": {
     "system": "System",
@@ -117,7 +145,7 @@
     "reverseProxy": {
       "title": "Reverse Proxy",
       "description": "Eigene Domains auf den Ports 443 und 80, Weiterleitungen und weitergeleitete Ports",
-      "keywords": "reverse proxy domain hostname vhost https tls sni zertifikat weiterleitung redirect port stream tcp udp websocket basic auth anmeldung hsts"
+      "keywords": "reverse proxy domain hostname vhost https tls sni zertifikat weiterleitung redirect port stream tcp udp websocket basic auth anmeldung hsts lets encrypt acme"
     },
     "regional": {
       "title": "Regionale Einstellungen",
@@ -140,24 +168,54 @@
       "keywords": "smb samba sftp ssh netzlaufwerk protokoll firewall"
     },
     "users": {
-      "title": "Benutzer",
-      "description": "Konten, Passwörter und Administratoren",
-      "keywords": "benutzer konto passwort administrator anmeldung personen"
+      "title": "Benutzer und Gruppen",
+      "description": "Konten, Passwörter, Gruppen und ihre Rechte",
+      "keywords": "benutzer konto passwort administrator anmeldung personen gruppe team mitglieder rechte berechtigungen"
     },
     "updates": {
       "title": "Updates",
       "description": "Pithyx- und Debian-Updates, der Update-Kanal, Rückkehr zu einem Snapshot, die Update-Quelle",
       "keywords": "update aktualisierung version release kanal beta stable debian sicherheit rollback snapshot wiederherstellen zurück quelle fork schlüssel"
     },
+    "ups": {
+      "title": "USV",
+      "description": "Bei einem Stromausfall sauber herunterfahren, mit einer USV an USB oder im Netzwerk",
+      "keywords": "usv ups unterbrechungsfreie stromversorgung akku batterie stromausfall herunterfahren nut network ups tools usb"
+    },
     "backup": {
       "title": "Backup und Wiederherstellung",
       "description": "Konfiguration dieser Box sichern und wiederherstellen",
       "keywords": "backup sicherung wiederherstellen konfiguration export import neuinstallation systemplatte"
     },
-    "groups": {
-      "title": "Gruppen",
-      "description": "Gruppen, ihre Mitglieder und Rechte",
-      "keywords": "gruppe team mitglieder rechte berechtigungen"
+    "security": {
+      "title": "Sicherheit",
+      "description": "Apps mit Root-Zugriff auf die Box und ihn entziehen",
+      "keywords": "sicherheit root zugriff sonderrechte apps docker container socket entziehen vertrauen"
+    },
+    "notifications": {
+      "title": "Benachrichtigungen",
+      "description": "Der E-Mail-Server und die Kanäle der Box für ihre Warnungen",
+      "keywords": "benachrichtigungen e-mail email smtp server webhook ntfy gotify push warnungen kanäle"
+    },
+    "pools": {
+      "title": "Pools",
+      "description": "Pools auf deinen Platten, ihr Platz und Zustand, und sie anlegen, erweitern, sperren und reparieren",
+      "keywords": "speicher pool zfs spiegel raid raidz platte festplatte platz kapazität verschlüsselung schlüssel sperren entsperren tresor usb stick reparieren ersetzen erweitern scrub"
+    },
+    "disks": {
+      "title": "Platten",
+      "description": "Jede Platte mit ihrem Zustand und ob ein neuer Pool sie nutzen darf",
+      "keywords": "speicher platte festplatte hdd ssd nvme smart zustand temperatur seriennummer"
+    },
+    "maintenance": {
+      "title": "Zustand und Wartung",
+      "description": "Gefundene Probleme, Scrub-Zeitpläne und Selbsttests der Platten",
+      "keywords": "speicher zustand warnungen scrub zeitplan smart selbsttest wartung"
+    },
+    "storageAdvanced": {
+      "title": "Speicher für Fortgeschrittene",
+      "description": "Datasets und Volumes, einen Pool exportieren und importieren",
+      "keywords": "speicher erweitert dataset volume kontingent komprimierung exportieren importieren umziehen pool"
     }
   },
   "info": {
@@ -172,17 +230,20 @@
     "memory": "Arbeitsspeicher",
     "uptime": "Läuft seit",
     "unknown": "Nicht gemeldet",
-    "uptimeValue": "{days, plural, =0 {} one {# Tag, } other {# Tagen, }}{hours, plural, one {# Stunde} other {# Stunden}}, {minutes, plural, one {# Minute} other {# Minuten}}"
+    "uptimeValue": "{days, plural, =0 {} one {# Tag, } other {# Tagen, }}{hours, plural, one {# Stunde} other {# Stunden}}, {minutes, plural, one {# Minute} other {# Minuten}}",
+    "section": "Diese Box"
   },
   "fileServices": {
     "intro": "Mit Dateidiensten öffnen andere Computer deine freigegebenen Ordner über das Netzwerk. Benutzer melden sich mit ihrem Pithyx-Benutzernamen und Passwort an.",
-    "save": "Speichern",
+    "service": "Dienst",
+    "connect": "Verbinden",
     "firewall": {
       "title": "Firewall",
       "explain": "Pithyx lässt andere Computer nur die Weboberfläche und die eingeschalteten Dateidienste erreichen. Schaltest du einen Dienst aus, ist auch sein Port zu.",
       "privateSwitch": "Nur private Netze dürfen die Dateidienste nutzen",
       "privateExplain": "SMB, SFTP, SSH und FTP antworten dann nur Computern in privaten Netzen (10.x, 172.16 bis 31.x, 192.168.x, Link-local und IPv6-ULA). Lass es aus, wenn du die Box über einen Router aus einem anderen Netz oder über ein VPN mit öffentlichen Adressen erreichst. Die Weboberfläche bleibt in jedem Fall erreichbar.",
-      "inactive": "Das ist ein Entwicklungsrechner: Pithyx kennt die Regeln, wendet sie hier aber nicht an."
+      "inactive": "Das ist ein Entwicklungsrechner: Pithyx kennt die Regeln, wendet sie hier aber nicht an.",
+      "reach": "Erreichbar aus"
     },
     "rights": "Wer welchen Dateidienst nutzen darf, legst du mit den Rechten jedes Benutzers oder jeder Gruppe auf den Seiten Benutzer und Gruppen fest. Welche freigegebenen Ordner sie anbieten, legst du pro Ordner auf der Seite Freigegebene Ordner fest. Wer sich seit den Dateidiensten nicht im Web angemeldet hat, muss das einmal tun, damit die Dienste das Passwort kennen.",
     "state": {
@@ -196,7 +257,7 @@
       "explain": "Netzlaufwerke für Windows, macOS und Linux. Angenommen werden nur verschlüsselte, signierte Verbindungen aktueller Systeme (SMB 3).",
       "switch": "Freigegebene Ordner über SMB anbieten",
       "workgroup": "Arbeitsgruppe",
-      "workgroupHint": "Bis zu 15 Buchstaben, Ziffern, Punkte, Bindestriche und Unterstriche. Die meisten Netzwerke nutzen WORKGROUP.",
+      "workgroupHint": "Bis zu 15 Buchstaben, Ziffern, Punkte, Bindestriche und Unterstriche. Die meisten Netzwerke nutzen WORKGROUP. Gilt, sobald du das Feld verlässt oder Enter drückst.",
       "windows": "Windows: gib im Datei-Explorer ein",
       "mac": "macOS und Linux: verbinde dich mit dem Server",
       "trash": "Über SMB gelöschte Dateien landen im Papierkorb des freigegebenen Ordners, wo Dateien sie wiederherstellt.",
@@ -230,7 +291,8 @@
       "plainWarning": "Auf eigene Gefahr: Ohne Verschlüsselung gehen Benutzernamen, Passwörter und Dateien lesbar für alle im Netzwerk über die Leitung. Erlaube es nur für Geräte, die kein TLS können, und nur in einem Netzwerk, dem du vertraust. Nimmst du es wieder zurück, enden alle unverschlüsselten Sitzungen.",
       "connect": "Verbinde dich mit",
       "tls": "Wähle in deinem Programm „explizites FTP über TLS“. Die Box hat ein eigenes Zertifikat, daher fragt das Programm einmal, ob es ihm vertrauen soll; vergleiche den Fingerabdruck unten.",
-      "fingerprint": "Fingerabdruck des Zertifikats (SHA-256):"
+      "fingerprint": "Fingerabdruck des Zertifikats (SHA-256):",
+      "plain": "Unverschlüsseltes FTP"
     }
   },
   "network": {
@@ -351,7 +413,13 @@
       "connectionWarning": "Dieser Browser erreicht die Box über {name}, und das ändert sich. Die Seite antwortet vielleicht nicht mehr; öffne die neue Adresse oder warte 60 Sekunden, bis die alten Einstellungen zurück sind.",
       "addresses": "Die Box antwortet dann auch unter:",
       "confirm": "Anwenden"
-    }
+    },
+    "tabs": {
+      "interfaces": "Schnittstellen",
+      "names": "Hostname und Nameserver",
+      "proxy": "Reverse Proxy"
+    },
+    "applyNote": "Änderungen gelten zusammen. Ist die Box danach nicht erreichbar, kehrt sie nach 60 Sekunden zu den alten Einstellungen zurück."
   },
   "certificates": {
     "intro": "Die Box spricht HTTPS auf Port 7484; die Ports 80 und 443 schicken jeden dorthin, außer ein Host des Reverse Proxys hat den Namen. Sie ist ihre eigene Zertifizierungsstelle: Installiere ihr Root-Zertifikat einmal auf einem Gerät, dann vertraut das Gerät der Box und jedem Zertifikat, das sie ausstellt.",
@@ -380,35 +448,7 @@
     },
     "trust": {
       "title": "Dieser Box vertrauen",
-      "explain": "Lade das Root-Zertifikat herunter und installiere es auf jedem Gerät, das die Box nutzt. Danach zeigt der Browser keine Warnung mehr, lädt aus seinem Cache, und FTPS-Programme akzeptieren die Box.",
-      "download": "Root-Zertifikat herunterladen",
-      "compare": "Bevor du der Datei auf einem Gerät vertraust, vergleiche ihren Fingerabdruck mit dem oben.",
-      "devices": {
-        "windows": {
-          "name": "Windows:",
-          "steps": "Öffne die Datei, wähle Zertifikat installieren, Lokaler Computer und dann den Speicher Vertrauenswürdige Stammzertifizierungsstellen."
-        },
-        "macos": {
-          "name": "macOS:",
-          "steps": "Öffne die Datei in der Schlüsselbundverwaltung (Schlüsselbund System), öffne das Zertifikat und stelle Vertrauen auf Immer vertrauen."
-        },
-        "ios": {
-          "name": "iPhone und iPad:",
-          "steps": "Öffne die Datei in Safari, installiere das Profil unter Einstellungen, Allgemein, VPN und Geräteverwaltung und schalte es unter Einstellungen, Allgemein, Info, Zertifikatsvertrauenseinstellungen ein."
-        },
-        "android": {
-          "name": "Android:",
-          "steps": "Einstellungen, Sicherheit, Verschlüsselung und Anmeldedaten, Zertifikat installieren, CA-Zertifikat, dann die Datei wählen."
-        },
-        "linux": {
-          "name": "Linux:",
-          "steps": "Kopiere die Datei nach /usr/local/share/ca-certificates/ und führe sudo update-ca-certificates aus; Browser mit eigenem Speicher brauchen den Schritt darunter."
-        },
-        "firefox": {
-          "name": "Firefox:",
-          "steps": "Einstellungen, Datenschutz und Sicherheit, Zertifikate, Zertifikate anzeigen, Zertifizierungsstellen, Importieren, und ihm für Websites vertrauen."
-        }
-      }
+      "compare": "Bevor du der Datei auf einem Gerät vertraust, vergleiche ihren Fingerabdruck mit dem oben."
     },
     "authority": {
       "title": "Zertifizierungsstelle",
@@ -497,6 +537,27 @@
       "signInAddress": "Anmeldeadresse",
       "signInAddressHint": "Wohin Hosts mit Pithyx-Anmeldung Besucher schicken, zum Beispiel https://nas.home.arpa:7484. Leer lassen, um den aufgerufenen Namen auf Port 7484 zu nehmen."
     },
+    "acme": {
+      "title": "Let's Encrypt",
+      "explain": "Hosts mit einem Zertifikat von Let's Encrypt bekommen es über Port 80 (HTTP-01) und erneuern es 30 Tage vor seinem Ende. Let's Encrypt ist eine kostenlose Zertifizierungsstelle im Internet; die Box spricht nur für diese Hosts mit ihr.",
+      "terms": "Nutzungsbedingungen",
+      "agree": "Ich stimme den Nutzungsbedingungen der Zertifizierungsstelle zu",
+      "agreed": "Den Nutzungsbedingungen ist zugestimmt.",
+      "unreachable": "Die Zertifizierungsstelle antwortet gerade nicht. Prüf die Internetverbindung der Box.",
+      "email": "E-Mail-Adresse (optional)",
+      "emailHint": "Die Zertifizierungsstelle darf dir zu dem Konto schreiben.",
+      "directory": "ACME-Verzeichnis",
+      "directoryHint": "Let's Encrypt, außer du nutzt eine andere ACME-Zertifizierungsstelle; eine andere braucht eine neue Zustimmung.",
+      "save": "Speichern",
+      "status": {
+        "pending": "Wartet auf das erste Zertifikat",
+        "valid": "Gültig bis {date}",
+        "failed": "Die letzte Anfrage ist fehlgeschlagen",
+        "running": "Zertifikat wird angefordert",
+        "retry": "Nächster Versuch: {date}"
+      },
+      "renew": "Jetzt erneuern"
+    },
     "badges": {
       "disabled": "Aus",
       "signIn": "Pithyx-Anmeldung",
@@ -569,8 +630,10 @@
       "label": "Zertifikat",
       "box": "Von der Zertifizierungsstelle der Box",
       "custom": "Eigenes hochladen",
+      "acme": "Von Let's Encrypt",
       "boxHint": "Die Box stellt ein Zertifikat für die Domains aus. Sie müssen im Bereich ihrer Zertifizierungsstelle liegen (Einstellungen > Zertifikate); Geräte, die der Root der Box vertrauen, akzeptieren es.",
       "customHint": "Ein Zertifikat mit Kette und unverschlüsseltem privatem Schlüssel im PEM-Format, das jede Domain abdeckt, zum Beispiel für eine öffentliche Domain.",
+      "acmeHint": "Die Box holt ein kostenloses Zertifikat für öffentliche Domains und erneuert es selbst. Jede Domain muss auf die Box zeigen, und Port 80 muss sie aus dem Internet erreichen. Stimm zuerst im Abschnitt Let's Encrypt den Bedingungen zu.",
       "stored": "Ein Zertifikat ist hochgeladen. Wähle nur dann neue Dateien, wenn du es ersetzen willst."
     },
     "tls": {
@@ -642,15 +705,13 @@
     }
   },
   "regional": {
-    "intro": "Sprache, Formate und Uhrzeit der Box. Deine eigene Sprache wählst du weiterhin im Benutzermenü.",
+    "intro": "Sprache, Formate und Uhrzeit der Box. Deine eigene Sprache wählst du weiterhin in den Persönlichen Einstellungen.",
     "languageTitle": "Sprache und Formate",
     "language": "Systemsprache",
     "languageHint": "Die Anmeldeseite nutzt sie, und alle, deren Browser eine Sprache verlangt, die Pithyx nicht hat.",
     "formats": "Formate",
     "formatsLanguage": "Wie die Sprache",
     "formatsHint": "Wie Datum, Uhrzeit und Zahlen für alle aussehen, zum Beispiel 31.12.2026 oder 12/31/2026.",
-    "preview": "Beispiel: {preview}",
-    "saveLanguage": "Sprache und Formate speichern",
     "timeTitle": "Datum und Uhrzeit",
     "now": "Uhrzeit der Box",
     "sync": "Uhr",
@@ -659,8 +720,9 @@
     "zone": "Zeitzone",
     "servers": "Zeitserver",
     "serversHint": "Hostnamen oder Adressen, durch Leerzeichen getrennt. Leer lassen für die Standardserver.",
-    "saveTime": "Zeiteinstellungen speichern",
-    "saved": "Gespeichert."
+    "saved": "Gespeichert.",
+    "example": "Beispiel",
+    "applyNote": "Gilt für die Anmeldeseite und für alle, die keine eigene Sprache und keine eigenen Formate gewählt haben."
   },
   "restorePoints": {
     "explain": "Was sind Wiederherstellungspunkte?",
@@ -884,7 +946,7 @@
     },
     "pool": {
       "title": "Pool",
-      "current": "Die Home-Ordner liegen auf {pool}.",
+      "label": "Home-Ordner liegen auf",
       "none": "Noch kann kein Pool Home-Ordner aufnehmen. Der erste Pool mit dem Pithyx-Layout wird zum Home-Pool.",
       "explain": "Neue Benutzer bekommen ihren Home-Ordner hier. Beim Umzug wird jeder Home-Ordner mit seinen Dateien, Eigentümern und Rechten auf den anderen Pool kopiert.",
       "target": "Umziehen nach",
@@ -949,6 +1011,212 @@
       "explain": "Der Home-Ordner wird mit allen Dateien, seinem Papierkorb und seinen Snapshots gelöscht. Das lässt sich nicht rückgängig machen. Gehört er einem Benutzer, dessen Pool fehlt, bekommt der Benutzer einen neuen, leeren Home-Ordner.",
       "confirm": "Gib {folder} zur Bestätigung ein",
       "submit": "Home-Ordner löschen"
+    },
+    "toolbar": "Aktionen für Home-Ordner"
+  },
+  "ups": {
+    "intro": "Mit einer USV fährt die Box bei einem Stromausfall sauber herunter, bevor der Akku leer ist: Apps und Dateidienste stoppen und die Pools werden ausgehängt. Pithyx liest die USV über NUT (Network UPS Tools).",
+    "stateTitle": "Zustand",
+    "settingsTitle": "USV",
+    "connection": {
+      "off": "Aus",
+      "connecting": "Verbinde",
+      "connected": "Verbunden",
+      "unreachable": "Nicht erreichbar"
+    },
+    "power": "Strom",
+    "powerState": {
+      "unknown": "Unbekannt",
+      "online": "Netzstrom",
+      "onBattery": "Auf Akku"
+    },
+    "onBatterySince": "Auf Akku seit {time}",
+    "charge": "Akku",
+    "runtime": "Restlaufzeit",
+    "minutes": "{count, plural, one {# Minute} other {# Minuten}}",
+    "load": "Last",
+    "model": "Modell",
+    "problem": {
+      "refused": "Unter dieser Adresse und diesem Port antwortet kein NUT-Server.",
+      "timeout": "Der NUT-Server antwortet nicht rechtzeitig.",
+      "unknown_ups": "Der NUT-Server kennt keine USV mit diesem Namen.",
+      "driver_not_connected": "Es wurde keine USV gefunden. Prüf das USB-Kabel oder ob der NUT-Server seine USV sieht.",
+      "data_stale": "Die USV sendet keine Daten mehr.",
+      "access_denied": "Der NUT-Server hat Benutzer oder Passwort abgelehnt.",
+      "protocol": "Der NUT-Server hat mit einem Fehler geantwortet."
+    },
+    "shutdown": {
+      "forced": "Die Box fährt herunter: Der NUT-Server der USV fährt alle Systeme herunter.",
+      "low_battery": "Die Box fährt herunter: Die USV meldet einen schwachen Akku.",
+      "charge": "Die Box fährt herunter: Der Akku hat die Ladegrenze erreicht.",
+      "runtime": "Die Box fährt herunter: Der Akku hat die Laufzeitgrenze erreicht.",
+      "lost": "Die Box fährt herunter: Die USV lief auf Akku und antwortet nicht mehr."
+    },
+    "mode": "USV",
+    "modes": {
+      "off": "Keine USV",
+      "usb": "USV an USB",
+      "network": "USV eines anderen NUT-Servers"
+    },
+    "modeHint": {
+      "off": "Die Box überwacht keine USV.",
+      "usb": "Schließ die USV mit ihrem USB-Kabel an. Die Box findet sie selbst, und nach dem Herunterfahren schaltet die USV ihren Strom ab, damit die Box wieder startet, sobald der Strom zurück ist (wenn ihre Firmware beim Einschalten startet).",
+      "network": "Ein anderer Rechner (ein NAS, ein Router oder ein Server mit NUT) hat die USV. Die Box meldet sich als Secondary an, damit dieser Rechner auf die Box wartet, bevor er den Strom abschaltet."
+    },
+    "host": "NUT-Server",
+    "hostHint": "Hostname oder Adresse des Rechners mit der USV.",
+    "port": "Port",
+    "name": "USV-Name",
+    "nameHint": "Der Name der USV auf diesem Server, wie in seiner ups.conf.",
+    "username": "Benutzer",
+    "usernameHint": "Ein Benutzer aus der upsd.users dieses Servers mit „upsmon secondary“; leer liest die USV ohne Anmeldung.",
+    "password": "Passwort",
+    "passwordKept": "Ein Passwort ist gespeichert; lass das Feld leer, um es zu behalten.",
+    "limits": "Auf Akku fährt die Box herunter, sobald eine dieser Grenzen erreicht ist oder die USV einen schwachen Akku meldet.",
+    "batteryLow": "Akku-Grenze (Prozent)",
+    "batteryLowHint": "5 bis 90; standardmäßig 20.",
+    "runtimeLow": "Laufzeit-Grenze (Minuten)",
+    "runtimeLowHint": "1 bis 60; standardmäßig 5.",
+    "limitsTitle": "Grenzen",
+    "applyNote": "Übernehmen speichert die Einstellungen und verbindet sich neu mit der USV."
+  },
+  "notifications": {
+    "smtp": {
+      "title": "E-Mail-Server",
+      "explain": "Die Box schickt E-Mails über diesen SMTP-Server, für ihre eigenen Kanäle und für die der Benutzer.",
+      "host": "Server",
+      "hostHint": "Name oder Adresse des SMTP-Servers. Lass ihn leer, um den Server zu entfernen.",
+      "port": "Port",
+      "security": "Verschlüsselung",
+      "securities": {
+        "tls": "TLS (meist Port 465)",
+        "startTls": "STARTTLS (meist Port 587)",
+        "none": "Keine, nur im lokalen Netz"
+      },
+      "username": "Benutzername (optional)",
+      "password": "Passwort",
+      "passwordSet": "Ein Passwort ist gespeichert. Gib nur ein neues ein, um es zu ersetzen.",
+      "from": "Absenderadresse",
+      "applyNote": "Übernehmen speichert den Server; mit dem Test unten probierst du ihn vorher aus.",
+      "testTitle": "Test-E-Mail",
+      "testTo": "Senden an",
+      "testToHint": "Der Test nutzt den Server so, wie er oben steht, gespeichert oder nicht.",
+      "testSend": "Test-E-Mail senden",
+      "testSent": "An {address} gesendet. Kommt sie nicht an, schau auch im Spam-Ordner nach."
+    },
+    "system": {
+      "title": "Kanäle der Box",
+      "explain": "Diese Kanäle bekommen die eigenen Warnungen des Systems (Speicher, Updates, die USV, falsche Anmeldungen und mehr) einmal für alle Administratoren. Jeder Benutzer, auch Administratoren, kann im Benutzermenü eigene Kanäle hinzufügen."
+    },
+    "tabs": "Benachrichtigungen der Box",
+    "matrix": {
+      "tab": "Ereignisse",
+      "explain": "Welche Ereignisse der Box auf dem Desktop der Administratoren und in jedem Kanal der Box ankommen. Jede Änderung gilt sofort. Ein ausgeschalteter Kanal sendet nichts, egal was hier steht.",
+      "event": "Ereignis",
+      "desktop": "Desktop",
+      "cell": "{event}: {column}",
+      "group": "Alle von {group}: {column}",
+      "channelOff": "{name} (aus)",
+      "noChannels": "Die Box hat noch keine Kanäle; leg unter Kanäle der Box einen an, um hier zu wählen, was er bekommt.",
+      "events": {
+        "storage": {
+          "alert": {
+            "poolFaulted": "Pool nicht verfügbar",
+            "poolSuspended": "Pool angehalten",
+            "poolDegraded": "Pool beeinträchtigt",
+            "diskMissing": "Platte eines Pools nicht angeschlossen",
+            "dataErrors": "Beschädigte Dateien in einem Pool",
+            "scrubErrors": "Scrub hat Fehler gefunden",
+            "smartFailed": "Platte fällt aus",
+            "smartWarning": "Platte zeigt Verschleiß",
+            "capacityCritical": "Pool fast voll",
+            "capacityWarning": "Pool wird voll",
+            "poolLocked": "Pool gesperrt",
+            "poolLockedVault": "Pool nicht aus dem Schlüsseltresor entsperrt",
+            "poolLockedUsb": "Pool wartet auf seinen USB-Stick",
+            "poolLockedUsbFailed": "Pool nicht vom USB-Stick entsperrt",
+            "resolved": "Speicherproblem behoben"
+          },
+          "usb": {
+            "unlocked": "Pool vom USB-Stick entsperrt"
+          }
+        },
+        "update": {
+          "available": "Pithyx-Update verfügbar",
+          "debian": {
+            "available": "Debian-Updates verfügbar"
+          },
+          "installed": "Pithyx-Update installiert",
+          "rolled_back": "Update fehlgeschlagen und zurückgerollt",
+          "restored": "Snapshot wiederhergestellt",
+          "source": {
+            "changed": "Update-Quelle geändert"
+          }
+        },
+        "store": {
+          "updates": {
+            "available": "App-Updates verfügbar"
+          },
+          "catalog": {
+            "failed": "Katalog nicht abgerufen"
+          }
+        },
+        "auth": {
+          "signin": {
+            "blocked": "Wiederholt fehlgeschlagene Anmeldungen"
+          }
+        },
+        "apps": {
+          "elevated": {
+            "critical": "App hat Root-Zugriff erhalten"
+          },
+          "device": {
+            "missing": "Gerät einer App fehlt"
+          }
+        },
+        "system": {
+          "mirror": {
+            "degraded": "Systemplatte fehlt"
+          },
+          "ups": {
+            "on_battery": "USV läuft auf Batterie",
+            "online": "Strom wieder da",
+            "shutdown": "Herunterfahren wegen der USV",
+            "unreachable": "USV antwortet nicht"
+          }
+        },
+        "proxy": {
+          "acme": {
+            "renewal_failed": "Zertifikat nicht erneuert"
+          }
+        },
+        "jobs": {
+          "job": {
+            "succeeded": "Aufgabe der Box erledigt",
+            "failed": "Aufgabe der Box fehlgeschlagen",
+            "cancelled": "Aufgabe der Box abgebrochen",
+            "interrupted": "Aufgabe der Box unterbrochen"
+          }
+        }
+      }
     }
+  },
+  "security": {
+    "intro": "Was auf der Box mehr kann, als eine App sollte.",
+    "root": {
+      "title": "Apps mit Root-Zugriff",
+      "intro": "Diese Apps haben ein Recht, das root auf der Box ist, etwa den ungefilterten Containerdienst: Sie können jede Datei und jede Einstellung lesen und ändern. Sie aktualisieren sich nie von selbst. Entziehst du das Recht, startet der Hintergrunddienst der App ohne es neu.",
+      "none": "Keine App hat Root-Zugriff.",
+      "badge": "Root-Zugriff",
+      "rights": "Rechte: {rights}",
+      "revoke": "Root-Zugriff entziehen"
+    }
+  },
+  "groups": {
+    "system": "System",
+    "storage": "Speicher",
+    "network": "Netzwerk",
+    "services": "Dienste",
+    "access": "Zugriff"
   }
 }

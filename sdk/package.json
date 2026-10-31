@@ -1,6 +1,6 @@
 {
   "name": "@pithyx/sdk",
-  "version": "1.0.0",
+  "version": "2.2.0",
   "description": "SDK for building Pithyx apps: the API between an app and the Pithyx desktop",
   "keywords": [
     "pithyx",
@@ -45,7 +45,7 @@
       "types": "./dist/i18n.d.ts",
       "import": "./dist/i18n.js"
     },
-    "./schema/manifest.v1.schema.json": "./schema/manifest.v1.schema.json",
+    "./schema/manifest.v2.schema.json": "./schema/manifest.v2.schema.json",
     "./schema/compose.v1.rules.json": "./schema/compose.v1.rules.json",
     "./schema/images-lock.v1.schema.json": "./schema/images-lock.v1.schema.json",
     "./schema/catalog.v1.schema.json": "./schema/catalog.v1.schema.json",
@@ -87,7 +87,7 @@
         "types": "./dist/i18n.d.ts",
         "import": "./dist/i18n.js"
       },
-      "./schema/manifest.v1.schema.json": "./schema/manifest.v1.schema.json",
+      "./schema/manifest.v2.schema.json": "./schema/manifest.v2.schema.json",
       "./schema/compose.v1.rules.json": "./schema/compose.v1.rules.json",
       "./schema/images-lock.v1.schema.json": "./schema/images-lock.v1.schema.json",
       "./schema/catalog.v1.schema.json": "./schema/catalog.v1.schema.json",

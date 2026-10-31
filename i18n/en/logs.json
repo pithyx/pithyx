@@ -1,16 +1,15 @@
 {
-  "filter": "Filter logs",
   "list": "Log entries",
   "search": {
     "label": "Search logs",
-    "placeholder": "Search messages or a request id"
+    "placeholder": "Search messages"
   },
   "levels": {
     "label": "Levels",
-    "debug": "Debug",
-    "info": "Info",
-    "warn": "Warning",
-    "error": "Error"
+    "all": "All",
+    "warnings": "Warnings",
+    "errors": "Errors",
+    "debug": "Debug"
   },
   "range": {
     "label": "Time range",
@@ -23,13 +22,11 @@
   "sources": {
     "label": "Sources",
     "all": "All sources",
-    "some": "{count, plural, one {# source} other {# sources}}",
-    "none": "No sources yet",
     "daemon": "Pithyx daemon",
-    "system": "System · {name}",
-    "app": "App · {name}"
+    "audit": "Audit log",
+    "search": "Search sources",
+    "proxy": "Reverse proxy · {host}"
   },
-  "refresh": "Refresh",
   "export": {
     "label": "Export",
     "text": "Export as text",
@@ -44,7 +41,6 @@
     "level": "Level",
     "source": "Source",
     "user": "User",
-    "requestId": "Request id",
     "stored": "Stored",
     "archive": "In the archive"
   },
@@ -74,5 +70,40 @@
     "never": "never",
     "cancel": "Cancel",
     "save": "Save"
+  },
+  "navigation": "Log sources",
+  "toolbar": "Log actions",
+  "level": {
+    "debug": "Debug",
+    "info": "Info",
+    "warn": "Warning",
+    "error": "Error"
+  },
+  "groups": {
+    "system": "System",
+    "apps": "Apps"
+  },
+  "counts": {
+    "problems": "{count, plural, one {# warning or error} other {# warnings and errors}}"
+  },
+  "live": {
+    "pause": "Pause",
+    "resume": "Live"
+  },
+  "status": {
+    "entries": "{count, plural, one {# entry} other {# entries}} loaded",
+    "live": "Live",
+    "paused": "Paused",
+    "kept": "Kept for {count, plural, one {# day} other {# days}}"
+  },
+  "day": {
+    "today": "Today, {date}",
+    "yesterday": "Yesterday, {date}"
+  },
+  "columns": {
+    "time": "Time",
+    "level": "Level",
+    "source": "Source",
+    "message": "Message"
   }
 }

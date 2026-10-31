@@ -6,6 +6,6 @@ order: 60
 status: ready
 ---
 
-Pithyx wird nur frisch installiert und übernimmt keine Konfiguration anderer Systeme. Vorhandene ZFS-Pools kannst du nach der Installation in der App Speicher importieren, zuerst schreibgeschützt, damit du sie prüfen kannst.
+Pithyx wird nur frisch installiert und übernimmt keine Konfiguration anderer Systeme. Vorhandene ZFS-Pools kannst du nach der Installation in den Einstellungen unter Speicher importieren, zuerst schreibgeschützt, damit du sie prüfen kannst.
 
 Details: [Speicher und Pools](/de/docs/admin/storage/).

@@ -11,15 +11,16 @@ Eine App bekommt genau die Berechtigungen, die sie in `pithyx.json` deklariert u
 
 ## Die Berechtigungen
 
-| Berechtigung       | Erlaubt der App                                                                                                                 |
-| ------------------ | ------------------------------------------------------------------------------------------------------------------------------- |
-| `files.read`       | Dateien in freigegebenen Ordnern (mit `files.shares`) und Dateien, die der Benutzer ihr gibt, lesen                             |
-| `files.write`      | diese Dateien schreiben                                                                                                         |
-| `files.shares`     | die freigegebenen Ordner des Benutzers listen und mit seinen Rechten durchsuchen                                                |
-| `notifications`    | Benachrichtigungen mit `app.notify` zeigen                                                                                      |
-| `directory.read`   | alle Benutzer und Gruppen mit `app.directory.users()` und `groups()` listen                                                     |
-| `network.internet` | Verbindungen ins Internet aus dem Fenster (`connect-src https:`) und aus dem Backend öffnen                                     |
-| `network.lan`      | Verbindungen aus dem Backend zu anderen Geräten im lokalen Netzwerk öffnen; das Fenster und die Box selbst bleiben unerreichbar |
+| Berechtigung             | Erlaubt der App                                                                                                                 |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------- |
+| `files.read`             | Dateien in freigegebenen Ordnern (mit `files.shares`) und Dateien, die der Benutzer ihr gibt, lesen                             |
+| `files.write`            | diese Dateien schreiben                                                                                                         |
+| `files.shares`           | die freigegebenen Ordner des Benutzers listen und mit seinen Rechten durchsuchen                                                |
+| `notifications`          | Benachrichtigungen mit `app.notify` zeigen                                                                                      |
+| `notifications.external` | lässt sie mit `notifications` auch die E-Mail- und Webhook-Kanäle der Benutzer erreichen                                        |
+| `directory.read`         | alle Benutzer und Gruppen mit `app.directory.users()` und `groups()` listen                                                     |
+| `network.internet`       | Verbindungen ins Internet aus dem Fenster (`connect-src https:`) und aus dem Backend öffnen                                     |
+| `network.lan`            | Verbindungen aus dem Backend zu anderen Geräten im lokalen Netzwerk öffnen; das Fenster und die Box selbst bleiben unerreichbar |
 
 Alles andere braucht keine Berechtigung: der Kontext, Fensteraufrufe, `app.storage`, `app.session`, Logs, das Backend und Speicheranfragen, die der Administrator zugeordnet hat. Welche Benutzer die App überhaupt öffnen dürfen, ist eine eigene Freigabe pro Benutzer und Gruppe, keine Berechtigung der App.
 
@@ -27,13 +28,22 @@ Wer `directory.read` verlangt, bekommt im Installationsdialog den Vorschlag "nur
 
 ## Beispiel
 
-Das Manifest deklariert `"permissions": ["notifications", "directory.read"]`. Das Board funktioniert ohne beide und bietet mit ihnen mehr:
+Das Manifest deklariert `notifications` und `directory.read`, jede mit dem `reason`, den der Installationsdialog zeigt (siehe [Berechtigungen](/de/docs/developers/apps/manifest/#berechtigungen)):
+
+```json
+"permissions": {
+  "notifications": { "reason": { "en": "Tells you when a card is assigned to you.", "de": "Sagt dir, wenn dir eine Karte zugewiesen wird." } },
+  "directory.read": { "reason": { "en": "Lets you assign cards to other users.", "de": "Damit kannst du Karten anderen Benutzern zuweisen." } }
+}
+```
+
+Das Board funktioniert ohne beide und bietet mit ihnen mehr:
 
 <!-- example: sdk/permissions.ts -->
 
 ```ts
 // A team board that offers what its permissions allow and follows when an administrator changes them.
-// pithyx.json declares: "permissions": ["notifications", "directory.read"]
+// pithyx.json declares "notifications" and "directory.read" in "permissions", each with its "reason".
 import { PithyxError, type DirectoryUser, type PithyxApp } from '@pithyx/sdk';
 
 interface Features {

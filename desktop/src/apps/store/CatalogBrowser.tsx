@@ -1,126 +1,214 @@
 import type { PithyxApp } from '@pithyx/sdk';
-import { Badge, SearchField } from '@pithyx/ui';
-import { useQuery } from '@tanstack/react-query';
-import { useDeferredValue, useState } from 'react';
+import { Button, StatusBadge } from '@pithyx/ui';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ErrorNotice } from '../../errors/ErrorNotice';
 import { AppIcon } from '../../shell/AppIcon';
+import { IconInfoCircle } from '../../ui/icons';
 import { manifestText } from '../installed';
-import { storeCall, type CatalogInfo, type StoreAppSummary } from '../sdk/store';
+import type { AdminAppList, CatalogInfo, StoreAppSummary } from '../sdk/store';
 import { describeProblem } from '../storage/shared';
-import { catalogName } from './storeState';
+import { CardGrid, CatalogAppCard } from './AppCards';
+import { InstallDialog } from './InstallDialog';
+import { discover, inCategory } from './model';
+import { catalogName, useCatalogApps } from './storeState';
 import styles from './Store.module.css';
 
+/** Discover, All apps, or one category of the catalogs (D389). */
+export type CatalogPlace = 'discover' | 'all' | { category: string };
+
 /**
- * The apps of one tab's catalogs as a grid with a search over id, name, description and author. A catalog that was
- * never fetched or whose last fetch failed says so above the grid; its last verified copy is still listed.
+ * The apps of the enabled catalogs. Discover features the newest app the box does not have and lists the newest apps
+ * below it (D404); All apps and a category list every match. A search over every catalog replaces Discover's sections
+ * with its results and narrows the others. A catalog that was never fetched or whose last fetch failed says so once at
+ * the top; its last verified copy is still listed.
  */
 export function CatalogBrowser({
   app,
-  title,
-  intro,
+  place,
+  query,
   catalogs,
+  installed,
   onOpen,
+  onShowCatalogs,
 }: {
   app: PithyxApp;
-  title: string;
-  intro: string;
+  place: CatalogPlace;
+  /** The search, trimmed; empty for none. */
+  query: string;
   catalogs: readonly CatalogInfo[];
+  installed: AdminAppList | undefined;
   onOpen: (entry: StoreAppSummary) => void;
+  onShowCatalogs: () => void;
 }) {
   const { t, i18n } = useTranslation('store');
-  const [query, setQuery] = useState('');
-  const deferred = useDeferredValue(query.trim());
-  const ids = catalogs.map((catalog) => catalog.id).filter((id): id is string => id !== null);
-  const search = useQuery({
-    queryKey: ['store', 'search', deferred],
-    queryFn: () =>
-      storeCall(app, 'internal.admin.store.search', deferred === '' ? {} : { query: deferred }),
-  });
-  const apps = (search.data?.apps ?? []).filter((entry) => ids.includes(entry.catalog));
+  const search = useCatalogApps(app, query);
+  const found = search.data?.apps ?? [];
+  const category = typeof place === 'object' ? place.category : null;
+  const apps = inCategory(found, category);
+  const enabled = catalogs.filter((catalog) => catalog.enabled);
+  const nameOf = (id: string) => {
+    const catalog = catalogs.find((candidate) => candidate.id === id);
+    return catalog === undefined ? id : catalogName(catalog, i18n.language);
+  };
+
+  const grid = (label: string, entries: readonly StoreAppSummary[]) => (
+    <CardGrid label={label}>
+      {entries.map((entry) => (
+        <CatalogAppCard
+          key={`${entry.catalog}/${entry.id}`}
+          app={app}
+          entry={entry}
+          catalogs={catalogs}
+          installed={installed}
+          onOpen={() => {
+            onOpen(entry);
+          }}
+        />
+      ))}
+    </CardGrid>
+  );
+
+  let body;
+  if (search.isPending) {
+    body = (
+      <p className={styles.muted} role="status">
+        {t('catalog.loading')}
+      </p>
+    );
+  } else if (search.isError) {
+    body = <ErrorNotice error={describeProblem(search.error)} />;
+  } else if (enabled.length === 0) {
+    body = (
+      <div className={styles.empty}>
+        <p>{t('discover.noCatalogs')}</p>
+        <Button onPress={onShowCatalogs}>{t('discover.showCatalogs')}</Button>
+      </div>
+    );
+  } else if (apps.length === 0) {
+    body = (
+      <p className={styles.empty}>
+        {query !== ''
+          ? t('catalog.noMatch', { query })
+          : category !== null
+            ? t('catalog.noCategoryMatch')
+            : t('catalog.empty')}
+      </p>
+    );
+  } else if (place === 'discover' && query === '') {
+    const { featured, recent } = discover(apps);
+    body = (
+      <>
+        {featured !== null && (
+          <Featured
+            app={app}
+            entry={featured}
+            label={
+              featured.kind === 'custom'
+                ? t('discover.featured.custom', { name: nameOf(featured.catalog) })
+                : t(`discover.featured.${featured.kind}`)
+            }
+            onOpen={() => {
+              onOpen(featured);
+            }}
+          />
+        )}
+        {recent.length > 0 && (
+          <section className={styles.section} aria-labelledby="store-recent">
+            <h2 id="store-recent" className={styles.sectionHeading}>
+              {t('discover.recent')}
+            </h2>
+            {grid(t('discover.recent'), recent)}
+          </section>
+        )}
+      </>
+    );
+  } else {
+    const label = query === '' ? t('catalog.apps') : t('search.results', { query });
+    body = (
+      <>
+        {query !== '' && <h2 className={styles.sectionHeading}>{label}</h2>}
+        {grid(label, apps)}
+      </>
+    );
+  }
+
   return (
-    <section className={styles.page} aria-labelledby="store-catalog-title">
-      <header className={styles.pageHeader}>
-        <div className={styles.headerText}>
-          <h2 id="store-catalog-title" className={styles.pageTitle}>
-            {title}
-          </h2>
-          <p className={styles.muted}>{intro}</p>
-        </div>
-      </header>
-      {catalogs
+    <>
+      {enabled
         .filter((catalog) => catalog.status !== 'ok')
         .map((catalog) => (
-          <p key={catalog.key} className={styles.notice}>
+          <p key={catalog.key} className={styles.infoBar} role="note">
+            <IconInfoCircle size={18} stroke={1.75} aria-hidden />
             {catalog.status === 'failed'
               ? t('catalog.failedNotice', { name: catalogName(catalog, i18n.language) })
               : t('catalog.newNotice', { name: catalogName(catalog, i18n.language) })}
           </p>
         ))}
-      <SearchField
-        label={t('catalog.search')}
-        placeholder={t('catalog.searchPlaceholder')}
-        value={query}
-        onChange={setQuery}
-      />
-      {search.isPending && (
-        <p className={styles.loading} role="status">
-          {t('catalog.loading')}
-        </p>
-      )}
-      {search.isError && <ErrorNotice error={describeProblem(search.error)} />}
-      {search.data !== undefined && apps.length === 0 && (
-        <p className={styles.empty}>
-          {deferred === '' ? t('catalog.empty') : t('catalog.noMatch', { query: deferred })}
-        </p>
-      )}
-      {apps.length > 0 && (
-        <ul className={styles.list} aria-label={t('catalog.apps')}>
-          {apps.map((entry) => (
-            <li key={`${entry.catalog}/${entry.id}`}>
-              <button
-                type="button"
-                className={styles.tile}
-                onClick={() => {
-                  onOpen(entry);
-                }}
-              >
-                <AppIcon app={{ icon: entry.icon, tone: 'graphite' }} size={44} />
-                <span className={styles.tileText}>
-                  <span className={styles.tileTitle}>
-                    {manifestText(entry.name, i18n.language)}
-                  </span>
-                  <span className={styles.tileMeta}>
-                    {t('installed.version', { version: entry.version })}
-                    {entry.author !== null && ` · ${entry.author}`}
-                  </span>
-                  {entry.description !== null && (
-                    <span className={styles.tileDescription}>
-                      {manifestText(entry.description, i18n.language)}
-                    </span>
-                  )}
-                  <span className={styles.badges}>
-                    <SourceBadge kind={entry.kind} />
-                    {entry.installedVersion !== null && (
-                      <Badge tone={entry.update ? 'highlight' : 'neutral'}>
-                        {entry.update ? t('catalog.updateAvailable') : t('catalog.installed')}
-                      </Badge>
-                    )}
-                  </span>
-                </span>
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
-    </section>
+      {body}
+    </>
   );
 }
 
-/** "Pithyx" for the official catalog, "Community" or "Unverified" for the others. */
-export function SourceBadge({ kind }: { kind: StoreAppSummary['kind'] }) {
-  const { t } = useTranslation('store');
+/** The app Discover features: a wide card with a large icon, its description and its one action. */
+function Featured({
+  app,
+  entry,
+  label,
+  onOpen,
+}: {
+  app: PithyxApp;
+  entry: StoreAppSummary;
+  label: string;
+  onOpen: () => void;
+}) {
+  const { t, i18n } = useTranslation('store');
+  const [installing, setInstalling] = useState(false);
+  const name = manifestText(entry.name, i18n.language);
   return (
-    <Badge tone={kind === 'official' ? 'accent' : 'neutral'}>{t(`catalog.badge.${kind}`)}</Badge>
+    <article className={styles.featured} aria-labelledby="store-featured">
+      <AppIcon app={{ icon: entry.icon, tone: 'graphite' }} size={72} />
+      <div className={styles.featuredBody}>
+        <span className={styles.featuredLabel}>{label}</span>
+        <h2 className={styles.featuredName}>
+          <button id="store-featured" type="button" className={styles.cardLink} onClick={onOpen}>
+            {name}
+          </button>
+        </h2>
+        {entry.description !== null && (
+          <p className={styles.featuredDescription}>
+            {manifestText(entry.description, i18n.language)}
+          </p>
+        )}
+        {entry.critical && (
+          <span className={styles.cardActions}>
+            <StatusBadge tone="danger">{t('elevated.rootBadge')}</StatusBadge>
+          </span>
+        )}
+      </div>
+      <Button
+        className={styles.featuredAction}
+        variant="primary"
+        onPress={() => {
+          setInstalling(true);
+        }}
+      >
+        {t('catalog.install')}
+      </Button>
+      {installing && (
+        <InstallDialog
+          app={app}
+          catalog={{
+            catalog: entry.catalog,
+            appId: entry.id,
+            version: entry.version,
+            verified: entry.kind !== 'custom',
+          }}
+          onClose={() => {
+            setInstalling(false);
+          }}
+        />
+      )}
+    </article>
   );
 }

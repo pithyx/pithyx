@@ -1,14 +1,21 @@
-import { PithyxApiError, unwrap, type components, type ErrorCode } from '@pithyx/api-client';
-import type { MethodName, PithyxApp } from '@pithyx/sdk';
-import { PithyxError, type HostExtensions } from '@pithyx/sdk/host';
+import { unwrap, type components, type ErrorCode } from '@pithyx/api-client';
+import type { EventName, MethodName, PithyxApp } from '@pithyx/sdk';
+import { type HostExtensions } from '@pithyx/sdk/host';
 import { api } from '../../api/client';
+import { realtime } from '../../realtime/connection';
 import type { DescribedError } from '../../errors/describe';
+import { daemon } from './daemonError';
 
 export type LogEntry = components['schemas']['LogEntry'];
 export type LogPage = components['schemas']['LogPage'];
 export type LogSettings = components['schemas']['LogSettings'];
 export type LogStatus = components['schemas']['LogStatus'];
 export type LogLevelName = LogEntry['level'];
+export type LogCount = components['schemas']['LogCount'];
+export type LogsAdded = components['schemas']['LogsAdded'];
+
+/** The entries of every write while the Log Center follows `system/logs`. */
+export const LOGS_ADDED = 'internal.admin.logs.added';
 
 /** The filters of GET /api/logs; every one is optional. */
 export interface LogFilter {
@@ -25,6 +32,8 @@ export interface LogFilter {
 interface LogMethods {
   'internal.admin.logs.query': { params: LogFilter; result: LogPage };
   'internal.admin.logs.sources': { params: Record<string, never>; result: string[] };
+  'internal.admin.logs.counts': { params: { from: string }; result: LogCount[] };
+  'internal.admin.logs.watch': { params: { watch: boolean }; result: null };
   'internal.admin.logs.settings': { params: Record<string, never>; result: LogStatus };
   'internal.admin.logs.setSettings': { params: LogSettings; result: LogStatus };
   'internal.admin.logs.export': { params: LogFilter & { format: 'jsonl' | 'text' }; result: null };
@@ -60,21 +69,6 @@ function isSettings(value: unknown): value is LogSettings {
   );
 }
 
-async function daemon<T>(call: () => Promise<T>): Promise<T> {
-  try {
-    return await call();
-  } catch (error) {
-    throw error instanceof PithyxApiError
-      ? new PithyxError({
-          code: error.code,
-          params: error.params,
-          detail: error.message,
-          requestId: error.requestId,
-        })
-      : error;
-  }
-}
-
 /** The query string of a filter; arrays repeat their key, as the daemon expects. */
 export function logQuery(filter: LogFilter & { format?: string }): string {
   const query = new URLSearchParams();
@@ -88,10 +82,45 @@ export function logQuery(filter: LogFilter & { format?: string }): string {
   return query.toString();
 }
 
-/** The host side of the Log Center's window. */
-export function logsHost(): { extensions: HostExtensions; close: () => void } {
+/**
+ * The host side of the Log Center's window. While the app watches, it follows `system/logs`, whose events carry the
+ * new entries themselves: asking the daemon again would log that request and feed itself.
+ */
+export function logsHost(emit: (event: string, data?: unknown) => void): {
+  extensions: HostExtensions;
+  close: () => void;
+} {
+  let stop: (() => void) | null = null;
+  const unwatch = () => {
+    stop?.();
+    stop = null;
+  };
   return {
     extensions: {
+      'internal.admin.logs.counts': {
+        validate: (value) => isRecord(value) && typeof value.from === 'string',
+        handle: (params) =>
+          daemon(async () =>
+            unwrap(
+              await api.GET('/api/logs/counts', {
+                params: { query: { from: (params as { from: string }).from } },
+              }),
+            ),
+          ),
+      },
+      'internal.admin.logs.watch': {
+        validate: (value) => isRecord(value) && typeof value.watch === 'boolean',
+        handle: (params) => {
+          if (!(params as { watch: boolean }).watch) {
+            unwatch();
+          } else {
+            stop ??= realtime.listen('system/logs', (data) => {
+              emit(LOGS_ADDED, data);
+            });
+          }
+          return Promise.resolve(null);
+        },
+      },
       'internal.admin.logs.query': {
         validate: isFilter,
         handle: (params) =>
@@ -130,8 +159,15 @@ export function logsHost(): { extensions: HostExtensions; close: () => void } {
         },
       },
     },
-    close: () => undefined,
+    close: unwatch,
   };
+}
+
+/** The entries of every write while the Log Center watches; the first event is the topic's empty snapshot. */
+export function onLogs(app: PithyxApp, handler: (added: LogsAdded) => void): () => void {
+  return app.on(LOGS_ADDED as unknown as EventName, (data) => {
+    handler(data as unknown as LogsAdded);
+  });
 }
 
 /** Calls one of the Log Center's methods through the SDK. */

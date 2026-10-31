@@ -18,7 +18,7 @@ The desktop is a React 19 single-page app in `desktop/` (Vite 8, TypeScript, zus
 - **Installer.** The installer interface is loaded only on the live system.
 - **Design gallery.** `desktop/design.html` (`pnpm design`, port 5174) shows every screen for layout checks. It is for development only.
 - **Dev server.** It proxies `/api` and `/ws` to the daemon and rewrites the `Origin` header of WebSocket upgrades, because the daemon accepts only its own origin.
-- **Secure contexts.** The desktop works on plain HTTP by address. ESLint refuses `crypto.randomUUID`, `crypto.subtle`, the Clipboard API, service workers, WebAuthn, notifications, `window.open` and similar APIs outside `desktop/src/platform/browser.ts`, which offers fallbacks (`randomId`, `copyText`, `openInNewTab`).
+- **Secure contexts.** The desktop works on plain HTTP by address. ESLint refuses `crypto.randomUUID`, `crypto.subtle`, the Clipboard API, service workers, WebAuthn, notifications, `window.open` and similar APIs outside `desktop/src/platform/browser.ts`, which offers fallbacks (`randomId`, `copyText`, `openInNewTab`). `deviceTrust` registers the service worker (`desktop/service-worker.js`, written as `sw.js` with a cache name per build) and so tells whether the device trusts the box; passkeys (`createPasskey`, `getPasskey`, with the JSON conversion in `platform/webauthnJson.ts` loaded on first use) wait for that.
 - **Texts.** ESLint also refuses string literals in JSX (`i18next/no-literal-string`) and imports of icon libraries other than through `ui/icons.ts`.
 
 ## Shell and window manager
@@ -34,7 +34,7 @@ The window manager is a zustand store (`useDesktop`). Every change goes through 
 - **Keyboard.** All window shortcuts use Alt+Shift because browsers and operating systems do not claim it: Space for the window menu, Left and Right to snap, Up to maximize, Down to restore or minimize, Page Up and Page Down to cycle windows.
 - **Layout memory.** The layout (windows, positions, order, taskbar) is saved per user and device in the daemon (`PUT /api/desktop/layout` with `If-Match`), debounced by 1 second, only by the visible tab, flushed when the page is hidden. Windows of apps you may no longer open are skipped on restore. Limits: 50 windows, 16 KB of window arguments, 48 KB for the whole layout. "Get desktop from" copies the layout of another device.
 - **Appearance.** Accent and wallpaper are saved per user and shared across devices; the light or dark choice is saved per browser.
-- **Desktop items** (shortcuts and notes) are saved per user through `/api/desktop/items`.
+- **Desktop items** (shortcuts to apps, files and folders, and notes) are saved per user through `/api/desktop/items`; shortcuts to files follow renames and moves made through the daemon (D382).
 
 ## Core apps
 

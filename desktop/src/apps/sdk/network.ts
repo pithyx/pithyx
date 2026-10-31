@@ -1,8 +1,9 @@
-import { PithyxApiError, unwrap, type components } from '@pithyx/api-client';
+import { unwrap, type components } from '@pithyx/api-client';
 import type { EventName, MethodName, PithyxApp } from '@pithyx/sdk';
-import { PithyxError, type HostExtensions } from '@pithyx/sdk/host';
+import { type HostExtensions } from '@pithyx/sdk/host';
 import { api } from '../../api/client';
 import { realtime } from '../../realtime/connection';
+import { daemon } from './daemonError';
 
 export type NetworkState = components['schemas']['NetworkState'];
 export type NetworkConfig = components['schemas']['NetworkConfig'];
@@ -33,21 +34,6 @@ const isConfig = (value: unknown): value is NetworkConfig =>
 
 const isChange = (value: unknown): value is { id: string } =>
   isRecord(value) && typeof value.id === 'string';
-
-async function daemon<T>(call: () => Promise<T>): Promise<T> {
-  try {
-    return await call();
-  } catch (error) {
-    throw error instanceof PithyxApiError
-      ? new PithyxError({
-          code: error.code,
-          params: error.params,
-          detail: error.message,
-          requestId: error.requestId,
-        })
-      : error;
-  }
-}
 
 /**
  * The host side of Settings > Network. The live topic is followed only while the page watches it; closing the window

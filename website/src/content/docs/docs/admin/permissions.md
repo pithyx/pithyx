@@ -32,7 +32,7 @@ Protocol sign-ins use the password only; two-factor sign-in applies to the web d
 
 ## App access
 
-Files and Viewer are given by right (new users get both), About is open to everybody, and Storage, Settings, Resource Monitor, Log Center and Store are for administrators only. For apps from the Store, **Who may use the app** is **Everybody**, **Administrators only** or **Selected groups and users**; administrators may use every app. Per app, administrators can turn permissions off to take them from the app. More on [apps and the Store](/docs/admin/apps-and-store/).
+Files and Viewer are given by right (new users get both), About is open to everybody, and Settings, Resource Monitor, Log Center and Store are for administrators only. For apps from the Store, **Who may use the app** is **Everybody**, **Administrators only** or **Selected groups and users**; administrators may use every app. Per app, administrators can turn permissions off to take them from the app. More on [apps and the Store](/docs/admin/apps-and-store/).
 
 ## When a change applies
 

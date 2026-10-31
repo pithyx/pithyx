@@ -1,0 +1,55 @@
+.pane {
+  position: relative;
+  display: flex;
+  flex: none;
+  min-width: 0;
+  min-height: 0;
+}
+
+.body {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* A strip over the pane's left border; the line shows on hover, while dragging and with keyboard focus. */
+.handle {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: -4px;
+  z-index: 1;
+  display: var(--details-handle, block);
+  width: 8px;
+  cursor: col-resize;
+  touch-action: none;
+  outline: none;
+}
+
+.handle::after {
+  content: '';
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 3px;
+  width: 2px;
+  background: transparent;
+}
+
+.handle:hover::after,
+.handle:active::after {
+  background: var(--color-accent);
+}
+
+.handle:focus-visible::after {
+  width: 3px;
+  background: var(--color-focus);
+}
+
+@media (pointer: coarse) {
+  .handle {
+    inset-inline-start: -8px;
+    width: 16px;
+  }
+
+  .handle::after {
+    inset-inline-start: 7px;
+  }
+}

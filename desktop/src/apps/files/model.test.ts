@@ -1,7 +1,7 @@
 import type { FileEntry, FolderPage } from '@pithyx/sdk';
 import { describe, expect, it } from 'vitest';
 import type { InstalledApp } from '../installed';
-import { choiceExtension, defaultAction, openWithChoices } from './defaultAction';
+import { choiceExtension, currentChoice, defaultAction, openWithChoices } from './defaultAction';
 import { itemsToDrop, parseDragged } from './drop';
 import { compareEntries, naturalKey } from './order';
 import { applyChange, loadedEntries, type FolderPages } from './pages';
@@ -160,14 +160,15 @@ describe('default action', () => {
       permissions: [],
       logLevel: 'info',
       fileHandlers: [{ extensions, isDefault: false }],
+      fileActions: [],
     });
     const apps = [app('com.example.draw', ['png', 'tar.gz']), app('com.example.text', ['txt'])];
     expect(openWithChoices(entry('a.PNG'), apps)).toEqual([
+      'app:com.example.draw',
       'viewer',
       'download',
-      'app:com.example.draw',
     ]);
-    expect(openWithChoices(entry('a.tar.gz'), apps)).toEqual(['download', 'app:com.example.draw']);
+    expect(openWithChoices(entry('a.tar.gz'), apps)).toEqual(['app:com.example.draw', 'download']);
     expect(openWithChoices(entry('a.zip'), apps)).toEqual(['download']);
     expect(openWithChoices(entry('png', 0, 'folder'), apps)).toEqual([]);
     expect(defaultAction(entry('dev', 0, 'other'))).toEqual({ kind: 'none' });
@@ -184,6 +185,7 @@ describe('default action', () => {
     permissions: [],
     logLevel: 'info',
     fileHandlers: [{ extensions, isDefault }],
+    fileActions: [],
   });
 
   it('opens a file in the only app that is the default for it, else as before', () => {
@@ -284,5 +286,36 @@ describe('drop targets', () => {
     expect(parseDragged(JSON.stringify(dragged))).toEqual(dragged);
     expect(parseDragged('not json')).toBeNull();
     expect(parseDragged('{}')).toBeNull();
+  });
+});
+
+describe('open with', () => {
+  const app = (id: string, extensions: string[], isDefault: boolean): InstalledApp => ({
+    id,
+    version: '1.0.0',
+    name: { en: id },
+    description: null,
+    entry: '/apps/x/index.html',
+    icon: '',
+    window: {},
+    permissions: [],
+    logLevel: 'info',
+    fileHandlers: [{ extensions, isDefault }],
+    fileActions: [],
+  });
+
+  it('lists the app that is the default for the type first and marks what a double click does', () => {
+    const plain = app('com.example.plain', ['md'], false);
+    const editor = app('org.pithyx.editor', ['md'], true);
+    expect(openWithChoices(entry('notes.md'), [plain, editor])).toEqual([
+      'app:org.pithyx.editor',
+      'app:com.example.plain',
+      'viewer',
+      'download',
+    ]);
+    expect(currentChoice(entry('notes.md'), [plain, editor])).toBe('app:org.pithyx.editor');
+    expect(currentChoice(entry('notes.md'), [plain, editor], { md: 'download' })).toBe('download');
+    expect(currentChoice(entry('notes.md'))).toBe('viewer');
+    expect(currentChoice(entry('dir', 0, 'folder'))).toBeNull();
   });
 });

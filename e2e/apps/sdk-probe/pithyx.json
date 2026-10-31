@@ -1,19 +1,60 @@
 {
-  "manifestVersion": 1,
+  "manifestVersion": 2,
   "id": "com.example.sdk-probe",
   "version": "1.0.0",
-  "name": { "en": "SDK demo", "de": "SDK-Demo" },
+  "name": {
+    "en": "SDK demo",
+    "de": "SDK-Demo"
+  },
   "description": {
     "en": "The E2E probe: a third-party app on @pithyx/sdk, installed from its package."
   },
-  "author": { "name": "Pithyx E2E" },
+  "author": {
+    "name": "Pithyx E2E"
+  },
   "license": "MIT",
   "entry": "frontend/index.html",
   "sdk": "^1.0.0-rc.1",
-  "permissions": ["notifications", "files.write"],
+  "arch": ["amd64", "arm64"],
+  "source": "https://github.com/example/app",
+  "permissions": {
+    "notifications": {
+      "reason": {
+        "en": "Tells you about new messages."
+      }
+    },
+    "files.write": {
+      "reason": {
+        "en": "Saves your changes."
+      }
+    },
+    "files.shares": {
+      "reason": {
+        "en": "Browses your shared folders."
+      }
+    }
+  },
   "window": {
     "instances": "single",
-    "defaultSize": { "width": 520, "height": 560 },
-    "minSize": { "width": 320, "height": 320 }
-  }
+    "defaultSize": {
+      "width": 520,
+      "height": 560
+    },
+    "minSize": {
+      "width": 320,
+      "height": 320
+    }
+  },
+  "fileActions": [
+    {
+      "id": "inspect",
+      "label": {
+        "en": "Inspect with the probe",
+        "de": "Mit der Probe prüfen"
+      },
+      "extensions": ["zip"],
+      "folders": true,
+      "multiple": true
+    }
+  ]
 }

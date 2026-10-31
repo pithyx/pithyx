@@ -31,12 +31,15 @@ Rules for `daemon/`; the root `CLAUDE.md` applies as well.
 ```
 /usr/lib/pithyx/     binaries, read-only
 /etc/pithyx/         bootstrap only
-/var/lib/pithyx/     database and secrets (tls/: the box's certificate authority, its certificate and an uploaded one, D346; proxy-host-<id>.pem and .key: uploaded certificates of the reverse proxy, D347)
+/var/lib/pithyx/     database and secrets (tls/: the box's certificate authority, its certificate and an uploaded one, D346; proxy-host-<id>.pem and .key: uploaded certificates of the reverse proxy, D347; proxy-<host|redirect>-<id>-acme.pem and .key from the ACME authority and acme-account-<hash>.key, D378)
 /var/lib/pithyx/catalogs/<id>/  a catalog's shallow git repository (repo.git) and its verified copy per channel (stable, beta)
+/var/lib/pithyx/pool-keys/  the key vault (D384): <pool GUID>.key per encrypted pool unlocked at start, and <pool GUID>.usb noting the USB stick its key was written to (D385); root only, never in a backup
 /var/cache/pithyx/   rebuildable, safe to delete
 /var/log/pithyx/     logs: daemon.json files and logs.db (the Log Center, capped at 4 GB)
 /run/pithyx/sftp/    SFTP views: one chroot per user with bind mounts of its shared folders and homes (home, for administrators homes/<folder>), rebuilt at start
 /run/pithyx/backup/  a checked configuration backup's database until it is restored (tmpfs, never on a disk)
+/run/pithyx/docker-proxy/  <id>.sock: an app's Docker socket of the filtering proxy (D387), while its backend runs
+/run/pithyx/usb-key/  where a USB stick with pool keys is mounted while its key files are read or written (D385), unmounted right after
 /<pool>/homes/<user>  a user's home (dataset <pool>/pithyx/homes/<user> on the home pool, setting homes.pool, D348); a deleted user's kept home is <user>.deleted-<uid>
 /<pool>/.pithyx/     app data, volumes
 /<pool>/.pithyx/apps/<id>/  one app (dataset <pool>/pithyx/apps/<id>): versions/<version>, current, volumes/, run/

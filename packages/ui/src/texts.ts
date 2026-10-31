@@ -18,6 +18,51 @@ export interface UiTexts {
     /** Label of the clear button. */
     clear: string;
   };
+  /** `AppFrame`. */
+  frame: {
+    /** The button that leads from a page back to the navigation in the compact size class. */
+    back: string;
+  };
+  /** `NavList`. */
+  nav: {
+    /** Label and placeholder of the search field. */
+    search: string;
+    /** Shown when no item matches the search. */
+    noResults: string;
+  };
+  /** `Select`. */
+  select: {
+    /** Shown while nothing is chosen. */
+    placeholder: string;
+  };
+  /** `ActionBar`. */
+  actionBar: {
+    /** The button that applies the changes. */
+    apply: string;
+    /** The button that drops the changes. */
+    discard: string;
+  };
+  /** `Card`. */
+  card: {
+    /** The expand button, announced together with the card's title. */
+    details: string;
+  };
+  /** `DetailsPane`. */
+  details: {
+    /** The name of the handle that changes the pane's width. */
+    resize: string;
+  };
+  /** `AttentionList`. */
+  attention: {
+    /** The default heading. */
+    title: string;
+    /** Announced for a row with the tone `warning`. */
+    warning: string;
+    /** Announced for a row with the tone `danger`. */
+    danger: string;
+    /** Announced for a row with the tone `info`. */
+    info: string;
+  };
 }
 
 const texts: Record<string, UiTexts> = { en, de };

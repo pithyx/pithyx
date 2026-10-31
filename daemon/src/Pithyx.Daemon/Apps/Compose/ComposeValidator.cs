@@ -610,13 +610,16 @@ public static partial class ComposeValidator
         {
             if (rules.DockerSockets.Contains(source))
             {
-                _rights.Add(new Reference(rules.DockerSocketRight, path));
+                // The raw socket is the same mount with the other right (D387); declaring both leaves one unused.
+                _rights.Add(new Reference(DeclaresRawSocket() ? rules.DockerSocketRawRight : rules.DockerSocketRight, path));
             }
             else
             {
                 Invalid(path, "host_path");
             }
         }
+
+        private bool DeclaresRawSocket() => ElevatedRights.Declares(manifest, rules.DockerSocketRawRight);
 
         private bool Target(string target, string path)
         {
@@ -1011,6 +1014,19 @@ public static partial class ComposeValidator
                     index++;
                 }
             }
+            if (backend?.TryGetProperty("backup", out var backup) == true && backup.TryGetProperty("exclude", out var exclude))
+            {
+                var index = 0;
+                foreach (var excluded in exclude.EnumerateArray())
+                {
+                    var volume = excluded.GetString()!.Split('/')[0];
+                    if (!_declaredVolumes.Contains(volume))
+                    {
+                        Add(ErrorCodes.AppComposeReferenceUnknown, ("path", Child("/backend/backup/exclude", index.ToString(CultureInfo.InvariantCulture))), ("name", volume));
+                    }
+                    index++;
+                }
+            }
 
             if (manifest.TryGetProperty("storage", out var storage))
             {
@@ -1021,9 +1037,7 @@ public static partial class ComposeValidator
                 }
             }
 
-            var declared = backend?.TryGetProperty("elevated", out var elevated) == true
-                ? elevated.EnumerateArray().Select(right => right.GetString()!).ToList()
-                : [];
+            var declared = ElevatedRights.Of(manifest);
             foreach (var (name, path) in _rights)
             {
                 if (!ManifestValidator.IsSupportedElevatedRight(name))
@@ -1035,12 +1049,11 @@ public static partial class ComposeValidator
                     Add(ErrorCodes.AppComposeRightMissing, ("path", path), ("right", name));
                 }
             }
-            for (var index = 0; index < declared.Count; index++)
+            foreach (var right in declared)
             {
-                var right = declared[index];
                 if (ManifestValidator.IsSupportedElevatedRight(right) && !_rights.Exists(used => used.Name == right))
                 {
-                    Add(ErrorCodes.AppComposeRightUnused, ("path", $"/backend/elevated/{index}"), ("right", right));
+                    Add(ErrorCodes.AppComposeRightUnused, ("path", $"/permissions/{JsonSchemaCheck.EscapePointer(right)}"), ("right", right));
                 }
             }
         }
@@ -1164,6 +1177,11 @@ internal sealed record KeyRule(
     string? Right,
     IReadOnlyDictionary<string, KeyRule>? Keys);
 
+/// <summary>A device class of the rules (D387): which character devices in its folder, or which link targets below it, it names.</summary>
+/// <param name="Nodes">Names of character devices directly in the folder.</param>
+/// <param name="Links">Targets of the links below the folder, taken instead of the links.</param>
+internal sealed record DeviceClass(Regex? Nodes, Regex? Links);
+
 /// <summary><c>sdk/schema/compose.v1.rules.json</c> as read by the daemon.</summary>
 internal sealed class ComposeRules
 {
@@ -1193,8 +1211,24 @@ internal sealed class ComposeRules
         ReservedTargets = Strings(mount.GetProperty("reservedTargets"));
         DockerSockets = Strings(mount.GetProperty("dockerSockets"));
         DockerSocketRight = mount.GetProperty("dockerSocketRight").GetString()!;
+        DockerSocketRawRight = mount.GetProperty("dockerSocketRawRight").GetString()!;
         DependsOnKeys = KeyRules(root.GetProperty("dependsOn").GetProperty("keys"));
         ReservedLabelPrefixes = Strings(root.GetProperty("reservedLabelPrefixes"));
+        var elevated = root.GetProperty("elevated");
+        BlockedCapabilities = Strings(elevated.GetProperty("blockedCapabilities"));
+        HostNamespaceRights = Strings(elevated.GetProperty("hostNamespaceRights"));
+        NamespacedDevices = Strings(elevated.GetProperty("namespacedDevices"));
+        DeviceClasses = elevated.GetProperty("deviceClasses").EnumerateObject()
+            .Where(entry => !entry.Name.StartsWith('$'))
+            .ToDictionary(
+                entry => entry.Name,
+                entry => new DeviceClass(
+                    entry.Value.TryGetProperty("nodes", out var nodes) ? new Regex(nodes.GetString()!, RegexOptions.CultureInvariant) : null,
+                    entry.Value.TryGetProperty("links", out var links) ? new Regex(links.GetString()!, RegexOptions.CultureInvariant) : null),
+                StringComparer.Ordinal);
+        var tiers = elevated.GetProperty("tiers");
+        DefaultTier = Tier(tiers.GetProperty("default"));
+        Tiers = tiers.GetProperty("rights").EnumerateObject().ToDictionary(entry => entry.Name, entry => Tier(entry.Value), StringComparer.Ordinal);
         Version = root.GetProperty("rulesVersion").GetInt32();
     }
 
@@ -1219,7 +1253,29 @@ internal sealed class ComposeRules
 
     public string DockerSocketRight { get; }
 
+    /// <summary>The right for the unfiltered socket (D387); a mount of the socket needs it or <see cref="DockerSocketRight"/>.</summary>
+    public string DockerSocketRawRight { get; }
+
+    /// <summary>The device classes by path (D387): what a device right on such a path stands for at the start.</summary>
+    public IReadOnlyDictionary<string, DeviceClass> DeviceClasses { get; }
+
     public IReadOnlyList<string> ReservedLabelPrefixes { get; }
+
+    /// <summary>Capabilities no app gets (D311).</summary>
+    public IReadOnlyList<string> BlockedCapabilities { get; }
+
+    /// <summary>Rights whose service runs in the host's user namespace, so never together with <c>backend.root</c>.</summary>
+    public IReadOnlyList<string> HostNamespaceRights { get; }
+
+    /// <summary>Devices a service can use inside the box's user namespace; every other device needs the host's.</summary>
+    public IReadOnlyList<string> NamespacedDevices { get; }
+
+    /// <summary>The risk tier of single elevated rights (D388); every other right has <see cref="DefaultTier"/>.</summary>
+    public IReadOnlyDictionary<string, RiskTier> Tiers { get; }
+
+    public RiskTier DefaultTier { get; }
+
+    private static RiskTier Tier(JsonElement value) => Enum.Parse<RiskTier>(value.GetString()!, ignoreCase: true);
 
     public double Limit(string name) => _limits[name];
 
