@@ -1,7 +1,7 @@
 ---
 title: 'Benachrichtigungen per E-Mail und Webhook'
 description: 'Die Warnungen der Box und die Benachrichtigungen jedes Benutzers per E-Mail oder an einen Push-Dienst wie ntfy oder Gotify schicken: der E-Mail-Server, die Kanäle, welche Ereignisse sie bekommen und was privat bleibt.'
-status: draft
+status: ready
 audience: admin
 since: 1.2.0
 sidebar:
@@ -55,4 +55,4 @@ _Die Matrix: jedes Ereignis nach Desktop und den Kanälen der Box._
 
 - Die Box verbindet sich nur mit dem E-Mail-Server und den Webhook-Adressen, die du einträgst; nichts geht an das Pithyx-Projekt.
 - Ein Webhook erreicht nie die Box selbst: `localhost`, Loopback- und Link-Local-Adressen werden abgelehnt ([`notifications.channel.invalid`](/de/docs/reference/errors/#notifications.channel.invalid)), auch wenn ein Name auf sie zeigt, und einer Weiterleitung folgt die Box nicht. Adressen im lokalen Netz sind erlaubt, damit ein selbst betriebener Push-Server funktioniert.
-- Passwörter und Header-Werte erscheinen nie in den Protokollen, von einem Webhook höchstens Host und Port. Die Kanäle und der E-Mail-Server gehören zum Konfigurations-Backup (die Kanäle zu **Benutzer und Gruppen**, der E-Mail-Server zu **Systemeinstellungen**).
+- Passwörter und Header-Werte erscheinen nie in den Protokollen, von einem Webhook höchstens Host und Port. Die Kanäle und der E-Mail-Server gehören zum Konfigurations-Backup (die Kanäle und die Matrix zu **Benutzer und Gruppen**, der E-Mail-Server zu **Systemeinstellungen**).

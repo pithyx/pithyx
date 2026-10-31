@@ -1,7 +1,7 @@
 ---
 title: 'UPS'
 description: 'Shut the box down cleanly on a power failure with a UPS on USB or a UPS of another NUT server, and when it shuts down.'
-status: draft
+status: ready
 audience: admin
 since: 1.2.0
 sidebar:

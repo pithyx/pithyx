@@ -334,36 +334,6 @@
     "raidz3": "RAID-Z3 (drei Platten dürfen ausfallen)",
     "stripe": "Stripe (eine ausgefallene Platte kostet alles)"
   },
-  "snapshots": {
-    "title": "Snapshots",
-    "intro": "Ein Snapshot hält den Stand eines Datasets zu einem Zeitpunkt fest. Benutzer stellen daraus in Dateien unter Frühere Versionen Dateien wieder her. Zeitpläne löschen nur die Snapshots, die sie selbst angelegt haben.",
-    "noDatasets": "Noch keine Datasets.",
-    "dataset": "Dataset",
-    "take": "Snapshot anlegen",
-    "empty": "Dieses Dataset hat noch keine Snapshots.",
-    "name": "Name",
-    "created": "Angelegt",
-    "used": "Platz",
-    "actions": "Aktionen",
-    "foreign": "Fremd",
-    "held": "Festgehalten",
-    "hold": "Festhalten",
-    "release": "Freigeben",
-    "rollback": "Zurücksetzen",
-    "delete": "Löschen",
-    "kinds": {
-      "hourly": "Stündlich",
-      "daily": "Täglich",
-      "weekly": "Wöchentlich",
-      "monthly": "Monatlich",
-      "manual": "Von Hand",
-      "update": "Vor einem App-Update"
-    },
-    "schedules": "Zeitpläne",
-    "keep": "Behalten",
-    "save": "Zeitpläne speichern",
-    "schedulesHint": "Zeitpläne legen pro Stunde, Tag, Woche (ab Montag) oder Monat in UTC einen Snapshot an und behalten die angegebene Zahl ihrer eigenen Snapshots. Festgehaltene Snapshots und solche, die von Hand oder von anderen Programmen angelegt wurden, werden nie gelöscht."
-  },
   "health": {
     "title": "Zustand",
     "alerts": "Speicherhinweise",

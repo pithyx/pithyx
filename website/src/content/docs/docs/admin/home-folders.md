@@ -1,7 +1,7 @@
 ---
 title: 'Home folders'
 description: 'Every user gets a private home folder on the home pool; administrators pick the pool, set quotas and decide what happens to the home of a deleted user.'
-status: draft
+status: ready
 audience: admin
 sidebar:
   order: 5
@@ -46,7 +46,7 @@ A home on a pool that is gone (destroyed, or exported and not imported again) ca
 
 Deleting a user in Settings > **Users and groups** asks what happens to the home folder:
 
-- **Keep it** (the default): the home stays, renamed to `<name>.deleted-<user id>`, so the name is free for a new user. Administrators see it below **homes**.
+- **Keep it** (the default): the home stays, renamed to `<name>.deleted-<uid>` (the user's Linux user id), so the name is free for a new user. Administrators see it below **homes**.
 - **Move its files into a shared folder**: a new folder named after the user in the shared folder you choose gets every file, then the home is deleted with its recycle bin. This runs as a job.
 - **Delete it with every file**: the home goes with its files, recycle bin and snapshots, after you typed the user name.
 
