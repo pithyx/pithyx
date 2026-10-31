@@ -121,7 +121,7 @@ export function Wallpaper({ plain = false }: { plain?: boolean }) {
         </radialGradient>
       </defs>
       <rect width="1600" height="1000" fill={`url(#${glow}-base)`} />
-      <rect width="1600" height="1000" fill={`url(#${glow})`} />
+      <rect className={styles.glow} width="1600" height="1000" fill={`url(#${glow})`} />
       {CUBES.map((cube) => (
         <g
           key={`${String(cube.x)}-${String(cube.y)}`}
