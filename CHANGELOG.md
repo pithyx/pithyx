@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Fixed
+
+- pithyx.org: the tab of the landing page says "Pithyx" instead of "Pithyx | Pithyx", and the icon is served under a new name (`/pithyx-icon.svg`), so browsers that kept the old light tile load the current one.
+
 ## [1.2.0] - 2026-10-31
 
 Codename Vela (D408). Pithyx gets its new look (direction F of the design pass): a full-width taskbar, the Pithyx menu with its status tiles and search, and Files, Settings, the Store, the Log Center, the Resource Monitor and Personal settings in one frame with a navigation column, tables with a details pane and settings in form rows. Settings becomes the one place that sets up the box, storage included. New are pool encryption with keys on USB sticks, elevated rights for app backends with risk tiers and manifest version 2, notifications by email and webhook with a matrix of which event goes where, passkeys, the UPS, certificates from Let's Encrypt for proxy hosts and the search of Settings in the Pithyx menu. `@pithyx/sdk`, `@pithyx/ui` and `@pithyx/cli` go to 2.2.0. Like 1.0.0 and 1.1.0 it is marked beta on the stable channel. A box on 1.0.0 or 1.1.0 updates to it with one file.
