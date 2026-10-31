@@ -2,6 +2,7 @@
 title: 'Design guidelines'
 description: 'How an app looks and behaves like the rest of Pithyx: the app frame, toolbars, tables, forms, state and rights.'
 status: ready
+since: 1.2.0
 audience: developer
 sidebar:
   order: 6

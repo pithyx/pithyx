@@ -2,6 +2,7 @@
 title: 'Gestaltungsrichtlinien'
 description: 'Wie eine App aussieht und sich verhält wie der Rest von Pithyx: App-Rahmen, Werkzeugleisten, Tabellen, Formulare, Zustände und Rechte.'
 status: ready
+since: 1.2.0
 audience: developer
 sidebar:
   order: 6

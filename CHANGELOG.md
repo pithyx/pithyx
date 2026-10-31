@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-10-31
+
+Codename Vela (D408). Pithyx gets its new look (direction F of the design pass): a full-width taskbar, the Pithyx menu with its status tiles and search, and Files, Settings, the Store, the Log Center, the Resource Monitor and Personal settings in one frame with a navigation column, tables with a details pane and settings in form rows. Settings becomes the one place that sets up the box, storage included. New are pool encryption with keys on USB sticks, elevated rights for app backends with risk tiers and manifest version 2, notifications by email and webhook with a matrix of which event goes where, passkeys, the UPS, certificates from Let's Encrypt for proxy hosts and the search of Settings in the Pithyx menu. `@pithyx/sdk`, `@pithyx/ui` and `@pithyx/cli` go to 2.2.0. Like 1.0.0 and 1.1.0 it is marked beta on the stable channel. A box on 1.1.0 updates to it with one file.
+
 ### Added
 
 - Settings > **Notifications** > **Events**: a matrix of every event the box reports to its administrators (about 40, grouped by storage, updates, security, apps and system) by the administrators' desktop and each channel of the box; a checkbox applies at once, and the box's channels no longer have their own events and least level (`GET`/`PUT /api/system/notifications/matrix`, migration 0040, D407, #363).
@@ -62,6 +66,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Changed
 
+- The npm packages `@pithyx/sdk`, `@pithyx/ui` and `@pithyx/cli` are at `2.2.0` in the repository: `@pithyx/ui` adds `DetailsPane` (a details pane with a resize handle, also used by `DataTable`), `isIndeterminate` on `Checkbox`, and `density="comfortable"` rows of 52 px with room above and below. Nothing was removed, so apps on 2.x keep working.
 - The plain wallpaper leaves out the amber glow along with the boxes, so it is the petrol gradient alone.
 - The screenshots of the website and the design gallery show only what exists: the Store with the Editor of the official catalog and the empty community catalog, the Editor in the Pithyx menu, and notifications, log entries and processes the box really has, instead of invented apps and events. The daily check time of the Store's updates applies when the field is left, like the policy above it (#367).
 - The edit dialog of a shared folder and the SMB workgroup in Settings > **File services** apply at once like the switches around them: when the field is left or with Enter; their **Save** buttons are gone (#364).
@@ -492,6 +497,7 @@ The first release, codename Pyxis (D345, D366): the NAS core, the file services,
 - SMB sessions end when their user's groups change (D353): smbd kept a session's groups from its start, so a new right did not apply and a revoked shared folder stayed usable over SMB until the user signed out of the computer. The daemon now ends the user's sessions after the change, and the client reconnects with the current rights.
 - The command log no longer records the output of commands that print secrets: creating a configuration backup ran `pdbedit -L -w` and wrote every user's NT password hash into the Log Center and the log files at Info level. The output of `pdbedit`, `smbpasswd` and `chpasswd` is now always masked, and other callers mark secret output per command (the catalog deploy key's `ssh-keygen`).
 
-[Unreleased]: https://github.com/pithyx/pithyx/compare/v1.1.0...dev
+[Unreleased]: https://github.com/pithyx/pithyx/compare/v1.2.0...dev
+[1.2.0]: https://github.com/pithyx/pithyx/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/pithyx/pithyx/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/pithyx/pithyx/releases/tag/v1.0.0
