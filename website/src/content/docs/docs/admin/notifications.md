@@ -1,7 +1,7 @@
 ---
 title: 'Notifications by email and webhook'
 description: "Send the box's alerts and every user's notifications by email or to a push service such as ntfy or Gotify: the email server, the channels, which events they get and what stays private."
-status: draft
+status: ready
 audience: admin
 since: 1.2.0
 sidebar:
@@ -55,4 +55,4 @@ _The matrix: every event by the desktop and the box's channels._
 
 - The box connects only to the email server and the webhook addresses you set; nothing goes to the Pithyx project.
 - A webhook never reaches the box itself: `localhost`, loopback and link-local addresses are refused ([`notifications.channel.invalid`](/docs/reference/errors/#notifications.channel.invalid)), also when a name resolves to them, and a redirect is not followed. Addresses in the local network are allowed, so a self-hosted push server works.
-- Passwords and header values never appear in the logs, and of a webhook at most its host and port. The channels and the email server are part of the configuration backup (channels with **Users and groups**, the email server with **System settings**).
+- Passwords and header values never appear in the logs, and of a webhook at most its host and port. The channels and the email server are part of the configuration backup (channels and the matrix with **Users and groups**, the email server with **System settings**).

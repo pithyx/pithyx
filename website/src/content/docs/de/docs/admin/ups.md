@@ -1,7 +1,7 @@
 ---
 title: 'USV'
 description: 'Die Box bei einem Stromausfall mit einer USV an USB oder einer USV eines anderen NUT-Servers sauber herunterfahren, und wann sie herunterfährt.'
-status: draft
+status: ready
 audience: admin
 since: 1.2.0
 sidebar:

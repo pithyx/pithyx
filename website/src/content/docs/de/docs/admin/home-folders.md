@@ -1,7 +1,7 @@
 ---
 title: 'Home-Ordner'
 description: 'Jeder Benutzer bekommt einen privaten Home-Ordner auf dem Home-Pool; Administratoren wählen den Pool, setzen Quotas und entscheiden, was mit dem Home eines gelöschten Benutzers passiert.'
-status: draft
+status: ready
 audience: admin
 sidebar:
   order: 5
@@ -46,7 +46,7 @@ Ein Home auf einem Pool, der fehlt (zerstört oder exportiert und nicht wieder i
 
 Beim Löschen eines Benutzers unter Einstellungen > **Benutzer und Gruppen** fragt Pithyx, was mit dem Home-Ordner passiert:
 
-- **Behalten** (die Vorgabe): Das Home bleibt, umbenannt in `<name>.deleted-<benutzer-id>`, damit der Name für einen neuen Benutzer frei ist. Administratoren sehen es unter **homes**.
+- **Behalten** (die Vorgabe): Das Home bleibt, umbenannt in `<name>.deleted-<uid>` (die Linux-Benutzer-ID), damit der Name für einen neuen Benutzer frei ist. Administratoren sehen es unter **homes**.
 - **Dateien in einen freigegebenen Ordner verschieben**: Ein neuer Ordner mit dem Namen des Benutzers im gewählten freigegebenen Ordner bekommt alle Dateien, danach wird das Home samt Papierkorb gelöscht. Das läuft als Job.
 - **Mit allen Dateien löschen**: Das Home wird mit seinen Dateien, seinem Papierkorb und seinen Snapshots gelöscht, nachdem du den Benutzernamen eingegeben hast.
 
