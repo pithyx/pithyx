@@ -19,8 +19,11 @@ public static class ShareAvailability
 
     private static readonly HashSet<string> _stopped = new(StringComparer.Ordinal) { "UNAVAIL", "FAULTED", "SUSPENDED", "REMOVED" };
 
-    /// <summary>Why the share cannot be reached, or null when it can (or when the pools were never read).</summary>
-    public static string? Reason(string? dataset, PoolList pools, bool poolsRead)
+    /// <summary>
+    /// Why the share cannot be reached, or null when it can (or when the pools were never read). A dataset that does
+    /// not mount itself (<paramref name="mountsItself"/> false, <c>canmount=off</c>) only needs its key loaded.
+    /// </summary>
+    public static string? Reason(string? dataset, PoolList pools, bool poolsRead, bool mountsItself = true)
     {
         ArgumentNullException.ThrowIfNull(pools);
         if (dataset is null || !poolsRead)
@@ -37,7 +40,11 @@ public static class ShareAvailability
         {
             return PoolUnavailable;
         }
-        return found.Mounted ? null : found.KeyStatus is "unavailable" ? Locked : NotMounted;
+        if (found.KeyStatus is "unavailable")
+        {
+            return Locked;
+        }
+        return found.Mounted || !mountsItself ? null : NotMounted;
     }
 
     /// <summary>What decides the availability of every share dataset; a change means the share lists may differ.</summary>

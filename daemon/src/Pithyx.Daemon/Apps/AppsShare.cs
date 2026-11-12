@@ -125,7 +125,8 @@ public sealed partial class AppsShare(
 
     /// <summary>
     /// Why Apps cannot be used now (<see cref="ShareAvailability"/>), or null when it can: it follows the app pool's
-    /// <c>pithyx/apps</c>, in simulation the pool alone.
+    /// <c>pithyx/apps</c>, in simulation the pool alone. That dataset never mounts itself (<c>canmount=off</c>); the
+    /// app folders follow their own datasets.
     /// </summary>
     public static string? Unavailable(string? pool, PoolList current, bool poolsRead, bool useZfs)
     {
@@ -136,7 +137,7 @@ public sealed partial class AppsShare(
         }
         if (useZfs)
         {
-            return ShareAvailability.Reason($"{pool}/pithyx/apps", current, poolsRead);
+            return ShareAvailability.Reason($"{pool}/pithyx/apps", current, poolsRead, mountsItself: false);
         }
         return !poolsRead || current.Pools.Any(candidate => candidate.Name == pool) ? null : ShareAvailability.PoolMissing;
     }
