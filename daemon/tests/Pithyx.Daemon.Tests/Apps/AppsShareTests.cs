@@ -156,6 +156,7 @@ public sealed class AppsShareTests
         Assert.Contains("admin users = \"ada\" \"rita\"", apps, StringComparison.Ordinal);
         Assert.Contains("write list = \"ada\"", apps, StringComparison.Ordinal);
         Assert.Contains("inherit owner = unix only", apps, StringComparison.Ordinal);
+        Assert.Contains("create mask = 0600", apps, StringComparison.Ordinal);
         Assert.Contains("follow symlinks = no", apps, StringComparison.Ordinal);
         Assert.Contains("wide links = no", apps, StringComparison.Ordinal);
         Assert.Contains("full_audit:success = connect disconnect", apps, StringComparison.Ordinal);

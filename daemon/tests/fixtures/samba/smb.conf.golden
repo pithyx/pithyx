@@ -106,8 +106,8 @@
    admin users = "ada" "tom"
    inherit owner = unix only
    inherit acls = no
-   create mask = 0660
-   directory mask = 0770
+   create mask = 0600
+   directory mask = 0700
    follow symlinks = no
    wide links = no
    vfs objects = full_audit catia fruit streams_xattr

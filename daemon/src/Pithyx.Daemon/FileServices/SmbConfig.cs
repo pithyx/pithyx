@@ -199,8 +199,9 @@ public static class SmbConfig
         Line(text, "admin users", Users(share.Readers.Concat(share.Writers)));
         Line(text, "inherit owner", "unix only");
         Line(text, "inherit acls", "no");
-        Line(text, "create mask", "0660");
-        Line(text, "directory mask", "0770");
+        // inherit owner sets only the owner; the group stays the user's (users), so it gets no rights. The app is the owner.
+        Line(text, "create mask", "0600");
+        Line(text, "directory mask", "0700");
         Line(text, "follow symlinks", "no");
         Line(text, "wide links", "no");
         Line(text, "vfs objects", "full_audit catia fruit streams_xattr");

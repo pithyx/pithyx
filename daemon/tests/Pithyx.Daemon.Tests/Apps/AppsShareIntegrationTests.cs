@@ -64,6 +64,15 @@ public sealed class AppsShareIntegrationTests
         await using var vdevs = FileVdevs.Create(1);
         await vdevs.CreateLayoutPoolAsync();
         var pool = vdevs.PoolName;
+        // The app's uid must pass through every folder above the pool, as it does through /<pool> on a box; the
+        // temporary folders of the run are private.
+        for (var folder = new DirectoryInfo(vdevs.AltRoot); folder is not null && folder.FullName != "/dev/shm" && folder.FullName != "/"; folder = folder.Parent)
+        {
+            if (OperatingSystem.IsLinux())
+            {
+                File.SetUnixFileMode(folder.FullName, File.GetUnixFileMode(folder.FullName) | UnixFileMode.OtherExecute);
+            }
+        }
         var work = Directory.CreateTempSubdirectory("pithyxci-apps-").FullName;
         var runRoot = $"/run/pithyxci-{Guid.NewGuid():N}";
         var root = Path.Combine(runRoot, "apps");
@@ -170,9 +179,10 @@ public sealed class AppsShareIntegrationTests
             // What ada puts into an app's folder belongs to the app, and the app can change it.
             var put = await SmbAsync("pxit-ada", $"put {configPath} {Alpha}/data/smb.txt; mkdir {Alpha}/data/smbdir; put {configPath} {Beta}/data/smb.txt");
             Assert.True(File.Exists(Path.Combine(volumes[Alpha], "smb.txt")), put);
-            Assert.StartsWith($"{AppUid}:{AppUid} ", await OwnerAsync(Path.Combine(volumes[Alpha], "smb.txt")), StringComparison.Ordinal);
-            Assert.StartsWith($"{AppUid}:{AppUid} ", await OwnerAsync(Path.Combine(volumes[Alpha], "smbdir")), StringComparison.Ordinal);
-            Assert.StartsWith($"{DockerHost.RemapBase}:{DockerHost.RemapBase} ", await OwnerAsync(Path.Combine(volumes[Beta], "smb.txt")), StringComparison.Ordinal);
+            // Samba sets only the owner; the group stays the user's (users), which gets no rights.
+            Assert.Equal($"{AppUid}:100 600", await OwnerAsync(Path.Combine(volumes[Alpha], "smb.txt")));
+            Assert.Equal($"{AppUid}:100 700", await OwnerAsync(Path.Combine(volumes[Alpha], "smbdir")));
+            Assert.Equal($"{DockerHost.RemapBase}:100 600", await OwnerAsync(Path.Combine(volumes[Beta], "smb.txt")));
             var app = await RunAsync("setpriv", $"--reuid={AppUid}", $"--regid={AppUid}", "--clear-groups", "--",
                 "sh", "-c", $"cat '{Path.Combine(volumes[Alpha], "smb.txt")}' > /dev/null && echo app >> '{Path.Combine(volumes[Alpha], "smb.txt")}' && echo from-app > '{Path.Combine(volumes[Alpha], "app.txt")}'");
             Assert.True(app.ExitCode == 0, app.StandardError);
