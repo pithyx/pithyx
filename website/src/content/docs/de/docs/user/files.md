@@ -94,6 +94,16 @@ Um den Papierkorb zu überspringen, drücke **Umschalt+Entf** oder wähle **Endg
 
 Löschen über SFTP nutzt den Papierkorb nicht: Die Dateien sind sofort weg.
 
+## Der Ordner Apps
+
+Administratoren, und wem ein Administrator ihn gegeben hat, sehen **Apps** in der Navigationsspalte, mit einem Schloss, wenn du nur lesen darfst. Er enthält einen Ordner pro App mit den Daten der App, benannt nach der ID der App; die Liste zeigt den Namen der App und **Läuft** für eine App, deren Backend läuft, oder **Nicht installiert** für Daten, die eine Deinstallation behalten hat. Die Ordner selbst kommen und gehen mit den Apps, daher lässt sich neben ihnen nichts anlegen. Im Ordner einer App arbeitest du wie in jedem Ordner, mit drei Unterschieden:
+
+- Bevor du im Ordner einer laufenden App etwas hochlädst, anlegst, umbenennst, verschiebst oder löschst, fragt Dateien zuerst, denn die App kann diese Dateien offen haben; **Trotzdem ändern** macht weiter und fragt für diese App nicht mehr, solange das Fenster offen bleibt. Wenn du unsicher bist, deaktiviere die App vorher im Store.
+- Apps hat keinen Papierkorb und keine früheren Versionen: **Löschen** fragt und löscht dann endgültig.
+- Was du dort anlegst, gehört der App, damit sie es nutzen kann. Eine Datei in Apps öffnet sich im Betrachter oder wird heruntergeladen, nie in einer installierten App.
+
+Wie Administratoren Apps einrichten, steht unter [Freigegebene Ordner](/de/docs/admin/shared-folders/#der-ordner-apps).
+
 ## Vorschaubilder und der Betrachter
 
 **Vorschaubilder.** Dateien zeigt kleine Vorschauen für JPEG-, PNG-, WebP- und GIF-Bilder. Andere Typen, auch Videos und HEIC-Bilder, zeigen ein Symbol. Vorschauen werden gezeichnet, wenn sie ins Bild kommen, und die Box hält sie in einem Cache auf dem Pool (bis zu 2 GB). Sehr große Bilder bekommen keine Vorschau: Die Grenzen sind 256 MiB pro Datei und 50 Millionen Pixel.

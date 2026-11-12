@@ -29,6 +29,10 @@ Bei der ersten Installation wählst du **Pool für App-Daten**: „Alle Apps spe
 
 Jede App bekommt ein Dataset `<pool>/pithyx/apps/<id>`, eingehängt unter `/<pool>/.pithyx/apps/<id>`. Das Datenverzeichnis von Docker ist `/<pool>/.pithyx/docker`. Fehlt der Pool oder ist er gesperrt, zeigen Apps darauf „Pool nicht verfügbar“, und niemand kann sie öffnen, bis er zurück ist. App-Container laufen mit Benutzer-IDs von 40000 bis 49999.
 
+### Die App-Daten in Dateien
+
+Die Daten jeder App (das `volumes/` ihres Datasets) liegen im Ordner **Apps**, ein Ordner pro App, in Dateien und über SMB, nur für Administratoren, solange ein Administrator ihn nicht anderen gibt. Siehe [Freigegebene Ordner](/de/docs/admin/shared-folders/#der-ordner-apps). Eine Deinstallation mit **Daten behalten** lässt den Ordner dort, gekennzeichnet mit **Nicht installiert**; das Löschen der Daten trennt zuerst jede SMB-Verbindung zu Apps, und der Deinstallationsdialog sagt es, wenn jemand verbunden ist.
+
 ## Updates und Rollback
 
 ![Die Seite Updates mit dem Update des Editors von 1.0.0 auf 1.1.0 und seinen Versionshinweisen und den Update-Einstellungen mit der Regel Administratoren benachrichtigen und der täglichen Prüfzeit 03:00](../../../../../assets/screenshots/store-update-settings.de.webp)

@@ -17,6 +17,8 @@ Schalte **Freigegebene Ordner über SMB anbieten** ein; die Standard-Arbeitsgrup
 
 Verbinde dich im Windows-Explorer mit `\\<adresse>\<freigabe>`, unter macOS oder Linux mit `smb://<adresse>`. Die Box macht sich im Netzwerk nicht bekannt (kein WS-Discovery, kein mDNS), daher verbinden sich Clients über die Adresse. Gelöschtes geht in den Papierkorb, und die täglichen Wiederherstellungspunkte erscheinen in Windows als „Vorgängerversionen“.
 
+Der Ordner [Apps](/de/docs/admin/shared-folders/#der-ordner-apps) mit den Daten aller Apps wird nur über SMB angeboten; Löschen ist dort endgültig, und ein Client kann nirgends Besitzer, Modi oder ACLs ändern, da Samba ohne NT-ACLs und ohne die UNIX-Erweiterungen läuft.
+
 Ändert sich der Zugriff eines Benutzers (ein Recht auf einen freigegebenen Ordner, eine Gruppenmitgliedschaft), beendet Pithyx seine offenen SMB-Verbindungen. Der Computer verbindet sich innerhalb von Sekunden von selbst neu und hat sofort die neuen Rechte; Dateien, die der Benutzer über SMB offen hatte, werden geschlossen, wie nach einem kurzen Netzwerkausfall.
 
 ## SFTP

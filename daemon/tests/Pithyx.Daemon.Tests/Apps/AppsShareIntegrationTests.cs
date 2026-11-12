@@ -30,6 +30,7 @@ namespace Pithyx.Daemon.Tests.Apps;
 /// from being destroyed once Samba let go of the share. The machine's services are not touched.
 /// </summary>
 [Trait("Category", FileVdevs.Category)]
+[Collection(LinuxAccounts.Name)]
 public sealed class AppsShareIntegrationTests
 {
     private const string Password = "pxit-river-candle-8";
@@ -143,7 +144,8 @@ public sealed class AppsShareIntegrationTests
             var uid = 20960;
             foreach (var user in users)
             {
-                await RunAsync("useradd", "--uid", (uid++).ToString(CultureInfo.InvariantCulture), "--gid", "users", "--no-user-group", "--no-create-home", "--home-dir", "/nonexistent", "--shell", "/usr/sbin/nologin", user);
+                var added = await RunAsync("useradd", "--uid", (uid++).ToString(CultureInfo.InvariantCulture), "--gid", "users", "--no-user-group", "--no-create-home", "--home-dir", "/nonexistent", "--shell", "/usr/sbin/nologin", user);
+                Assert.True(added.ExitCode == 0, added.StandardError);
             }
             var passwords = new FileServicePasswords(_commands, new AccountOptions("/etc/passwd", Apply: true), NullLogger<FileServicePasswords>.Instance);
             foreach (var user in users)
@@ -210,6 +212,12 @@ public sealed class AppsShareIntegrationTests
             Assert.False(Directory.Exists(Path.Combine(volumes[Alpha], "tomdir")));
             Assert.True(File.Exists(Path.Combine(volumes[Alpha], "smb.txt")));
             Assert.True(File.Exists(Path.Combine(volumes[Alpha], "app.txt")));
+
+            // A move into another app's folder crosses a mount: Samba refuses it, and a client that copies instead
+            // creates a new file, which belongs to the other app.
+            await SmbAsync("pxit-ada", $"rename {Alpha}/data/app.txt {Beta}/data/moved.txt");
+            Assert.True(File.Exists(Path.Combine(volumes[Alpha], "app.txt")));
+            Assert.False(File.Exists(Path.Combine(volumes[Beta], "moved.txt")));
 
             // chmod, DOS attributes, ACLs and owners from the client change nothing on the box.
             var before = await OwnerAsync(Path.Combine(volumes[Alpha], "smb.txt"));
@@ -302,4 +310,11 @@ public sealed class AppsShareIntegrationTests
         }
         Assert.Fail($"Nothing listens on port {port}.");
     }
+}
+
+/// <summary>Tests that run alone, so no other test holds the lock of <c>/etc/passwd</c> while they add accounts.</summary>
+[CollectionDefinition(Name, DisableParallelization = true)]
+public sealed class LinuxAccounts
+{
+    public const string Name = "linux_accounts";
 }

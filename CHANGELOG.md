@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+
+- The special folder **Apps** (D409, #200): one folder per installed app with the app's data (its `volumes/`), in Files and over SMB, for administrators only unless an administrator confirms giving it to others (the other administrators are told). Files warns before writing into a running app's folder, shows kept data of uninstalled apps as **Not installed** and deletes in Apps for good after a confirmation (no recycle bin, no previous versions). No link an app made leads out of its folder, and what Files or SMB creates there belongs to the app. Settings > **Shared folders** shows Apps as a system folder, and the uninstall dialog says when somebody is connected to it over SMB. New error codes `fs.apps.confirmation_required`, `fs.apps.root_fixed`, `fs.apps.trash_unsupported` and `fs.share.system`; `GET /api/shares/apps`, and `confirmAppsAccess` for the grants of shares, users and groups. Migration 0041.
+
 ### Fixed
 
 - pithyx.org: the tab of the landing page says "Pithyx" instead of "Pithyx | Pithyx", and the icon is served under a new name (`/pithyx-icon.svg`), so browsers that kept the old light tile load the current one.
