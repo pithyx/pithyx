@@ -164,5 +164,13 @@
     "no": "Nein",
     "editRights": "Rechte bearbeiten",
     "noGroups": "Keine Gruppen"
+  },
+  "appsAccess": {
+    "title": "Zugriff auf Apps geben?",
+    "body": "Apps enthält die Daten aller Apps, auch persönliche Daten aller Nutzer. Wem du Zugriff gibst, sieht diese Daten und kann sie mit Lesen und Schreiben ändern oder löschen.",
+    "smb": "Files warnt, bevor eine Datei einer laufenden App geändert wird. Über SMB kann nichts warnen, deshalb kann eine Änderung dort die Daten einer laufenden App beschädigen.",
+    "notice": "Die anderen Administratoren bekommen eine Benachrichtigung.",
+    "cancel": "Abbrechen",
+    "confirm": "Zugriff geben"
   }
 }

@@ -77,7 +77,7 @@ public sealed class UserService(
                 transaction,
                 id,
                 request.Grants ?? [.. Resources.NewUserDefaults.Select(resource => new GrantEntry(resource, GrantLevel.Allow))],
-                request.ConfirmAppsAccess);
+                request.ConfirmAppsAccess == true);
             await transaction.CommitAsync(cancellationToken);
         }
         permissions.Invalidate();

@@ -108,7 +108,7 @@ export interface InternalMethods {
   'internal.admin.shares.list': { params: Record<string, never>; result: ShareDetails[] };
   'internal.admin.shares.grants': { params: { shareId: number }; result: ShareGrants };
   'internal.admin.shares.setGrants': {
-    params: { shareId: number; grants: SubjectGrant[] };
+    params: { shareId: number; grants: SubjectGrant[]; confirmAppsAccess?: boolean };
     result: ShareGrants;
   };
   'internal.admin.shares.update': {
@@ -580,12 +580,12 @@ export function adminStorageHost(emit: (event: string, data?: unknown) => void):
       validate: isShareGrants,
       handle: (params) =>
         daemon(async () => {
-          const { shareId, grants } =
+          const { shareId, grants, confirmAppsAccess } =
             params as InternalMethods['internal.admin.shares.setGrants']['params'];
           return unwrap(
             await api.PUT('/api/shares/{shareId}/grants', {
               params: { path: { shareId } },
-              body: { grants },
+              body: { grants, confirmAppsAccess: confirmAppsAccess === true },
             }),
           );
         }),

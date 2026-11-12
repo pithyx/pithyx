@@ -5095,11 +5095,8 @@ export type components = {
          */
         GrantLevel: "read" | "readWrite" | "allow";
         GrantsRequest: {
-            /**
-             * @description Confirms that the subject may see the data of every app (D409); required when the grants give it more of Apps than before (`fs.apps.confirmation_required`).
-             * @default false
-             */
-            confirmAppsAccess: boolean;
+            /** @description Confirms that the subject may see the data of every app (D409); required when the grants give it more of Apps than before (`fs.apps.confirmation_required`). */
+            confirmAppsAccess?: null | boolean;
             /** @description Every grant the subject should have; the others go. A subject has at most one grant per resource. */
             grants: components["schemas"]["GrantEntry"][];
         };
@@ -5967,11 +5964,8 @@ export type components = {
             path: string;
         };
         NewUser: {
-            /**
-             * @description Confirms that the new user may see the data of every app; required when Grants name Apps (D409, `fs.apps.confirmation_required`).
-             * @default false
-             */
-            confirmAppsAccess: boolean;
+            /** @description Confirms that the new user may see the data of every app; required when Grants name Apps (D409, `fs.apps.confirmation_required`). */
+            confirmAppsAccess?: null | boolean;
             /** @description Optional, at most 64 characters. */
             displayName?: null | string;
             /** @description The user's own grants; when left out, the desktop login, SMB and the apps org.pithyx.files, org.pithyx.viewer and org.pithyx.demo. */
@@ -7406,11 +7400,8 @@ export type components = {
             users: components["schemas"]["ShareUserAccess"][];
         };
         ShareGrantsRequest: {
-            /**
-             * @description For Apps (D409): confirms that the users and groups given more of it may see the data of every app; required then (`fs.apps.confirmation_required`).
-             * @default false
-             */
-            confirmAppsAccess: boolean;
+            /** @description For Apps (D409): confirms that the users and groups given more of it may see the data of every app; required then (`fs.apps.confirmation_required`). */
+            confirmAppsAccess?: null | boolean;
             /** @description Every grant the shared folder should have; the others go. */
             grants: components["schemas"]["SubjectGrant"][];
         };

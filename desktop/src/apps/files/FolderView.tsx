@@ -12,7 +12,7 @@ import {
   type PointerEvent,
 } from 'react';
 import { useTranslation } from 'react-i18next';
-import { cx } from '@pithyx/ui';
+import { cx, StatusBadge, type StatusTone } from '@pithyx/ui';
 import { IconArrowDown, IconArrowUp, IconFile, IconFolder, IconLink } from '../../ui/icons';
 import { ENTRIES_TYPE } from './drop';
 import styles from './FilesApp.module.css';
@@ -75,6 +75,14 @@ export interface FolderViewProps {
   emptyText?: string | undefined;
   /** The mouse rested on a folder, so it can be read ahead of a double click. */
   onRest?: (entry: FileEntry) => void;
+  /** A name to show instead of the entry's own and a state in words: the app folders of Apps (D409). */
+  describe?: ((entry: FileEntry) => EntryDescription | null) | undefined;
+}
+
+/** How an entry is shown when its name is not what users know it by. */
+export interface EntryDescription {
+  title: string;
+  state?: { text: string; tone: StatusTone } | undefined;
 }
 
 /** How long the mouse rests on a folder before it is read ahead: passing over a folder reads nothing. */
@@ -456,7 +464,16 @@ export function FolderView(props: FolderViewProps) {
         }}
       />
     ) : (
-      <span>{entry.name}</span>
+      <span>{props.describe?.(entry)?.title ?? entry.name}</span>
+    );
+  }
+
+  function state(entry: FileEntry) {
+    const about = props.describe?.(entry)?.state;
+    return about === undefined ? null : (
+      <StatusBadge tone={about.tone} className={styles.entryState}>
+        {about.text}
+      </StatusBadge>
     );
   }
 
@@ -557,7 +574,9 @@ export function FolderView(props: FolderViewProps) {
                         role="gridcell"
                         aria-colindex={column + 1}
                         className={styles.tile}
-                        title={entry.name}
+                        title={[entry.name, props.describe?.(entry)?.state?.text]
+                          .filter(Boolean)
+                          .join(' · ')}
                         {...entryProps(entry, index)}
                       >
                         <span className={styles.tileImage}>
@@ -601,6 +620,7 @@ export function FolderView(props: FolderViewProps) {
                   <span className={styles.name}>
                     {glyph(entry, 18, styles.rowThumb)}
                     {label(entry)}
+                    {state(entry)}
                   </span>
                 </div>
                 <div role="gridcell" className={cx(styles.cell, styles.size)}>

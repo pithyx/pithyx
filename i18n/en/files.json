@@ -178,5 +178,15 @@
     "expand": "Show the folders in {name}",
     "collapse": "Hide the folders in {name}",
     "more": "More in {name}"
+  },
+  "apps": {
+    "topInfo": "Each folder holds the data of one app. The box adds and removes these folders; you can change what is inside them.",
+    "folderInfo": "These files belong to {app}. Apps has no recycle bin and no previous versions: what you delete here is gone.",
+    "notInstalled": "Not installed",
+    "running": "Running",
+    "noTrash": "Apps has no recycle bin, so this cannot be restored.",
+    "runningTitle": "{count, plural, one {The app is running} other {The apps are running}}",
+    "runningBody": "{apps} {count, plural, one {is running and may have these files open} other {are running and may have these files open}}. Changing them now can damage the app's data. If you are not sure, disable the app in the Store first.",
+    "runningConfirm": "Change anyway"
   }
 }

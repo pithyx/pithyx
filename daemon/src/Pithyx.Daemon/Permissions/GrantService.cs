@@ -52,7 +52,7 @@ public sealed class GrantService(SqliteConnectionFactory connections, Permission
             {
                 throw new PithyxException(ErrorCodes.UsersUserNotFound);
             }
-            widened = await ReplaceAsync(connection, transaction, SubjectKind.User, userId, request.Grants, request.ConfirmAppsAccess);
+            widened = await ReplaceAsync(connection, transaction, SubjectKind.User, userId, request.Grants, request.ConfirmAppsAccess == true);
             await transaction.CommitAsync(cancellationToken);
         }
         permissions.Invalidate();
@@ -77,7 +77,7 @@ public sealed class GrantService(SqliteConnectionFactory connections, Permission
         await using (var transaction = await connection.BeginTransactionAsync(cancellationToken))
         {
             await RequireGroupAsync(connection, transaction, groupId);
-            widened = await ReplaceAsync(connection, transaction, SubjectKind.Group, groupId, request.Grants, request.ConfirmAppsAccess);
+            widened = await ReplaceAsync(connection, transaction, SubjectKind.Group, groupId, request.Grants, request.ConfirmAppsAccess == true);
             await transaction.CommitAsync(cancellationToken);
         }
         permissions.Invalidate();
@@ -141,7 +141,7 @@ public sealed class GrantService(SqliteConnectionFactory connections, Permission
                 widened = AppsAccess.Widened(
                     [.. before.Select(grant => new SubjectGrant(grant.SubjectKind == "group" ? SubjectKind.Group : SubjectKind.User, grant.SubjectId, PermissionService.LevelOf(grant.Level)))],
                     request.Grants ?? []);
-                AppsAccess.RequireConfirmation(widened, request.ConfirmAppsAccess);
+                AppsAccess.RequireConfirmation(widened, request.ConfirmAppsAccess == true);
             }
             await connection.ExecuteAsync("DELETE FROM grants WHERE resource = @resource AND subject_kind <> 'app'", new { resource }, transaction);
             foreach (var grant in request.Grants ?? [])

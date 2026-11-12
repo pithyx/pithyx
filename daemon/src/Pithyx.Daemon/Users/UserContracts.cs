@@ -35,7 +35,7 @@ public sealed record UserSummary(
 /// <param name="GroupIds">The groups the user joins, besides the built-in group <c>users</c>.</param>
 /// <param name="Grants">The user's own grants; when left out, the desktop login, SMB and the apps org.pithyx.files, org.pithyx.viewer and org.pithyx.demo.</param>
 /// <param name="ConfirmAppsAccess">Confirms that the new user may see the data of every app; required when <paramref name="Grants"/> name Apps (D409, <c>fs.apps.confirmation_required</c>).</param>
-public sealed record NewUser(string Username, string Password, string? DisplayName = null, IReadOnlyList<long>? GroupIds = null, IReadOnlyList<Permissions.GrantEntry>? Grants = null, bool ConfirmAppsAccess = false);
+public sealed record NewUser(string Username, string Password, string? DisplayName = null, IReadOnlyList<long>? GroupIds = null, IReadOnlyList<Permissions.GrantEntry>? Grants = null, bool? ConfirmAppsAccess = null);
 
 /// <summary>Fields left out stay as they are.</summary>
 /// <param name="DisplayName">An empty text removes the display name.</param>

@@ -36,6 +36,7 @@ import {
   type UserSummary,
 } from '../sdk/users';
 import { useShares } from '../settings/shares';
+import { isAppsAccessCancelled, useAppsAccessConfirmation } from './AppsAccessDialog';
 import { FormDialog } from './FormDialog';
 import { GrantEditor, protocolKey, type ProtocolName } from './GrantEditor';
 import { groupsKey, useGroups, usersKey, useUsers } from './queries';
@@ -410,15 +411,19 @@ function CreateDialog({
     ].map((resource): GrantEntry => ({ resource, level: 'allow' }));
   const [groupIds, setGroupIds] = useState<number[]>([]);
   const [passwordError, setPasswordError] = useState<string | undefined>();
+  const apps = useAppsAccessConfirmation();
   const create = useChange(
     () =>
-      usersCall(app, 'internal.admin.users.create', {
-        username,
-        password,
-        displayName: displayName.trim() === '' ? null : displayName,
-        groupIds,
-        grants,
-      }),
+      apps.confirmed((confirmAppsAccess) =>
+        usersCall(app, 'internal.admin.users.create', {
+          username,
+          password,
+          displayName: displayName.trim() === '' ? null : displayName,
+          groupIds,
+          grants,
+          confirmAppsAccess,
+        }),
+      ),
     onClose,
   );
   function submit(event: SyntheticEvent<HTMLFormElement>) {
@@ -472,7 +477,10 @@ function CreateDialog({
           onChange={setEdited}
         />
       )}
-      {create.isError && <ErrorNotice error={describeProblem(create.error)} />}
+      {create.isError && !isAppsAccessCancelled(create.error) && (
+        <ErrorNotice error={describeProblem(create.error)} />
+      )}
+      {apps.dialog}
     </FormDialog>
   );
 }

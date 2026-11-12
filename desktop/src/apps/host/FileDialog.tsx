@@ -50,7 +50,8 @@ export function matchesExtensions(name: string, extensions: readonly string[]): 
 
 /**
  * The places of the dialog: the user's own home first, then the shared folders; other users' homes (which only
- * administrators see) sit behind one entry, as in Files, so a box with many users keeps a short list.
+ * administrators see) sit behind one entry, as in Files, so a box with many users keeps a short list. Apps (D409) is
+ * left out: an app never gets another app's data through a dialog.
  */
 export function placesOf(shares: readonly Share[]): {
   own: Share[];
@@ -60,7 +61,7 @@ export function placesOf(shares: readonly Share[]): {
   const byName = (a: Share, b: Share) => a.name.localeCompare(b.name);
   return {
     own: shares.filter((share) => share.kind === 'home'),
-    shared: shares.filter((share) => share.kind !== 'home' && share.kind !== 'userHome'),
+    shared: shares.filter((share) => (share.kind ?? 'share') === 'share'),
     homes: shares.filter((share) => share.kind === 'userHome').sort(byName),
   };
 }

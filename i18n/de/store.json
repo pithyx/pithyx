@@ -244,6 +244,7 @@
     "delete": "Daten löschen",
     "deleteHint": "Ihre Datenbanken, Einstellungen und anderen Dateien auf dem App-Pool werden mit allen Snapshots gelöscht. Das lässt sich nicht rückgängig machen.",
     "mapped": "Der App zugeordnete Ordner bleiben in jedem Fall in ihren freigegebenen Ordnern.",
+    "smbConnected": "{count, plural, one {# SMB-Verbindung nutzt} other {# SMB-Verbindungen nutzen}} gerade Apps. Das Löschen der Daten trennt sie zuerst; dort geöffnete Dateien werden nicht gespeichert.",
     "confirm": "Deinstallieren",
     "cancel": "Abbrechen",
     "close": "Schließen",

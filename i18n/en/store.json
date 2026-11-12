@@ -244,6 +244,7 @@
     "delete": "Delete the data",
     "deleteHint": "Its databases, settings and other files on the app pool are deleted with every snapshot. This cannot be undone.",
     "mapped": "Folders mapped to the app stay in their shared folders either way.",
+    "smbConnected": "{count, plural, one {# SMB connection uses} other {# SMB connections use}} Apps right now. Deleting the data closes them first; files open there are not saved.",
     "confirm": "Uninstall",
     "cancel": "Cancel",
     "close": "Close",

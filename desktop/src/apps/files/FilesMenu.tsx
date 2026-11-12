@@ -46,6 +46,7 @@ export function FilesMenu({
   writable,
   canPaste,
   openOnly = false,
+  withoutTrash = false,
   appActions = [],
   onAction,
   onAppAction,
@@ -63,6 +64,8 @@ export function FilesMenu({
   canPaste: boolean;
   /** Only "Open": the homes of every user, which open as shares of their own. */
   openOnly?: boolean;
+  /** Apps (D409) has no recycle bin and no previous versions: deleting is only permanent. */
+  withoutTrash?: boolean;
   /** The installed apps' file actions that apply to the selection (D375), with their app's icon. */
   appActions?: readonly { label: string; icon: string }[];
   onAction: (action: FilesAction) => void;
@@ -138,7 +141,7 @@ export function FilesMenu({
                 {t('actions.rename')}
               </MenuItem>
             )}
-            {single !== null && (
+            {single !== null && !withoutTrash && (
               <MenuItem id="versions" icon={<IconHistory {...icon} />}>
                 {t('actions.versions')}
               </MenuItem>
@@ -146,14 +149,16 @@ export function FilesMenu({
             {writable && (
               <>
                 <MenuSeparator />
-                <MenuItem
-                  id="delete"
-                  icon={<IconTrash {...icon} />}
-                  tone="danger"
-                  shortcut={t('keys.delete')}
-                >
-                  {t('actions.delete')}
-                </MenuItem>
+                {!withoutTrash && (
+                  <MenuItem
+                    id="delete"
+                    icon={<IconTrash {...icon} />}
+                    tone="danger"
+                    shortcut={t('keys.delete')}
+                  >
+                    {t('actions.delete')}
+                  </MenuItem>
+                )}
                 <MenuItem
                   id="deletePermanent"
                   icon={<IconTrashX {...icon} />}

@@ -1,6 +1,6 @@
 import type { PithyxApp } from '@pithyx/sdk';
 import { Button, Dialog } from '@pithyx/ui';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ErrorNotice } from '../../errors/ErrorNotice';
@@ -30,6 +30,13 @@ export function UninstallDialog({
     onSuccess: start,
   });
   const close = onClose;
+  // Deleting the data closes every SMB connection to Apps first (D409), so the dialog says when there are some.
+  const connections = useQuery({
+    queryKey: ['store', 'appsConnections'],
+    queryFn: () => storeCall(app, 'internal.admin.apps.smbConnections', {}),
+    enabled: data === 'delete',
+    staleTime: 0,
+  });
 
   return (
     <Dialog
@@ -85,6 +92,11 @@ export function UninstallDialog({
               </div>
             ))}
           </fieldset>
+        )}
+        {job === null && data === 'delete' && (connections.data ?? 0) > 0 && (
+          <p className={styles.muted} role="status">
+            {t('uninstall.smbConnected', { count: connections.data ?? 0 })}
+          </p>
         )}
         <p className={styles.muted}>{t('uninstall.mapped')}</p>
         {remove.isError && <ErrorNotice error={describeProblem(remove.error)} />}

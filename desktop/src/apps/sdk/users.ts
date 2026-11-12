@@ -64,12 +64,12 @@ interface UserMethods {
   };
   'internal.admin.users.grants': { params: { userId: number }; result: UserGrants };
   'internal.admin.users.setGrants': {
-    params: { userId: number; grants: GrantEntry[] };
+    params: { userId: number; grants: GrantEntry[]; confirmAppsAccess?: boolean };
     result: UserGrants;
   };
   'internal.admin.groups.grants': { params: { groupId: number }; result: GroupGrants };
   'internal.admin.groups.setGrants': {
-    params: { groupId: number; grants: GrantEntry[] };
+    params: { groupId: number; grants: GrantEntry[]; confirmAppsAccess?: boolean };
     result: GroupGrants;
   };
 }
@@ -263,12 +263,16 @@ export function usersHost(): HostExtensions {
     'internal.admin.users.setGrants': {
       validate: (value) => hasUserId(value) && hasGrants(value),
       handle: (params) => {
-        const { userId, grants } = params as { userId: number; grants: GrantEntry[] };
+        const { userId, grants, confirmAppsAccess } = params as {
+          userId: number;
+          grants: GrantEntry[];
+          confirmAppsAccess?: boolean;
+        };
         return daemon(async () =>
           unwrap(
             await api.PUT('/api/users/{userId}/grants', {
               params: { path: { userId } },
-              body: { grants },
+              body: { grants, confirmAppsAccess: confirmAppsAccess === true },
             }),
           ),
         );
@@ -288,12 +292,16 @@ export function usersHost(): HostExtensions {
     'internal.admin.groups.setGrants': {
       validate: (value) => hasGroupId(value) && hasGrants(value),
       handle: (params) => {
-        const { groupId, grants } = params as { groupId: number; grants: GrantEntry[] };
+        const { groupId, grants, confirmAppsAccess } = params as {
+          groupId: number;
+          grants: GrantEntry[];
+          confirmAppsAccess?: boolean;
+        };
         return daemon(async () =>
           unwrap(
             await api.PUT('/api/groups/{groupId}/grants', {
               params: { path: { groupId } },
-              body: { grants },
+              body: { grants, confirmAppsAccess: confirmAppsAccess === true },
             }),
           ),
         );

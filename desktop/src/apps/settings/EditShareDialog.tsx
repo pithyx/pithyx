@@ -13,6 +13,7 @@ import {
 } from '../sdk/internal';
 import { describeProblem } from '../storage/shared';
 import { usersCall } from '../sdk/users';
+import { useAppsAccessConfirmation } from '../users/AppsAccessDialog';
 import styles from './Settings.module.css';
 import {
   accessOf,
@@ -24,6 +25,11 @@ import {
 } from './shares';
 
 const LEVELS: readonly ShareAccess[] = ['none', 'read', 'readWrite'];
+
+/** Whether a level gives more than another: none, then read, then read and write. */
+function widens(from: ShareAccess, to: ShareAccess): boolean {
+  return LEVELS.indexOf(to) > LEVELS.indexOf(from);
+}
 
 /** Name and description of a shared folder, and the access of every group and user to it (applied at once, optimistically). */
 export function EditShareDialog({
@@ -37,6 +43,8 @@ export function EditShareDialog({
 }) {
   const { t } = useTranslation('settings');
   const queryClient = useQueryClient();
+  // Apps (D409): the box names it and offers it over SMB only; who may use it is the one thing to choose.
+  const apps = share.system === 'apps';
   const [name, setName] = useState(share.name);
   const [description, setDescription] = useState(share.description);
   // What the box has, so a field left unchanged sends nothing.
@@ -74,67 +82,84 @@ export function EditShareDialog({
       actions={<Button onPress={onClose}>{t('shares.close')}</Button>}
     >
       <div className={styles.form}>
-        <form
-          className={styles.group}
-          aria-label={t('shares.editDialog.details')}
-          onSubmit={(event) => {
-            event.preventDefault();
-            commit();
-          }}
-        >
-          <p className={styles.muted}>{t('shares.editDialog.atOnce')}</p>
-          <TextField
-            label={t('shares.editDialog.name')}
-            {...(share.dataset === null ? {} : { description: t('shares.editDialog.datasetKept') })}
-            value={name}
-            onChange={(value) => {
-              setName(value);
-              save.reset();
+        {apps ? (
+          <p className={styles.muted}>{t('shares.apps.editIntro')}</p>
+        ) : (
+          <form
+            className={styles.group}
+            aria-label={t('shares.editDialog.details')}
+            onSubmit={(event) => {
+              event.preventDefault();
+              commit();
             }}
-            onBlur={commit}
-            autoComplete="off"
-            maxLength={64}
-          />
-          <TextField
-            label={t('shares.editDialog.description')}
-            value={description}
-            onChange={(value) => {
-              setDescription(value);
-              save.reset();
-            }}
-            onBlur={commit}
-            autoComplete="off"
-            maxLength={200}
-          />
-          {/* Enter in a field applies it; the button is never shown. */}
-          <button type="submit" hidden />
-          {save.isSuccess && (
-            <p className={styles.muted} role="status">
-              {t('shares.editDialog.saved')}
-            </p>
-          )}
-          {save.isError && <ErrorNotice error={describeProblem(save.error)} />}
-        </form>
-        {share.dataset !== null && <ShareProtocols app={app} share={share} />}
-        <ShareRights app={app} shareId={share.id} />
+          >
+            <p className={styles.muted}>{t('shares.editDialog.atOnce')}</p>
+            <TextField
+              label={t('shares.editDialog.name')}
+              {...(share.dataset === null
+                ? {}
+                : { description: t('shares.editDialog.datasetKept') })}
+              value={name}
+              onChange={(value) => {
+                setName(value);
+                save.reset();
+              }}
+              onBlur={commit}
+              autoComplete="off"
+              maxLength={64}
+            />
+            <TextField
+              label={t('shares.editDialog.description')}
+              value={description}
+              onChange={(value) => {
+                setDescription(value);
+                save.reset();
+              }}
+              onBlur={commit}
+              autoComplete="off"
+              maxLength={200}
+            />
+            {/* Enter in a field applies it; the button is never shown. */}
+            <button type="submit" hidden />
+            {save.isSuccess && (
+              <p className={styles.muted} role="status">
+                {t('shares.editDialog.saved')}
+              </p>
+            )}
+            {save.isError && <ErrorNotice error={describeProblem(save.error)} />}
+          </form>
+        )}
+        {share.dataset !== null && <ShareProtocols app={app} share={share} smbOnly={apps} />}
+        <ShareRights app={app} shareId={share.id} apps={apps} />
       </div>
     </Dialog>
   );
 }
 
-function ShareRights({ app, shareId }: { app: PithyxApp; shareId: number }) {
+function ShareRights({ app, shareId, apps }: { app: PithyxApp; shareId: number; apps: boolean }) {
   const { t } = useTranslation('settings');
   const queryClient = useQueryClient();
   const grants = useShareGrants(app, shareId);
+  const confirmation = useAppsAccessConfirmation();
   const groups = useQuery({
     queryKey: ['groups'],
     queryFn: () => usersCall(app, 'internal.admin.groups.list', {}),
   });
   const key = shareGrantsKey(shareId);
   const change = useMutation({
-    mutationFn: (next: SubjectGrant[]) =>
-      internalCall(app, 'internal.admin.shares.setGrants', { shareId, grants: next }),
-    onMutate: async (next) => {
+    mutationFn: ({
+      next,
+      confirmAppsAccess,
+    }: {
+      next: SubjectGrant[];
+      confirmAppsAccess: boolean;
+    }) =>
+      internalCall(app, 'internal.admin.shares.setGrants', {
+        shareId,
+        grants: next,
+        confirmAppsAccess,
+      }),
+    onMutate: async ({ next }) => {
       await queryClient.cancelQueries({ queryKey: key });
       const previous = queryClient.getQueryData<ShareGrants>(key);
       if (previous !== undefined) {
@@ -161,7 +186,18 @@ function ShareRights({ app, shareId }: { app: PithyxApp; shareId: number }) {
       aria-label={t('shares.editDialog.access', { user: label })}
       value={accessOf(current, kind, id)}
       onChange={(event) => {
-        change.mutate(withSubjectAccess(current, kind, id, event.target.value as ShareAccess));
+        const level = event.target.value as ShareAccess;
+        const next = withSubjectAccess(current, kind, id, level);
+        // Giving more of Apps asks first; the daemon refuses it unconfirmed.
+        if (apps && widens(accessOf(current, kind, id), level)) {
+          void confirmation.ask().then((go) => {
+            if (go) {
+              change.mutate({ next, confirmAppsAccess: true });
+            }
+          });
+        } else {
+          change.mutate({ next, confirmAppsAccess: false });
+        }
       }}
     >
       {LEVELS.map((level) => (
@@ -177,7 +213,11 @@ function ShareRights({ app, shareId }: { app: PithyxApp; shareId: number }) {
       <h3 id={`rights-${String(shareId)}`} className={styles.sectionTitle}>
         {t('shares.editDialog.rights')}
       </h3>
-      <p className={styles.muted}>{t('shares.editDialog.rightsIntro')}</p>
+      <p className={styles.muted}>
+        {apps ? t('shares.apps.rightsIntro') : t('shares.editDialog.rightsIntro')}
+      </p>
+      {apps && <p className={styles.muted}>{t('shares.apps.rightsSmb')}</p>}
+      {confirmation.dialog}
       {(grants.isPending || groups.isPending) && (
         <p className={styles.loading} role="status">
           {t('shares.editDialog.loading')}
@@ -240,7 +280,15 @@ function ShareRights({ app, shareId }: { app: PithyxApp; shareId: number }) {
 type ProtocolFlag = 'smb' | 'sftp' | 'smbEncrypt' | 'webDav' | 'ftp';
 
 /** Whether SMB, SFTP, WebDAV and FTP offer the shared folder, and whether SMB must encrypt; applied at once, optimistically. */
-function ShareProtocols({ app, share }: { app: PithyxApp; share: ShareDetails }) {
+function ShareProtocols({
+  app,
+  share,
+  smbOnly,
+}: {
+  app: PithyxApp;
+  share: ShareDetails;
+  smbOnly: boolean;
+}) {
   const { t } = useTranslation('settings');
   const queryClient = useQueryClient();
   const change = useMutation({
@@ -278,9 +326,15 @@ function ShareProtocols({ app, share }: { app: PithyxApp; share: ShareDetails })
       {flag('smb', t('shares.editDialog.smb'))}
       {flag('smbEncrypt', t('shares.editDialog.smbEncrypt'))}
       <p className={styles.muted}>{t('shares.editDialog.smbEncryptHint')}</p>
-      {flag('sftp', t('shares.editDialog.sftp'))}
-      {flag('webDav', t('shares.editDialog.webdav'))}
-      {flag('ftp', t('shares.editDialog.ftp'))}
+      {smbOnly ? (
+        <p className={styles.muted}>{t('shares.apps.smbOnly')}</p>
+      ) : (
+        <>
+          {flag('sftp', t('shares.editDialog.sftp'))}
+          {flag('webDav', t('shares.editDialog.webdav'))}
+          {flag('ftp', t('shares.editDialog.ftp'))}
+        </>
+      )}
       {change.isError && <ErrorNotice error={describeProblem(change.error)} />}
     </section>
   );

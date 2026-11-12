@@ -58,9 +58,10 @@ export interface ShareInfo {
   unavailable?: 'poolMissing' | 'poolUnavailable' | 'notMounted';
   /**
    * Set for a home instead of a shared folder: `home` is the user's own (named `home`), `userHome` another user's home
-   * (named after its folder), which only the core apps of administrators see. Left out for a shared folder.
+   * (named after its folder), which only the core apps of administrators see. `apps` is the special folder Apps with
+   * one folder per app, which only core apps see. Left out for a shared folder.
    */
-  kind?: 'home' | 'userHome';
+  kind?: 'home' | 'userHome' | 'apps';
 }
 
 /** Order of a folder listing. Name order is natural ("file2" before "file10") and ignores case. */

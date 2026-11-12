@@ -164,5 +164,13 @@
     "no": "No",
     "editRights": "Edit rights",
     "noGroups": "No groups"
+  },
+  "appsAccess": {
+    "title": "Give access to Apps?",
+    "body": "Apps holds the data of every app, which may include personal data of every user. Whoever you give it to can see that data, and with read and write access change or delete it.",
+    "smb": "Files warns before a file of a running app is changed. Over SMB nothing can warn, so a change there can damage an app's data while the app runs.",
+    "notice": "The other administrators get a notification.",
+    "cancel": "Cancel",
+    "confirm": "Give access"
   }
 }

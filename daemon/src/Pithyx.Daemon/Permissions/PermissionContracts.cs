@@ -32,7 +32,7 @@ public sealed record GroupGrants(IReadOnlyList<GrantEntry> Grants);
 
 /// <param name="Grants">Every grant the subject should have; the others go. A subject has at most one grant per resource.</param>
 /// <param name="ConfirmAppsAccess">Confirms that the subject may see the data of every app (D409); required when the grants give it more of Apps than before (<c>fs.apps.confirmation_required</c>).</param>
-public sealed record GrantsRequest(IReadOnlyList<GrantEntry> Grants, bool ConfirmAppsAccess = false);
+public sealed record GrantsRequest(IReadOnlyList<GrantEntry> Grants, bool? ConfirmAppsAccess = null);
 
 /// <summary>A user's or a group's access to one shared folder.</summary>
 /// <param name="SubjectKind"><c>user</c> or <c>group</c>.</param>
@@ -47,7 +47,7 @@ public sealed record ShareGrants(IReadOnlyList<SubjectGrant> Grants, IReadOnlyLi
 
 /// <param name="Grants">Every grant the shared folder should have; the others go.</param>
 /// <param name="ConfirmAppsAccess">For Apps (D409): confirms that the users and groups given more of it may see the data of every app; required then (<c>fs.apps.confirmation_required</c>).</param>
-public sealed record ShareGrantsRequest(IReadOnlyList<SubjectGrant> Grants, bool ConfirmAppsAccess = false);
+public sealed record ShareGrantsRequest(IReadOnlyList<SubjectGrant> Grants, bool? ConfirmAppsAccess = null);
 
 /// <summary>One user's effective access to a shared folder.</summary>
 /// <param name="UserId">The user's id.</param>
