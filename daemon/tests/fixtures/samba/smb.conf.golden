@@ -23,6 +23,8 @@
    logging = systemd
    log level = 1
    nt acl support = no
+   smb1 unix extensions = no
+   smb3 unix extensions = no
    store dos attributes = yes
    map archive = no
    map hidden = no
@@ -89,6 +91,28 @@
    shadow:sort = desc
    full_audit:prefix = %U|%S
    full_audit:success = pwrite_send unlinkat renameat mkdirat
+   full_audit:failure = none
+   full_audit:facility = LOCAL5
+   full_audit:priority = DEBUG
+
+[Apps]
+   path = /run/pithyx/apps
+   browseable = yes
+   access based share enum = yes
+   valid users = "ada" "tom"
+   read only = yes
+   write list = "ada"
+   server smb encrypt = if_required
+   admin users = "ada" "tom"
+   inherit owner = unix only
+   inherit acls = no
+   create mask = 0660
+   directory mask = 0770
+   follow symlinks = no
+   wide links = no
+   vfs objects = full_audit catia fruit streams_xattr
+   full_audit:prefix = %U|%S
+   full_audit:success = connect disconnect pwrite_send unlinkat renameat mkdirat
    full_audit:failure = none
    full_audit:facility = LOCAL5
    full_audit:priority = DEBUG

@@ -539,6 +539,18 @@
       },
       "expected": "Enter a workgroup of 1 to 15 letters, digits, dots, dashes or underscores, starting with a letter or digit."
     },
+    "fs.apps.confirmation_required": {
+      "params": {},
+      "expected": "Apps holds the data of every app, which may include personal data of every user. Confirm that the users or groups you chose may see it."
+    },
+    "fs.apps.root_fixed": {
+      "params": {},
+      "expected": "The top level of Apps only holds the folders of the apps. Open an app’s folder to change files."
+    },
+    "fs.apps.trash_unsupported": {
+      "params": {},
+      "expected": "Apps has no recycle bin. Delete the items for good, or leave them."
+    },
     "fs.cursor.invalid": {
       "params": {},
       "expected": "The list position is no longer valid. Load the folder again."
@@ -660,6 +672,10 @@
     "fs.share.read_only": {
       "params": {},
       "expected": "You can only read in this share."
+    },
+    "fs.share.system": {
+      "params": {},
+      "expected": "Apps is part of the box: its name and description stay, it is offered over SMB only, and it cannot be deleted."
     },
     "fs.share.unavailable": {
       "params": {

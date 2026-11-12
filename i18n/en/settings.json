@@ -1166,6 +1166,11 @@
             "blocked": "Repeated failed sign-ins"
           }
         },
+        "shares": {
+          "apps": {
+            "granted": "Access to Apps given"
+          }
+        },
         "apps": {
           "elevated": {
             "critical": "App got root access"

@@ -284,7 +284,7 @@ public sealed partial class HomeService(
             case HomeDataChoice.Move:
                 await using (var connection = await connections.OpenAsync(cancellationToken))
                 {
-                    if (await connection.ExecuteScalarAsync<long>("SELECT count(*) FROM shares WHERE id = @shareId AND home = 0", new { shareId }) == 0)
+                    if (await connection.ExecuteScalarAsync<long>("SELECT count(*) FROM shares WHERE id = @shareId AND home = 0 AND system IS NULL", new { shareId }) == 0)
                     {
                         throw new PithyxException(ErrorCodes.FsShareNotFound);
                     }

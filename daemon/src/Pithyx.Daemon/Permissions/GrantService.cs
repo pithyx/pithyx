@@ -10,9 +10,10 @@ namespace Pithyx.Daemon.Permissions;
 
 /// <summary>
 /// The grant editors of Settings (D290): the grants of one user, of one group and on one shared folder, each read and
-/// replaced as a whole. Administrators only. A change that would leave no active administrator is refused.
+/// replaced as a whole. Administrators only. A change that would leave no active administrator is refused, and one
+/// that gives somebody more of Apps needs a confirmation and tells the other administrators (<see cref="AppsAccess"/>).
 /// </summary>
-public sealed class GrantService(SqliteConnectionFactory connections, PermissionService permissions)
+public sealed class GrantService(SqliteConnectionFactory connections, PermissionService permissions, Notifications.NotificationService? notifications = null)
 {
     public static PermissionCatalog Catalog { get; } = new(Resources.Rights, Resources.Protocols, CoreApps.Granted);
 
@@ -43,6 +44,7 @@ public sealed class GrantService(SqliteConnectionFactory connections, Permission
     {
         RequireAdmin(caller);
         ArgumentNullException.ThrowIfNull(request);
+        IReadOnlyList<SubjectGrant> widened;
         await using (var connection = await connections.OpenAsync(cancellationToken))
         await using (var transaction = await connection.BeginTransactionAsync(cancellationToken))
         {
@@ -50,10 +52,11 @@ public sealed class GrantService(SqliteConnectionFactory connections, Permission
             {
                 throw new PithyxException(ErrorCodes.UsersUserNotFound);
             }
-            await ReplaceAsync(connection, transaction, SubjectKind.User, userId, request.Grants);
+            widened = await ReplaceAsync(connection, transaction, SubjectKind.User, userId, request.Grants, request.ConfirmAppsAccess);
             await transaction.CommitAsync(cancellationToken);
         }
         permissions.Invalidate();
+        await AppsAccess.NotifyAsync(notifications, connections, caller, widened);
         return await UserGrantsAsync(caller, userId, cancellationToken);
     }
 
@@ -69,14 +72,16 @@ public sealed class GrantService(SqliteConnectionFactory connections, Permission
     {
         RequireAdmin(caller);
         ArgumentNullException.ThrowIfNull(request);
+        IReadOnlyList<SubjectGrant> widened;
         await using (var connection = await connections.OpenAsync(cancellationToken))
         await using (var transaction = await connection.BeginTransactionAsync(cancellationToken))
         {
             await RequireGroupAsync(connection, transaction, groupId);
-            await ReplaceAsync(connection, transaction, SubjectKind.Group, groupId, request.Grants);
+            widened = await ReplaceAsync(connection, transaction, SubjectKind.Group, groupId, request.Grants, request.ConfirmAppsAccess);
             await transaction.CommitAsync(cancellationToken);
         }
         permissions.Invalidate();
+        await AppsAccess.NotifyAsync(notifications, connections, caller, widened);
         return await GroupGrantsAsync(caller, groupId, cancellationToken);
     }
 
@@ -105,6 +110,7 @@ public sealed class GrantService(SqliteConnectionFactory connections, Permission
         RequireAdmin(caller);
         ArgumentNullException.ThrowIfNull(request);
         var resource = Resources.Share(shareId);
+        IReadOnlyList<SubjectGrant> widened = [];
         await using (var connection = await connections.OpenAsync(cancellationToken))
         await using (var transaction = await connection.BeginTransactionAsync(cancellationToken))
         {
@@ -128,6 +134,15 @@ public sealed class GrantService(SqliteConnectionFactory connections, Permission
                     await RequireGroupAsync(connection, transaction, grant.SubjectId);
                 }
             }
+            if (await AppsAccess.ShareIdAsync(connection, transaction) == shareId)
+            {
+                var before = await connection.QueryAsync<(string SubjectKind, long SubjectId, string Level)>(
+                    "SELECT subject_kind, subject_id, level FROM grants WHERE resource = @resource AND subject_kind <> 'app'", new { resource }, transaction);
+                widened = AppsAccess.Widened(
+                    [.. before.Select(grant => new SubjectGrant(grant.SubjectKind == "group" ? SubjectKind.Group : SubjectKind.User, grant.SubjectId, PermissionService.LevelOf(grant.Level)))],
+                    request.Grants ?? []);
+                AppsAccess.RequireConfirmation(widened, request.ConfirmAppsAccess);
+            }
             await connection.ExecuteAsync("DELETE FROM grants WHERE resource = @resource AND subject_kind <> 'app'", new { resource }, transaction);
             foreach (var grant in request.Grants ?? [])
             {
@@ -139,6 +154,7 @@ public sealed class GrantService(SqliteConnectionFactory connections, Permission
             await transaction.CommitAsync(cancellationToken);
         }
         permissions.Invalidate();
+        await AppsAccess.NotifyAsync(notifications, connections, caller, widened);
         return await ShareGrantsAsync(caller, shareId, cancellationToken);
     }
 
@@ -220,11 +236,15 @@ public sealed class GrantService(SqliteConnectionFactory connections, Permission
             ]);
     }
 
-    /// <summary>Gives a new user its first grants, in the transaction that creates it.</summary>
-    public static Task GrantNewUserAsync(DbConnection connection, DbTransaction transaction, long userId, IReadOnlyList<GrantEntry> grants) =>
-        ReplaceAsync(connection, transaction, SubjectKind.User, userId, grants);
+    /// <summary>
+    /// Gives a new user its first grants, in the transaction that creates it. Returns its grant on Apps, if any, for
+    /// <see cref="AppsAccess.NotifyAsync"/> after the commit.
+    /// </summary>
+    public static Task<IReadOnlyList<SubjectGrant>> GrantNewUserAsync(DbConnection connection, DbTransaction transaction, long userId, IReadOnlyList<GrantEntry> grants, bool confirmAppsAccess = false) =>
+        ReplaceAsync(connection, transaction, SubjectKind.User, userId, grants, confirmAppsAccess);
 
-    private static async Task ReplaceAsync(DbConnection connection, DbTransaction transaction, SubjectKind kind, long subjectId, IReadOnlyList<GrantEntry>? grants)
+    /// <summary>Replaces every grant of a subject. Returns its grant on Apps when it gives the subject more of it than before.</summary>
+    private static async Task<IReadOnlyList<SubjectGrant>> ReplaceAsync(DbConnection connection, DbTransaction transaction, SubjectKind kind, long subjectId, IReadOnlyList<GrantEntry>? grants, bool confirmAppsAccess)
     {
         var wanted = grants ?? [];
         var seen = new HashSet<string>(StringComparer.Ordinal);
@@ -257,6 +277,19 @@ public sealed class GrantService(SqliteConnectionFactory connections, Permission
             }
         }
         var subjectKind = PermissionService.KindText(kind);
+        IReadOnlyList<SubjectGrant> widened = [];
+        if (await AppsAccess.ShareIdAsync(connection, transaction) is { } appsId)
+        {
+            var appsResource = Resources.Share(appsId);
+            var before = await connection.ExecuteScalarAsync<string?>(
+                "SELECT level FROM grants WHERE subject_kind = @subjectKind AND subject_id = @subjectId AND resource = @appsResource",
+                new { subjectKind, subjectId, appsResource },
+                transaction);
+            widened = AppsAccess.Widened(
+                before is null ? [] : [new SubjectGrant(kind, subjectId, PermissionService.LevelOf(before))],
+                [.. wanted.Where(grant => grant.Resource == appsResource).Select(grant => new SubjectGrant(kind, subjectId, grant.Level))]);
+            AppsAccess.RequireConfirmation(widened, confirmAppsAccess);
+        }
         await connection.ExecuteAsync("DELETE FROM grants WHERE subject_kind = @subjectKind AND subject_id = @subjectId", new { subjectKind, subjectId }, transaction);
         foreach (var grant in wanted)
         {
@@ -266,6 +299,7 @@ public sealed class GrantService(SqliteConnectionFactory connections, Permission
                 transaction);
         }
         await PermissionService.EnsureAdministratorRemainsAsync(connection, transaction);
+        return widened;
     }
 
     private static async Task<IReadOnlyList<GrantEntry>> SubjectGrantsAsync(DbConnection connection, SubjectKind kind, long subjectId)

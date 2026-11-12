@@ -4,7 +4,8 @@ namespace Pithyx.Daemon.Storage;
 /// <param name="Target">Mount point.</param>
 /// <param name="FileSystem">File system type, for example <c>ext4</c> or <c>zfs</c>.</param>
 /// <param name="Source">Mount source: a device path, or a dataset name for ZFS.</param>
-public sealed record MountEntry(string MajorMinor, string Target, string FileSystem, string Source);
+/// <param name="Root">The folder of the file system the mount shows: <c>/</c> for a whole file system, the subfolder for a bind mount of one.</param>
+public sealed record MountEntry(string MajorMinor, string Target, string FileSystem, string Source, string Root = "/");
 
 /// <summary>Parses <c>/proc/self/mountinfo</c> and <c>/proc/swaps</c>: plain files, so reading them starts no process.</summary>
 public static class MountTable
@@ -26,7 +27,7 @@ public static class MountTable
             {
                 continue;
             }
-            mounts.Add(new MountEntry(fields[2], Unescape(fields[4]), tail[0], Unescape(tail[1])));
+            mounts.Add(new MountEntry(fields[2], Unescape(fields[4]), tail[0], Unescape(tail[1]), Unescape(fields[3])));
         }
         return mounts;
     }

@@ -1166,6 +1166,11 @@
             "blocked": "Wiederholt fehlgeschlagene Anmeldungen"
           }
         },
+        "shares": {
+          "apps": {
+            "granted": "Zugriff auf Apps vergeben"
+          }
+        },
         "apps": {
           "elevated": {
             "critical": "App hat Root-Zugriff erhalten"

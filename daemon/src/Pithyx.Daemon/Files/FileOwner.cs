@@ -6,15 +6,42 @@ using Pithyx.Daemon.Database;
 
 namespace Pithyx.Daemon.Files;
 
-/// <summary>The Linux owner of what the file service creates for a user: the user's uid and the group <c>users</c>.</summary>
-public sealed record FileOwner(uint Uid, uint Gid)
+/// <summary>
+/// The Linux owner of what the file service creates for a user: the user's uid and the group <c>users</c>; in Apps
+/// (D409, <paramref name="FromFolder"/>) the owner of the folder it is created in, the app, as Samba's
+/// <c>inherit owner</c> does there.
+/// </summary>
+public sealed record FileOwner(uint Uid, uint Gid, bool FromFolder = false)
 {
     /// <summary>Debian's group <c>users</c>, the primary group of every Pithyx account.</summary>
     public const uint UsersGroup = 100;
 
-    public void Apply(SafeFileHandle file) => LinuxFs.ChangeOwner(file, Uid, Gid);
+    /// <summary>What is created belongs to the owner of its folder.</summary>
+    public static FileOwner OfFolder { get; } = new(0, 0, FromFolder: true);
 
-    public void ApplyAt(SafeFileHandle folder, string name) => LinuxFs.ChangeOwnerAt(folder, name, Uid, Gid);
+    /// <summary>Gives a new file its owner; <paramref name="folder"/>, the folder it is in, is needed in Apps.</summary>
+    public void Apply(SafeFileHandle file, SafeFileHandle? folder = null)
+    {
+        var (uid, gid) = For(folder);
+        LinuxFs.ChangeOwner(file, uid, gid);
+    }
+
+    public void ApplyAt(SafeFileHandle folder, string name)
+    {
+        var (uid, gid) = For(folder);
+        LinuxFs.ChangeOwnerAt(folder, name, uid, gid);
+    }
+
+    private (uint Uid, uint Gid) For(SafeFileHandle? folder)
+    {
+        if (!FromFolder)
+        {
+            return (Uid, Gid);
+        }
+        ArgumentNullException.ThrowIfNull(folder);
+        var stat = LinuxFs.Stat(folder, "");
+        return (stat.Uid, stat.Gid);
+    }
 }
 
 /// <summary>
@@ -26,11 +53,18 @@ public sealed class FileOwners(SqliteConnectionFactory connections)
 {
     private readonly bool _root = LinuxFs.IsRoot;
 
-    public async Task<FileOwner?> ForAsync(ClaimsPrincipal user, CancellationToken cancellationToken)
+    /// <param name="user">The user the request is for.</param>
+    /// <param name="target">The share things are created in; in Apps they belong to their folder's owner.</param>
+    /// <param name="cancellationToken">Cancels the lookup.</param>
+    public async Task<FileOwner?> ForAsync(ClaimsPrincipal user, Shares.ResolvedShare? target, CancellationToken cancellationToken)
     {
         if (!_root)
         {
             return null;
+        }
+        if (target?.Kind == Shares.ShareKind.Apps)
+        {
+            return FileOwner.OfFolder;
         }
         await using var connection = await connections.OpenAsync(cancellationToken);
         var uid = await connection.ExecuteScalarAsync<long?>("SELECT uid FROM users WHERE id = @id", new { id = CurrentUser.Id(user) });

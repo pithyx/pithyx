@@ -29,7 +29,8 @@ public sealed class UserService(
     FileServicePasswords passwords,
     Homes homes,
     HomeService homeService,
-    TimeProvider time)
+    TimeProvider time,
+    Notifications.NotificationService? appsNotices = null)
 {
     public async Task<IReadOnlyList<UserSummary>> ListAsync(ClaimsPrincipal caller, CancellationToken cancellationToken)
     {
@@ -54,6 +55,7 @@ public sealed class UserService(
         var now = time.GetUtcNow().ToString("O", CultureInfo.InvariantCulture);
         long id;
         long uid;
+        IReadOnlyList<SubjectGrant> appsGranted;
         await using (var connection = await connections.OpenAsync(cancellationToken))
         await using (var transaction = await connection.BeginTransactionAsync(cancellationToken))
         {
@@ -70,11 +72,12 @@ public sealed class UserService(
                 new { username, displayName, hash, uid, now },
                 transaction);
             await GroupService.SetUserGroupsAsync(connection, transaction, id, request.GroupIds ?? []);
-            await GrantService.GrantNewUserAsync(
+            appsGranted = await GrantService.GrantNewUserAsync(
                 connection,
                 transaction,
                 id,
-                request.Grants ?? [.. Resources.NewUserDefaults.Select(resource => new GrantEntry(resource, GrantLevel.Allow))]);
+                request.Grants ?? [.. Resources.NewUserDefaults.Select(resource => new GrantEntry(resource, GrantLevel.Allow))],
+                request.ConfirmAppsAccess);
             await transaction.CommitAsync(cancellationToken);
         }
         permissions.Invalidate();
@@ -91,6 +94,7 @@ public sealed class UserService(
         }
         // SMB and SFTP check the Linux and Samba accounts, which get the password now that the account exists.
         await passwords.SetAsync(username, request.Password, cancellationToken);
+        await AppsAccess.NotifyAsync(appsNotices, connections, caller, appsGranted);
         return (await FindAsync(id, cancellationToken))!;
     }
 

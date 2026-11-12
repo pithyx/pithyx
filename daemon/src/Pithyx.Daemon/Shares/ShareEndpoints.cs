@@ -26,6 +26,9 @@ public static class ShareEndpoints
         shares.MapGet("", ListAsync)
             .WithName("ListShares")
             .WithDescription("The shares the user can use, with the user's access. Administrators get every share and its path on the host. The shares/list topic says when the list may have changed.");
+        shares.MapGet("/apps", AppsAsync)
+            .WithName("GetAppsShare")
+            .WithDescription("The special folder Apps (D409) for a user who may use it: its share id and one folder per app on the app pool with whether the app is installed and whether its backend runs (Files warns before writing into a running app's folder). Administrators also get how many SMB connections use it now. fs.share.not_found without access or before there is an app pool.");
         shares.MapPost("", CreateAsync)
             .RequireAuthorization(Policies.Admin)
             .WithName("CreateShare")
@@ -58,6 +61,9 @@ public static class ShareEndpoints
 
     private static async Task<Ok<IReadOnlyList<ShareInfo>>> ListAsync(ShareService shares, HttpContext context, CancellationToken cancellationToken) =>
         TypedResults.Ok(await shares.ListAsync(context.User, cancellationToken));
+
+    private static Ok<Apps.AppsShareState> AppsAsync(Apps.AppsShare apps, HttpContext context) =>
+        TypedResults.Ok(apps.State(context.User));
 
     private static async Task<Created<ShareInfo>> CreateAsync(
         NewShare share,

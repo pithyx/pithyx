@@ -184,6 +184,11 @@
     }
   },
   "fs": {
+    "apps": {
+      "confirmation_required": "Apps holds the data of every app, which may include personal data of every user. Confirm that the users or groups you chose may see it.",
+      "root_fixed": "The top level of Apps only holds the folders of the apps. Open an app’s folder to change files.",
+      "trash_unsupported": "Apps has no recycle bin. Delete the items for good, or leave them."
+    },
     "cursor": {
       "invalid": "The list position is no longer valid. Load the folder again."
     },
@@ -227,6 +232,7 @@
       "path_taken": "Something else is already mounted at {path}. Choose another name.",
       "pool_not_prepared": "The pool {pool} has no place for shared folders (pithyx/shares), so none can be created on it.",
       "read_only": "You can only read in this share.",
+      "system": "Apps is part of the box: its name and description stay, it is offered over SMB only, and it cannot be deleted.",
       "unavailable": "{name} cannot be opened right now: {reason, select, pool_missing {its pool is not connected. It comes back on its own once its disks are back} pool_unavailable {its pool stopped because disks are missing. It comes back on its own once its disks are back} locked {its pool is locked. An administrator unlocks it in Settings > Storage with the pool's key} other {its folder is not mounted}}."
     },
     "thumbnail": {

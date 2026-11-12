@@ -43,6 +43,12 @@ public sealed record FileServicePlan(
     IReadOnlyDictionary<long, string> SharePaths,
     string NetbiosName = "");
 
+/// <summary>Apps (D409) while SMB may offer it.</summary>
+/// <param name="Id">Its share id.</param>
+/// <param name="Path">Its folder.</param>
+/// <param name="Encrypt">Clients must encrypt.</param>
+public sealed record AppsSmbShare(long Id, string Path, bool Encrypt);
+
 /// <summary>
 /// Brings SMB and SFTP in line with SQLite (D287, D288): the groups sshd matches on, the Samba accounts, the bin
 /// folders Samba needs, <c>smb.conf</c> (checked with <c>testparm</c> before it replaces the old one), the sshd drop-in
@@ -60,7 +66,8 @@ public sealed partial class FileServiceSync(
     SmbRecycle recycle,
     FileServiceActivity activity,
     FileServiceOptions options,
-    ILogger<FileServiceSync> logger) : BackgroundService
+    ILogger<FileServiceSync> logger,
+    SmbSessions? sessions = null) : BackgroundService
 {
     public const string SmbUnit = "smbd.service";
     public const string SshUnit = "ssh.service";
@@ -88,7 +95,14 @@ public sealed partial class FileServiceSync(
         var homeRows = (await Homes.RowsAsync(connection)).Where(row => row.Dataset is not null).ToList();
         var pool = await connection.ExecuteScalarAsync<string?>("SELECT value FROM settings WHERE key = @key", new { key = Homes.PoolSetting });
         var homesRoot = pool is null ? null : pools.Current.Datasets.FirstOrDefault(dataset => dataset.Name == Storage.Zfs.HomePlans.HomesDataset(pool)) is { Mounted: true, MountPoint: { } mount } ? mount : null;
-        return Plan(settings.Smb == 1, settings.Workgroup, settings.Sftp == 1, settings.Ssh == 1, users, shares, pools.Current, pools.Available, homeRows, homesRoot) with
+        // Apps (D409) only while its app pool can be used; it is real mode here, so the pool's pithyx/apps decides.
+        var appsPool = await connection.ExecuteScalarAsync<string?>("SELECT value FROM settings WHERE key = @key", new { key = Apps.AppRegistry.PoolSetting });
+        var appsRow = await connection.QuerySingleOrDefaultAsync<(long Id, string Path, long Smb, long Encrypt)?>(
+            "SELECT id, path, smb, smb_encrypt FROM shares WHERE system = @system", new { system = Apps.AppsShare.SystemKey });
+        var apps = appsRow is { Smb: 1 } row && Apps.AppsShare.Unavailable(appsPool, pools.Current, pools.Available, useZfs: true) is null
+            ? new AppsSmbShare(row.Id, row.Path, row.Encrypt == 1)
+            : null;
+        return Plan(settings.Smb == 1, settings.Workgroup, settings.Sftp == 1, settings.Ssh == 1, users, shares, pools.Current, pools.Available, homeRows, homesRoot, apps) with
         {
             NetbiosName = SmbConfig.NetbiosName(Environment.MachineName),
         };
@@ -100,7 +114,7 @@ public sealed partial class FileServiceSync(
     /// offer the protocol. A user who signs in over SSH with a shell (SSH logins on and the SSH login right) uses SFTP
     /// as an ordinary SSH user and gets no SFTP view. Every user with a home gets it as <c>home</c>; administrators also
     /// get <c>homes</c> with every home (D348): over SMB the folder <paramref name="homesRoot"/>, over SFTP one
-    /// folder per home.
+    /// folder per home. Apps (D409) is offered over SMB only, to the users with access and the SMB right.
     /// </summary>
     public static FileServicePlan Plan(
         bool smbEnabled,
@@ -112,7 +126,8 @@ public sealed partial class FileServiceSync(
         PoolList current,
         bool poolsAvailable,
         IReadOnlyList<HomeRow>? homes = null,
-        string? homesRoot = null)
+        string? homesRoot = null,
+        AppsSmbShare? apps = null)
     {
         ArgumentNullException.ThrowIfNull(users);
         ArgumentNullException.ThrowIfNull(shares);
@@ -142,6 +157,15 @@ public sealed partial class FileServiceSync(
         if (homesRoot is not null && smbAdmins.Count > 0)
         {
             smbShares.Add(new SmbShare(Homes.AllName, homesRoot, [], smbAdmins, Encrypt: false, SmbShareKind.Homes));
+        }
+        if (apps is not null)
+        {
+            var readers = smbUsers.Where(user => user.Permissions.Share(apps.Id) == ShareAccess.Read).Select(user => user.Username).ToList();
+            var writers = smbUsers.Where(user => user.Permissions.Share(apps.Id) == ShareAccess.ReadWrite).Select(user => user.Username).ToList();
+            if (readers.Count + writers.Count > 0)
+            {
+                smbShares.Add(new SmbShare(Apps.AppsShare.Name, apps.Path, readers, writers, apps.Encrypt, SmbShareKind.Apps));
+            }
         }
         foreach (var user in sftpUsers)
         {
@@ -179,6 +203,7 @@ public sealed partial class FileServiceSync(
             {
                 return;
             }
+            var previous = _plan;
             _plan = plan;
             activity.SftpUsers = plan.SftpUsers.ToHashSet(StringComparer.Ordinal);
             if (!options.Apply)
@@ -196,6 +221,11 @@ public sealed partial class FileServiceSync(
                 PrepareBin(path);
             }
             SmbState = await SmbAsync(plan, cancellationToken);
+            if (sessions is not null && AppsAccessLost(previous, plan) is { Count: > 0 } lost)
+            {
+                // Samba checks admin users and the write list when a client connects; a narrowed right applies at the reconnect.
+                await sessions.CloseAsync(lost, cancellationToken);
+            }
             SftpState = await SftpAsync(plan, cancellationToken);
             await views.ReconcileAsync(plan.SftpUsers, plan.SftpEntries, cancellationToken);
             _applied = fingerprint;
@@ -210,6 +240,23 @@ public sealed partial class FileServiceSync(
         {
             _running.Release();
         }
+    }
+
+    /// <summary>The users who could use Apps over SMB before, or write there, and no longer can.</summary>
+    public static IReadOnlySet<string> AppsAccessLost(FileServicePlan? before, FileServicePlan after)
+    {
+        ArgumentNullException.ThrowIfNull(after);
+        var old = before?.SmbShares.FirstOrDefault(share => share.Kind == SmbShareKind.Apps);
+        if (old is null)
+        {
+            return new HashSet<string>(StringComparer.Ordinal);
+        }
+        var current = after.SmbShares.FirstOrDefault(share => share.Kind == SmbShareKind.Apps);
+        var readers = current?.Readers.ToHashSet(StringComparer.Ordinal) ?? [];
+        var writers = current?.Writers.ToHashSet(StringComparer.Ordinal) ?? [];
+        return old.Writers.Where(user => !writers.Contains(user))
+            .Concat(old.Readers.Where(user => !readers.Contains(user) && !writers.Contains(user)))
+            .ToHashSet(StringComparer.Ordinal);
     }
 
     private void PrepareBin(string path)

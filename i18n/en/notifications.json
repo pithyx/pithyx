@@ -246,6 +246,14 @@
       }
     }
   },
+  "shares": {
+    "apps": {
+      "granted": {
+        "title": "{subject} has access to Apps now",
+        "body": "{user} gave {kind, select, group {the group {subject}} other {{subject}}} {access, select, readWrite {read and write access} other {read access}} to Apps, which holds the data of every app. If you did not expect that, change it in Settings > Shared folders."
+      }
+    }
+  },
   "notifications": {
     "channel": {
       "test": {

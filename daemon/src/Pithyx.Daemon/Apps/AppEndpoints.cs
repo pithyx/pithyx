@@ -47,6 +47,19 @@ public static class AppEndpoints
         services.AddSingleton(provider => provider.GetRequiredService<AppRegistry>().Definition());
         services.AddSingleton(provider => provider.GetRequiredService<AppRegistry>().AdminDefinition());
         services.AddSingleton<AppStorage>();
+        services.AddSingleton(provider =>
+        {
+            var storage = provider.GetRequiredService<AppStorageOptions>();
+            // Simulation keeps the folder next to the stand-ins of the pools.
+            return storage.UseZfs
+                ? new AppsShareOptions(Apply: true, AppsShareOptions.BoxRoot)
+                : new AppsShareOptions(Apply: false, Path.Combine(Path.GetDirectoryName(storage.FolderRoot.TrimEnd('/')) ?? ".", "apps"));
+        });
+        services.AddSingleton<AppsShare>();
+        if (!Hosting.BuildTimeDocument.IsGenerating)
+        {
+            services.AddHostedService(provider => provider.GetRequiredService<AppsShare>());
+        }
         services.AddSingleton<AppPackages>();
         services.AddSingleton<AppService>();
         services.AddSingleton<AppTokens>();

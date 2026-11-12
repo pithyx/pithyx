@@ -47,7 +47,8 @@ public sealed record AppFileOperationRequest(
 /// the user's own rights on the shared folder and the kernel's beneath-the-root check apply. On top of that the app
 /// needs its own permission: a shared folder needs <c>files.shares</c>, and reading or writing its files
 /// <c>files.read</c> or <c>files.write</c>. A storage request needs no <c>files.*</c> permission (the administrator
-/// mapped it), but never reaches beyond the mapped folder or beyond the access of the request and the mapping.
+/// mapped it), but never reaches beyond the mapped folder or beyond the access of the request and the mapping. Apps
+/// (D409) is never offered to an app: through an administrator's session it would read every other app's data.
 /// </summary>
 public sealed class AppFiles(
     FileService files,
@@ -56,7 +57,8 @@ public sealed class AppFiles(
     TrashService trash,
     PreviousVersions versions,
     JobService jobs,
-    AppHandles handles)
+    AppHandles handles,
+    AppsShare? appsShare = null)
 {
     public const string SharesPermission = "files.shares";
     public const string ReadPermission = "files.read";
@@ -73,7 +75,7 @@ public sealed class AppFiles(
     {
         Require(app, SharesPermission);
         // An administrator's list has every user's home too; an app sees only the user's own (D348).
-        return [.. (await shares.ListAsync(user, cancellationToken)).Where(share => share.Kind != ShareKind.UserHome).Select(share => new AppShareInfo(
+        return [.. (await shares.ListAsync(user, cancellationToken)).Where(share => share.Kind is not (ShareKind.UserHome or ShareKind.Apps)).Select(share => new AppShareInfo(
             share.Id.ToString(CultureInfo.InvariantCulture),
             share.Name,
             share.Access,
@@ -270,8 +272,8 @@ public sealed class AppFiles(
         return job;
     }
 
-    private static long ParseShare(string? share) =>
-        long.TryParse(share, NumberStyles.None, CultureInfo.InvariantCulture, out var shareId) && shareId > 0
+    private long ParseShare(string? share) =>
+        long.TryParse(share, NumberStyles.None, CultureInfo.InvariantCulture, out var shareId) && shareId > 0 && shareId != appsShare?.ShareId
             ? shareId
             : throw new PithyxException(ErrorCodes.FsShareNotFound);
 

@@ -82,6 +82,7 @@ public sealed partial class EndpointMatrixTests : IDisposable
         ["DeleteNotificationChannel"] = Need.AnyUser,
         ["TestNotificationChannel"] = Need.AnyUser,
         ["ListShares"] = Need.AnyUser,
+        ["GetAppsShare"] = Need.AnyUser,
         ["StartFileOperation"] = Need.AnyUser,
         ["WriteAppLogs"] = Need.AnyUser,
         ["ListFolder"] = Need.AnyUser,

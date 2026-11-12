@@ -190,13 +190,24 @@ public sealed class FileOperations(ShareService shares, JobService jobs, TrashSe
             {
                 throw new PithyxException(ErrorCodes.FsOperationInvalid);
             }
-            sources.Add((await ResolveAsync(user, item.ShareId, writesSource, resolved, cancellationToken), path));
+            var source = await ResolveAsync(user, item.ShareId, writesSource, resolved, cancellationToken);
+            if (writesSource)
+            {
+                FileService.RequireAppFolder(source, FsPath.Split(path).Parent);
+            }
+            // Apps has no recycle bin (D409): what goes there goes for good, so the client must say so.
+            if (source.Kind == ShareKind.Apps && request.Kind == FileOperationKind.Delete && !request.Permanent)
+            {
+                throw new PithyxException(ErrorCodes.FsAppsTrashUnsupported);
+            }
+            sources.Add((source, path));
         }
         (ResolvedShare Share, string Path)? target = null;
         if (request.Target is { } destination)
         {
             var share = await shares.ResolveAsync(user, destination.ShareId, write: true, cancellationToken);
             var path = FsPath.Normalize(destination.Path);
+            FileService.RequireAppFolder(share, path);
             foreach (var (source, sourcePath) in sources)
             {
                 if (source.Id == share.Id && FsPath.IsSameOrInside(path, sourcePath))
@@ -215,7 +226,7 @@ public sealed class FileOperations(ShareService shares, JobService jobs, TrashSe
             target,
             request.OnConflict ?? ConflictPolicy.Fail,
             request.Kind == FileOperationKind.Delete && !request.Permanent,
-            await owners.ForAsync(user, cancellationToken));
+            await owners.ForAsync(user, target?.Share, cancellationToken));
     }
 
     /// <summary>Puts recycle bin items back where they were, recreating missing parent folders.</summary>
@@ -224,7 +235,7 @@ public sealed class FileOperations(ShareService shares, JobService jobs, TrashSe
         ArgumentNullException.ThrowIfNull(request);
         var (share, items) = await ResolveTrashAsync(user, shareId, request.Ids, cancellationToken);
         var policy = request.OnConflict ?? ConflictPolicy.Rename;
-        var owner = await owners.ForAsync(user, cancellationToken);
+        var owner = await owners.ForAsync(user, share, cancellationToken);
         return await StartJobAsync(CurrentUserId(user), "files.restore", request, context => Task.Run(() => Restore(share, items, policy, new Progress(context, owner, context.Cancellation)), context.Cancellation), cancellationToken);
     }
 
@@ -252,7 +263,8 @@ public sealed class FileOperations(ShareService shares, JobService jobs, TrashSe
         bool overwrite,
         CancellationToken cancellationToken)
     {
-        var owner = await owners.ForAsync(user, cancellationToken);
+        FileService.RequireAppFolder(target, FsPath.Normalize(targetFolder));
+        var owner = await owners.ForAsync(user, target, cancellationToken);
         return await StartJobAsync(
             CurrentUserId(user),
             kind,
@@ -625,7 +637,7 @@ public sealed class FileOperations(ShareService shares, JobService jobs, TrashSe
             using (var input = Child(fromFolder, name, LinuxFs.ReadOnly))
             using (var output = Child(toFolder, temporary, LinuxFs.WriteOnly | LinuxFs.Create | LinuxFs.Exclusive, LinuxFs.NewFileMode))
             {
-                run.Owner?.Apply(output);
+                run.Owner?.Apply(output, toFolder);
                 CopyContent(input, output, run);
             }
             try

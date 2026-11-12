@@ -18,6 +18,12 @@ public enum ShareKind
 
     /// <summary>Another user's home, or one whose user was deleted, named after its folder. Administrators only.</summary>
     UserHome,
+
+    /// <summary>
+    /// The special folder Apps (D409): one folder per app on the app pool showing the app's volumes. Administrators by
+    /// default; it has no recycle bin and no previous versions, and its top level holds only the app folders.
+    /// </summary>
+    Apps,
 }
 
 /// <summary>A share the user can use.</summary>
@@ -59,6 +65,7 @@ public sealed record ResolvedShare(long Id, string Name, string Path, ShareAcces
 /// <param name="SmbEncrypt">Whether SMB clients must encrypt.</param>
 /// <param name="WebDav">Whether WebDAV offers the shared folder.</param>
 /// <param name="Ftp">Whether FTP offers the shared folder.</param>
+/// <param name="System">Null for a shared folder; <c>apps</c> for the special folder Apps (D409), whose name, description and protocols other than SMB stay as they are.</param>
 public sealed record ShareDetails(
     long Id,
     string Name,
@@ -76,7 +83,8 @@ public sealed record ShareDetails(
     bool Sftp,
     bool SmbEncrypt,
     bool WebDav,
-    bool Ftp);
+    bool Ftp,
+    string? System = null);
 
 /// <param name="Enabled">Daily restore points, kept 7 days, on or off.</param>
 public sealed record RestorePointsRequest(bool Enabled);
