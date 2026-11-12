@@ -107,6 +107,17 @@ public sealed class DockerIntegrationTests
             Assert.StartsWith("172.29.", container.Addresses["pithyx-com_example_dockerprobe"], StringComparison.Ordinal);
             Assert.True(File.Exists(Path.Combine(root, "run", AppBackendRuntime.ComposeFile)));
 
+            // A file put into Apps (D409) belongs to its folder's owner, as Samba's inherit owner and Files leave it:
+            // the backend reads and changes it through its user namespace.
+            var put = Path.Combine(root, "volumes", "data", "from-apps.txt");
+            await File.WriteAllTextAsync(put, "apps\n", Token);
+            await vdevs.RunAsync("chown", [$"--reference={Path.GetDirectoryName(put)}", put]);
+            await vdevs.RunAsync("chmod", ["0644", put]);
+            Assert.Equal("apps\n", await http.GetStringAsync(new Uri(endpoint, "from-apps.txt"), Token));
+            await vdevs.RunAsync("docker", ["exec", container.Name, "/bin/sh", "-c", "echo app >> /data/from-apps.txt"]);
+            Assert.Equal("apps\napp\n", await File.ReadAllTextAsync(put, Token));
+            Assert.Equal($"{Uid}:{Uid}", (await vdevs.RunAsync("stat", ["-c", "%u:%g", put])).Trim());
+
             // Its output reaches the journal with the app's label, which the Log Center reads as app/<id>.
             var journal = "";
             for (var attempt = 0; attempt < 20 && !journal.Contains("started one", StringComparison.Ordinal); attempt++)

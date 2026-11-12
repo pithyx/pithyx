@@ -94,6 +94,16 @@ To skip the bin, press **Shift+Del** or choose **Delete permanently**. After the
 
 Deleting over SFTP does not use the recycle bin: the files are gone at once.
 
+## The Apps folder
+
+Administrators, and whoever an administrator gave it to, see **Apps** in the navigation column, with a lock when you may only read. It holds one folder per app with the app's data, named after the app's id; the list shows the app's name and **Running** for an app whose backend runs, or **Not installed** for data an uninstall kept. The folders themselves come and go with the apps, so nothing can be created next to them. Inside an app's folder you work as in any folder, with three differences:
+
+- Before you upload, create, rename, move or delete something in the folder of a running app, Files asks first, since the app may have those files open; **Change anyway** goes ahead and does not ask again for that app while the window stays open. If you are not sure, disable the app in the Store first.
+- Apps has no recycle bin and no previous versions: **Delete** asks and then deletes for good.
+- What you create there belongs to the app, so it can use it. A file in Apps opens in the Viewer or downloads, never in an installed app.
+
+How administrators set up Apps is in [Shared folders](/docs/admin/shared-folders/#the-apps-folder).
+
 ## Thumbnails and the viewer
 
 **Thumbnails.** Files shows small previews for JPEG, PNG, WebP and GIF images. Other types, including videos and HEIC pictures, show an icon. Previews are drawn when they come into view, and the box keeps them in a cache on the pool (up to 2 GB). Very large images are not previewed: the limits are 256 MiB per file and 50 million pixels.

@@ -43,6 +43,7 @@ public static class NotificationEvents
         Of("update.source.changed", NotificationLevel.Warning),
         Of("store.updates.available", NotificationLevel.Info),
         Of("auth.signin.blocked", NotificationLevel.Warning),
+        Of("shares.apps.granted", NotificationLevel.Warning),
         Of("apps.elevated.critical", NotificationLevel.Warning),
         Of("apps.device.missing", NotificationLevel.Warning),
         Of("store.catalog.failed", NotificationLevel.Warning),

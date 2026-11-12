@@ -178,5 +178,15 @@
     "expand": "Ordner in {name} zeigen",
     "collapse": "Ordner in {name} ausblenden",
     "more": "Mehr in {name}"
+  },
+  "apps": {
+    "topInfo": "Jeder Ordner enthält die Daten einer App. Die Box legt diese Ordner an und entfernt sie; was darin liegt, kannst du ändern.",
+    "folderInfo": "Diese Dateien gehören zu {app}. Apps hat keinen Papierkorb und keine Vorgängerversionen: Was du hier löschst, ist weg.",
+    "notInstalled": "Nicht installiert",
+    "running": "Läuft",
+    "noTrash": "Apps hat keinen Papierkorb, deshalb lässt sich das nicht wiederherstellen.",
+    "runningTitle": "{count, plural, one {Die App läuft} other {Die Apps laufen}}",
+    "runningBody": "{apps} {count, plural, one {läuft und hat diese Dateien vielleicht geöffnet} other {laufen und haben diese Dateien vielleicht geöffnet}}. Sie jetzt zu ändern, kann die Daten der App beschädigen. Wenn du unsicher bist, deaktiviere die App zuerst im Store.",
+    "runningConfirm": "Trotzdem ändern"
   }
 }

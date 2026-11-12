@@ -246,6 +246,14 @@
       }
     }
   },
+  "shares": {
+    "apps": {
+      "granted": {
+        "title": "{subject} hat jetzt Zugriff auf Apps",
+        "body": "{user} hat {kind, select, group {der Gruppe {subject}} other {{subject}}} {access, select, readWrite {Lese- und Schreibzugriff} other {Lesezugriff}} auf Apps gegeben, wo die Daten aller Apps liegen. Falls du das nicht erwartet hast, ändere es unter Einstellungen > Freigegebene Ordner."
+      }
+    }
+  },
   "notifications": {
     "channel": {
       "test": {

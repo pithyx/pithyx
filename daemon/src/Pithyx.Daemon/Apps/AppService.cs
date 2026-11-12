@@ -47,7 +47,8 @@ public sealed partial class AppService(
     Notifications.NotificationService notifications,
     Docker.DeviceFs deviceFs,
     TimeProvider time,
-    ILogger<AppService> logger)
+    ILogger<AppService> logger,
+    AppsShare? appsShare = null)
 {
     public async Task<AppPackagePreview> UploadAsync(ClaimsPrincipal caller, Stream body, CancellationToken cancellationToken)
     {
@@ -436,6 +437,11 @@ public sealed partial class AppService(
         }
         var path = FsPath.Normalize(request.Path);
         var share = await shares.ResolveAsync(caller, request.ShareId, write: false, cancellationToken);
+        // Apps shows the apps' own volumes (D409); an app's storage is a shared folder of its own.
+        if (share.Kind == ShareKind.Apps)
+        {
+            throw new PithyxException(ErrorCodes.FsShareSystem);
+        }
         RequireFolder(share.Path, path);
         // The backend mounts its folders when it starts: a running one restarts, and one waiting for a required folder starts.
         await ChangeAsync(appId, app.Enabled && Docker.BackendApp.Of(app).HasBackend, async () =>
@@ -539,6 +545,10 @@ public sealed partial class AppService(
                     {
                         if (data == AppDataChoice.Delete)
                         {
+                            // Its folder in Apps and SMB connections to Apps would keep the dataset busy.
+                            using var released = appsShare is not null && storage.RootOf(pool, appId) is { } dataRoot
+                                ? await appsShare.ReleaseBelowAsync([dataRoot], context.Cancellation)
+                                : null;
                             await storage.DestroyAsync(pool, appId, context.Cancellation);
                         }
                         else if (storage.RootOf(pool, appId) is { } root)

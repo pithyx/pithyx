@@ -11,7 +11,7 @@ namespace Pithyx.Daemon.Storage;
 /// vdev in the meantime. Steps of an import are checked with the import rule, after the pools were
 /// read again. When the plan ends, the pools are read again, so an imported or exported pool shows at once.
 /// </summary>
-public sealed class CommandPlanRunner(ICommandRunner commands, SystemStateService state, StorageFacts facts, TimeProvider time, FolderWatches? watches = null)
+public sealed class CommandPlanRunner(ICommandRunner commands, SystemStateService state, StorageFacts facts, TimeProvider time, FolderWatches? watches = null, Apps.AppsShare? appsShare = null)
 {
     /// <param name="plan">The plan as shown.</param>
     /// <param name="progress">Called before each step with its index and the step count.</param>
@@ -40,6 +40,7 @@ public sealed class CommandPlanRunner(ICommandRunner commands, SystemStateServic
 
     private async Task RunStepsAsync(CommandPlan plan, Action<int, int>? progress, CancellationToken cancellationToken)
     {
+        using var appFolders = plan.Releases is { Count: > 0 } && appsShare is not null ? await appsShare.ReleaseBelowAsync(plan.Releases, cancellationToken) : null;
         if (plan.Releases is { Count: > 0 } releases)
         {
             watches?.ReleaseBelow(releases);

@@ -12,6 +12,7 @@ import { installedApp } from '../installed';
 
 export type ThumbnailSize = components['schemas']['ThumbnailSize'];
 export type ThumbnailState = components['schemas']['ThumbnailState'];
+export type AppsShareState = components['schemas']['AppsShareState'];
 
 /** Thumbnails that were rendered or refused; `folder` and `size` say which request they answer. */
 export const THUMBNAILS_READY = 'internal.files.thumbnails';
@@ -55,6 +56,7 @@ interface InternalFilesMethods {
   'internal.files.openViewer': { params: ViewerTarget; result: boolean };
   'internal.files.openWithApp': { params: AppTarget; result: boolean };
   'internal.files.runAction': { params: ActionTarget; result: boolean };
+  'internal.files.appsFolders': { params: Record<string, never>; result: AppsShareState };
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -117,8 +119,8 @@ export function thumbnailUrl(
 }
 
 /**
- * The host side of the Files app's own calls: thumbnails of the entries on screen, and opening a file in the
- * viewer. Thumbnail events of the folder last asked about are followed until another folder is, or the window
+ * The host side of the Files app's own calls: thumbnails of the entries on screen, opening a file in the viewer,
+ * and the app folders of Apps (D409). Thumbnail events of the folder last asked about are followed until another folder is, or the window
  * closes.
  */
 export function filesHost(emit: (event: string, data?: unknown) => void): {
@@ -160,6 +162,10 @@ export function filesHost(emit: (event: string, data?: unknown) => void): {
           }
           return states.items;
         },
+      },
+      'internal.files.appsFolders': {
+        validate: isRecord,
+        handle: async () => unwrap(await api.GET('/api/shares/apps')),
       },
       'internal.files.openViewer': {
         validate: isTarget,

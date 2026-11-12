@@ -1,0 +1,124 @@
+{
+    "timestamp": "2026-11-12T13:29:42.922673+0100",
+    "version": "4.22.11-Debian-4.22.11+dfsg-0+deb13u1",
+    "smb_conf": "/etc/samba/smb.conf",
+    "sessions": {
+        "1025278305": {
+            "session_id": "1025278305",
+            "server_id": {
+                "pid": "158027",
+                "task_id": "0",
+                "vnn": "4294967295",
+                "unique_id": "9574205554651899753"
+            },
+            "uid": 20002,
+            "gid": 100,
+            "username": "e2e-user",
+            "groupname": "users",
+            "creation_time": "2026-11-12T13:29:38.937609+01:00",
+            "expiration_time": "30828-09-14T04:48:05.477581+02:00",
+            "auth_time": "2026-11-12T13:29:38.938512+01:00",
+            "remote_machine": "127.0.0.1",
+            "hostname": "ipv4:127.0.0.1:53200",
+            "session_dialect": "SMB3_11",
+            "client_guid": "8a87498d-7e47-4d5f-9333-1c785631eff7",
+            "encryption": {
+                "cipher": "-",
+                "degree": "none"
+            },
+            "signing": {
+                "cipher": "AES-128-GMAC",
+                "degree": "full"
+            },
+            "channels": {
+                "1": {
+                    "channel_id": "1",
+                    "creation_time": "2026-11-12T13:29:38.937609+01:00",
+                    "local_address": "ipv4:127.0.0.1:445",
+                    "remote_address": "ipv4:127.0.0.1:53200"
+                }
+            }
+        },
+        "4147612142": {
+            "session_id": "4147612142",
+            "server_id": {
+                "pid": "158028",
+                "task_id": "0",
+                "vnn": "4294967295",
+                "unique_id": "13833560383882859967"
+            },
+            "uid": 20002,
+            "gid": 100,
+            "username": "e2e-user",
+            "groupname": "users",
+            "creation_time": "2026-11-12T13:29:38.939920+01:00",
+            "expiration_time": "30828-09-14T04:48:05.477581+02:00",
+            "auth_time": "2026-11-12T13:29:38.940684+01:00",
+            "remote_machine": "127.0.0.1",
+            "hostname": "ipv4:127.0.0.1:53208",
+            "session_dialect": "SMB3_11",
+            "client_guid": "dbeede35-1ef1-41e0-95dd-d7b954aec202",
+            "encryption": {
+                "cipher": "-",
+                "degree": "none"
+            },
+            "signing": {
+                "cipher": "AES-128-GMAC",
+                "degree": "full"
+            },
+            "channels": {
+                "1": {
+                    "channel_id": "1",
+                    "creation_time": "2026-11-12T13:29:38.939920+01:00",
+                    "local_address": "ipv4:127.0.0.1:445",
+                    "remote_address": "ipv4:127.0.0.1:53208"
+                }
+            }
+        }
+    },
+    "tcons": {
+        "2073548663": {
+            "service": "Apps",
+            "server_id": {
+                "pid": "158028",
+                "task_id": "0",
+                "vnn": "4294967295",
+                "unique_id": "13833560383882859967"
+            },
+            "tcon_id": "2073548663",
+            "session_id": "4147612142",
+            "machine": "127.0.0.1",
+            "connected_at": "2026-11-12T13:29:38.952774+01:00",
+            "encryption": {
+                "cipher": "-",
+                "degree": "none"
+            },
+            "signing": {
+                "cipher": "AES-128-GMAC",
+                "degree": "full"
+            }
+        },
+        "2241052230": {
+            "service": "Apps",
+            "server_id": {
+                "pid": "158027",
+                "task_id": "0",
+                "vnn": "4294967295",
+                "unique_id": "9574205554651899753"
+            },
+            "tcon_id": "2241052230",
+            "session_id": "1025278305",
+            "machine": "127.0.0.1",
+            "connected_at": "2026-11-12T13:29:38.955783+01:00",
+            "encryption": {
+                "cipher": "-",
+                "degree": "none"
+            },
+            "signing": {
+                "cipher": "AES-128-GMAC",
+                "degree": "full"
+            }
+        }
+    },
+    "open_files": {}
+}

@@ -17,7 +17,7 @@ A shared folder is a ZFS dataset of its own on a pool, with its own space, right
 
 If no pool exists, the dialog says "No pool is ready for shared folders yet. Create a pool under Storage first." **Go to the pools…** opens Settings > **Pools**.
 
-The name has 1 to 64 characters: letters, digits, spaces, dots, dashes and underscores, not starting with a dot, unique without regard to case ([`fs.share.invalid`](/docs/reference/errors/#fs.share.invalid), [`fs.share.exists`](/docs/reference/errors/#fs.share.exists)). The description has at most 200 characters on one line. The names `global`, `home`, `homes`, `printers`, `print$` and `ipc$` are reserved ([`fs.share.name_reserved`](/docs/reference/errors/#fs.share.name_reserved)); `home` and `homes` are the [home folders](/docs/admin/home-folders/). The dataset gets a name derived from the folder name (lowercase, accents folded, other characters turned into `-`) at `<pool>/pithyx/shares/<name>`, mounted at `/<pool>/<dataset-name>`.
+The name has 1 to 64 characters: letters, digits, spaces, dots, dashes and underscores, not starting with a dot, unique without regard to case ([`fs.share.invalid`](/docs/reference/errors/#fs.share.invalid), [`fs.share.exists`](/docs/reference/errors/#fs.share.exists)). The description has at most 200 characters on one line. The names `global`, `home`, `homes`, `apps`, `printers`, `print$` and `ipc$` are reserved ([`fs.share.name_reserved`](/docs/reference/errors/#fs.share.name_reserved)); `home` and `homes` are the [home folders](/docs/admin/home-folders/), `apps` is the [Apps folder](#the-apps-folder). The dataset gets a name derived from the folder name (lowercase, accents folded, other characters turned into `-`) at `<pool>/pithyx/shares/<name>`, mounted at `/<pool>/<dataset-name>`.
 
 New folders start with restore points on. To limit the size of a shared folder, set a quota on its dataset under Settings > **Advanced storage** > **Show datasets** (**Limits…**); the dialog has no size field.
 
@@ -56,3 +56,20 @@ Restore points are daily snapshots; the newest 7 are kept (a box that was off fo
 ## Encryption over SMB
 
 The per-folder switch **Require encryption over SMB** sets `server smb encrypt = required` for that folder; otherwise a connection is encrypted when the client asks for it. The server always requires SMB 3 and signing. This is separate from pool encryption, which encrypts the data on the disks (see [Storage](/docs/admin/storage/#encryption)).
+
+## The Apps folder
+
+**Apps** is a shared folder the box makes itself: one folder per app on the app pool, named after the app's id (`com.example.chat`), with the app's data and nothing else of it (the app's `volumes/`; versions and its Compose file stay hidden). It appears once an app is installed, in Files and over SMB, and never over SFTP, WebDAV or FTP. Settings > **Shared folders** lists it with the badge **System**; it cannot be renamed, described or deleted ([`fs.share.system`](/docs/reference/errors/#fs.share.system)), and its edit dialog offers only **Offer over SMB**, **Require encryption over SMB** and the rights.
+
+Only administrators have Apps. Giving it to a user or a group, or raising read to read and write, asks first: Apps holds the data of every app, which may include personal data of every user. **Give access** applies the change and every other administrator gets a notification; a request without the confirmation fails with [`fs.apps.confirmation_required`](/docs/reference/errors/#fs.apps.confirmation_required). The same question comes from the user and group dialogs under Settings > **Users and groups**.
+
+What changes in an app's folder:
+
+- **The top level is the box's.** The folders come and go with the apps; nothing can be created, renamed or deleted next to them ([`fs.apps.root_fixed`](/docs/reference/errors/#fs.apps.root_fixed)). Inside an app's folder, whoever may write can change anything.
+- **No recycle bin and no previous versions.** Deleting in Apps is permanent, in Files after a confirmation, over SMB at once ([`fs.apps.trash_unsupported`](/docs/reference/errors/#fs.apps.trash_unsupported) for a move to the bin). The column **Restore points** says "None".
+- **New files belong to the app.** What Files or SMB creates in an app's folder gets the folder's owner, the app's user id (or the remapped root of an app that runs as root), and no rights for anybody else, so the app can use it. Nobody can change owners, modes or ACLs from an SMB client.
+- **Links stay inside.** A link an app made points somewhere in its container; neither Files nor SMB follows it, and no path leads from one app's folder into another or out of Apps.
+- **Moving between apps is a copy.** Each app's folder is a file system of its own, so a move from one app's folder into another's copies the files and then deletes the originals: in Files that takes as long as a copy, and over SMB the computer does the same or refuses the move (then copy and delete by hand). The copies belong to the other app.
+- **Uninstalled apps.** When an uninstall keeps the data, the folder stays and Files marks it **Not installed**. Deleting the data removes it.
+
+Files warns before something is changed in the folder of an app whose backend runs, because the app may have those files open; over SMB nothing can warn, and the dialog that gives access says so. Before an app's data is deleted, or its pool exported or destroyed, the box ends every SMB connection to Apps, so files open there are closed without saving; the uninstall dialog says when somebody is connected.

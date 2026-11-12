@@ -85,7 +85,16 @@
       "gone": "These are deleted for good:",
       "run": "Delete shared folder"
     },
-    "toolbar": "Shared folder actions"
+    "toolbar": "Shared folder actions",
+    "apps": {
+      "badge": "System",
+      "description": "The data of every app, one folder per app. Only administrators reach it unless you give it to others.",
+      "noRestorePoints": "None",
+      "editIntro": "Apps is made by the box: one folder per app with the app's data. Its name, its description and its protocols other than SMB cannot be changed, and it has no recycle bin and no previous versions.",
+      "rightsIntro": "Changes apply right away. Administrators always have Apps. Whoever else gets it sees the data of every app, which may include personal data of every user, and the other administrators are told.",
+      "rightsSmb": "Files warns before a file of a running app is changed. Over SMB nothing can warn: a change there goes straight into the app's data.",
+      "smbOnly": "Apps is offered over SMB only, never over SFTP, WebDAV or FTP."
+    }
   },
   "overview": {
     "title": "Settings",
@@ -1164,6 +1173,11 @@
         "auth": {
           "signin": {
             "blocked": "Repeated failed sign-ins"
+          }
+        },
+        "shares": {
+          "apps": {
+            "granted": "Access to Apps given"
           }
         },
         "apps": {

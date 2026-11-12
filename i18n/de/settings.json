@@ -85,7 +85,16 @@
       "gone": "Das wird endgültig gelöscht:",
       "run": "Freigegebenen Ordner löschen"
     },
-    "toolbar": "Aktionen für freigegebene Ordner"
+    "toolbar": "Aktionen für freigegebene Ordner",
+    "apps": {
+      "badge": "System",
+      "description": "Die Daten aller Apps, ein Ordner pro App. Nur Administratoren erreichen ihn, außer du gibst ihn anderen.",
+      "noRestorePoints": "Keine",
+      "editIntro": "Apps legt die Box an: ein Ordner pro App mit den Daten der App. Name, Beschreibung und alle Protokolle außer SMB lassen sich nicht ändern, und es gibt keinen Papierkorb und keine Vorgängerversionen.",
+      "rightsIntro": "Änderungen gelten sofort. Administratoren haben Apps immer. Wer es sonst bekommt, sieht die Daten aller Apps, auch persönliche Daten aller Nutzer, und die anderen Administratoren erfahren davon.",
+      "rightsSmb": "Files warnt, bevor eine Datei einer laufenden App geändert wird. Über SMB kann nichts warnen: Eine Änderung dort geht direkt in die Daten der App.",
+      "smbOnly": "Apps gibt es nur über SMB, nie über SFTP, WebDAV oder FTP."
+    }
   },
   "overview": {
     "title": "Einstellungen",
@@ -1164,6 +1173,11 @@
         "auth": {
           "signin": {
             "blocked": "Wiederholt fehlgeschlagene Anmeldungen"
+          }
+        },
+        "shares": {
+          "apps": {
+            "granted": "Zugriff auf Apps vergeben"
           }
         },
         "apps": {

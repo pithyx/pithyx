@@ -116,8 +116,10 @@ public sealed class FileService(ShareService shares, FolderCache cache, TimeProv
     /// </summary>
     public async Task CheckUploadAsync(ClaimsPrincipal user, long shareId, string? path, CancellationToken cancellationToken)
     {
-        _ = await shares.ResolveAsync(user, shareId, write: true, cancellationToken);
-        FsPath.CheckName(FsPath.Split(NonRoot(path)).Name);
+        var share = await shares.ResolveAsync(user, shareId, write: true, cancellationToken);
+        var (parent, name) = FsPath.Split(NonRoot(path));
+        RequireAppFolder(share, parent);
+        FsPath.CheckName(name);
     }
 
     /// <summary>
@@ -136,9 +138,10 @@ public sealed class FileService(ShareService shares, FolderCache cache, TimeProv
     {
         ArgumentNullException.ThrowIfNull(body);
         var share = await shares.ResolveAsync(user, shareId, write: true, cancellationToken);
-        var owner = await owners.ForAsync(user, cancellationToken);
+        var owner = await owners.ForAsync(user, share, cancellationToken);
         var normalized = NonRoot(path);
         var (parent, name) = FsPath.Split(normalized);
+        RequireAppFolder(share, parent, within);
         FsPath.CheckName(name);
         using var root = OpenRoot(share, within);
         using var folder = Open(root, parent, LinuxFs.Path | LinuxFs.Directory);
@@ -149,7 +152,7 @@ public sealed class FileService(ShareService shares, FolderCache cache, TimeProv
             using (var handle = Open(root, FsPath.Join(parent, temporary), LinuxFs.WriteOnly | LinuxFs.Create | LinuxFs.Exclusive, LinuxFs.NewFileMode))
             await using (var file = new FileStream(handle, FileAccess.Write, bufferSize: 0, isAsync: false))
             {
-                owner?.Apply(handle);
+                owner?.Apply(handle, folder);
                 var buffer = new byte[256 * 1024];
                 int read;
                 while ((read = await body.ReadAsync(buffer, cancellationToken)) > 0)
@@ -182,9 +185,10 @@ public sealed class FileService(ShareService shares, FolderCache cache, TimeProv
     public async Task<FileEntry> CreateFolderAsync(ClaimsPrincipal user, long shareId, string? path, CancellationToken cancellationToken, string within = "")
     {
         var share = await shares.ResolveAsync(user, shareId, write: true, cancellationToken);
-        var owner = await owners.ForAsync(user, cancellationToken);
+        var owner = await owners.ForAsync(user, share, cancellationToken);
         var normalized = NonRoot(path);
         var (parent, name) = FsPath.Split(normalized);
+        RequireAppFolder(share, parent, within);
         FsPath.CheckName(name);
         using var root = OpenRoot(share, within);
         using var folder = Open(root, parent, LinuxFs.Path | LinuxFs.Directory);
@@ -206,6 +210,7 @@ public sealed class FileService(ShareService shares, FolderCache cache, TimeProv
         var share = await shares.ResolveAsync(user, shareId, write: true, cancellationToken);
         var normalized = NonRoot(path);
         var (parent, name) = FsPath.Split(normalized);
+        RequireAppFolder(share, parent, within);
         var target = FsPath.CheckName(newName);
         using var root = OpenRoot(share, within);
         using var folder = Open(root, parent, LinuxFs.Path | LinuxFs.Directory);
@@ -219,6 +224,18 @@ public sealed class FileService(ShareService shares, FolderCache cache, TimeProv
             }
         }
         return ToEntry(target, Stat(folder, target));
+    }
+
+    /// <summary>
+    /// Refuses a change in the top level of Apps (D409): it holds only the app folders, which the box makes and
+    /// takes away. <paramref name="folder"/> is the folder that would change, below <paramref name="within"/>.
+    /// </summary>
+    internal static void RequireAppFolder(ResolvedShare share, string folder, string within = "")
+    {
+        if (share.Kind == ShareKind.Apps && FsPath.Join(FsPath.Normalize(within), folder).Length == 0)
+        {
+            throw new PithyxException(ErrorCodes.FsAppsRootFixed);
+        }
     }
 
     internal static SafeFileHandle OpenRoot(ResolvedShare share)

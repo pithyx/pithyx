@@ -2991,6 +2991,37 @@
         }
       }
     },
+    "/api/shares/apps": {
+      "get": {
+        "tags": [
+          "Shares"
+        ],
+        "description": "The special folder Apps (D409) for a user who may use it: its share id and one folder per app on the app pool with whether the app is installed and whether its backend runs (Files warns before writing into a running app's folder). Administrators also get how many SMB connections use it now. fs.share.not_found without access or before there is an app pool.",
+        "operationId": "GetAppsShare",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppsShareState"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/shares/details": {
       "get": {
         "tags": [
@@ -12199,6 +12230,68 @@
         },
         "description": "How the desktop looks for the user on every device. The theme (light, dark) is a choice of each device."
       },
+      "AppsFolderInfo": {
+        "required": [
+          "id",
+          "name",
+          "installed",
+          "running"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The app's id, the folder's name."
+          },
+          "name": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The app's name in English, or null when it is not installed."
+          },
+          "installed": {
+            "type": "boolean",
+            "description": "False for the data an uninstall kept."
+          },
+          "running": {
+            "type": "boolean",
+            "description": "Its backend runs or is on its way: Files warns before writing into its folder."
+          }
+        },
+        "description": "An app folder of Apps as Files shows it."
+      },
+      "AppsShareState": {
+        "required": [
+          "shareId",
+          "folders",
+          "smbConnections"
+        ],
+        "type": "object",
+        "properties": {
+          "shareId": {
+            "type": "integer",
+            "description": "The share Files opens.",
+            "format": "int64"
+          },
+          "folders": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AppsFolderInfo"
+            },
+            "description": "Every app folder, by id."
+          },
+          "smbConnections": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "How many SMB connections use Apps now; only administrators get it, for the uninstall dialog.",
+            "format": "int32"
+          }
+        },
+        "description": "Apps for the user who may use it."
+      },
       "AuthorityInfo": {
         "required": [
           "root",
@@ -13711,6 +13804,9 @@
           "desktop.startup_apps.invalid",
           "fileservices.service.unavailable",
           "fileservices.workgroup.invalid",
+          "fs.apps.confirmation_required",
+          "fs.apps.root_fixed",
+          "fs.apps.trash_unsupported",
           "fs.cursor.invalid",
           "fs.entry.access_denied",
           "fs.entry.exists",
@@ -13737,6 +13833,7 @@
           "fs.share.path_taken",
           "fs.share.pool_not_prepared",
           "fs.share.read_only",
+          "fs.share.system",
           "fs.share.unavailable",
           "fs.thumbnail.not_found",
           "fs.thumbnail.too_many",
@@ -14687,6 +14784,13 @@
               "$ref": "#/components/schemas/GrantEntry"
             },
             "description": "Every grant the subject should have; the others go. A subject has at most one grant per resource."
+          },
+          "confirmAppsAccess": {
+            "type": [
+              "null",
+              "boolean"
+            ],
+            "description": "Confirms that the subject may see the data of every app (D409); required when the grants give it more of Apps than before (`fs.apps.confirmation_required`)."
           }
         }
       },
@@ -16953,6 +17057,13 @@
               "$ref": "#/components/schemas/GrantEntry"
             },
             "description": "The user's own grants; when left out, the desktop login, SMB and the apps org.pithyx.files, org.pithyx.viewer and org.pithyx.demo."
+          },
+          "confirmAppsAccess": {
+            "type": [
+              "null",
+              "boolean"
+            ],
+            "description": "Confirms that the new user may see the data of every app; required when Grants name Apps (D409, `fs.apps.confirmation_required`)."
           }
         }
       },
@@ -20257,6 +20368,13 @@
           "ftp": {
             "type": "boolean",
             "description": "Whether FTP offers the shared folder."
+          },
+          "system": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Null for a shared folder; `apps` for the special folder Apps (D409), whose name, description and protocols other than SMB stay as they are."
           }
         },
         "description": "A share with what the Shared folders page shows. Administrators only."
@@ -20297,6 +20415,13 @@
               "$ref": "#/components/schemas/SubjectGrant"
             },
             "description": "Every grant the shared folder should have; the others go."
+          },
+          "confirmAppsAccess": {
+            "type": [
+              "null",
+              "boolean"
+            ],
+            "description": "For Apps (D409): confirms that the users and groups given more of it may see the data of every app; required then (`fs.apps.confirmation_required`)."
           }
         }
       },
@@ -20347,7 +20472,8 @@
         "enum": [
           "share",
           "home",
-          "userHome"
+          "userHome",
+          "apps"
         ],
         "description": "What a share is (D348).",
         "default": "share"

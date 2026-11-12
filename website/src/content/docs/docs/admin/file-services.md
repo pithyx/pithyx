@@ -17,6 +17,8 @@ Switch **Offer shared folders over SMB**; the default workgroup is `WORKGROUP` (
 
 Connect from Windows File Explorer with `\\<address>\<share>`, from macOS or Linux with `smb://<address>`. The box does not announce itself on the network (no WS-Discovery, no mDNS), so clients connect by address. Deletes go to the recycle bin, and the daily restore points show as "Previous versions" in Windows.
 
+The folder [Apps](/docs/admin/shared-folders/#the-apps-folder) with the data of every app is offered over SMB only; deletes there are permanent, and a client cannot change owners, modes or ACLs anywhere, since Samba runs without NT ACLs and without the UNIX extensions.
+
 When a user's access changes (a right on a shared folder, a group membership), Pithyx ends that user's open SMB connections. The computer reconnects by itself within seconds and gets the new rights at once; files the user had open over SMB are closed, as after a short network outage.
 
 ## SFTP

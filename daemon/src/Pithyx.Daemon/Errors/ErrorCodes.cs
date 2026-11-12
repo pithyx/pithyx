@@ -517,6 +517,21 @@ public static class ErrorCodes
     [ErrorStatus(HttpStatusCode.BadRequest)]
     public const string FileServicesWorkgroupInvalid = "fileservices.workgroup.invalid";
 
+    /// <summary>
+    /// Giving users or groups who are not administrators access to the special folder Apps (D409) needs the
+    /// confirmation that they can read every app's data, which may hold sensitive data of every user.
+    /// </summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string FsAppsConfirmationRequired = "fs.apps.confirmation_required";
+
+    /// <summary>The top level of Apps holds only the folders of the apps, which the box makes; nothing is created, renamed, moved or deleted there.</summary>
+    [ErrorStatus(HttpStatusCode.Forbidden)]
+    public const string FsAppsRootFixed = "fs.apps.root_fixed";
+
+    /// <summary>Apps has no recycle bin: what is deleted there is gone, so a delete must ask for it (<c>permanent</c>).</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string FsAppsTrashUnsupported = "fs.apps.trash_unsupported";
+
     [ErrorStatus(HttpStatusCode.BadRequest)]
     public const string FsCursorInvalid = "fs.cursor.invalid";
 
@@ -614,6 +629,10 @@ public static class ErrorCodes
 
     [ErrorStatus(HttpStatusCode.Forbidden)]
     public const string FsShareReadOnly = "fs.share.read_only";
+
+    /// <summary>The special folder Apps is part of the box: its name and description stay, it is offered over SMB only, and it is never deleted.</summary>
+    [ErrorStatus(HttpStatusCode.Forbidden)]
+    public const string FsShareSystem = "fs.share.system";
 
     [ErrorStatus(HttpStatusCode.NotFound)]
     public const string FsThumbnailNotFound = "fs.thumbnail.not_found";

@@ -19,6 +19,15 @@ public enum SmbShareKind
     /// recycle bin across them: it has none, and what is deleted there is gone.
     /// </summary>
     Homes,
+
+    /// <summary>
+    /// <c>Apps</c> (D409): one folder per app showing its volumes. Rights come only from the daemon, without POSIX ACLs:
+    /// the users with access work as root in this share (<c>admin users</c>; who may only read still cannot write), new
+    /// files belong to the owner of their folder, the app (<c>inherit owner</c>), and no symlink is followed, so an
+    /// app's link never leads out of its folder. It has no recycle bin and no previous versions, and it reports
+    /// connects and disconnects so the box can say who is connected before an app is uninstalled.
+    /// </summary>
+    Apps,
 }
 
 /// <summary>A shared folder as SMB offers it.</summary>
@@ -54,10 +63,10 @@ public static class SmbConfig
     public const string AuditIdentifier = "smbd_audit";
 
     /// <summary>
-    /// Section names Samba gives a meaning of its own, and the names of the homes (D348); a shared folder can never be
+    /// Section names Samba gives a meaning of its own, and the names of the homes (D348) and of Apps (D409); a shared folder can never be
     /// named like this, and one from before is not offered over SMB.
     /// </summary>
-    public static readonly IReadOnlySet<string> ReservedNames = new HashSet<string>(["global", "home", "homes", "printers", "print$", "ipc$"], StringComparer.OrdinalIgnoreCase);
+    public static readonly IReadOnlySet<string> ReservedNames = new HashSet<string>(["global", "home", "homes", "apps", "printers", "print$", "ipc$"], StringComparer.OrdinalIgnoreCase);
 
     /// <summary>The longest workgroup name (a NetBIOS name).</summary>
     public const int MaxWorkgroupLength = 15;
@@ -112,7 +121,10 @@ public static class SmbConfig
         Line(text, "unix password sync", "no");
         Line(text, "logging", "systemd");
         Line(text, "log level", "1");
+        // No client changes owners, modes or ACLs (D102, D409): no NT ACLs and no UNIX extensions of SMB1 or SMB3.
         Line(text, "nt acl support", "no");
+        Line(text, "smb1 unix extensions", "no");
+        Line(text, "smb3 unix extensions", "no");
         Line(text, "store dos attributes", "yes");
         Line(text, "map archive", "no");
         Line(text, "map hidden", "no");
@@ -143,6 +155,11 @@ public static class SmbConfig
             Line(text, "read only", "yes");
             Line(text, "write list", Users(share.Writers));
             Line(text, "server smb encrypt", share.Encrypt ? "required" : "if_required");
+            if (share.Kind == SmbShareKind.Apps)
+            {
+                AppsSection(text, share);
+                continue;
+            }
             // The default ACL of D286 gives new files their rights; the group bits stay open so its mask allows the named
             // users. Files are never executable: "inherit acls" would create them with 0777.
             Line(text, "inherit acls", "no");
@@ -175,6 +192,24 @@ public static class SmbConfig
             Line(text, "full_audit:priority", "DEBUG");
         }
         return text.ToString();
+    }
+
+    private static void AppsSection(StringBuilder text, SmbShare share)
+    {
+        Line(text, "admin users", Users(share.Readers.Concat(share.Writers)));
+        Line(text, "inherit owner", "unix only");
+        Line(text, "inherit acls", "no");
+        // inherit owner sets only the owner; the group stays the user's (users), so it gets no rights. The app is the owner.
+        Line(text, "create mask", "0600");
+        Line(text, "directory mask", "0700");
+        Line(text, "follow symlinks", "no");
+        Line(text, "wide links", "no");
+        Line(text, "vfs objects", "full_audit catia fruit streams_xattr");
+        Line(text, "full_audit:prefix", "%U|%S");
+        Line(text, "full_audit:success", "connect disconnect pwrite_send unlinkat renameat mkdirat");
+        Line(text, "full_audit:failure", "none");
+        Line(text, "full_audit:facility", "LOCAL5");
+        Line(text, "full_audit:priority", "DEBUG");
     }
 
     /// <summary>A user list for <c>valid users</c>: names quoted, so nothing in them is read as a group or a separator.</summary>

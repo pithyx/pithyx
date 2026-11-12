@@ -56,6 +56,8 @@ interface StoreMethods {
     params: { appId: string; data: 'keep' | 'delete' };
     result: Job;
   };
+  /** How many SMB connections use Apps now (D409); null when the box cannot tell. */
+  'internal.admin.apps.smbConnections': { params: Record<string, never>; result: number | null };
   'internal.admin.apps.setEnabled': {
     params: { appId: string; enabled: boolean };
     result: AppDetails;
@@ -331,6 +333,11 @@ export function storeHost(emit: (event: string, data?: unknown) => void): {
     'internal.admin.auth.stepUp': {
       validate: isRecord,
       handle: () => daemon(async () => unwrap(await api.GET('/api/auth/step-up')).until ?? null),
+    },
+    'internal.admin.apps.smbConnections': {
+      validate: isRecord,
+      handle: () =>
+        daemon(async () => unwrap(await api.GET('/api/shares/apps')).smbConnections ?? null),
     },
     'internal.admin.apps.uninstall': {
       validate: (value) => hasApp(value) && (value.data === 'keep' || value.data === 'delete'),

@@ -12,7 +12,7 @@ namespace Pithyx.Daemon.Shares;
 /// Shares and who may use them. Every file request resolves its share here, so a changed or revoked access applies to
 /// the next request. A share the caller cannot use is reported as not found, so share names do not leak.
 /// </summary>
-public sealed class ShareService(SqliteConnectionFactory connections, TimeProvider time, PoolInventory? pools = null, Permissions.PermissionService? permissions = null)
+public sealed class ShareService(SqliteConnectionFactory connections, TimeProvider time, PoolInventory? pools = null, Permissions.PermissionService? permissions = null, Apps.AppStorageOptions? appStorage = null)
 {
     private readonly Permissions.PermissionService _permissions = permissions ?? new Permissions.PermissionService(connections);
 
@@ -34,7 +34,7 @@ public sealed class ShareService(SqliteConnectionFactory connections, TimeProvid
 
     /// <summary>
     /// The shares the user can use: its own home first, then the shared folders by name, and for administrators every
-    /// other home by folder name (D348).
+    /// other home by folder name (D348), then Apps (D409) once there is an app pool.
     /// </summary>
     public async Task<IReadOnlyList<ShareInfo>> ListAsync(ClaimsPrincipal user, CancellationToken cancellationToken)
     {
@@ -42,13 +42,13 @@ public sealed class ShareService(SqliteConnectionFactory connections, TimeProvid
         var admin = IsAdmin(user);
         var userId = CurrentUser.Id(user);
         var rights = await _permissions.ForUserAsync(userId, cancellationToken);
-        var rows = await connection.QueryAsync<Row>(RowSelect + " ORDER BY name");
+        var rows = (await connection.QueryAsync<Row>(RowSelect + " ORDER BY name")).Select(await AppsDatasetAsync(connection));
         return [.. rows
             .Select(row => (Row: row, Kind: KindOf(row, userId)))
-            .Where(item => rights.Share(item.Row.Id) != ShareAccess.None && (item.Kind != ShareKind.UserHome || admin))
+            .Where(item => rights.Share(item.Row.Id) != ShareAccess.None && (item.Kind != ShareKind.UserHome || admin) && (item.Kind != ShareKind.Apps || item.Row.Dataset is not null))
             .OrderBy(item => item.Kind)
             .ThenBy(item => NameOf(item.Row, item.Kind), StringComparer.OrdinalIgnoreCase)
-            .Select(item => new ShareInfo(item.Row.Id, NameOf(item.Row, item.Kind), rights.Share(item.Row.Id), admin ? item.Row.Path : null, UnavailableReason(item.Row.Dataset), item.Kind))];
+            .Select(item => new ShareInfo(item.Row.Id, NameOf(item.Row, item.Kind), rights.Share(item.Row.Id), admin ? item.Row.Path : null, UnavailableReason(item.Row), item.Kind))];
     }
 
     /// <summary>
@@ -59,6 +59,12 @@ public sealed class ShareService(SqliteConnectionFactory connections, TimeProvid
     {
         await using var connection = await connections.OpenAsync(cancellationToken);
         var row = await connection.QuerySingleOrDefaultAsync<Row>(RowSelect + " WHERE id = @shareId", new { shareId });
+        row = row is null ? null : (await AppsDatasetAsync(connection))(row);
+        // Apps exists only on a box with an app pool.
+        if (row is { System: Apps.AppsShare.SystemKey, Dataset: null })
+        {
+            row = null;
+        }
         var access = row is null ? ShareAccess.None : (await _permissions.ForUserAsync(CurrentUser.Id(user), cancellationToken)).Share(shareId);
         if (row is null || access == ShareAccess.None)
         {
@@ -69,29 +75,55 @@ public sealed class ShareService(SqliteConnectionFactory connections, TimeProvid
             throw new PithyxException(ErrorCodes.FsShareReadOnly);
         }
         var kind = KindOf(row, CurrentUser.Id(user));
-        if (UnavailableReason(row.Dataset) is { } reason)
+        if (UnavailableReason(row) is { } reason)
         {
             throw new PithyxException(ErrorCodes.FsShareUnavailable, new Dictionary<string, object?> { ["name"] = NameOf(row, kind), ["reason"] = reason });
         }
         return new ResolvedShare(row.Id, NameOf(row, kind), row.Path, access, kind);
     }
 
-    private const string RowSelect = "SELECT id AS Id, name AS Name, path AS Path, dataset AS Dataset, home AS Home, home_user_id AS HomeUserId FROM shares";
+    private const string RowSelect = "SELECT id AS Id, name AS Name, path AS Path, dataset AS Dataset, home AS Home, home_user_id AS HomeUserId, system AS System FROM shares";
 
-    private sealed record Row(long Id, string Name, string Path, string? Dataset, long Home, long? HomeUserId);
+    /// <summary>
+    /// Gives Apps the dataset its availability follows, the app pool's <c>pithyx/apps</c>, or none before there is an
+    /// app pool; every other row keeps its own.
+    /// </summary>
+    private static async Task<Func<Row, Row>> AppsDatasetAsync(System.Data.Common.DbConnection connection)
+    {
+        var dataset = AppsDataset(await connection.ExecuteScalarAsync<string?>("SELECT value FROM settings WHERE key = @key", new { key = Apps.AppRegistry.PoolSetting }));
+        return row => row.System == Apps.AppsShare.SystemKey ? row with { Dataset = dataset } : row;
+    }
+
+    private static string? AppsDataset(string? pool) => pool is null ? null : $"{pool}/pithyx/apps";
+
+    private sealed record Row(long Id, string Name, string Path, string? Dataset, long Home, long? HomeUserId, string? System);
 
     private static ShareKind KindOf(Row row, long userId) =>
-        row.Home == 0 ? ShareKind.Share : row.HomeUserId == userId ? ShareKind.Home : ShareKind.UserHome;
+        row.System == Apps.AppsShare.SystemKey ? ShareKind.Apps
+        : row.Home == 0 ? ShareKind.Share
+        : row.HomeUserId == userId ? ShareKind.Home
+        : ShareKind.UserHome;
 
     private static string NameOf(Row row, ShareKind kind) => kind switch
     {
         ShareKind.Home => Users.Homes.OwnName,
         ShareKind.UserHome => row.Name[Users.Homes.RowPrefix.Length..],
+        ShareKind.Apps => Apps.AppsShare.Name,
         _ => row.Name,
     };
 
-    private string? UnavailableReason(string? dataset) =>
-        pools is null ? null : ShareAvailability.Reason(dataset, pools.Current, pools.Available);
+    private string? UnavailableReason(Row row)
+    {
+        if (pools is null)
+        {
+            return null;
+        }
+        if (row.System == Apps.AppsShare.SystemKey)
+        {
+            return Apps.AppsShare.Unavailable(row.Dataset?[..row.Dataset.IndexOf('/', StringComparison.Ordinal)], pools.Current, pools.Available, appStorage?.UseZfs ?? true);
+        }
+        return ShareAvailability.Reason(row.Dataset, pools.Current, pools.Available);
+    }
 
     public async Task<ShareInfo> CreateAsync(ClaimsPrincipal user, NewShare share, CancellationToken cancellationToken)
     {
@@ -131,20 +163,26 @@ public sealed class ShareService(SqliteConnectionFactory connections, TimeProvid
         await using var connection = await connections.OpenAsync(cancellationToken);
         // Administrators use every share anyway, so the summary counts the others who are active.
         var others = (await Permissions.PermissionService.AllUsersAsync(connection, null)).Where(other => !other.Disabled && !other.Permissions.IsAdmin).ToList();
-        var rows = await connection.QueryAsync<(long Id, string Name, string Description, string Path, string? Dataset, long? RestorePoints, long Smb, long Sftp, long SmbEncrypt, long WebDav, long Ftp)>(
+        var appsDataset = AppsDataset(await connection.ExecuteScalarAsync<string?>("SELECT value FROM settings WHERE key = @key", new { key = Apps.AppRegistry.PoolSetting }));
+        var rows = (await connection.QueryAsync<(long Id, string Name, string Description, string Path, string? Dataset, long? RestorePoints, long Smb, long Sftp, long SmbEncrypt, long WebDav, long Ftp, string? System)>(
             """
             SELECT shares.id, shares.name, shares.description, shares.path, shares.dataset,
                 (SELECT enabled FROM snapshot_schedules WHERE snapshot_schedules.dataset = shares.dataset AND kind = 'daily'),
-                shares.smb, shares.sftp, shares.smb_encrypt, shares.webdav, shares.ftp
-            FROM shares WHERE shares.home = 0 ORDER BY shares.name
-            """);
+                shares.smb, shares.sftp, shares.smb_encrypt, shares.webdav, shares.ftp, shares.system
+            FROM shares WHERE shares.home = 0 ORDER BY shares.system IS NOT NULL, shares.name
+            """))
+            // Apps shows once there is an app pool.
+            .Where(row => row.System is null || appsDataset is not null)
+            .Select(row => row.System is null ? row : row with { Dataset = appsDataset });
         var datasets = pools.Datasets.ToDictionary(dataset => dataset.Name, StringComparer.Ordinal);
         return [.. rows.Select(row =>
         {
-            var dataset = row.Dataset is { } name && datasets.TryGetValue(name, out var found) ? found : null;
+            // Apps has no dataset of its own: the space of pithyx/apps would count every app's packages too.
+            var system = row.System is not null;
+            var dataset = !system && row.Dataset is { } name && datasets.TryGetValue(name, out var found) ? found : null;
             return new ShareDetails(
                 row.Id,
-                row.Name,
+                system ? Apps.AppsShare.Name : row.Name,
                 row.Description,
                 row.Path,
                 row.Dataset?.Split('/')[0],
@@ -154,12 +192,13 @@ public sealed class ShareService(SqliteConnectionFactory connections, TimeProvid
                 dataset?.QuotaBytes,
                 others.Count(other => other.Permissions.Share(row.Id) == ShareAccess.Read),
                 others.Count(other => other.Permissions.Share(row.Id) == ShareAccess.ReadWrite),
-                row.Dataset is null ? null : row.RestorePoints == 1,
+                row.Dataset is null || system ? null : row.RestorePoints == 1,
                 row.Smb == 1,
                 row.Sftp == 1,
                 row.SmbEncrypt == 1,
                 row.WebDav == 1,
-                row.Ftp == 1);
+                row.Ftp == 1,
+                row.System);
         })];
     }
 
@@ -173,7 +212,16 @@ public sealed class ShareService(SqliteConnectionFactory connections, TimeProvid
         await using var connection = await connections.OpenAsync(cancellationToken);
         if (await FindAsync(connection, shareId) is null)
         {
-            throw new PithyxException(ErrorCodes.FsShareNotFound);
+            // Apps keeps its name and description and is offered over SMB only (D409).
+            var system = await connection.ExecuteScalarAsync<string?>("SELECT system FROM shares WHERE id = @shareId", new { shareId });
+            if (system is null)
+            {
+                throw new PithyxException(ErrorCodes.FsShareNotFound);
+            }
+            if (name is not null || description is not null || update.Sftp is true || update.WebDav is true || update.Ftp is true)
+            {
+                throw new PithyxException(ErrorCodes.FsShareSystem);
+            }
         }
         if (name is not null && FileServices.SmbConfig.ReservedNames.Contains(name))
         {
@@ -193,7 +241,7 @@ public sealed class ShareService(SqliteConnectionFactory connections, TimeProvid
             new { shareId, name, description, smb = update.Smb, sftp = update.Sftp, smbEncrypt = update.SmbEncrypt, webDav = update.WebDav, ftp = update.Ftp, now = SessionService.Format(time.GetUtcNow()) });
     }
 
-    /// <summary>The shared folder as stored, or null; homes are not shared folders. Not for callers with a user: it checks no access.</summary>
+    /// <summary>The shared folder as stored, or null; homes and Apps are not shared folders. Not for callers with a user: it checks no access.</summary>
     public async Task<ShareRecord?> FindAsync(long shareId, CancellationToken cancellationToken)
     {
         await using var connection = await connections.OpenAsync(cancellationToken);
@@ -252,7 +300,7 @@ public sealed class ShareService(SqliteConnectionFactory connections, TimeProvid
     public async Task SeedSimulationAsync(string directory, CancellationToken cancellationToken)
     {
         await using var connection = await connections.OpenAsync(cancellationToken);
-        if (await connection.ExecuteScalarAsync<long>("SELECT COUNT(*) FROM shares WHERE home = 0") > 0)
+        if (await connection.ExecuteScalarAsync<long>("SELECT COUNT(*) FROM shares WHERE home = 0 AND system IS NULL") > 0)
         {
             return;
         }
@@ -374,7 +422,7 @@ public sealed class ShareService(SqliteConnectionFactory connections, TimeProvid
     private static async Task<ShareRecord?> FindAsync(System.Data.Common.DbConnection connection, long shareId)
     {
         var row = await connection.QuerySingleOrDefaultAsync<(long Id, string Name, string Path, string Description, string? Dataset)?>(
-            "SELECT id, name, path, description, dataset FROM shares WHERE id = @shareId AND home = 0",
+            "SELECT id, name, path, description, dataset FROM shares WHERE id = @shareId AND home = 0 AND system IS NULL",
             new { shareId });
         return row is { } found ? new ShareRecord(found.Id, found.Name, found.Path, found.Description, found.Dataset) : null;
     }

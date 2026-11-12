@@ -8,6 +8,7 @@ import { useFormatLocale } from '../../i18n';
 import {
   Button,
   DataTable,
+  StatusBadge,
   Switch,
   Toolbar,
   ToolbarSeparator,
@@ -86,7 +87,7 @@ export function SharesPage({ app }: { app: PithyxApp }) {
           {t('shares.edit')}
         </Button>
         <Button
-          isDisabled={selected === undefined}
+          isDisabled={selected === undefined || selected.system != null}
           onPress={() => {
             if (selected !== undefined) {
               setOpen({ kind: 'delete', share: selected });
@@ -181,7 +182,7 @@ function ShareTable({
   const locale = useFormatLocale();
   const bytes = (value: number) => formatBytes(value, locale);
   const used = (share: ShareDetails) =>
-    share.dataset === null
+    share.dataset === null || share.system != null
       ? null
       : share.usedBytes === null
         ? t('shares.missing')
@@ -202,10 +203,17 @@ function ShareTable({
       label: t('shares.columns.name'),
       cell: (share) => (
         <span className={styles.stack}>
-          <span className={styles.shareName}>{share.name}</span>{' '}
+          <span className={styles.shareName}>
+            {share.name}
+            {share.system != null && <StatusBadge>{t('shares.apps.badge')}</StatusBadge>}
+          </span>{' '}
           <span className={styles.path}>{breakable(share.dataset ?? share.path)}</span>{' '}
           <span className={styles.detail}>
-            {share.description === '' ? t('shares.noDescription') : share.description}
+            {share.system != null
+              ? t('shares.apps.description')
+              : share.description === ''
+                ? t('shares.noDescription')
+                : share.description}
           </span>
         </span>
       ),
@@ -243,7 +251,9 @@ function ShareTable({
       id: 'restorePoints',
       label: t('shares.columns.restorePoints'),
       cell: (share) =>
-        share.restorePoints === null ? (
+        share.system != null ? (
+          <span className={styles.muted}>{t('shares.apps.noRestorePoints')}</span>
+        ) : share.restorePoints === null ? (
           <span className={styles.muted}>{t('restorePoints.folder')}</span>
         ) : (
           <RestorePointSwitch app={app} share={share} />

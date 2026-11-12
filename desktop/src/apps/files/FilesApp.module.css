@@ -369,6 +369,10 @@
   text-overflow: ellipsis;
 }
 
+.entryState {
+  flex: none;
+}
+
 .folderIcon {
   flex: none;
   color: var(--pithyx-color-accent);

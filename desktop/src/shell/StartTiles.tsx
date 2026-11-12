@@ -145,7 +145,10 @@ export function FolderTiles({
 }) {
   const { t } = useTranslation();
   const folders = shares
-    .filter((share: Share) => share.kind !== 'userHome' && share.unavailable === null)
+    .filter(
+      (share: Share) =>
+        share.kind !== 'userHome' && share.kind !== 'apps' && share.unavailable === null,
+    )
     .toSorted((a, b) => Number(b.kind === 'home') - Number(a.kind === 'home'));
   if (folders.length === 0) {
     return null;

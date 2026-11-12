@@ -84,6 +84,7 @@ public sealed class FileServiceConfigTests
             new SmbShare("homes", "/tank/pithyx/shares/homes", [], ["ada"], Encrypt: false),
             new SmbShare("homes", "/tank/homes", [], ["ada"], Encrypt: false, SmbShareKind.Homes),
             new SmbShare("home", "%H", [], ["ada", "rita"], Encrypt: false, SmbShareKind.Home),
+            new SmbShare("Apps", "/run/pithyx/apps", ["tom"], ["ada"], Encrypt: false, SmbShareKind.Apps),
         ], SmbConfig.NetbiosName("nas-in-the-basement"));
 
         Assert.StartsWith(SmbConfig.Header, config, StringComparison.Ordinal);

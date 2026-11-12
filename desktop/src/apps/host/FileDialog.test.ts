@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { firstPlace, placesOf } from './FileDialog';
 
-const share = (id: number, name: string, kind?: 'share' | 'home' | 'userHome') => ({
+const share = (id: number, name: string, kind?: 'share' | 'home' | 'userHome' | 'apps') => ({
   id,
   name,
   access: 'readWrite' as const,
@@ -22,6 +22,17 @@ describe('placesOf', () => {
     expect(places.own.map((each) => each.id)).toEqual([3]);
     expect(places.shared.map((each) => each.id)).toEqual([1, 4]);
     expect(places.homes.map((each) => each.name)).toEqual(['anna', 'zoe']);
+  });
+
+  it('never offers Apps, so no app gets the data of another app through a dialog', () => {
+    const places = placesOf([
+      share(1, 'media'),
+      share(2, 'Apps', 'apps'),
+      share(3, 'home', 'home'),
+    ]);
+    expect([...places.own, ...places.shared, ...places.homes].map((each) => each.id)).toEqual([
+      3, 1,
+    ]);
   });
 
   it('has no homes entry for a user who sees no other homes', () => {

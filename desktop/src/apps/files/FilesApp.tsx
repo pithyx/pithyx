@@ -37,6 +37,7 @@ import {
   ToolbarSeparator,
 } from '@pithyx/ui';
 import {
+  IconApps,
   IconArrowLeft,
   IconArrowRight,
   IconArrowUp,
@@ -52,6 +53,7 @@ import {
   IconFile,
   IconFolder,
   IconHistory,
+  IconInfoCircle,
   IconLayoutSidebarRight,
   IconListDetails,
   IconLock,
@@ -89,7 +91,7 @@ import {
   type DraggedEntries,
   type DropTarget,
 } from './drop';
-import { dragKindOf, FolderView } from './FolderView';
+import { dragKindOf, FolderView, type EntryDescription } from './FolderView';
 import { compareEntries } from './order';
 import { addFileShortcuts } from '../../items/ItemsLayer';
 import { itemsKey } from '../../items/query';
@@ -133,6 +135,8 @@ type Layout = 'list' | 'grid';
 
 /** The place of the administrators' list of every other user's home; real share ids are numbers. */
 const HOMES = 'homes';
+
+const appsKey = ['files', 'apps'] as const;
 
 function restoreLayout(saved: unknown): Layout {
   return typeof saved === 'object' &&
@@ -244,7 +248,24 @@ export function FilesApp({ app }: { app: PithyxApp }) {
   const inUserHome = share?.kind === 'userHome';
   const path = share?.id === place.share ? place.path : '';
   const view = share?.id === place.share ? place.view : 'folder';
-  const writable = share?.access === 'readWrite';
+  // Apps (D409): one folder per app, which only the box adds and removes, so its top is read-only. It has no recycle
+  // bin and no previous versions, and apps never open its files.
+  const appsShare = shareList.find((candidate) => candidate.kind === 'apps');
+  const inApps = share?.kind === 'apps';
+  const atAppsTop = inApps && path === '';
+  const appsFolders = useQuery({
+    queryKey: appsKey,
+    queryFn: () => filesCall(app, 'internal.files.appsFolders', {}),
+    enabled: appsShare !== undefined,
+  });
+  const writable = share?.access === 'readWrite' && !atAppsTop;
+  const [appsWarning, setAppsWarning] = useState<{
+    apps: string[];
+    answer: (go: boolean) => void;
+  } | null>(null);
+  // The apps whose folders the user chose to change while they run; this window does not ask about them again.
+  const appsConfirmed = useRef(new Set<string>());
+  const openers = inApps ? [] : (installed ?? []);
   const here = `${shareId ?? ''}:${path}:${view}`;
 
   const [announcement, setAnnouncement] = useState<string | null>(null);
@@ -456,6 +477,80 @@ export function FilesApp({ app }: { app: PithyxApp }) {
     [app, client],
   );
 
+  /** The name users know an app by: its own while installed, else what the box kept, else its id. */
+  function appTitle(id: string): string {
+    if (installed?.some((candidate) => candidate.id === id) === true) {
+      return appName(id);
+    }
+    return appsFolders.data?.folders.find((candidate) => candidate.id === id)?.name ?? id;
+  }
+
+  /** An app folder at the top of Apps, by its app's name and whether the app is there or runs. */
+  function describeApp(entry: FileEntry): EntryDescription | null {
+    const about = appsFolders.data?.folders.find((candidate) => candidate.id === entry.name);
+    if (about === undefined) {
+      return null;
+    }
+    return {
+      title: appTitle(about.id),
+      state: !about.installed
+        ? { text: t('apps.notInstalled'), tone: 'neutral' }
+        : about.running
+          ? { text: t('apps.running'), tone: 'success' }
+          : undefined,
+    };
+  }
+
+  /** The app whose folder in Apps a folder is in, or null outside Apps and at its top. */
+  function appOf(at: string | null, folder: string): string | null {
+    return at !== null && at === appsShare?.id && folder !== ''
+      ? (folder.split('/')[0] ?? null)
+      : null;
+  }
+
+  /**
+   * Whether a change of files may go ahead: a change in the folder of an app that runs asks first (D409), since the
+   * app may have its files open. SMB cannot ask, so the dialogs that give access to Apps say so.
+   */
+  async function mayWrite(places: readonly { share: string | null; folder: string }[]) {
+    const ids = [
+      ...new Set(
+        places
+          .map((at) => appOf(at.share, at.folder))
+          .filter((id) => id !== null && !appsConfirmed.current.has(id)),
+      ),
+    ] as string[];
+    if (ids.length === 0) {
+      return true;
+    }
+    let state;
+    try {
+      state = await client.query({
+        queryKey: appsKey,
+        queryFn: () => filesCall(app, 'internal.files.appsFolders', {}),
+        staleTime: 0,
+      });
+    } catch (error) {
+      await report(error);
+      return false;
+    }
+    const running = ids.filter((id) =>
+      state.folders.some((candidate) => candidate.id === id && candidate.running),
+    );
+    if (running.length === 0) {
+      return true;
+    }
+    const go = await new Promise<boolean>((answer) => {
+      setAppsWarning({ apps: running, answer });
+    });
+    if (go) {
+      for (const id of running) {
+        appsConfirmed.current.add(id);
+      }
+    }
+    return go;
+  }
+
   async function run(operation: FileOperation) {
     try {
       track(await app.files.run(operation), operation);
@@ -465,8 +560,12 @@ export function FilesApp({ app }: { app: PithyxApp }) {
     }
   }
 
-  function remove(items: FileItems, permanent: boolean) {
-    if (shareId === null || isEmpty(items)) {
+  async function remove(items: FileItems, permanent: boolean) {
+    if (
+      shareId === null ||
+      isEmpty(items) ||
+      !(await mayWrite([{ share: shareId, folder: path }]))
+    ) {
       return;
     }
     // Optimistic: the entries leave the list at once and come back if the job fails.
@@ -483,11 +582,18 @@ export function FilesApp({ app }: { app: PithyxApp }) {
     });
   }
 
-  function paste() {
+  async function paste() {
     if (clipboard === null || shareId === null) {
       return;
     }
     if (clipboard.mode === 'cut' && clipboard.share === shareId && clipboard.folder === path) {
+      return;
+    }
+    const touched = [{ share: shareId, folder: path }];
+    if (clipboard.mode === 'cut') {
+      touched.push({ share: clipboard.share, folder: clipboard.folder });
+    }
+    if (!(await mayWrite(touched))) {
       return;
     }
     void run({
@@ -519,7 +625,7 @@ export function FilesApp({ app }: { app: PithyxApp }) {
     policy?: ConflictPolicy,
     intoShare: string | null = shareId,
   ) {
-    if (intoShare === null) {
+    if (intoShare === null || !(await mayWrite([{ share: intoShare, folder: into }]))) {
       return;
     }
     const conflicts: File[] = [];
@@ -567,7 +673,7 @@ export function FilesApp({ app }: { app: PithyxApp }) {
 
   /** Creates a folder or an empty file under a free default name and starts renaming it. */
   async function createEntry(kind: 'folder' | 'file') {
-    if (shareId === null) {
+    if (shareId === null || !(await mayWrite([{ share: shareId, folder: path }]))) {
       return;
     }
     const taken = new Set(folder.entries.map((entry) => entry.name));
@@ -661,7 +767,11 @@ export function FilesApp({ app }: { app: PithyxApp }) {
         (candidate) => candidate.id === String(file.share) && candidate.access === 'readWrite',
       ),
     };
-    const action = defaultAction(entry, installed ?? [], useFileDefaults.getState().choices);
+    const action = defaultAction(
+      entry,
+      at.share === appsShare?.id ? [] : (installed ?? []),
+      useFileDefaults.getState().choices,
+    );
     if (action.kind === 'view') {
       await openIn(entry, 'viewer', at);
     } else if (action.kind === 'app') {
@@ -694,7 +804,7 @@ export function FilesApp({ app }: { app: PithyxApp }) {
       return;
     }
     const target = joinPath(path, entry.name);
-    const action = defaultAction(entry, installed ?? [], useFileDefaults.getState().choices);
+    const action = defaultAction(entry, openers, useFileDefaults.getState().choices);
     if (action.kind === 'download') {
       await app.files.download(location, target).catch(report);
     } else if (action.kind === 'view') {
@@ -758,11 +868,15 @@ export function FilesApp({ app }: { app: PithyxApp }) {
         toClipboard(action);
         break;
       case 'paste':
-        paste();
+        void paste();
         break;
       case 'rename':
         if (entry !== undefined && writable) {
-          setRenaming(entry.name);
+          void mayWrite([{ share: shareId, folder: path }]).then((go) => {
+            if (go) {
+              setRenaming(entry.name);
+            }
+          });
         }
         break;
       case 'addToDesktop':
@@ -784,13 +898,16 @@ export function FilesApp({ app }: { app: PithyxApp }) {
         }
         break;
       case 'versions':
-        if (entry !== undefined && shareId !== null) {
+        if (entry !== undefined && shareId !== null && !inApps) {
           setVersionsOf({ share: shareId, path: joinPath(path, entry.name), name: entry.name });
         }
         break;
       case 'delete':
-        if (writable) {
-          remove(toItems(selection), false);
+        // Apps has no recycle bin: a delete there is permanent and asks first.
+        if (writable && inApps && selectedCount(selection, folder.total) > 0) {
+          setConfirmPermanent(toItems(selection));
+        } else if (writable) {
+          void remove(toItems(selection), false);
         }
         break;
       case 'deletePermanent':
@@ -872,7 +989,7 @@ export function FilesApp({ app }: { app: PithyxApp }) {
         zone.target.share,
       );
     } else {
-      dropEntries(
+      void dropEntries(
         event.dataTransfer.getData(ENTRIES_TYPE),
         zone.target,
         event.ctrlKey || event.altKey,
@@ -890,10 +1007,17 @@ export function FilesApp({ app }: { app: PithyxApp }) {
     };
   }
 
-  function dropEntries(data: string, target: DropTarget, copy: boolean) {
+  async function dropEntries(data: string, target: DropTarget, copy: boolean) {
     const dragged = parseDragged(data);
     const items = dragged === null ? null : itemsToDrop(dragged, target);
     if (dragged?.share == null || items === null) {
+      return;
+    }
+    const touched = [{ share: target.share, folder: target.path }];
+    if (!copy) {
+      touched.push({ share: dragged.share, folder: dragged.folder });
+    }
+    if (!(await mayWrite(touched))) {
       return;
     }
     void run({
@@ -912,9 +1036,7 @@ export function FilesApp({ app }: { app: PithyxApp }) {
       ? []
       : folder.entries.filter((entry) => selectedItems.names.includes(entry.name));
   const appActions =
-    chosen.length > 0 && chosen.length === count
-      ? actionsFor(chosen, installed ?? [], writable)
-      : [];
+    chosen.length > 0 && chosen.length === count ? actionsFor(chosen, openers, writable) : [];
 
   function runAppAction(index: number) {
     const offered = appActions[index];
@@ -1161,11 +1283,24 @@ export function FilesApp({ app }: { app: PithyxApp }) {
           />
         )}
       </div>
-      {view === 'folder' && !writable && share !== undefined && (
+      {view === 'folder' && share !== undefined && atAppsTop ? (
+        <p className={styles.infoBar}>
+          <IconInfoCircle size={16} stroke={1.75} aria-hidden />
+          {t('apps.topInfo')}
+        </p>
+      ) : view === 'folder' && share !== undefined && !writable ? (
         <p className={styles.infoBar}>
           <IconLock size={16} stroke={1.75} aria-hidden />
           {t('readOnlyInfo', { name: share.name })}
         </p>
+      ) : (
+        view === 'folder' &&
+        inApps && (
+          <p className={styles.infoBar}>
+            <IconInfoCircle size={16} stroke={1.75} aria-hidden />
+            {t('apps.folderInfo', { app: appTitle(appOf(shareId, path) ?? '') })}
+          </p>
+        )
       )}
       <div className={styles.split} data-sidebar-open={sidebarOpen ? '' : undefined}>
         <nav
@@ -1244,6 +1379,32 @@ export function FilesApp({ app }: { app: PithyxApp }) {
             </Fragment>
           ))}
           <hr className={styles.sideRule} />
+          {appsShare !== undefined && (
+            <button
+              type="button"
+              className={styles.sideItem}
+              aria-current={inApps && view === 'folder' ? 'page' : undefined}
+              onClick={() => {
+                go({ share: appsShare.id, path: '', view: 'folder' });
+              }}
+            >
+              <IconApps className={styles.sideIcon} size={16} stroke={1.75} aria-hidden />
+              <span className={styles.sideName}>{appsShare.name}</span>
+              {appsShare.unavailable !== undefined ? (
+                <span className={styles.sideNote}>{t('shares.unavailable')}</span>
+              ) : (
+                appsShare.access !== 'readWrite' && (
+                  <IconLock
+                    className={styles.sideLock}
+                    size={14}
+                    stroke={1.75}
+                    role="img"
+                    aria-label={t('readOnly')}
+                  />
+                )
+              )}
+            </button>
+          )}
           {userHomes.length > 0 && (
             <button
               type="button"
@@ -1397,7 +1558,7 @@ export function FilesApp({ app }: { app: PithyxApp }) {
               }}
               onDropEntries={(data, into, copy) => {
                 if (shareId !== null && writable) {
-                  dropEntries(
+                  void dropEntries(
                     data,
                     { share: shareId, path: into === null ? path : joinPath(path, into) },
                     copy,
@@ -1415,6 +1576,7 @@ export function FilesApp({ app }: { app: PithyxApp }) {
               }}
               folderKey={here}
               format={app.format}
+              describe={atAppsTop ? describeApp : undefined}
             />
           )}
         </div>
@@ -1423,6 +1585,7 @@ export function FilesApp({ app }: { app: PithyxApp }) {
             entry={detailEntry}
             thumbnail={detailEntry === undefined ? null : thumbnailOf(detailEntry)}
             format={app.format}
+            versions={!inApps}
             onAction={act}
           />
         )}
@@ -1475,6 +1638,7 @@ export function FilesApp({ app }: { app: PithyxApp }) {
           viewable={menuEntry !== null && defaultAction(menuEntry).kind === 'view'}
           writable={writable}
           openOnly={atHomes}
+          withoutTrash={inApps}
           canPaste={clipboard !== null}
           appActions={appActions.map((offered) => ({
             label: manifestText(offered.action.label, i18n.language),
@@ -1540,13 +1704,13 @@ export function FilesApp({ app }: { app: PithyxApp }) {
                 event.preventDefault();
               }}
             >
-              {openWithChoices(openWith, installed ?? []).map((choice) => {
+              {openWithChoices(openWith, openers).map((choice) => {
                 const appId = choice.startsWith('app:') ? choice.slice('app:'.length) : null;
                 const icon =
                   appId === null
                     ? ''
                     : (installed?.find((candidate) => candidate.id === appId)?.icon ?? '');
-                const current = choice === currentChoice(openWith, installed ?? [], fileChoices);
+                const current = choice === currentChoice(openWith, openers, fileChoices);
                 return (
                   <li key={choice}>
                     <button
@@ -1625,7 +1789,7 @@ export function FilesApp({ app }: { app: PithyxApp }) {
               variant="danger"
               onPress={() => {
                 if (confirmPermanent !== null) {
-                  remove(confirmPermanent, true);
+                  void remove(confirmPermanent, true);
                 }
                 setConfirmPermanent(null);
               }}
@@ -1636,6 +1800,48 @@ export function FilesApp({ app }: { app: PithyxApp }) {
         }
       >
         <p>{t('dialog.permanentBody', { count })}</p>
+        {inApps && <p>{t('apps.noTrash')}</p>}
+      </Dialog>
+      <Dialog
+        isOpen={appsWarning !== null}
+        onOpenChange={(isOpen) => {
+          if (!isOpen) {
+            appsWarning?.answer(false);
+            setAppsWarning(null);
+          }
+        }}
+        role="alertdialog"
+        title={t('apps.runningTitle', { count: appsWarning?.apps.length ?? 1 })}
+        actions={
+          <>
+            <Button
+              onPress={() => {
+                appsWarning?.answer(false);
+                setAppsWarning(null);
+              }}
+            >
+              {t('dialog.cancel')}
+            </Button>
+            <Button
+              variant="primary"
+              onPress={() => {
+                appsWarning?.answer(true);
+                setAppsWarning(null);
+              }}
+            >
+              {t('apps.runningConfirm')}
+            </Button>
+          </>
+        }
+      >
+        <p>
+          {t('apps.runningBody', {
+            count: appsWarning?.apps.length ?? 1,
+            apps: new Intl.ListFormat(i18n.language, { type: 'conjunction' }).format(
+              (appsWarning?.apps ?? []).map(appTitle),
+            ),
+          })}
+        </p>
       </Dialog>
       <Dialog
         isOpen={conflict !== null}
@@ -1764,11 +1970,14 @@ function DetailsPane({
   entry,
   thumbnail,
   format,
+  versions,
   onAction,
 }: {
   entry: FileEntry | undefined;
   thumbnail: string | null;
   format: PithyxApp['format'];
+  /** Whether the place keeps previous versions (Apps does not). */
+  versions: boolean;
   onAction: (action: FilesAction) => void;
 }) {
   const { t } = useTranslation('files');
@@ -1813,15 +2022,17 @@ function DetailsPane({
                 <IconDownload size={16} stroke={1.75} aria-hidden />
                 {t('actions.download')}
               </Button>
-              <Button
-                size="sm"
-                onPress={() => {
-                  onAction('versions');
-                }}
-              >
-                <IconHistory size={16} stroke={1.75} aria-hidden />
-                {t('actions.versions')}
-              </Button>
+              {versions && (
+                <Button
+                  size="sm"
+                  onPress={() => {
+                    onAction('versions');
+                  }}
+                >
+                  <IconHistory size={16} stroke={1.75} aria-hidden />
+                  {t('actions.versions')}
+                </Button>
+              )}
             </div>
           )}
         </>

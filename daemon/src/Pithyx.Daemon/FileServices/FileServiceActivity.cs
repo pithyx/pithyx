@@ -8,7 +8,8 @@ namespace Pithyx.Daemon.FileServices;
 /// What SMB and SFTP did, read from the journal the Log Center follows anyway, so writes over them show in the used
 /// space like writes through Files (D209) without polling. SMB's audit log (<c>full_audit</c>, one line per write
 /// request, delete, rename or new folder) asks for a pool read a few seconds later and hands deletes to the recycle
-/// bin. Its lines are not kept in the Log Center. <c>internal-sftp</c> cannot log from its chroot, so SFTP is seen by
+/// bin; for Apps (D409) it also logs connects and disconnects, which make Apps count its connections. Its lines are not
+/// kept in the Log Center. <c>internal-sftp</c> cannot log from its chroot, so SFTP is seen by
 /// its sessions: while a Pithyx user has one open, the pools are read once a minute, and once more when it ends.
 /// Reading the used space never wakes a disk: ZFS keeps it in memory.
 /// </summary>
@@ -28,12 +29,20 @@ public sealed partial class FileServiceActivity(StorageUsage usage, TimeProvider
     /// <summary>Raised with the share's name in <c>shares</c> when a file was deleted over SMB.</summary>
     public event Action<string>? SmbDeleted;
 
+    /// <summary>Raised with the share's SMB name when a client connected to it or let it go (logged for Apps only).</summary>
+    public event Action<string>? SmbConnectionsChanged;
+
     /// <summary>Looks at a journal entry; returns false when it should not be kept in the Log Center.</summary>
     public bool Observe(PendingLogEntry entry, string? identifier)
     {
         ArgumentNullException.ThrowIfNull(entry);
         if (identifier == SmbConfig.AuditIdentifier && Audit(entry.Message) is { } audit)
         {
+            if (audit.Operation is "connect" or "disconnect")
+            {
+                SmbConnectionsChanged?.Invoke(audit.Share);
+                return false;
+            }
             Written();
             if (audit.Operation == "unlinkat")
             {
@@ -54,7 +63,7 @@ public sealed partial class FileServiceActivity(StorageUsage usage, TimeProvider
     {
         ArgumentNullException.ThrowIfNull(message);
         var fields = message.Split('|');
-        return fields.Length >= 5 && fields[3] == "ok" && fields[2] is "pwrite_send" or "unlinkat" or "renameat" or "mkdirat"
+        return fields.Length >= 5 && fields[3] == "ok" && fields[2] is "pwrite_send" or "unlinkat" or "renameat" or "mkdirat" or "connect" or "disconnect"
             ? (fields[0], fields[1], fields[2])
             : null;
     }

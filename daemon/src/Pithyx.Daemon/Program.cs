@@ -216,6 +216,8 @@ if (!BuildTimeDocument.IsGenerating)
     try
     {
         await app.Services.GetRequiredService<MigrationRunner>().RunAsync(Migration.Embedded(), CancellationToken.None);
+        // Apps (D409) is a row of its own before anything lists the shares.
+        await app.Services.GetRequiredService<Pithyx.Daemon.Apps.AppsShare>().EnsureRowAsync(CancellationToken.None);
         if (mode == DaemonMode.Simulated)
         {
             var shares = Path.Combine(Path.GetDirectoryName(paths.DatabasePath)!, "shares");

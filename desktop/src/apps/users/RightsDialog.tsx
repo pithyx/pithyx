@@ -11,6 +11,7 @@ import {
   type GroupSummary,
   type UserSummary,
 } from '../sdk/users';
+import { isAppsAccessCancelled, useAppsAccessConfirmation } from './AppsAccessDialog';
 import { FormDialog } from './FormDialog';
 import { GrantEditor } from './GrantEditor';
 import styles from './Users.module.css';
@@ -65,17 +66,22 @@ export function RightsDialog({
   });
   const [edited, setEdited] = useState<GrantEntry[] | undefined>();
   const value = edited ?? current.data?.grants ?? [];
+  const apps = useAppsAccessConfirmation();
   const save = useMutation({
     mutationFn: () =>
-      subject.kind === 'user'
-        ? usersCall(app, 'internal.admin.users.setGrants', {
-            userId: subject.user.id,
-            grants: value,
-          })
-        : usersCall(app, 'internal.admin.groups.setGrants', {
-            groupId: subject.group.id,
-            grants: value,
-          }),
+      apps.confirmed((confirmAppsAccess) =>
+        subject.kind === 'user'
+          ? usersCall(app, 'internal.admin.users.setGrants', {
+              userId: subject.user.id,
+              grants: value,
+              confirmAppsAccess,
+            })
+          : usersCall(app, 'internal.admin.groups.setGrants', {
+              groupId: subject.group.id,
+              grants: value,
+              confirmAppsAccess,
+            }),
+      ),
     onSuccess: async () => {
       // Rights show on the users list, the groups and the shared folders.
       await Promise.all([
@@ -119,7 +125,10 @@ export function RightsDialog({
           onChange={setEdited}
         />
       )}
-      {save.isError && <ErrorNotice error={describeProblem(save.error)} />}
+      {save.isError && !isAppsAccessCancelled(save.error) && (
+        <ErrorNotice error={describeProblem(save.error)} />
+      )}
+      {apps.dialog}
     </FormDialog>
   );
 }

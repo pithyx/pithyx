@@ -29,6 +29,10 @@ At the first install you pick **Pool for app data**: "Every app keeps its data o
 
 Each app gets a dataset `<pool>/pithyx/apps/<id>`, mounted at `/<pool>/.pithyx/apps/<id>`. Docker's data root is `/<pool>/.pithyx/docker`. If the pool is missing or locked, apps on it show "Pool not available" and nobody can open them until it is back. App containers run with user ids from 40000 to 49999.
 
+### The app data in Files
+
+The data of every app (the `volumes/` of its dataset) is in the folder **Apps**, one folder per app, in Files and over SMB, for administrators only unless an administrator gives it to others. See [Shared folders](/docs/admin/shared-folders/#the-apps-folder). Uninstalling an app with **Keep the data** leaves its folder there, marked **Not installed**; deleting the data ends every SMB connection to Apps first, and the uninstall dialog says when somebody is connected.
+
 ## Updates and rollback
 
 ![The page Updates with the update of the Editor from 1.0.0 to 1.1.0 and its release notes, and the update settings with the policy Tell administrators and the daily check time 03:00](../../../../assets/screenshots/store-update-settings.webp)
