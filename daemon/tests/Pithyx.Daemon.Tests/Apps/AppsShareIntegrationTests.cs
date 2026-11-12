@@ -123,6 +123,9 @@ public sealed class AppsShareIntegrationTests
             await apps.ReconcileAsync(Token);
             // A second run finds everything in place and changes nothing.
             await apps.ReconcileAsync(Token);
+            // pithyx/apps never mounts itself (canmount=off), and Apps is still there for Files and SMB.
+            Assert.Equal("off", (await vdevs.RunAsync("zfs", ["get", "-H", "-o", "value", "canmount", $"{pool}/pithyx/apps"])).Trim());
+            Assert.Null(AppsShare.Unavailable(pool, pools.Current, poolsRead: true, useZfs: true));
 
             var mountInfo = (await File.ReadAllLinesAsync("/proc/self/mountinfo", Token)).Where(line => line.Contains($" {runRoot}/", StringComparison.Ordinal)).ToList();
             Assert.Single(mountInfo, line => line.Contains($" {root} ", StringComparison.Ordinal) && line.Contains(" ro,", StringComparison.Ordinal) && line.Contains(" - tmpfs ", StringComparison.Ordinal));

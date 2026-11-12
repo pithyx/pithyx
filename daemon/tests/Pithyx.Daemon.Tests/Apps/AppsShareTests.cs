@@ -70,11 +70,15 @@ public sealed class AppsShareTests
     public void FollowsTheAppPoolForWhetherAppsCanBeUsed()
     {
         var pool = new Pool("tank", "1", "ONLINE", 1, 0, 1, 0, 0, false, 0, null, []);
-        var apps = new Dataset("tank/pithyx/apps", "tank", "filesystem", 1, 1, 1, "/tank/.pithyx/apps", true, "off", null, null, null, null, "lz4", 131072, null, null, 0);
-        var locked = apps with { Mounted = false, KeyStatus = "unavailable" };
+        // As on a box: pithyx/apps is created with canmount=off and never mounted itself.
+        var apps = new Dataset("tank/pithyx/apps", "tank", "filesystem", 1, 1, 1, "/tank/.pithyx/apps", false, "off", null, null, null, null, "lz4", 131072, null, null, 0);
+        var locked = apps with { KeyStatus = "unavailable" };
+        var stopped = pool with { State = "SUSPENDED" };
 
         Assert.Null(AppsShare.Unavailable("tank", new PoolList([pool], [apps]), poolsRead: true, useZfs: true));
         Assert.Equal(ShareAvailability.Locked, AppsShare.Unavailable("tank", new PoolList([pool], [locked]), poolsRead: true, useZfs: true));
+        Assert.Equal(ShareAvailability.PoolUnavailable, AppsShare.Unavailable("tank", new PoolList([stopped], [apps]), poolsRead: true, useZfs: true));
+        Assert.Equal(ShareAvailability.PoolMissing, AppsShare.Unavailable("tank", new PoolList([pool], []), poolsRead: true, useZfs: true));
         Assert.Equal(ShareAvailability.PoolMissing, AppsShare.Unavailable("tank", new PoolList([], []), poolsRead: true, useZfs: true));
         Assert.Equal(ShareAvailability.PoolMissing, AppsShare.Unavailable(null, new PoolList([pool], [apps]), poolsRead: true, useZfs: true));
         Assert.Null(AppsShare.Unavailable("tank", new PoolList([pool], []), poolsRead: true, useZfs: false));
