@@ -25,6 +25,7 @@ export { default as IconCertificate } from '@tabler/icons-react/dist/esm/icons/I
 export { default as IconCheck } from '@tabler/icons-react/dist/esm/icons/IconCheck.mjs';
 export { default as IconChevronDown } from '@tabler/icons-react/dist/esm/icons/IconChevronDown.mjs';
 export { default as IconChevronRight } from '@tabler/icons-react/dist/esm/icons/IconChevronRight.mjs';
+export { default as IconClearAll } from '@tabler/icons-react/dist/esm/icons/IconClearAll.mjs';
 export { default as IconClipboard } from '@tabler/icons-react/dist/esm/icons/IconClipboard.mjs';
 export { default as IconColorSwatch } from '@tabler/icons-react/dist/esm/icons/IconColorSwatch.mjs';
 export { default as IconCopy } from '@tabler/icons-react/dist/esm/icons/IconCopy.mjs';

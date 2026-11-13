@@ -81,7 +81,7 @@ Um die Taskleiste zu verschieben, öffne **Persönliche Einstellungen** (in der 
 
 - eine schmale Leiste links: deine Initialen (das Kontomenü), dein persönlicher Ordner und unten **Persönliche Einstellungen**, **Abmelden** und, mit dem Recht, **Ein/Aus**,
 - die App-Liste mit einem Suchfeld, gruppiert in **System** (nur für Administratoren: die Apps, die mit Pithyx kommen), **Apps** und **Du**,
-- Kacheln: Administratoren sehen den Zustand jedes Pools, das System (Prozessor und Arbeitsspeicher) und die Updates, jede öffnet ihre App; alle sehen **Deine Ordner**, den persönlichen Ordner und die freigegebenen Ordner mit dem Zugriff, den sie haben, jeder öffnet sich in Dateien.
+- Kacheln: Administratoren sehen den Zustand jedes Pools, das System (Prozessor und Arbeitsspeicher) und die Updates, jede öffnet ihre App; alle sehen **Zuletzt verwendete Dateien**, die fünf Dateien, die du zuletzt geöffnet hast (ein Klick öffnet eine, **Dateien öffnen** zeigt die ganze Liste in Dateien, siehe [Dateien](/de/docs/user/files/#zuletzt-verwendete-dateien)), und **Deine Ordner**, den persönlichen Ordner und die freigegebenen Ordner mit dem Zugriff, den sie haben, jeder öffnet sich in Dateien.
 
 Die Suche findet Apps nach ihrem Namen, und Administratoren finden auch die Seiten der Einstellungen nach ihrem Namen oder nach dem, was sie einstellen („Quota“, „Zeitzone“); ein Treffer öffnet die Einstellungen auf dieser Seite. Dateien findet sie dort nicht. Dein Kontomenü (klicke auf deine Initialen) enthält **Persönliche Einstellungen** und **Darstellung**. In Persönliche Einstellungen ([Dein Konto](/de/docs/user/account/#persönliche-einstellungen)) findest du außerdem:
 

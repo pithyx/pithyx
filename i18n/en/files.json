@@ -172,7 +172,8 @@
     "empty": "Files you open appear here.",
     "location": "Location",
     "opened": "Opened",
-    "show": "Show in {location}"
+    "show": "Show in {location}",
+    "clear": "Clear list"
   },
   "tree": {
     "expand": "Show the folders in {name}",
