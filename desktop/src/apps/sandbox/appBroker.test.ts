@@ -85,6 +85,7 @@ describe('the file dialogs of a third-party app', () => {
     const [file] = (await reading) as unknown as FileRef[];
     expect(file).toMatchObject({ name: 'a.png', size: 10, writable: false });
     expect(posts).toEqual([
+      { url: '/api/files/recent', body: { share: 3, path: 'photos/a.png' } },
       { url: '/api/app/files/handles', body: { share: '3', path: 'photos/a.png', write: false } },
     ]);
 
