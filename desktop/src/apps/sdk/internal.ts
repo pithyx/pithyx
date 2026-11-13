@@ -37,6 +37,8 @@ export type ScrubAction = 'start' | 'pause' | 'stop';
 export type ShareDetails = components['schemas']['ShareDetails'];
 export type ShareUserAccess = components['schemas']['ShareUserAccess'];
 export type ShareGrants = components['schemas']['ShareGrants'];
+export type ShareQuotaList = components['schemas']['ShareQuotaList'];
+export type ShareUserQuota = components['schemas']['ShareUserQuota'];
 export type SubjectGrant = components['schemas']['SubjectGrant'];
 export type ShareAccess = components['schemas']['ShareAccess'];
 export type SharePlanRequest = components['schemas']['SharePlanRequest'];
@@ -119,8 +121,23 @@ export interface InternalMethods {
       smb?: boolean;
       sftp?: boolean;
       smbEncrypt?: boolean;
+      webDav?: boolean;
+      ftp?: boolean;
+      previousVersions?: boolean;
     };
     result: ShareDetails;
+  };
+  /** Days the recycle bin keeps deleted items; 0 keeps them until it is emptied. */
+  'internal.admin.shares.trash': {
+    params: { shareId: number; retentionDays: number };
+    result: null;
+  };
+  /** The users of a shared folder with their space and quota (D411). */
+  'internal.admin.shares.quotas': { params: { shareId: number }; result: ShareQuotaList };
+  /** Sets a user's quota on a shared folder, or removes it with null. */
+  'internal.admin.shares.setQuota': {
+    params: { shareId: number; userId: number; quotaBytes: number | null };
+    result: ShareQuotaList;
   };
   /** Plans creating or deleting a shared folder; the plan runs with `internal.admin.storage.run`. */
   'internal.admin.shares.plan': { params: SharePlanRequest; result: StoragePlanPreview };
@@ -144,7 +161,10 @@ export const SNAPSHOTS_CHANGED = 'internal.admin.storage.snapshots.changed';
 /** Sent to the app with every change of a job it started with `internal.admin.storage.run`. */
 export const STORAGE_JOB = 'internal.admin.storage.job';
 
-/** Sent to the app when the shares may have changed (the `shares/list` topic); the app reads them again. */
+/**
+ * Sent to the app when the shares may have changed (the `shares/list` and `shares/quotas` topics); the app reads them
+ * again.
+ */
 export const SHARES_CHANGED = 'internal.admin.shares.changed';
 
 type InternalName = keyof InternalMethods;
@@ -240,9 +260,14 @@ function isShareUpdate(value: unknown): boolean {
     isShareId(value) &&
     (value.name === undefined || typeof value.name === 'string') &&
     (value.description === undefined || typeof value.description === 'string') &&
-    [value.smb, value.sftp, value.smbEncrypt, value.webDav, value.ftp].every(
-      (flag) => flag === undefined || typeof flag === 'boolean',
-    )
+    [
+      value.smb,
+      value.sftp,
+      value.smbEncrypt,
+      value.webDav,
+      value.ftp,
+      value.previousVersions,
+    ].every((flag) => flag === undefined || typeof flag === 'boolean')
   );
 }
 
@@ -312,6 +337,7 @@ export function adminStorageHost(emit: (event: string, data?: unknown) => void):
   };
   // The first message is the snapshot the app has already read; later revisions are changes.
   let sharesRevision: number | undefined;
+  let quotasRevision: number | undefined;
   let snapshotsRevision: number | undefined;
   const stops = [
     realtime.listen('storage/pools', changed),
@@ -330,6 +356,13 @@ export function adminStorageHost(emit: (event: string, data?: unknown) => void):
         emit(SHARES_CHANGED);
       }
       sharesRevision = revision;
+    }),
+    realtime.listen('shares/quotas', (data) => {
+      const { revision } = data as components['schemas']['ShareQuotaRevision'];
+      if (quotasRevision !== undefined && revision !== quotasRevision) {
+        emit(SHARES_CHANGED);
+      }
+      quotasRevision = revision;
     }),
   ];
   const follow = (job: Job) => {
@@ -612,18 +645,71 @@ export function adminStorageHost(emit: (event: string, data?: unknown) => void):
       validate: isShareUpdate,
       handle: (params) =>
         daemon(async () => {
-          const { shareId, name, description, smb, sftp, smbEncrypt } =
+          const { shareId, ...changes } =
             params as InternalMethods['internal.admin.shares.update']['params'];
+          // Only the fields the app named; the validator has checked their types.
+          const fields = [
+            'name',
+            'description',
+            'smb',
+            'sftp',
+            'smbEncrypt',
+            'webDav',
+            'ftp',
+            'previousVersions',
+          ] as const;
+          const body = Object.fromEntries(
+            fields
+              .filter((field) => changes[field] !== undefined)
+              .map((field) => [field, changes[field]]),
+          );
           return unwrap(
-            await api.PATCH('/api/shares/{shareId}', {
+            await api.PATCH('/api/shares/{shareId}', { params: { path: { shareId } }, body }),
+          );
+        }),
+    },
+    'internal.admin.shares.trash': {
+      validate: (value) =>
+        isShareId(value) &&
+        Number.isSafeInteger(value.retentionDays) &&
+        (value.retentionDays as number) >= 0,
+      handle: (params) =>
+        daemon(async () => {
+          const { shareId, retentionDays } =
+            params as InternalMethods['internal.admin.shares.trash']['params'];
+          unwrap(
+            await api.PUT('/api/shares/{shareId}/trash', {
               params: { path: { shareId } },
-              body: {
-                ...(name === undefined ? {} : { name }),
-                ...(description === undefined ? {} : { description }),
-                ...(smb === undefined ? {} : { smb }),
-                ...(sftp === undefined ? {} : { sftp }),
-                ...(smbEncrypt === undefined ? {} : { smbEncrypt }),
-              },
+              body: { retentionDays },
+            }),
+          );
+          return null;
+        }),
+    },
+    'internal.admin.shares.quotas': {
+      validate: isShareId,
+      handle: (params) =>
+        daemon(async () =>
+          unwrap(
+            await api.GET('/api/shares/{shareId}/quotas', {
+              params: { path: { shareId: (params as { shareId: number }).shareId } },
+            }),
+          ),
+        ),
+    },
+    'internal.admin.shares.setQuota': {
+      validate: (value) =>
+        isShareId(value) &&
+        Number.isSafeInteger(value.userId) &&
+        (value.quotaBytes === null || Number.isSafeInteger(value.quotaBytes)),
+      handle: (params) =>
+        daemon(async () => {
+          const { shareId, userId, quotaBytes } =
+            params as InternalMethods['internal.admin.shares.setQuota']['params'];
+          return unwrap(
+            await api.PUT('/api/shares/{shareId}/quotas/{userId}', {
+              params: { path: { shareId, userId } },
+              body: { quotaBytes },
             }),
           );
         }),

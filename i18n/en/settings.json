@@ -68,7 +68,28 @@
       "everybody": "every user",
       "effective": "ends up with: {access}",
       "webdav": "Offer over WebDAV",
-      "ftp": "Offer over FTP"
+      "ftp": "Offer over FTP",
+      "keeping": "Recycle bin and previous versions",
+      "previousVersions": "Show previous versions",
+      "previousVersionsHint": "Files and SMB clients offer the daily restore points of this folder as previous versions. Switched off, the restore points stay, and Advanced storage can still roll the folder back to one.",
+      "trashRetention": "Keep deleted items for (days)",
+      "trashRetentionHint": "0 keeps them until the recycle bin is emptied. Applies to items already in it.",
+      "trashRetentionInvalid": "Enter a whole number of days from 0 to {max, number}."
+    },
+    "quotas": {
+      "title": "Quotas",
+      "intro": "How much each user may store in this folder. A quota counts the files the user owns, also those written over SMB or SFTP, and the box notices it a few seconds late.",
+      "empty": "Nobody but administrators may write to this folder.",
+      "usage": "uses {used} of {quota}",
+      "unknown": "unknown",
+      "none": "No limit",
+      "limited": "Quota",
+      "edit": "Quota",
+      "editLabel": "Quota of {name}",
+      "dialogTitle": "Quota of {name} in this folder",
+      "size": "Quota",
+      "sizeHint": "At least {min}.",
+      "save": "Save"
     },
     "deleteDialog": {
       "title": "Delete {name}",

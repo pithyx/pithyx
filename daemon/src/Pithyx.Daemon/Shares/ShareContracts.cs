@@ -120,7 +120,7 @@ public sealed record ShareUserQuota(long UserId, string Username, string? Displa
 /// <param name="Users">By user name.</param>
 public sealed record ShareQuotaList(long ShareId, long MinQuotaBytes, IReadOnlyList<ShareUserQuota> Users);
 
-/// <param name="QuotaBytes">The user's quota in bytes, at least <see cref="ShareQuotaList.MinQuotaBytes"/>; null removes it.</param>
+/// <param name="QuotaBytes">The user's quota in bytes, at least the list's minQuotaBytes; null removes it.</param>
 public sealed record ShareQuotaRequest(long? QuotaBytes);
 
 /// <summary>Snapshot and event of <c>shares/quotas</c>.</summary>

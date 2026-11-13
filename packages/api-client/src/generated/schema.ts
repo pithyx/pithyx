@@ -7584,7 +7584,7 @@ export type components = {
         ShareQuotaRequest: {
             /**
              * Format: int64
-             * @description The user's quota in bytes, at least long ShareQuotaList.MinQuotaBytes; null removes it.
+             * @description The user's quota in bytes, at least the list's minQuotaBytes; null removes it.
              */
             quotaBytes: null | number;
         };

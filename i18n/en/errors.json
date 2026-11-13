@@ -217,7 +217,7 @@
     },
     "quota": {
       "exceeded": "Your quota on this shared folder is used up. Delete files you own there, or ask an administrator for more space.",
-      "invalid": "A quota is at least {minBytes, number} bytes, or no limit."
+      "invalid": "A quota is at least 1 MiB, or no limit."
     },
     "range": {
       "not_satisfiable": "The requested part of the file does not exist."

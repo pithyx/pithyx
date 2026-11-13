@@ -20870,7 +20870,7 @@
               "null",
               "integer"
             ],
-            "description": "The user's quota in bytes, at least long ShareQuotaList.MinQuotaBytes; null removes it.",
+            "description": "The user's quota in bytes, at least the list's minQuotaBytes; null removes it.",
             "format": "int64"
           }
         }
