@@ -12,6 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Fixed
 
+- WebSocket: a topic's first `event` no longer comes before its `snap`. A change made while the snapshot is read is held and follows it, and one already in the snapshot is dropped (#339).
 - pithyx.org: the tab of the landing page says "Pithyx" instead of "Pithyx | Pithyx", and the icon is served under a new name (`/pithyx-icon.svg`), so browsers that kept the old light tile load the current one.
 
 ## [1.2.0] - 2026-10-31
