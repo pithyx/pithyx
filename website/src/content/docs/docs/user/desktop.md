@@ -81,7 +81,7 @@ To move the taskbar, open **Personal settings** (in the Pithyx menu's left bar),
 
 - a narrow bar at the left: your initials (the account menu), your home folder, and at the bottom **Personal settings**, **Sign out** and, with the right, **Power options**,
 - the app list with a search field, grouped into **System** (only for administrators: the apps that come with Pithyx), **Apps** and **You**,
-- tiles: administrators see the state of each pool, the system (processor and memory) and the updates, each opening its app; everybody sees **Your folders**, the home folder and the shared folders with the access they have, each opening in Files.
+- tiles: administrators see the state of each pool, the system (processor and memory) and the updates, each opening its app; everybody sees **Recent files**, the five files you opened last (a click opens one, **Open Files** shows the whole list in Files, see [Files](/docs/user/files/#recent-files)), and **Your folders**, the home folder and the shared folders with the access they have, each opening in Files.
 
 The search field finds apps by name, and administrators also find the pages of Settings by their name or by what they set ("quota", "time zone"); choosing one opens Settings on that page. Files are not found there. Your account menu (click your initials) has **Personal settings** and **Appearance**. Personal settings ([Your account](/docs/user/account/#personal-settings)) also has:
 

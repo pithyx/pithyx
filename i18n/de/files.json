@@ -172,7 +172,8 @@
     "empty": "Dateien, die du öffnest, erscheinen hier.",
     "location": "Ort",
     "opened": "Geöffnet",
-    "show": "In {location} zeigen"
+    "show": "In {location} zeigen",
+    "clear": "Liste leeren"
   },
   "tree": {
     "expand": "Ordner in {name} zeigen",

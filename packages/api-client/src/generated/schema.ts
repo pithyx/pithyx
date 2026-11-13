@@ -1324,6 +1324,25 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/api/files/recent": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description The signed-in user's recently opened files, newest first, at most 50. Files the user can no longer read (access taken away, deleted or moved, pool locked or missing) are left out; size and modified are the file's as it is now. */
+        get: operations["ListRecentFiles"];
+        put?: never;
+        /** @description Records that the signed-in user opened a file they can read; opening it again moves it to the top of the list. */
+        post: operations["RecordRecentFile"];
+        /** @description Forgets the signed-in user's recently opened files. */
+        delete: operations["ClearRecentFiles"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/groups": {
         parameters: {
             query?: never;
@@ -6949,6 +6968,48 @@ export type components = {
             /** @description The address it asked for. */
             url: string;
         };
+        /** @description A file the user opened recently. */
+        RecentFile: {
+            /**
+             * Format: date-time
+             * @description Last change of the content as the file is now, UTC.
+             */
+            modified: string;
+            /**
+             * Format: date-time
+             * @description When the user last opened it, UTC.
+             */
+            openedAt: string;
+            /** @description The file, relative to the share. */
+            path: string;
+            /**
+             * Format: int64
+             * @description The share the file is in.
+             */
+            share: number;
+            /**
+             * Format: int64
+             * @description Bytes, as the file is now.
+             */
+            size: number;
+        };
+        RecentFileRequest: {
+            /** @description The file, relative to the share. */
+            path: string;
+            /**
+             * Format: int64
+             * @description The share the file is in.
+             */
+            share: number;
+        };
+        /** @description Snapshot and event of `files/recent`. */
+        RecentFilesRevision: {
+            /**
+             * Format: int64
+             * @description Changes whenever the user's list changed; compare it, do not count on it.
+             */
+            revision: number;
+        };
         RecoverRequest: {
             newPassword: string;
             recoveryKey: string;
@@ -8388,6 +8449,7 @@ export type components = {
             "apps/+/context": components["schemas"]["AppContextState"];
             "apps/admin": components["schemas"]["AdminAppList"];
             "files/+/+": components["schemas"]["FolderChanges"];
+            "files/recent": components["schemas"]["RecentFilesRevision"];
             jobs: components["schemas"]["Job"];
             "jobs/+": components["schemas"]["Job"];
             notifications: components["schemas"]["NotificationEvent"];
@@ -8413,6 +8475,7 @@ export type components = {
             "apps/+/context": components["schemas"]["AppContextState"];
             "apps/admin": components["schemas"]["AdminAppList"];
             "files/+/+": components["schemas"]["FolderWatchState"];
+            "files/recent": components["schemas"]["RecentFilesRevision"];
             jobs: components["schemas"]["JobList"];
             "jobs/+": components["schemas"]["Job"];
             notifications: components["schemas"]["NotificationList"];
@@ -11912,6 +11975,93 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["Job"];
                 };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    ListRecentFiles: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RecentFile"][];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    RecordRecentFile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RecentFileRequest"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    ClearRecentFiles: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Problem details with a stable error code. */
             default: {

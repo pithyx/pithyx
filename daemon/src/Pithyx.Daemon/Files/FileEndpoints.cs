@@ -24,6 +24,8 @@ public static class FileEndpoints
         services.AddSingleton<FileOperations>();
         services.AddSingleton<TrashService>();
         services.AddSingleton<PreviousVersions>();
+        services.AddSingleton<RecentFiles>();
+        services.AddSingleton(provider => RecentFiles.Definition(provider.GetRequiredService<RecentFiles>));
         services.AddHostedService<TrashCleanupService>();
         services.AddSingleton<FolderWatches>();
         services.AddSingleton(provider => FolderWatchPublisher.Definition(
@@ -56,6 +58,20 @@ public static class FileEndpoints
                 + "checked now: read on the sources for copy, write on the sources for move and delete, write on the target. "
                 + "Deleting moves to the share's recycle bin unless permanent is true. onConflict decides about names that exist in the target: fail (default), skip, "
                 + "overwrite (folders are merged) or rename.");
+        api.MapGet("/files/recent", ListRecentAsync)
+            .WithTags("Files")
+            .WithName("ListRecentFiles")
+            .WithDescription(
+                $"The signed-in user's recently opened files, newest first, at most {RecentFiles.Limit}. Files the user can no longer read "
+                + "(access taken away, deleted or moved, pool locked or missing) are left out; size and modified are the file's as it is now.");
+        api.MapPost("/files/recent", RecordRecentAsync)
+            .WithTags("Files")
+            .WithName("RecordRecentFile")
+            .WithDescription("Records that the signed-in user opened a file they can read; opening it again moves it to the top of the list.");
+        api.MapDelete("/files/recent", ClearRecentAsync)
+            .WithTags("Files")
+            .WithName("ClearRecentFiles")
+            .WithDescription("Forgets the signed-in user's recently opened files.");
         var files = api.MapGroup("/files/{shareId:long}").WithTags("Files");
         files.MapGet("/list", ListAsync)
             .WithName("ListFolder")
@@ -117,6 +133,21 @@ public static class FileEndpoints
         files.MapPost("/rename", RenameAsync)
             .WithName("RenameFileEntry")
             .WithDescription("Renames a file or folder within its folder. An existing name is never replaced (fs.entry.exists).");
+    }
+
+    private static async Task<Ok<IReadOnlyList<RecentFile>>> ListRecentAsync(RecentFiles recent, HttpContext context, CancellationToken cancellationToken) =>
+        TypedResults.Ok(await recent.ListAsync(context.User, cancellationToken));
+
+    private static async Task<NoContent> RecordRecentAsync(RecentFileRequest request, RecentFiles recent, HttpContext context, CancellationToken cancellationToken)
+    {
+        await recent.RecordAsync(context.User, request, cancellationToken);
+        return TypedResults.NoContent();
+    }
+
+    private static async Task<NoContent> ClearRecentAsync(RecentFiles recent, HttpContext context, CancellationToken cancellationToken)
+    {
+        await recent.ClearAsync(context.User, cancellationToken);
+        return TypedResults.NoContent();
     }
 
     private static async Task<Ok<TrashPage>> ListTrashAsync(long shareId, string? cursor, int? limit, TrashService trash, HttpContext context, CancellationToken cancellationToken) =>

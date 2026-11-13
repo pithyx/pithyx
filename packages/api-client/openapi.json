@@ -392,6 +392,94 @@
         }
       }
     },
+    "/api/files/recent": {
+      "get": {
+        "tags": [
+          "Files"
+        ],
+        "description": "The signed-in user's recently opened files, newest first, at most 50. Files the user can no longer read (access taken away, deleted or moved, pool locked or missing) are left out; size and modified are the file's as it is now.",
+        "operationId": "ListRecentFiles",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RecentFile"
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Files"
+        ],
+        "description": "Records that the signed-in user opened a file they can read; opening it again moves it to the top of the list.",
+        "operationId": "RecordRecentFile",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecentFileRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Files"
+        ],
+        "description": "Forgets the signed-in user's recently opened files.",
+        "operationId": "ClearRecentFiles",
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/shares/{shareId}/trash": {
       "put": {
         "tags": [
@@ -19395,6 +19483,75 @@
         },
         "description": "A browser wants into a proxy host with the Pithyx sign-in."
       },
+      "RecentFile": {
+        "required": [
+          "share",
+          "path",
+          "size",
+          "modified",
+          "openedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "share": {
+            "type": "integer",
+            "description": "The share the file is in.",
+            "format": "int64"
+          },
+          "path": {
+            "type": "string",
+            "description": "The file, relative to the share."
+          },
+          "size": {
+            "type": "integer",
+            "description": "Bytes, as the file is now.",
+            "format": "int64"
+          },
+          "modified": {
+            "type": "string",
+            "description": "Last change of the content as the file is now, UTC.",
+            "format": "date-time"
+          },
+          "openedAt": {
+            "type": "string",
+            "description": "When the user last opened it, UTC.",
+            "format": "date-time"
+          }
+        },
+        "description": "A file the user opened recently."
+      },
+      "RecentFileRequest": {
+        "required": [
+          "share",
+          "path"
+        ],
+        "type": "object",
+        "properties": {
+          "share": {
+            "type": "integer",
+            "description": "The share the file is in.",
+            "format": "int64"
+          },
+          "path": {
+            "type": "string",
+            "description": "The file, relative to the share."
+          }
+        }
+      },
+      "RecentFilesRevision": {
+        "required": [
+          "revision"
+        ],
+        "type": "object",
+        "properties": {
+          "revision": {
+            "type": "integer",
+            "description": "Changes whenever the user's list changed; compare it, do not count on it.",
+            "format": "int64"
+          }
+        },
+        "description": "Snapshot and event of `files/recent`."
+      },
       "RecoverRequest": {
         "required": [
           "username",
@@ -22766,6 +22923,7 @@
           "apps/+/context",
           "apps/admin",
           "files/+/+",
+          "files/recent",
           "jobs",
           "jobs/+",
           "notifications",
@@ -22799,6 +22957,9 @@
           },
           "files/+/+": {
             "$ref": "#/components/schemas/FolderChanges"
+          },
+          "files/recent": {
+            "$ref": "#/components/schemas/RecentFilesRevision"
           },
           "jobs": {
             "$ref": "#/components/schemas/Job"
@@ -22865,6 +23026,7 @@
           "apps/+/context",
           "apps/admin",
           "files/+/+",
+          "files/recent",
           "jobs",
           "jobs/+",
           "notifications",
@@ -22898,6 +23060,9 @@
           },
           "files/+/+": {
             "$ref": "#/components/schemas/FolderWatchState"
+          },
+          "files/recent": {
+            "$ref": "#/components/schemas/RecentFilesRevision"
           },
           "jobs": {
             "$ref": "#/components/schemas/JobList"
