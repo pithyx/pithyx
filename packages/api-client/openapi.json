@@ -3061,7 +3061,7 @@
         "tags": [
           "Shares"
         ],
-        "description": "Administrators only. Changes the name shown, the description and whether SMB and SFTP offer the share (and whether SMB clients must encrypt); the folder and the dataset stay where they are.",
+        "description": "Administrators only. Changes the name shown, the description, whether SMB, SFTP, WebDAV and FTP offer the share (and whether SMB clients must encrypt) and whether SMB and Files show its daily restore points as previous versions; the folder and the dataset stay where they are.",
         "operationId": "UpdateShare",
         "parameters": [
           {
@@ -3231,6 +3231,109 @@
         "responses": {
           "204": {
             "description": "No Content"
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/shares/{shareId}/quotas": {
+      "get": {
+        "tags": [
+          "Shares"
+        ],
+        "description": "Administrators only. Every user who may write to the shared folder and every user with a quota there, with the space the files they own take and their quota (D411). The space is read after writes and pool events and announced on shares/quotas; null until it was read. Homes answer fs.share.not_found, Apps fs.share.system, a folder share fs.share.no_dataset.",
+        "operationId": "GetShareQuotas",
+        "parameters": [
+          {
+            "name": "shareId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShareQuotaList"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/shares/{shareId}/quotas/{userId}": {
+      "put": {
+        "tags": [
+          "Shares"
+        ],
+        "description": "Administrators only. Sets a user's quota on the shared folder (at least 1 MiB, fs.quota.invalid otherwise) or removes it with null, and applies it to the dataset before it answers. ZFS counts every file the user owns there and refuses writes over the quota with fs.quota.exceeded, a few seconds late.",
+        "operationId": "SetShareQuota",
+        "parameters": [
+          {
+            "name": "shareId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ShareQuotaRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShareQuotaList"
+                }
+              }
+            }
           },
           "default": {
             "description": "Problem details with a stable error code.",
@@ -13819,6 +13922,8 @@
           "fs.operation.into_itself",
           "fs.operation.invalid",
           "fs.path.invalid",
+          "fs.quota.exceeded",
+          "fs.quota.invalid",
           "fs.range.not_satisfiable",
           "fs.share.data_choice_required",
           "fs.share.dataset_name_invalid",
@@ -13839,6 +13944,7 @@
           "fs.thumbnail.too_many",
           "fs.trash.retention_invalid",
           "fs.upload.incomplete",
+          "fs.version.disabled",
           "fs.version.not_found",
           "fs.volume.full",
           "fs.volume.read_only",
@@ -20273,7 +20379,9 @@
           "sftp",
           "smbEncrypt",
           "webDav",
-          "ftp"
+          "ftp",
+          "previousVersions",
+          "trashRetentionDays"
         ],
         "type": "object",
         "properties": {
@@ -20368,6 +20476,15 @@
           "ftp": {
             "type": "boolean",
             "description": "Whether FTP offers the shared folder."
+          },
+          "previousVersions": {
+            "type": "boolean",
+            "description": "Whether SMB and Files show the daily restore points as previous versions (D411)."
+          },
+          "trashRetentionDays": {
+            "type": "integer",
+            "description": "Days the recycle bin keeps deleted items; 0 keeps them until it is emptied.",
+            "format": "int32"
           },
           "system": {
             "type": [
@@ -20464,6 +20581,11 @@
           "kind": {
             "description": "A shared folder, the caller's home or another user's home.",
             "$ref": "#/components/schemas/ShareKind"
+          },
+          "previousVersions": {
+            "type": "boolean",
+            "description": "Whether Files offers previous versions of its files (D411); false for Apps, which has none.",
+            "default": true
           }
         },
         "description": "A share the user can use."
@@ -20552,6 +20674,64 @@
         },
         "description": "A shared folder action to plan. `share.create` needs Name and Pool (Description is optional);\n`share.delete` needs ShareId, ConfirmName and Data."
       },
+      "ShareQuotaList": {
+        "required": [
+          "shareId",
+          "minQuotaBytes",
+          "users"
+        ],
+        "type": "object",
+        "properties": {
+          "shareId": {
+            "type": "integer",
+            "description": "The shared folder.",
+            "format": "int64"
+          },
+          "minQuotaBytes": {
+            "type": "integer",
+            "description": "The smallest quota.",
+            "format": "int64"
+          },
+          "users": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ShareUserQuota"
+            },
+            "description": "By user name."
+          }
+        },
+        "description": "The users of a shared folder with their space: everybody who may write, and everybody with a quota."
+      },
+      "ShareQuotaRequest": {
+        "required": [
+          "quotaBytes"
+        ],
+        "type": "object",
+        "properties": {
+          "quotaBytes": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "The user's quota in bytes, at least long ShareQuotaList.MinQuotaBytes; null removes it.",
+            "format": "int64"
+          }
+        }
+      },
+      "ShareQuotaRevision": {
+        "required": [
+          "revision"
+        ],
+        "type": "object",
+        "properties": {
+          "revision": {
+            "type": "integer",
+            "description": "Changes whenever a quota or the space of a user on a shared folder changed; compare it, do not count on it.",
+            "format": "int64"
+          }
+        },
+        "description": "Snapshot and event of `shares/quotas`."
+      },
       "ShareUpdate": {
         "type": "object",
         "properties": {
@@ -20603,6 +20783,13 @@
               "boolean"
             ],
             "description": "Offers the shared folder over FTP or stops it."
+          },
+          "previousVersions": {
+            "type": [
+              "null",
+              "boolean"
+            ],
+            "description": "Shows the daily restore points as previous versions over SMB and in Files, or hides them."
           }
         },
         "description": "Changes of a share; fields left out stay. The dataset is never renamed by this."
@@ -20648,6 +20835,51 @@
           }
         },
         "description": "One user's effective access to a shared folder."
+      },
+      "ShareUserQuota": {
+        "required": [
+          "userId",
+          "username",
+          "displayName",
+          "usedBytes",
+          "quotaBytes"
+        ],
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "integer",
+            "description": "The user.",
+            "format": "int64"
+          },
+          "username": {
+            "type": "string",
+            "description": "Its name."
+          },
+          "displayName": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Its display name, or null."
+          },
+          "usedBytes": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "Space the files the user owns there take, as ZFS counts it; null until the box read it (or in simulation).",
+            "format": "int64"
+          },
+          "quotaBytes": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "The user's quota on the shared folder, or null for none.",
+            "format": "int64"
+          }
+        },
+        "description": "A user's space on a shared folder (D411)."
       },
       "SmartReport": {
         "required": [
@@ -22539,6 +22771,7 @@
           "notifications",
           "session/permissions",
           "shares/list",
+          "shares/quotas",
           "storage/alerts",
           "storage/disks",
           "storage/pools",
@@ -22581,6 +22814,9 @@
           },
           "shares/list": {
             "$ref": "#/components/schemas/ShareListRevision"
+          },
+          "shares/quotas": {
+            "$ref": "#/components/schemas/ShareQuotaRevision"
           },
           "storage/alerts": {
             "$ref": "#/components/schemas/StorageHealth"
@@ -22634,6 +22870,7 @@
           "notifications",
           "session/permissions",
           "shares/list",
+          "shares/quotas",
           "storage/alerts",
           "storage/disks",
           "storage/pools",
@@ -22676,6 +22913,9 @@
           },
           "shares/list": {
             "$ref": "#/components/schemas/ShareListRevision"
+          },
+          "shares/quotas": {
+            "$ref": "#/components/schemas/ShareQuotaRevision"
           },
           "storage/alerts": {
             "$ref": "#/components/schemas/StorageHealth"

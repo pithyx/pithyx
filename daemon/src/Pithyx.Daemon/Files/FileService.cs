@@ -172,10 +172,10 @@ public sealed class FileService(ShareService shares, FolderCache cache, TimeProv
         catch (Exception exception) when (exception is IOException or OperationCanceledException or BadHttpRequestException or PithyxException)
         {
             TryUnlink(folder, temporary);
-            if (exception is IOException and not FsError)
+            if (exception is IOException io and not FsError)
             {
-                // The client went away mid-body.
-                throw new PithyxException(ErrorCodes.FsUploadIncomplete, null, exception);
+                // A full pool or quota, or else the client went away mid-body.
+                throw FsErrors.NoSpace(io) ?? new PithyxException(ErrorCodes.FsUploadIncomplete, null, exception);
             }
             throw;
         }

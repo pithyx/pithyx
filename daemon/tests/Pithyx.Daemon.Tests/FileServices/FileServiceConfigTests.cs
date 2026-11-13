@@ -80,7 +80,7 @@ public sealed class FileServiceConfigTests
         var config = SmbConfig.Render("WORKGROUP",
         [
             new SmbShare("Media", "/tank/pithyx/shares/media", ["tom"], ["ada", "rita"], Encrypt: false),
-            new SmbShare("Private Files", "/tank/pithyx/shares/private_files", [], [], Encrypt: true),
+            new SmbShare("Private Files", "/tank/pithyx/shares/private_files", [], [], Encrypt: true, PreviousVersions: false),
             new SmbShare("homes", "/tank/pithyx/shares/homes", [], ["ada"], Encrypt: false),
             new SmbShare("homes", "/tank/homes", [], ["ada"], Encrypt: false, SmbShareKind.Homes),
             new SmbShare("home", "%H", [], ["ada", "rita"], Encrypt: false, SmbShareKind.Home),
@@ -95,6 +95,10 @@ public sealed class FileServiceConfigTests
         Assert.True(config.IndexOf("[home]", StringComparison.Ordinal) < config.IndexOf("[homes]", StringComparison.Ordinal));
         var homes = config[config.IndexOf("[homes]", StringComparison.Ordinal)..config.IndexOf("[Media]", StringComparison.Ordinal)];
         Assert.DoesNotContain("recycle", homes, StringComparison.Ordinal);
+        // A shared folder without previous versions has no shadow_copy2 and none of its settings (D411).
+        var hidden = config[config.IndexOf("[Private Files]", StringComparison.Ordinal)..];
+        Assert.DoesNotContain("shadow", hidden, StringComparison.Ordinal);
+        Assert.Contains("shadow_copy2", config[config.IndexOf("[Media]", StringComparison.Ordinal)..config.IndexOf("[Private Files]", StringComparison.Ordinal)], StringComparison.Ordinal);
         AssertGolden(config, "samba", "smb.conf.golden");
     }
 

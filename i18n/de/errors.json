@@ -215,6 +215,10 @@
     "path": {
       "invalid": "Dieser Pfad ist ungültig. Pfade gehen vom Share aus, ohne „.“ oder „..“, und sind höchstens {maxBytes} Bytes lang."
     },
+    "quota": {
+      "exceeded": "Deine Quota in diesem freigegebenen Ordner ist aufgebraucht. Lösche Dateien, die dir dort gehören, oder bitte eine Administratorin oder einen Administrator um mehr Platz.",
+      "invalid": "Eine Quota ist mindestens {minBytes, number} Byte groß, oder es gibt keine Grenze."
+    },
     "range": {
       "not_satisfiable": "Den angefragten Teil der Datei gibt es nicht."
     },
@@ -246,6 +250,7 @@
       "incomplete": "Der Upload wurde unterbrochen. Es wurde nichts gespeichert."
     },
     "version": {
+      "disabled": "Dieser freigegebene Ordner zeigt keine Vorgängerversionen.",
       "not_found": "Diese Version gibt es nicht mehr. Vielleicht wurde der Snapshot gelöscht; lade die Liste neu."
     },
     "volume": {

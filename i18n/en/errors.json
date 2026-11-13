@@ -215,6 +215,10 @@
     "path": {
       "invalid": "This path is not valid. Paths are relative to the share, without “.” or “..”, and at most {maxBytes} bytes long."
     },
+    "quota": {
+      "exceeded": "Your quota on this shared folder is used up. Delete files you own there, or ask an administrator for more space.",
+      "invalid": "A quota is at least {minBytes, number} bytes, or no limit."
+    },
     "range": {
       "not_satisfiable": "The requested part of the file does not exist."
     },
@@ -246,6 +250,7 @@
       "incomplete": "The upload was interrupted. Nothing was saved."
     },
     "version": {
+      "disabled": "This shared folder does not show previous versions.",
       "not_found": "This version is no longer there. The snapshot may have been deleted; reload the list."
     },
     "volume": {
