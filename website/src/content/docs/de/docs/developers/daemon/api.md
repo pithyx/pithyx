@@ -44,7 +44,7 @@ Passwörter nutzen Argon2id (64 MiB, 3 Durchgänge) und brauchen mindestens 8 Ze
 
 `GET /ws` stuft eine authentifizierte Anfrage auf einen WebSocket hoch. Der `Origin` eines Browsers muss zum Host passen, sonst schließt der Daemon mit 4403; Clients ohne `Origin`-Header werden akzeptiert.
 
-Client-Nachrichten sind `sub` und `unsub` mit einer ID und einem Topic. Der Server antwortet mit `ack`, dann `snap` (der vollständige Zustand, einmal) und `event` (Änderungen), oder mit `error` und einem Code. Die größte Client-Nachricht ist 16 KB. Ein Client, der nicht mitkommt (Ausgangspuffer von 256 Nachrichten), wird mit 1008 geschlossen.
+Client-Nachrichten sind `sub` und `unsub` mit einer ID und einem Topic. Der Server antwortet mit `ack`, dann `snap` (der vollständige Zustand, einmal) und `event` (Änderungen), oder mit `error` und einem Code. Das erste `event` eines Topics kommt nie vor seinem `snap`: Eine Änderung, während der Snapshot gelesen wird, folgt ihm, und eine frühere steckt schon darin. Die größte Client-Nachricht ist 16 KB. Ein Client, der nicht mitkommt (Ausgangspuffer von 256 Nachrichten), wird mit 1008 geschlossen.
 
 | Close-Code | Bedeutung            | Aktion des Clients    |
 | ---------- | -------------------- | --------------------- |

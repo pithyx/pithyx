@@ -282,9 +282,13 @@ public sealed class JobServiceTests : IAsyncLifetime
     public async Task JobsLeftQueuedOrRunningAreInterruptedAfterARestartAndNeverResumed()
     {
         var runs = 0;
+        var bothStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         Func<JobContext, Task> work = context =>
         {
-            Interlocked.Increment(ref runs);
+            if (Interlocked.Increment(ref runs) == 2)
+            {
+                bothStarted.TrySetResult();
+            }
             return Task.Delay(Timeout.Infinite, context.Cancellation);
         };
         string dataDirectory;
@@ -299,7 +303,8 @@ public sealed class JobServiceTests : IAsyncLifetime
             await jobs.WaitForStateAsync(done, JobState.Succeeded);
             running = [(await jobs.StartAsync(userId, "test.work", null, work, Token)).Id, (await jobs.StartAsync(userId, "test.work", null, work, Token)).Id];
             queued = (await jobs.StartAsync(userId, "test.work", null, work, Token)).Id;
-            await jobs.WaitForStateAsync(running[1], JobState.Running);
+            // A job reports Running before its work is called, so wait for the work itself.
+            await bothStarted.Task.WaitAsync(TimeSpan.FromSeconds(10), Token);
             // What a crash leaves behind: a running row that nothing marked on the way down.
             crashed = await first.ScalarAsync<long>(
                 "INSERT INTO jobs (user_id, kind, state, request_id, created_at, started_at) VALUES (@userId, 'test.work', 'running', @requestId, @now, @now) RETURNING id",

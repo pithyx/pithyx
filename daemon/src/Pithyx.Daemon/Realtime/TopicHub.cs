@@ -30,6 +30,8 @@ public sealed partial class TopicHub(TopicRegistry registry, TimeProvider time, 
     {
         private readonly Lock _lock = new();
         private readonly HashSet<string> _patterns = new(StringComparer.Ordinal);
+        private readonly HashSet<string> _pending = new(StringComparer.Ordinal);
+        private readonly List<(TopicDefinition? Definition, string Topic, ReadOnlyMemory<byte> Payload)> _held = [];
 
         public Guid Id { get; } = Guid.NewGuid();
         /// <summary>The user as of the last change of rights; every snapshot and event is checked against it.</summary>
@@ -41,20 +43,88 @@ public sealed partial class TopicHub(TopicRegistry registry, TimeProvider time, 
 
         public WebSocketCloseCode? CloseCode { get; private set; }
 
-        internal bool AddPattern(string pattern)
+        /// <summary>
+        /// Adds a pattern that waits for its snapshots: until <see cref="Release"/>, events only it takes are held, so
+        /// the client never gets an event for a topic before that topic's snapshot.
+        /// </summary>
+        internal void AddPendingPattern(string pattern)
         {
             lock (_lock)
             {
-                return _patterns.Add(pattern);
+                if (_patterns.Add(pattern))
+                {
+                    _pending.Add(pattern);
+                }
             }
         }
 
-        internal bool RemovePattern(string pattern)
+        /// <summary>Drops the held events of a topic whose snapshot is about to be read; the snapshot includes them.</summary>
+        internal void Forget(string topic)
         {
             lock (_lock)
             {
-                return _patterns.Remove(pattern);
+                _held.RemoveAll(e => e.Topic == topic);
             }
+        }
+
+        /// <summary>Holds an event while every pattern that takes it still waits for snapshots; false to send it now.</summary>
+        internal bool Hold(TopicDefinition? definition, string topic, ReadOnlyMemory<byte> payload)
+        {
+            lock (_lock)
+            {
+                if (_pending.Count == 0 || MatchingPatterns(definition, topic).Any(p => !_pending.Contains(p)))
+                {
+                    return false;
+                }
+                if (_held.Count < OutboxCapacity)
+                {
+                    _held.Add((definition, topic, payload));
+                    return true;
+                }
+            }
+            // As with a full outbox: dropping the client is safer than holding without limit.
+            Close(WebSocketCloseCode.ClientTooSlow);
+            return true;
+        }
+
+        /// <summary>Ends the wait of a pattern and passes the held events it now takes to <paramref name="send"/>, in order.</summary>
+        internal void Release(string pattern, Action<ReadOnlyMemory<byte>> send)
+        {
+            lock (_lock)
+            {
+                _pending.Remove(pattern);
+                FlushHeld(send);
+            }
+        }
+
+        internal bool RemovePattern(string pattern, Action<ReadOnlyMemory<byte>> send)
+        {
+            lock (_lock)
+            {
+                _pending.Remove(pattern);
+                var removed = _patterns.Remove(pattern);
+                FlushHeld(send);
+                return removed;
+            }
+        }
+
+        private IEnumerable<string> MatchingPatterns(TopicDefinition? definition, string topic) =>
+            definition is { ExactOnly: true }
+                ? _patterns.Contains(topic) ? [topic] : []
+                : _patterns.Where(pattern => TopicPattern.Matches(pattern, topic));
+
+        private void FlushHeld(Action<ReadOnlyMemory<byte>> send)
+        {
+            _held.RemoveAll(held =>
+            {
+                var matching = MatchingPatterns(held.Definition, held.Topic).ToList();
+                if (matching.Any(p => !_pending.Contains(p)))
+                {
+                    send(held.Payload);
+                    return true;
+                }
+                return matching.Count == 0;
+            });
         }
 
         /// <summary>The topics and patterns this connection is subscribed to.</summary>
@@ -214,7 +284,7 @@ public sealed partial class TopicHub(TopicRegistry registry, TimeProvider time, 
     public async Task SubscribeAsync(Connection connection, string id, string pattern, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(connection);
-        connection.AddPattern(pattern);
+        connection.AddPendingPattern(pattern);
         lock (_waitersLock)
         {
             foreach (var waiter in _waiters.Where(w => TopicPattern.Matches(pattern, w.Topic) && Allowed(connection.User, w.Topic)).ToList())
@@ -234,6 +304,7 @@ public sealed partial class TopicHub(TopicRegistry registry, TimeProvider time, 
                     : TopicPattern.HasWildcards(pattern) || !TopicPattern.Matches(definition.Pattern, pattern) ? Enumerable.Empty<string>() : [pattern];
                 foreach (var topic in matches.Where(t => TopicPattern.Matches(pattern, t) && definition.IsAllowed(connection.User, t)))
                 {
+                    connection.Forget(topic);
                     var data = await definition.Snapshot(topic, cancellationToken);
                     if (definition.ForUser is { } forUser)
                     {
@@ -250,9 +321,10 @@ public sealed partial class TopicHub(TopicRegistry registry, TimeProvider time, 
         catch
         {
             // Without its snapshot the subscription would deliver changes to a state the client never got.
-            connection.RemovePattern(pattern);
+            connection.RemovePattern(pattern, payload => Enqueue(connection, payload));
             throw;
         }
+        connection.Release(pattern, payload => Enqueue(connection, payload));
         SubscribersAdded?.Invoke();
     }
 
@@ -261,7 +333,7 @@ public sealed partial class TopicHub(TopicRegistry registry, TimeProvider time, 
     public void Unsubscribe(Connection connection, string id, string pattern)
     {
         ArgumentNullException.ThrowIfNull(connection);
-        connection.RemovePattern(pattern);
+        connection.RemovePattern(pattern, payload => Enqueue(connection, payload));
         // Publishers stop their work first, so it has stopped by the time the client reads the ack.
         SubscribersRemoved?.Invoke();
         Send(connection, new AckMessage(id, Tracing.CurrentRequestId));
@@ -306,13 +378,21 @@ public sealed partial class TopicHub(TopicRegistry registry, TimeProvider time, 
                 {
                     if (forUser(connection.User, data) is { } shaped)
                     {
-                        Enqueue(connection, JsonSerializer.SerializeToUtf8Bytes<object>(new EventMessage(topic, shaped, requestId), _serializer));
+                        Route(connection, definition, topic, JsonSerializer.SerializeToUtf8Bytes<object>(new EventMessage(topic, shaped, requestId), _serializer));
                     }
                     continue;
                 }
                 payload ??= JsonSerializer.SerializeToUtf8Bytes<object>(new EventMessage(topic, data, requestId), _serializer);
-                Enqueue(connection, payload.Value);
+                Route(connection, definition, topic, payload.Value);
             }
+        }
+    }
+
+    private void Route(Connection connection, TopicDefinition definition, string topic, ReadOnlyMemory<byte> payload)
+    {
+        if (!connection.Hold(definition, topic, payload))
+        {
+            Enqueue(connection, payload);
         }
     }
 

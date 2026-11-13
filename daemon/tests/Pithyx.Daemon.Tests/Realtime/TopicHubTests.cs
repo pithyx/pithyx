@@ -126,4 +126,58 @@ public sealed class TopicHubTests
 
         await waiting.WaitAsync(TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken);
     }
+
+    [Fact]
+    public async Task AnEventPublishedWhileTheSnapshotIsReadComesAfterTheSnapshot()
+    {
+        _registry.Add(new TopicDefinition("shares/list", typeof(int), typeof(int), (_, _) =>
+        {
+            _hub.Publish("shares/list", 2);
+            return ValueTask.FromResult<object>(1);
+        }, TopicDefinition.AnyUser));
+        var connection = _hub.Connect(_user, "s");
+
+        await _hub.SubscribeAsync(connection, "c1", "shares/list", TestContext.Current.CancellationToken);
+
+        Assert.Equal([("ack", 0), ("snap", 1), ("event", 2)], Drain(connection).Select(m =>
+            (m.GetProperty("type").GetString(), m.TryGetProperty("data", out var data) ? data.GetInt32() : 0)));
+    }
+
+    [Fact]
+    public async Task AnEventOfATopicWhoseSnapshotIsStillToComeIsLeftToThatSnapshot()
+    {
+        var topics = new List<string> { "pools/a", "pools/b" };
+        _registry.Add(new TopicDefinition("pools/+", typeof(int), typeof(int), (topic, _) =>
+        {
+            if (topic == "pools/a")
+            {
+                _hub.Publish("pools/b", 7);
+            }
+            return ValueTask.FromResult<object>(1);
+        }, TopicDefinition.AnyUser, CurrentTopics: () => topics));
+        var connection = _hub.Connect(_user, "s");
+
+        await _hub.SubscribeAsync(connection, "c1", "pools/#", TestContext.Current.CancellationToken);
+        _hub.Publish("pools/a", 3);
+
+        Assert.Equal(["ack", "snap pools/a", "snap pools/b", "event pools/a"], Drain(connection).Select(m =>
+            m.TryGetProperty("topic", out var topic) ? $"{m.GetProperty("type").GetString()} {topic.GetString()}" : m.GetProperty("type").GetString()));
+    }
+
+    [Fact]
+    public async Task AnEventIsHeldOnlyWhileNoActiveSubscriptionTakesIt()
+    {
+        _registry.Add(new TopicDefinition("system/info", typeof(int), typeof(int), (_, _) =>
+        {
+            _hub.Publish("system/info", 2);
+            return ValueTask.FromResult<object>(1);
+        }, TopicDefinition.AnyUser));
+        var connection = _hub.Connect(_user, "s");
+        await _hub.SubscribeAsync(connection, "c1", "system/info", TestContext.Current.CancellationToken);
+        Drain(connection);
+
+        await _hub.SubscribeAsync(connection, "c2", "system/#", TestContext.Current.CancellationToken);
+
+        Assert.Equal(["ack", "event", "snap"], Drain(connection).Select(m => m.GetProperty("type").GetString()));
+    }
 }

@@ -44,7 +44,7 @@ Passwords use Argon2id (64 MiB, 3 passes) and need at least 8 characters. Pithyx
 
 `GET /ws` upgrades an authenticated request. A browser's `Origin` must match the host, otherwise the daemon closes with 4403; clients without an `Origin` header are accepted.
 
-Client messages are `sub` and `unsub` with an id and a topic. The server answers with `ack`, then `snap` (the full state, once) and `event` (changes), or `error` with a code. The largest client message is 16 KB. A client that cannot keep up (outbox of 256 messages) is closed with 1008.
+Client messages are `sub` and `unsub` with an id and a topic. The server answers with `ack`, then `snap` (the full state, once) and `event` (changes), or `error` with a code. A topic's first `event` never comes before its `snap`: a change made while the snapshot is read follows it, and one made before is already in it. The largest client message is 16 KB. A client that cannot keep up (outbox of 256 messages) is closed with 1008.
 
 | Close code | Meaning          | Client action        |
 | ---------- | ---------------- | -------------------- |
