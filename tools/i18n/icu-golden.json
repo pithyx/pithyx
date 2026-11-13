@@ -605,6 +605,14 @@
       },
       "expected": "This path is not valid. Paths are relative to the share, without “.” or “..”, and at most 999 bytes long."
     },
+    "fs.quota.exceeded": {
+      "params": {},
+      "expected": "Your quota on this shared folder is used up. Delete files you own there, or ask an administrator for more space."
+    },
+    "fs.quota.invalid": {
+      "params": {},
+      "expected": "A quota is at least 1 MiB, or no limit."
+    },
     "fs.range.not_satisfiable": {
       "params": {},
       "expected": "The requested part of the file does not exist."
@@ -703,6 +711,10 @@
     "fs.upload.incomplete": {
       "params": {},
       "expected": "The upload was interrupted. Nothing was saved."
+    },
+    "fs.version.disabled": {
+      "params": {},
+      "expected": "This shared folder does not show previous versions."
     },
     "fs.version.not_found": {
       "params": {},
