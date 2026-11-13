@@ -84,6 +84,7 @@ export function fileBrokerFor(target: FileBrokerTarget): {
         ...(share.kind === 'home' || share.kind === 'userHome' || share.kind === 'apps'
           ? { kind: share.kind }
           : {}),
+        ...(share.previousVersions ? {} : { previousVersions: false as const }),
       }));
     },
     'files.list': async ({ location, path, cursor, limit, sort, order, query }) => {

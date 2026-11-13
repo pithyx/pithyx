@@ -3,8 +3,10 @@ using System.Net.Http.Json;
 using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
+using Dapper;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
+using Pithyx.Daemon.Database;
 using Pithyx.Daemon.Jobs;
 using Pithyx.Daemon.Tests.Jobs;
 using Pithyx.Daemon.Tests.Support;
@@ -74,6 +76,73 @@ public sealed class ShareApiTests : IAsyncLifetime
         Assert.Equal(
             (HttpStatusCode.Forbidden, "auth.permission.denied"),
             await RefusedAsync(await anna.PutAsJsonAsync($"/api/shares/{_shared}/restore-points", new { enabled = true }, Token)));
+    }
+
+    [Fact]
+    public async Task PreviousVersionsCanBeHiddenFromFiles()
+    {
+        Assert.True((await DetailsAsync("Shared")).GetProperty("previousVersions").GetBoolean());
+        Assert.Equal(30, (await DetailsAsync("Shared")).GetProperty("trashRetentionDays").GetInt32());
+
+        (await _admin.PatchAsJsonAsync($"/api/shares/{_shared}", new { previousVersions = false }, Token)).EnsureSuccessStatusCode();
+
+        Assert.False((await DetailsAsync("Shared")).GetProperty("previousVersions").GetBoolean());
+        var listed = (await (await _admin.GetAsync("/api/shares", Token)).JsonAsync()).EnumerateArray().Single(share => share.GetProperty("id").GetInt64() == _shared);
+        Assert.False(listed.GetProperty("previousVersions").GetBoolean());
+        Assert.Equal(
+            (HttpStatusCode.Forbidden, "fs.version.disabled"),
+            await RefusedAsync(await _admin.GetAsync($"/api/files/{_shared}/versions?path=a.txt", Token)));
+        Assert.Equal(
+            (HttpStatusCode.Forbidden, "fs.version.disabled"),
+            await RefusedAsync(await _admin.PostAsJsonAsync($"/api/files/{_shared}/versions/restore", new { path = "a.txt", snapshot = "pithyx-daily-20261101T000000Z" }, Token)));
+
+        (await _admin.PatchAsJsonAsync($"/api/shares/{_shared}", new { previousVersions = true }, Token)).EnsureSuccessStatusCode();
+        using var versions = await _admin.GetAsync($"/api/files/{_shared}/versions?path=a.txt", Token);
+        Assert.Equal(HttpStatusCode.OK, versions.StatusCode);
+    }
+
+    [Fact]
+    public async Task QuotasArePerUserOnSharedFoldersWithADataset()
+    {
+        var (anna, annaId) = await UserAsync("anna");
+        var (_, tomId) = await UserAsync("tom");
+        Assert.Equal(
+            (HttpStatusCode.Conflict, "fs.share.no_dataset"),
+            await RefusedAsync(await _admin.GetAsync($"/api/shares/{_shared}/quotas", Token)));
+        await using (var connection = await _factory.Services.GetRequiredService<SqliteConnectionFactory>().OpenAsync(Token))
+        {
+            await connection.ExecuteAsync("UPDATE shares SET dataset = 'ghost/pithyx/shares/shared' WHERE id = @shared", new { shared = _shared });
+        }
+        await _admin.SetShareAccessAsync(_shared, annaId, "readWrite");
+        await _admin.SetShareAccessAsync(_shared, tomId, "read");
+
+        var list = await _admin.GetFromJsonAsync<JsonElement>($"/api/shares/{_shared}/quotas", Token);
+        Assert.Equal(1048576, list.GetProperty("minQuotaBytes").GetInt64());
+        // Who may write, administrators included; tom may only read. Simulation reads no space.
+        Assert.Equal(["admin", "anna"], list.GetProperty("users").EnumerateArray().Select(user => user.GetProperty("username").GetString()));
+        Assert.All(list.GetProperty("users").EnumerateArray(), user => Assert.Equal(JsonValueKind.Null, user.GetProperty("usedBytes").ValueKind));
+
+        using (var set = await _admin.PutAsJsonAsync($"/api/shares/{_shared}/quotas/{tomId}", new { quotaBytes = 5 * 1048576L }, Token))
+        {
+            Assert.Equal(HttpStatusCode.OK, set.StatusCode);
+            var tom = (await set.JsonAsync()).GetProperty("users").EnumerateArray().Single(user => user.GetProperty("userId").GetInt64() == tomId);
+            Assert.Equal(5 * 1048576L, tom.GetProperty("quotaBytes").GetInt64());
+        }
+        (await _admin.PutAsJsonAsync($"/api/shares/{_shared}/quotas/{tomId}", new { quotaBytes = (long?)null }, Token)).EnsureSuccessStatusCode();
+        Assert.DoesNotContain("tom", (await _admin.GetFromJsonAsync<JsonElement>($"/api/shares/{_shared}/quotas", Token)).GetProperty("users").EnumerateArray().Select(user => user.GetProperty("username").GetString()));
+
+        Assert.Equal(
+            (HttpStatusCode.BadRequest, "fs.quota.invalid"),
+            await RefusedAsync(await _admin.PutAsJsonAsync($"/api/shares/{_shared}/quotas/{annaId}", new { quotaBytes = 1000 }, Token)));
+        Assert.Equal(
+            (HttpStatusCode.NotFound, "users.user.not_found"),
+            await RefusedAsync(await _admin.PutAsJsonAsync($"/api/shares/{_shared}/quotas/9999", new { quotaBytes = 1048576 }, Token)));
+        Assert.Equal(
+            (HttpStatusCode.NotFound, "fs.share.not_found"),
+            await RefusedAsync(await _admin.GetAsync("/api/shares/9999/quotas", Token)));
+        Assert.Equal(
+            (HttpStatusCode.Forbidden, "auth.permission.denied"),
+            await RefusedAsync(await anna.GetAsync($"/api/shares/{_shared}/quotas", Token)));
     }
 
     [Fact]

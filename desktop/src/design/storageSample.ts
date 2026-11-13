@@ -7,6 +7,7 @@ import type {
   Dataset,
   Job,
   ShareGrants,
+  ShareQuotaList,
   Pool,
   Snapshot,
   StorageDisk,
@@ -741,6 +742,13 @@ export const sampleShares = [
     readUsers: 1,
     readWriteUsers: 2,
     restorePoints: true,
+    previousVersions: true,
+    trashRetentionDays: 30,
+    smb: true,
+    smbEncrypt: false,
+    sftp: true,
+    webDav: true,
+    ftp: false,
   },
   {
     id: 2,
@@ -758,6 +766,13 @@ export const sampleShares = [
     readUsers: 3,
     readWriteUsers: 1,
     restorePoints: true,
+    previousVersions: true,
+    trashRetentionDays: 30,
+    smb: true,
+    smbEncrypt: false,
+    sftp: true,
+    webDav: false,
+    ftp: false,
   },
   {
     id: 3,
@@ -772,6 +787,13 @@ export const sampleShares = [
     readUsers: 0,
     readWriteUsers: 0,
     restorePoints: false,
+    previousVersions: true,
+    trashRetentionDays: 30,
+    smb: true,
+    smbEncrypt: false,
+    sftp: true,
+    webDav: false,
+    ftp: false,
   },
 ];
 
@@ -1171,6 +1193,28 @@ export const sampleShareGrants: ShareGrants = {
   ],
 };
 
+/** Ben's quota on Family; the other user who may write there has none. */
+export const sampleShareQuotas: ShareQuotaList = {
+  shareId: 1,
+  minQuotaBytes: 1024 * 1024,
+  users: [
+    {
+      userId: 1,
+      username: 'ada',
+      displayName: 'Ada Admin',
+      usedBytes: 312 * GB,
+      quotaBytes: null,
+    },
+    {
+      userId: 2,
+      username: 'ben',
+      displayName: 'Ben Berger',
+      usedBytes: 41.5 * GB,
+      quotaBytes: 100 * GB,
+    },
+  ],
+};
+
 /** Answers the internal calls of the Storage and Settings apps from the sample, never from a daemon. */
 function answer(method: string, params: unknown, extra: ExtraAnswers): unknown {
   const custom = extra[method];
@@ -1206,6 +1250,8 @@ function answer(method: string, params: unknown, extra: ExtraAnswers): unknown {
       return sampleShareAccess;
     case 'internal.admin.shares.grants':
       return sampleShareGrants;
+    case 'internal.admin.shares.quotas':
+      return sampleShareQuotas;
     case 'internal.admin.shares.plan':
       return sampleSharePlan(params as SharePlanRequest);
     case 'internal.admin.system.overview':

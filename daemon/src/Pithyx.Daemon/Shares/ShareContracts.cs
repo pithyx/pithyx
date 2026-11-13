@@ -33,7 +33,8 @@ public enum ShareKind
 /// <param name="Path">The share root on the host. Only administrators get it.</param>
 /// <param name="Unavailable">Why its files cannot be reached now (<see cref="ShareAvailability"/>), or null when they can.</param>
 /// <param name="Kind">A shared folder, the caller's home or another user's home.</param>
-public sealed record ShareInfo(long Id, string Name, ShareAccess Access, string? Path, string? Unavailable = null, ShareKind Kind = ShareKind.Share);
+/// <param name="PreviousVersions">Whether Files offers previous versions of its files (D411); false for Apps, which has none.</param>
+public sealed record ShareInfo(long Id, string Name, ShareAccess Access, string? Path, string? Unavailable = null, ShareKind Kind = ShareKind.Share, bool PreviousVersions = true);
 
 /// <param name="Name">Letters, digits, spaces, dots, dashes and underscores, 1 to 64 characters, not starting with a dot.</param>
 /// <param name="Path">An existing folder on the host: absolute, without symlinks, outside the system directories and not overlapping another share.</param>
@@ -45,7 +46,8 @@ public sealed record NewShare(string Name, string Path);
 /// <param name="Path">The share root on the host.</param>
 /// <param name="Access">The caller's access.</param>
 /// <param name="Kind">A shared folder or a home, named as <see cref="ShareInfo"/> names it.</param>
-public sealed record ResolvedShare(long Id, string Name, string Path, ShareAccess Access, ShareKind Kind = ShareKind.Share);
+/// <param name="PreviousVersions">Whether the share shows previous versions (D411).</param>
+public sealed record ResolvedShare(long Id, string Name, string Path, ShareAccess Access, ShareKind Kind = ShareKind.Share, bool PreviousVersions = true);
 
 /// <summary>A share with what the Shared folders page shows. Administrators only.</summary>
 /// <param name="Id">Stable id.</param>
@@ -65,6 +67,8 @@ public sealed record ResolvedShare(long Id, string Name, string Path, ShareAcces
 /// <param name="SmbEncrypt">Whether SMB clients must encrypt.</param>
 /// <param name="WebDav">Whether WebDAV offers the shared folder.</param>
 /// <param name="Ftp">Whether FTP offers the shared folder.</param>
+/// <param name="PreviousVersions">Whether SMB and Files show the daily restore points as previous versions (D411).</param>
+/// <param name="TrashRetentionDays">Days the recycle bin keeps deleted items; 0 keeps them until it is emptied.</param>
 /// <param name="System">Null for a shared folder; <c>apps</c> for the special folder Apps (D409), whose name, description and protocols other than SMB stay as they are.</param>
 public sealed record ShareDetails(
     long Id,
@@ -84,6 +88,8 @@ public sealed record ShareDetails(
     bool SmbEncrypt,
     bool WebDav,
     bool Ftp,
+    bool PreviousVersions,
+    int TrashRetentionDays,
     string? System = null);
 
 /// <param name="Enabled">Daily restore points, kept 7 days, on or off.</param>
@@ -97,7 +103,29 @@ public sealed record RestorePointsRequest(bool Enabled);
 /// <param name="SmbEncrypt">Requires SMB clients to encrypt, or lets them choose.</param>
 /// <param name="WebDav">Offers the shared folder over WebDAV or stops it.</param>
 /// <param name="Ftp">Offers the shared folder over FTP or stops it.</param>
-public sealed record ShareUpdate(string? Name = null, string? Description = null, bool? Smb = null, bool? Sftp = null, bool? SmbEncrypt = null, bool? WebDav = null, bool? Ftp = null);
+/// <param name="PreviousVersions">Shows the daily restore points as previous versions over SMB and in Files, or hides them.</param>
+public sealed record ShareUpdate(string? Name = null, string? Description = null, bool? Smb = null, bool? Sftp = null, bool? SmbEncrypt = null, bool? WebDav = null, bool? Ftp = null, bool? PreviousVersions = null);
+
+/// <summary>A user's space on a shared folder (D411).</summary>
+/// <param name="UserId">The user.</param>
+/// <param name="Username">Its name.</param>
+/// <param name="DisplayName">Its display name, or null.</param>
+/// <param name="UsedBytes">Space the files the user owns there take, as ZFS counts it; null until the box read it (or in simulation).</param>
+/// <param name="QuotaBytes">The user's quota on the shared folder, or null for none.</param>
+public sealed record ShareUserQuota(long UserId, string Username, string? DisplayName, long? UsedBytes, long? QuotaBytes);
+
+/// <summary>The users of a shared folder with their space: everybody who may write, and everybody with a quota.</summary>
+/// <param name="ShareId">The shared folder.</param>
+/// <param name="MinQuotaBytes">The smallest quota.</param>
+/// <param name="Users">By user name.</param>
+public sealed record ShareQuotaList(long ShareId, long MinQuotaBytes, IReadOnlyList<ShareUserQuota> Users);
+
+/// <param name="QuotaBytes">The user's quota in bytes, at least the list's minQuotaBytes; null removes it.</param>
+public sealed record ShareQuotaRequest(long? QuotaBytes);
+
+/// <summary>Snapshot and event of <c>shares/quotas</c>.</summary>
+/// <param name="Revision">Changes whenever a quota or the space of a user on a shared folder changed; compare it, do not count on it.</param>
+public sealed record ShareQuotaRevision(long Revision);
 
 public enum ShareDataChoice
 {

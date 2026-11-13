@@ -48,7 +48,7 @@ public sealed class ShareService(SqliteConnectionFactory connections, TimeProvid
             .Where(item => rights.Share(item.Row.Id) != ShareAccess.None && (item.Kind != ShareKind.UserHome || admin) && (item.Kind != ShareKind.Apps || item.Row.Dataset is not null))
             .OrderBy(item => item.Kind)
             .ThenBy(item => NameOf(item.Row, item.Kind), StringComparer.OrdinalIgnoreCase)
-            .Select(item => new ShareInfo(item.Row.Id, NameOf(item.Row, item.Kind), rights.Share(item.Row.Id), admin ? item.Row.Path : null, UnavailableReason(item.Row), item.Kind))];
+            .Select(item => new ShareInfo(item.Row.Id, NameOf(item.Row, item.Kind), rights.Share(item.Row.Id), admin ? item.Row.Path : null, UnavailableReason(item.Row), item.Kind, ShowsVersions(item.Row, item.Kind)))];
     }
 
     /// <summary>
@@ -79,10 +79,10 @@ public sealed class ShareService(SqliteConnectionFactory connections, TimeProvid
         {
             throw new PithyxException(ErrorCodes.FsShareUnavailable, new Dictionary<string, object?> { ["name"] = NameOf(row, kind), ["reason"] = reason });
         }
-        return new ResolvedShare(row.Id, NameOf(row, kind), row.Path, access, kind);
+        return new ResolvedShare(row.Id, NameOf(row, kind), row.Path, access, kind, ShowsVersions(row, kind));
     }
 
-    private const string RowSelect = "SELECT id AS Id, name AS Name, path AS Path, dataset AS Dataset, home AS Home, home_user_id AS HomeUserId, system AS System FROM shares";
+    private const string RowSelect = "SELECT id AS Id, name AS Name, path AS Path, dataset AS Dataset, home AS Home, home_user_id AS HomeUserId, system AS System, previous_versions AS PreviousVersions FROM shares";
 
     /// <summary>
     /// Gives Apps the dataset its availability follows, the app pool's <c>pithyx/apps</c>, or none before there is an
@@ -96,7 +96,10 @@ public sealed class ShareService(SqliteConnectionFactory connections, TimeProvid
 
     private static string? AppsDataset(string? pool) => pool is null ? null : $"{pool}/pithyx/apps";
 
-    private sealed record Row(long Id, string Name, string Path, string? Dataset, long Home, long? HomeUserId, string? System);
+    private sealed record Row(long Id, string Name, string Path, string? Dataset, long Home, long? HomeUserId, string? System, long PreviousVersions);
+
+    // Apps has no restore points of its own.
+    private static bool ShowsVersions(Row row, ShareKind kind) => kind != ShareKind.Apps && row.PreviousVersions == 1;
 
     private static ShareKind KindOf(Row row, long userId) =>
         row.System == Apps.AppsShare.SystemKey ? ShareKind.Apps
@@ -164,11 +167,11 @@ public sealed class ShareService(SqliteConnectionFactory connections, TimeProvid
         // Administrators use every share anyway, so the summary counts the others who are active.
         var others = (await Permissions.PermissionService.AllUsersAsync(connection, null)).Where(other => !other.Disabled && !other.Permissions.IsAdmin).ToList();
         var appsDataset = AppsDataset(await connection.ExecuteScalarAsync<string?>("SELECT value FROM settings WHERE key = @key", new { key = Apps.AppRegistry.PoolSetting }));
-        var rows = (await connection.QueryAsync<(long Id, string Name, string Description, string Path, string? Dataset, long? RestorePoints, long Smb, long Sftp, long SmbEncrypt, long WebDav, long Ftp, string? System)>(
+        var rows = (await connection.QueryAsync<(long Id, string Name, string Description, string Path, string? Dataset, long? RestorePoints, long Smb, long Sftp, long SmbEncrypt, long WebDav, long Ftp, long PreviousVersions, int TrashRetentionDays, string? System)>(
             """
             SELECT shares.id, shares.name, shares.description, shares.path, shares.dataset,
                 (SELECT enabled FROM snapshot_schedules WHERE snapshot_schedules.dataset = shares.dataset AND kind = 'daily'),
-                shares.smb, shares.sftp, shares.smb_encrypt, shares.webdav, shares.ftp, shares.system
+                shares.smb, shares.sftp, shares.smb_encrypt, shares.webdav, shares.ftp, shares.previous_versions, shares.trash_retention_days, shares.system
             FROM shares WHERE shares.home = 0 ORDER BY shares.system IS NOT NULL, shares.name
             """))
             // Apps shows once there is an app pool.
@@ -198,11 +201,13 @@ public sealed class ShareService(SqliteConnectionFactory connections, TimeProvid
                 row.SmbEncrypt == 1,
                 row.WebDav == 1,
                 row.Ftp == 1,
+                !system && row.PreviousVersions == 1,
+                row.TrashRetentionDays,
                 row.System);
         })];
     }
 
-    /// <summary>Changes the name shown, the description and the protocols. The folder and the dataset stay where they are.</summary>
+    /// <summary>Changes the name shown, the description, the protocols and the previous versions. The folder and the dataset stay where they are.</summary>
     public async Task UpdateAsync(ClaimsPrincipal user, long shareId, ShareUpdate update, CancellationToken cancellationToken)
     {
         RequireAdmin(user);
@@ -218,7 +223,7 @@ public sealed class ShareService(SqliteConnectionFactory connections, TimeProvid
             {
                 throw new PithyxException(ErrorCodes.FsShareNotFound);
             }
-            if (name is not null || description is not null || update.Sftp is true || update.WebDav is true || update.Ftp is true)
+            if (name is not null || description is not null || update.Sftp is true || update.WebDav is true || update.Ftp is true || update.PreviousVersions is true)
             {
                 throw new PithyxException(ErrorCodes.FsShareSystem);
             }
@@ -235,10 +240,11 @@ public sealed class ShareService(SqliteConnectionFactory connections, TimeProvid
             """
             UPDATE shares SET name = COALESCE(@name, name), description = COALESCE(@description, description),
                 smb = COALESCE(@smb, smb), sftp = COALESCE(@sftp, sftp), smb_encrypt = COALESCE(@smbEncrypt, smb_encrypt),
-                webdav = COALESCE(@webDav, webdav), ftp = COALESCE(@ftp, ftp), updated_at = @now
+                webdav = COALESCE(@webDav, webdav), ftp = COALESCE(@ftp, ftp),
+                previous_versions = COALESCE(@previousVersions, previous_versions), updated_at = @now
             WHERE id = @shareId
             """,
-            new { shareId, name, description, smb = update.Smb, sftp = update.Sftp, smbEncrypt = update.SmbEncrypt, webDav = update.WebDav, ftp = update.Ftp, now = SessionService.Format(time.GetUtcNow()) });
+            new { shareId, name, description, smb = update.Smb, sftp = update.Sftp, smbEncrypt = update.SmbEncrypt, webDav = update.WebDav, ftp = update.Ftp, previousVersions = update.PreviousVersions, now = SessionService.Format(time.GetUtcNow()) });
     }
 
     /// <summary>The shared folder as stored, or null; homes and Apps are not shared folders. Not for callers with a user: it checks no access.</summary>

@@ -571,6 +571,14 @@ public static class ErrorCodes
     [ErrorStatus(HttpStatusCode.BadRequest)]
     public const string FsPathInvalid = "fs.path.invalid";
 
+    /// <summary>The user's quota on this shared folder is used up (D411); it counts every file the user owns there.</summary>
+    [ErrorStatus(HttpStatusCode.InsufficientStorage)]
+    public const string FsQuotaExceeded = "fs.quota.exceeded";
+
+    /// <summary>A user's quota on a shared folder is below the smallest one; <c>params.minBytes</c> is that size.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string FsQuotaInvalid = "fs.quota.invalid";
+
     [ErrorStatus(HttpStatusCode.RequestedRangeNotSatisfiable)]
     public const string FsRangeNotSatisfiable = "fs.range.not_satisfiable";
 
@@ -646,6 +654,10 @@ public static class ErrorCodes
 
     [ErrorStatus(HttpStatusCode.BadRequest)]
     public const string FsUploadIncomplete = "fs.upload.incomplete";
+
+    /// <summary>The shared folder does not show previous versions (D411); its restore points are still in Storage.</summary>
+    [ErrorStatus(HttpStatusCode.Forbidden)]
+    public const string FsVersionDisabled = "fs.version.disabled";
 
     /// <summary>The share's dataset has no snapshot of this name, or the path is not in it.</summary>
     [ErrorStatus(HttpStatusCode.NotFound)]

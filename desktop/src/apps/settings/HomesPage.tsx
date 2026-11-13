@@ -15,12 +15,13 @@ import {
   type DataTableColumn,
 } from '@pithyx/ui';
 import { IconFolderShare, IconPencil, IconTrash } from '../../ui/icons';
-import { parseSize, sizeText, SIZE_UNITS, type SizeUnit } from '../storage/datasets';
+import { parseSize, sizeText } from '../storage/datasets';
 import { describeProblem } from '../storage/shared';
 import { usersCall, type HomeInfo, type HomeOverview } from '../sdk/users';
 import { FormDialog } from '../users/FormDialog';
 import styles from './Settings.module.css';
 import { sharesKey, useShares } from './shares';
+import { SizeField } from './SizeField';
 
 /** Changes of the shares and the pools refresh it with the other answers of the sharing pages. */
 const homesKey = [...sharesKey, 'homes'] as const;
@@ -141,52 +142,6 @@ function PoolCard({
         </FormRow>
       )}
     </FormSection>
-  );
-}
-
-/** A size in a text field with its unit; empty means no quota. In a `FormRow` the row labels the field. */
-function SizeField({
-  label,
-  description,
-  inRow = false,
-  value,
-  onChange,
-}: {
-  label: string;
-  description?: string;
-  inRow?: boolean;
-  value: { text: string; unit: SizeUnit };
-  onChange: (value: { text: string; unit: SizeUnit }) => void;
-}) {
-  const { t } = useTranslation('settings');
-  return (
-    <TextField
-      {...(inRow ? {} : { label, description })}
-      value={value.text}
-      inputMode="decimal"
-      autoComplete="off"
-      isInvalid={parseSize(value.text, value.unit) === undefined}
-      errorMessage={t('homes.quota.invalid')}
-      onChange={(text) => {
-        onChange({ ...value, text });
-      }}
-      trailing={
-        <select
-          className={styles.select}
-          aria-label={t('homes.quota.unit', { field: label })}
-          value={value.unit}
-          onChange={(event) => {
-            onChange({ ...value, unit: event.currentTarget.value as SizeUnit });
-          }}
-        >
-          {Object.keys(SIZE_UNITS).map((unit) => (
-            <option key={unit} value={unit}>
-              {t(`homes.units.${unit as SizeUnit}`)}
-            </option>
-          ))}
-        </select>
-      }
-    />
   );
 }
 

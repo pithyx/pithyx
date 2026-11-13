@@ -2,27 +2,34 @@ import type { PithyxApp } from '@pithyx/sdk';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { formatBytes } from '../../desktop/format';
 import { ErrorNotice } from '../../errors/ErrorNotice';
+import { useFormatLocale } from '../../i18n';
 import { Button, Dialog, Switch, TextField } from '@pithyx/ui';
 import {
   internalCall,
   type ShareAccess,
   type ShareDetails,
   type ShareGrants,
+  type ShareUserQuota,
   type SubjectGrant,
 } from '../sdk/internal';
+import { parseSize, sizeText } from '../storage/datasets';
 import { describeProblem } from '../storage/shared';
 import { usersCall } from '../sdk/users';
 import { useAppsAccessConfirmation } from '../users/AppsAccessDialog';
+import { FormDialog } from '../users/FormDialog';
 import styles from './Settings.module.css';
 import {
   accessOf,
   shareGrantsKey,
   shareListKey,
+  shareQuotasKey,
   useShareGrants,
   useShares,
   withSubjectAccess,
 } from './shares';
+import { SizeField } from './SizeField';
 
 const LEVELS: readonly ShareAccess[] = ['none', 'read', 'readWrite'];
 
@@ -130,7 +137,9 @@ export function EditShareDialog({
           </form>
         )}
         {share.dataset !== null && <ShareProtocols app={app} share={share} smbOnly={apps} />}
+        {!apps && <ShareKeeping app={app} share={share} />}
         <ShareRights app={app} shareId={share.id} apps={apps} />
+        {!apps && share.dataset !== null && <ShareQuotas app={app} shareId={share.id} />}
       </div>
     </Dialog>
   );
@@ -337,5 +346,248 @@ function ShareProtocols({
       )}
       {change.isError && <ErrorNotice error={describeProblem(change.error)} />}
     </section>
+  );
+}
+
+/** The recycle bin keeps deleted items at most this many days (TrashService.MaxRetentionDays). */
+const MAX_RETENTION_DAYS = 3650;
+
+/** Previous versions and how long the recycle bin keeps deleted items; applied at once like the rest of the dialog. */
+function ShareKeeping({ app, share }: { app: PithyxApp; share: ShareDetails }) {
+  const { t } = useTranslation('settings');
+  const queryClient = useQueryClient();
+  const versions = useMutation({
+    mutationFn: (previousVersions: boolean) =>
+      internalCall(app, 'internal.admin.shares.update', { shareId: share.id, previousVersions }),
+    onMutate: (previousVersions) => {
+      queryClient.setQueryData<ShareDetails[]>(shareListKey, (list) =>
+        list?.map((entry) => (entry.id === share.id ? { ...entry, previousVersions } : entry)),
+      );
+    },
+    onSettled: () => {
+      void queryClient.invalidateQueries({ queryKey: shareListKey });
+    },
+  });
+  const current = useShares(app).data?.find((entry) => entry.id === share.id) ?? share;
+  const [days, setDays] = useState(String(share.trashRetentionDays));
+  const [savedDays, setSavedDays] = useState(share.trashRetentionDays);
+  const trimmed = days.trim();
+  const parsed = /^\d{1,4}$/.test(trimmed) ? Number(trimmed) : undefined;
+  const valid = parsed !== undefined && parsed <= MAX_RETENTION_DAYS;
+  const retention = useMutation({
+    mutationFn: (retentionDays: number) =>
+      internalCall(app, 'internal.admin.shares.trash', { shareId: share.id, retentionDays }),
+    onSuccess: (_, retentionDays) => {
+      setSavedDays(retentionDays);
+      void queryClient.invalidateQueries({ queryKey: shareListKey });
+    },
+  });
+  const commit = () => {
+    if (valid && parsed !== savedDays) {
+      retention.mutate(parsed);
+    }
+  };
+
+  return (
+    <section className={styles.group} aria-labelledby={`keeping-${String(share.id)}`}>
+      <h3 id={`keeping-${String(share.id)}`} className={styles.sectionTitle}>
+        {t('shares.editDialog.keeping')}
+      </h3>
+      {share.dataset !== null && (
+        <>
+          <Switch
+            isSelected={current.previousVersions}
+            onChange={(value) => {
+              versions.mutate(value);
+            }}
+          >
+            {t('shares.editDialog.previousVersions')}
+          </Switch>
+          <p className={styles.muted}>{t('shares.editDialog.previousVersionsHint')}</p>
+          {versions.isError && <ErrorNotice error={describeProblem(versions.error)} />}
+        </>
+      )}
+      <form
+        className={styles.group}
+        aria-label={t('shares.editDialog.trashRetention')}
+        onSubmit={(event) => {
+          event.preventDefault();
+          commit();
+        }}
+      >
+        <TextField
+          label={t('shares.editDialog.trashRetention')}
+          description={t('shares.editDialog.trashRetentionHint')}
+          value={days}
+          inputMode="numeric"
+          autoComplete="off"
+          isInvalid={!valid}
+          errorMessage={t('shares.editDialog.trashRetentionInvalid', { max: MAX_RETENTION_DAYS })}
+          onChange={(value) => {
+            setDays(value);
+            retention.reset();
+          }}
+          onBlur={commit}
+        />
+        <button type="submit" hidden />
+        {retention.isSuccess && (
+          <p className={styles.muted} role="status">
+            {t('shares.editDialog.saved')}
+          </p>
+        )}
+        {retention.isError && <ErrorNotice error={describeProblem(retention.error)} />}
+      </form>
+    </section>
+  );
+}
+
+/** Each user's quota on a shared folder (D411); a quota changes in a small dialog of its own. */
+function ShareQuotas({ app, shareId }: { app: PithyxApp; shareId: number }) {
+  const { t } = useTranslation('settings');
+  const locale = useFormatLocale();
+  const quotas = useQuery({
+    queryKey: shareQuotasKey(shareId),
+    queryFn: () => internalCall(app, 'internal.admin.shares.quotas', { shareId }),
+  });
+  const [editing, setEditing] = useState<ShareUserQuota | null>(null);
+  const bytes = (value: number) => formatBytes(value, locale);
+
+  return (
+    <section className={styles.group} aria-labelledby={`quotas-${String(shareId)}`}>
+      <h3 id={`quotas-${String(shareId)}`} className={styles.sectionTitle}>
+        {t('shares.quotas.title')}
+      </h3>
+      <p className={styles.muted}>{t('shares.quotas.intro')}</p>
+      {quotas.isPending && (
+        <p className={styles.loading} role="status">
+          {t('shares.editDialog.loading')}
+        </p>
+      )}
+      {quotas.isError && <ErrorNotice error={describeProblem(quotas.error)} />}
+      {quotas.data?.users.length === 0 && (
+        <p className={styles.muted}>{t('shares.quotas.empty')}</p>
+      )}
+      {quotas.data !== undefined && quotas.data.users.length > 0 && (
+        <ul className={styles.users}>
+          {quotas.data.users.map((user) => {
+            const label = user.displayName ?? user.username;
+            return (
+              <li key={user.userId} className={styles.user}>
+                <span className={styles.userName}>
+                  {label}
+                  {user.displayName !== null && (
+                    <span className={styles.path}>{user.username}</span>
+                  )}
+                  <span className={styles.path}>
+                    {t('shares.quotas.usage', {
+                      used:
+                        user.usedBytes == null ? t('shares.quotas.unknown') : bytes(user.usedBytes),
+                      quota:
+                        user.quotaBytes == null ? t('shares.quotas.none') : bytes(user.quotaBytes),
+                    })}
+                  </span>
+                </span>
+                <Button
+                  aria-label={t('shares.quotas.editLabel', { name: label })}
+                  onPress={() => {
+                    setEditing(user);
+                  }}
+                >
+                  {t('shares.quotas.edit')}
+                </Button>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+      {editing !== null && quotas.data !== undefined && (
+        <QuotaDialog
+          app={app}
+          shareId={shareId}
+          user={editing}
+          minBytes={quotas.data.minQuotaBytes}
+          onClose={() => {
+            setEditing(null);
+          }}
+        />
+      )}
+    </section>
+  );
+}
+
+function QuotaDialog({
+  app,
+  shareId,
+  user,
+  minBytes,
+  onClose,
+}: {
+  app: PithyxApp;
+  shareId: number;
+  user: ShareUserQuota;
+  minBytes: number;
+  onClose: () => void;
+}) {
+  const { t } = useTranslation('settings');
+  const locale = useFormatLocale();
+  const queryClient = useQueryClient();
+  const [limited, setLimited] = useState(user.quotaBytes != null);
+  const [size, setSize] = useState(() => sizeText(user.quotaBytes ?? null, locale));
+  const bytes = parseSize(size.text, size.unit);
+  const tooSmall = typeof bytes === 'number' && bytes < minBytes;
+  const save = useMutation({
+    mutationFn: (quotaBytes: number | null) =>
+      internalCall(app, 'internal.admin.shares.setQuota', {
+        shareId,
+        userId: user.userId,
+        quotaBytes,
+      }),
+    onSuccess: (list) => {
+      queryClient.setQueryData(shareQuotasKey(shareId), list);
+      onClose();
+    },
+  });
+  const name = user.displayName ?? user.username;
+  return (
+    <FormDialog
+      title={t('shares.quotas.dialogTitle', { name })}
+      submit={t('shares.quotas.save')}
+      disabled={save.isPending || (limited && (typeof bytes !== 'number' || tooSmall))}
+      onClose={onClose}
+      onSubmit={(event) => {
+        event.preventDefault();
+        if (!limited) {
+          save.mutate(null);
+        } else if (typeof bytes === 'number') {
+          save.mutate(bytes);
+        }
+      }}
+    >
+      <fieldset className={styles.choices}>
+        <legend>{t('shares.quotas.title')}</legend>
+        {([false, true] as const).map((option) => (
+          <label key={String(option)} className={styles.option}>
+            <input
+              type="radio"
+              name="quota"
+              checked={limited === option}
+              onChange={() => {
+                setLimited(option);
+              }}
+            />
+            {option ? t('shares.quotas.limited') : t('shares.quotas.none')}
+          </label>
+        ))}
+      </fieldset>
+      {limited && (
+        <SizeField
+          label={t('shares.quotas.size')}
+          description={t('shares.quotas.sizeHint', { min: formatBytes(minBytes, locale) })}
+          value={size}
+          onChange={setSize}
+        />
+      )}
+      {save.isError && <ErrorNotice error={describeProblem(save.error)} />}
+    </FormDialog>
   );
 }

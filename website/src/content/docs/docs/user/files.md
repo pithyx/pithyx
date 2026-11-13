@@ -36,7 +36,7 @@ Right-click an item for its menu: **Open**, **Download**, **Open with…**, **Ad
 
 ### Previous versions
 
-If an administrator switched on restore points for the shared folder, the box saves a copy once a day and keeps it for 7 days. Right-click a file or folder and choose **Previous versions** to see them. Pick a day, then choose **Replace the current version**, or restore it next to the current one with the date in its name. Restoring needs write access to the folder. If no restore points exist, the list says there are no earlier versions yet.
+If an administrator switched on restore points for the shared folder, the box saves a copy once a day and keeps it for 7 days. Right-click a file or folder and choose **Previous versions** to see them. Pick a day, then choose **Replace the current version**, or restore it next to the current one with the date in its name. Restoring needs write access to the folder. If no restore points exist, the list says there are no earlier versions yet. An administrator can also switch previous versions off for a shared folder; then Files does not offer them there.
 
 Restore points live on the same disks as the files. They do not replace a backup on another device.
 
@@ -54,7 +54,7 @@ Things to know:
 
 - You need write access to the shared folder.
 - Files upload one after another.
-- There is no limit on file size besides the free space of the pool.
+- There is no limit on file size besides the free space of the pool and your quota on the shared folder, if an administrator set one ([`fs.quota.exceeded`](/docs/reference/errors/#fs.quota.exceeded)).
 - A file appears in the folder only when it has arrived completely. If the connection drops, nothing is saved and you upload the file again. There is no resume.
 - The uploaded file belongs to your account on the box.
 - If a name already exists, Files asks what to do (see below).

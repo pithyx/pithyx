@@ -398,7 +398,7 @@ export const storageScreens: ScreenDefinition[] = [
     group: 'storage',
     title: 'Edit a shared folder',
     description:
-      'Name and description, and the rights of every user: none, read, or read and write.',
+      'Name and description, network access, recycle bin and previous versions, the rights of every user and their quotas.',
     render: settings('shares', [{ press: 'Family' }, { press: 'settings:shares.edit' }]),
   },
   {

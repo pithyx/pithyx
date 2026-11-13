@@ -38,6 +38,10 @@ public sealed class PreviousVersions(ShareService shares, PoolInventory pools, S
     public async Task<FileVersionList> ListAsync(ClaimsPrincipal user, long shareId, string? path, CancellationToken cancellationToken)
     {
         var share = await shares.ResolveAsync(user, shareId, write: false, cancellationToken);
+        if (!share.PreviousVersions)
+        {
+            throw new PithyxException(ErrorCodes.FsVersionDisabled);
+        }
         var normalized = NonRoot(path);
         if (Locate(pools.Current.Datasets, share.Path, normalized) is not { } location)
         {
@@ -65,6 +69,10 @@ public sealed class PreviousVersions(ShareService shares, PoolInventory pools, S
     {
         ArgumentNullException.ThrowIfNull(request);
         var share = await shares.ResolveAsync(user, shareId, write: true, cancellationToken);
+        if (!share.PreviousVersions)
+        {
+            throw new PithyxException(ErrorCodes.FsVersionDisabled);
+        }
         var normalized = NonRoot(request.Path);
         var location = Locate(pools.Current.Datasets, share.Path, normalized);
         var snapshot = location is null ? null : snapshots.Find(location.Dataset, request.Snapshot);

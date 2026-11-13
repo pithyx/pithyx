@@ -1,6 +1,6 @@
 ---
 title: 'Shared folders'
-description: 'Create, edit and delete shared folders, set who may use them, and how the recycle bin and restore points protect their files.'
+description: 'Create, edit and delete shared folders, set who may use them and how much each user may store, and how the recycle bin and restore points protect their files.'
 status: ready
 audience: admin
 sidebar:
@@ -19,7 +19,7 @@ If no pool exists, the dialog says "No pool is ready for shared folders yet. Cre
 
 The name has 1 to 64 characters: letters, digits, spaces, dots, dashes and underscores, not starting with a dot, unique without regard to case ([`fs.share.invalid`](/docs/reference/errors/#fs.share.invalid), [`fs.share.exists`](/docs/reference/errors/#fs.share.exists)). The description has at most 200 characters on one line. The names `global`, `home`, `homes`, `apps`, `printers`, `print$` and `ipc$` are reserved ([`fs.share.name_reserved`](/docs/reference/errors/#fs.share.name_reserved)); `home` and `homes` are the [home folders](/docs/admin/home-folders/), `apps` is the [Apps folder](#the-apps-folder). The dataset gets a name derived from the folder name (lowercase, accents folded, other characters turned into `-`) at `<pool>/pithyx/shares/<name>`, mounted at `/<pool>/<dataset-name>`.
 
-New folders start with restore points on. To limit the size of a shared folder, set a quota on its dataset under Settings > **Advanced storage** > **Show datasets** (**Limits…**); the dialog has no size field.
+New folders start with restore points on. To limit the size of a shared folder as a whole, set a quota on its dataset under Settings > **Advanced storage** > **Show datasets** (**Limits…**); the dialog has no size field. To limit what each user may store in it, see [Quotas per user](#quotas-per-user).
 
 :::note
 Registering an existing folder as a shared folder works only on development machines ([`fs.share.folder_dev_only`](/docs/reference/errors/#fs.share.folder_dev_only)). On a normal box every shared folder is a new dataset.
@@ -27,15 +27,17 @@ Registering an existing folder as a shared folder works only on development mach
 
 ## Rules for folders
 
-![The dialog Edit Family with its name and description, the network access switches and the rights of the groups](../../../../assets/screenshots/shared-folders-edit.webp)
+![The dialog Edit Family with its name and description, the network access switches and the switch Show previous versions](../../../../assets/screenshots/shared-folders-edit.webp)
 
-_The edit dialog of a shared folder: network access per protocol and rights per group and user._
+_The edit dialog of a shared folder: network access per protocol, the recycle bin and previous versions; further down the rights per group and user and the quotas._
 
-The edit dialog has three parts.
+The edit dialog has these parts.
 
 - **Name and description.** Renaming changes only the name users see; the dataset keeps its name. Like everything else in the dialog, they apply at once: when you leave the field or press Enter.
 - **Rights.** Per user and per group: no access, read, or read and write. A user gets the most that it or one of its groups is given, and administrators can always read and change everything. Every user is in the group users, shown as "every user". Changes apply right away. See [Permissions](/docs/admin/permissions/).
 - **Network access.** Switches **Offer over SMB**, **Show over SFTP**, **Offer over WebDAV** and **Offer over FTP**, all on by default, and **Require encryption over SMB** (off by default; older clients without SMB encryption cannot connect then). A user needs both the protocol right and the folder switch. See [File services](/docs/admin/file-services/).
+- **Recycle bin and previous versions.** **Show previous versions** (on by default) and **Keep deleted items for (days)**; see [Recycle bin and retention](#recycle-bin-and-retention) and [Restore points](#restore-points).
+- **Quotas.** How much each user may store in the folder; see [Quotas per user](#quotas-per-user). Folders without a dataset of their own (development machines only) have none.
 
 The table shows each folder's name with its path and description, its pool with the space it uses, its rights and the restore points, and sorts by a click on a heading. Select a folder for **Edit** and **Delete…** in the toolbar, or double-click it to edit it. A user without any right does not see the folder at all ([`fs.share.not_found`](/docs/reference/errors/#fs.share.not_found)). If its pool is not connected, stopped or not mounted, the folder is unavailable ([`fs.share.unavailable`](/docs/reference/errors/#fs.share.unavailable)).
 
@@ -47,11 +49,23 @@ Deleting asks you to type the folder name and to choose: **Keep the data** (the 
 
 Every shared folder has a hidden folder `.pithyx-trash` at its root. Deleting in Files moves items there, and so do deletes over SMB, WebDAV and FTP. Deleting over SFTP removes files for good. The bin lists where each item came from, when it was deleted and when it goes for good, and offers **Restore**, **Delete for good** and **Empty recycle bin**. How users work with it is in [Files](/docs/user/files/#the-recycle-bin).
 
-The retention is per folder: 30 days by default, 0 keeps items until the bin is emptied, at most 3650 days. A cleanup runs hourly. Only administrators can change the retention, and the desktop has no setting for it today; it can only be set through the API (`PUT /api/shares/{shareId}/trash`, [`fs.trash.retention_invalid`](/docs/reference/errors/#fs.trash.retention_invalid) for a bad value). The bin shows "Deleted items are kept for {days} days."
+The retention is per folder: 30 days by default, 0 keeps items until the bin is emptied, at most 3650 days. It applies to items already in the bin, and a cleanup runs hourly. Administrators set it in the folder's edit dialog with **Keep deleted items for (days)**, which applies when you leave the field or press Enter, or through the API (`PUT /api/shares/{shareId}/trash`, [`fs.trash.retention_invalid`](/docs/reference/errors/#fs.trash.retention_invalid) for a bad value). The bin shows "Deleted items are kept for {days} days."
 
 ## Restore points
 
 Restore points are daily snapshots; the newest 7 are kept (a box that was off for a while keeps its last points instead of losing them). They only use space for files that changed or were deleted, and a deleted file frees its space after the last point holding it expires. Each folder has a switch in the column **Restore points** ("Daily, kept 7 days" or "Off"); **What are restore points?** explains them to the user. Users restore older versions with **Previous versions** in Files, and Windows shows them as "Previous versions". They help against accidental deletion and ransomware but are no replacement for a backup on another device, because they live on the same disks. Restore points are not available for a shared folder registered from an existing folder (development machines only), because it has no dataset of its own.
+
+To keep the restore points but not offer them to users, switch off **Show previous versions** in the folder's edit dialog. Files then has no **Previous versions** for the folder, SMB clients see none, and a request for them fails with [`fs.version.disabled`](/docs/reference/errors/#fs.version.disabled). The restore points are still taken, and an administrator can roll the whole folder back to one under Settings > **Advanced storage** > **Show datasets**. The hidden `.zfs` folder of the dataset is never shown, whatever the switch says.
+
+## Quotas per user
+
+The section **Quotas** of the edit dialog lists everybody who may write to the folder and everybody who has a quota there, with what each uses now ("uses 3.2 GB of 50 GB"). **Quota** opens a small dialog with **No limit** or **Quota** and a size of at least 1 MiB ([`fs.quota.invalid`](/docs/reference/errors/#fs.quota.invalid)); **Save** applies it at once.
+
+- A quota counts the files the user owns in that folder, whichever way they were written: Files, SMB, SFTP, WebDAV or FTP. Files someone else created there count for that person, even when the user changes them.
+- A write that would go over the quota fails: an upload in Files with [`fs.quota.exceeded`](/docs/reference/errors/#fs.quota.exceeded), a copy over SMB or SFTP with an error about a full disk in the client. ZFS checks quotas a few seconds late, so a user can go a little over before writes stop.
+- Quotas are per user and per folder. There are no quotas for groups and no default quota for every user of a folder; home folders have their own quota (see [Home folders](/docs/admin/home-folders/#quotas)). Administrators can have a quota like everybody else.
+- The used space shows "unknown" while the box cannot read it, for example while the pool is missing. A quota set while the pool is missing is applied when it comes back.
+- Removing a user removes the user's quotas.
 
 ## Encryption over SMB
 

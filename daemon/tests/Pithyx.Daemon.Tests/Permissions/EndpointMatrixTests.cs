@@ -147,6 +147,8 @@ public sealed partial class EndpointMatrixTests : IDisposable
         ["GetShareGrants"] = Need.Admin,
         ["SetShareGrants"] = Need.Admin,
         ["SetShareRestorePoints"] = Need.Admin,
+        ["GetShareQuotas"] = Need.Admin,
+        ["SetShareQuota"] = Need.Admin,
         ["PlanShareAction"] = Need.Admin,
         ["GetUsers"] = Need.Admin,
         ["CreateUser"] = Need.Admin,
