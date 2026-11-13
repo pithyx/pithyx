@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- **Recent files** (D410, #333): Files has a **Recent** place at the top of its navigation and the Pithyx menu a **Recent files** section with the files the user opened lately (in Files, from a desktop shortcut or an app's file dialog), newest first, at most 50, the same on every device. Files the user can no longer read leave the list by themselves; **Clear list** forgets them. `GET`, `POST` and `DELETE /api/files/recent` and the topic `files/recent`. Migration 0042.
 - The special folder **Apps** (D409, #200): one folder per installed app with the app's data (its `volumes/`), in Files and over SMB, for administrators only unless an administrator confirms giving it to others (the other administrators are told). Files warns before writing into a running app's folder, shows kept data of uninstalled apps as **Not installed** and deletes in Apps for good after a confirmation (no recycle bin, no previous versions). No link an app made leads out of its folder, and what Files or SMB creates there belongs to the app. Settings > **Shared folders** shows Apps as a system folder, and the uninstall dialog says when somebody is connected to it over SMB. New error codes `fs.apps.confirmation_required`, `fs.apps.root_fixed`, `fs.apps.trash_unsupported` and `fs.share.system`; `GET /api/shares/apps`, and `confirmAppsAccess` for the grants of shares, users and groups. Migration 0041.
 
 ### Fixed

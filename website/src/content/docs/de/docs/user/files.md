@@ -40,6 +40,10 @@ Hat ein Administrator für den freigegebenen Ordner Wiederherstellungspunkte ein
 
 Wiederherstellungspunkte liegen auf denselben Platten wie die Dateien. Sie ersetzen kein Backup auf einem anderen Gerät.
 
+### Zuletzt verwendete Dateien
+
+**Zuletzt verwendet** oben in der Navigationsspalte listet die Dateien, die du zuletzt geöffnet hast, die neueste zuerst, mit ihrem Ort und wann du sie geöffnet hast: per Doppelklick oder **Öffnen mit …** in Dateien, über eine Verknüpfung auf dem Desktop oder im Dateidialog einer App. Herunterladen zählt nicht. Öffnest du eine Datei wieder, rückt sie nach oben, und die Box behält deine neuesten 50. Ein Doppelklick öffnet eine Datei wie gewohnt, und ihr Ort zeigt sie markiert in ihrem Ordner. Eine Datei, die du nicht mehr lesen kannst (gelöscht, verschoben, umbenannt, ihr freigegebener Ordner dir entzogen oder nicht verfügbar), verschwindet von selbst aus der Liste. **Liste leeren** am Ende der Befehlsleiste vergisst alle. Die Liste gehört nur dir und ist auf jedem Gerät gleich, an dem du dich anmeldest; das Pithyx-Menü zeigt ihre neuesten fünf.
+
 ## Hochladen
 
 1. Öffne den Ordner, in den die Dateien sollen.

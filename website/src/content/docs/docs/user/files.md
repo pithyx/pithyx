@@ -40,6 +40,10 @@ If an administrator switched on restore points for the shared folder, the box sa
 
 Restore points live on the same disks as the files. They do not replace a backup on another device.
 
+### Recent files
+
+**Recent** at the top of the navigation column lists the files you opened lately, newest first, with their location and when you opened them: by a double click or **Open with…** in Files, from a shortcut on the desktop or in an app's file dialog. Downloading a file does not count. Opening a file again moves it to the top, and the box keeps your newest 50. A double click opens a file the usual way, and its location shows it selected in its folder. A file you can no longer read (deleted, moved, renamed, its shared folder taken away from you or not available) leaves the list by itself. **Clear list** at the end of the command bar forgets them all. The list is yours alone and the same on every device you sign in to; the Pithyx menu shows its newest five.
+
 ## Uploading
 
 1. Open the folder you want the files in.

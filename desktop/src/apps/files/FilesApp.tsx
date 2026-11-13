@@ -42,6 +42,7 @@ import {
   IconArrowRight,
   IconArrowUp,
   IconChevronRight,
+  IconClearAll,
   IconClipboard,
   IconClock,
   IconCopy,
@@ -110,7 +111,7 @@ import {
 } from './selection';
 import { createTransfers, type Transfers } from './transfers';
 import { TrashView, trashKey } from './TrashView';
-import { RECENT_PLACE, useRecentFiles, type RecentFile } from './recent';
+import { clearRecentFiles, RECENT_PLACE, useRecentFiles, type RecentFile } from './recent';
 import { RecentView } from './RecentView';
 import { VersionsDialog } from './VersionsDialog';
 import { createThumbnails, thumbnailKey } from './thumbnails';
@@ -1073,7 +1074,17 @@ export function FilesApp({ app }: { app: PithyxApp }) {
         variant="bar"
         className={styles.commands}
         end={
-          view === 'folder' && !atRecent ? (
+          atRecent ? (
+            <Button
+              size="sm"
+              variant="quiet"
+              isDisabled={recent.length === 0}
+              onPress={() => void clearRecentFiles().catch(report)}
+            >
+              <IconClearAll size={18} stroke={1.75} aria-hidden />
+              <span className={styles.viewLabel}>{t('recent.clear')}</span>
+            </Button>
+          ) : view === 'folder' ? (
             <>
               <Button
                 size="sm"
