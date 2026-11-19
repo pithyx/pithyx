@@ -7,6 +7,7 @@ const share = (id: number, name: string, kind?: 'share' | 'home' | 'userHome' | 
   access: 'readWrite' as const,
   path: null,
   unavailable: null,
+  previousVersions: true,
   ...(kind === undefined ? {} : { kind }),
 });
 

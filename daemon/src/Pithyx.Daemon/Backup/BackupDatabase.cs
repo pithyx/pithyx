@@ -51,7 +51,7 @@ public static class BackupDatabase
             "users", "recovery_codes", "passkeys", "user_appearance", "user_file_defaults", "user_startup_apps", "window_preferences", "desktop_layouts", "desktop_items",
             "groups", "group_members", "storage_alert_mutes", "notification_channels", "notification_rules", "user_languages",
         ],
-        [BackupCategory.SharedFolders] = ["shares", "file_services"],
+        [BackupCategory.SharedFolders] = ["shares", "file_services", "share_user_quotas"],
         [BackupCategory.Storage] = ["snapshot_schedules", "storage_schedules"],
         [BackupCategory.System] = ["system_region"],
         [BackupCategory.Certificates] = ["tls_issued"],
@@ -177,6 +177,19 @@ public static class BackupDatabase
             {
                 await connection.ExecuteAsync(
                     "DELETE FROM main.app_storage WHERE NOT EXISTS (SELECT 1 FROM main.users u JOIN temp.restore_users o ON o.id = u.id AND o.username = u.username WHERE u.id = app_storage.user_id)",
+                    transaction: transaction);
+            }
+            if (shares)
+            {
+                // A user's quota on a shared folder stays only with a user of the same id and name (D411).
+                await connection.ExecuteAsync(
+                    "DELETE FROM main.share_user_quotas WHERE NOT EXISTS (SELECT 1 FROM main.users u JOIN backup.users b ON b.id = u.id AND b.username = u.username WHERE u.id = share_user_quotas.user_id)",
+                    transaction: transaction);
+            }
+            else if (users)
+            {
+                await connection.ExecuteAsync(
+                    "DELETE FROM main.share_user_quotas WHERE NOT EXISTS (SELECT 1 FROM main.users u JOIN temp.restore_users o ON o.id = u.id AND o.username = u.username WHERE u.id = share_user_quotas.user_id)",
                     transaction: transaction);
             }
             if (users || shares)

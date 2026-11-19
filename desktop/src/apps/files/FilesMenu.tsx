@@ -47,6 +47,7 @@ export function FilesMenu({
   canPaste,
   openOnly = false,
   withoutTrash = false,
+  withoutVersions = withoutTrash,
   appActions = [],
   onAction,
   onAppAction,
@@ -66,6 +67,8 @@ export function FilesMenu({
   openOnly?: boolean;
   /** Apps (D409) has no recycle bin and no previous versions: deleting is only permanent. */
   withoutTrash?: boolean;
+  /** No "Previous versions": the share has none (Apps, or an administrator switched them off). */
+  withoutVersions?: boolean;
   /** The installed apps' file actions that apply to the selection (D375), with their app's icon. */
   appActions?: readonly { label: string; icon: string }[];
   onAction: (action: FilesAction) => void;
@@ -141,7 +144,7 @@ export function FilesMenu({
                 {t('actions.rename')}
               </MenuItem>
             )}
-            {single !== null && !withoutTrash && (
+            {single !== null && !withoutVersions && (
               <MenuItem id="versions" icon={<IconHistory {...icon} />}>
                 {t('actions.versions')}
               </MenuItem>

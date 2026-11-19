@@ -11,6 +11,10 @@ export function shareGrantsKey(shareId: number) {
   return [...sharesKey, 'grants', shareId] as const;
 }
 
+export function shareQuotasKey(shareId: number) {
+  return [...sharesKey, 'quotas', shareId] as const;
+}
+
 export const poolsKey = [...sharesKey, 'pools'] as const;
 
 /** Every share with its space and a summary of the rights. */

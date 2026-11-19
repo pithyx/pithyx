@@ -1,0 +1,14 @@
+{
+  "command": "zfs",
+  "args": [
+    "get",
+    "-j",
+    "--json-int",
+    "-t",
+    "filesystem",
+    "userused@60001,userquota@60001,userused@60002,userquota@60002,userused@60003,userquota@60003",
+    "pithyxtestfs/quotafixture",
+    "pithyxtestfs/pithyx"
+  ],
+  "exitCode": 0
+}

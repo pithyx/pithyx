@@ -62,6 +62,11 @@ export interface ShareInfo {
    * one folder per app, which only core apps see. Left out for a shared folder.
    */
   kind?: 'home' | 'userHome' | 'apps';
+  /**
+   * `false` when the share offers no previous versions: an administrator switched them off, or it is Apps.
+   * `files.versions` and `files.restoreVersion` then fail with `fs.version.disabled`. Left out when it offers them.
+   */
+  previousVersions?: false;
 }
 
 /** Order of a folder listing. Name order is natural ("file2" before "file10") and ignores case. */

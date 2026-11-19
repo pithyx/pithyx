@@ -71,6 +71,7 @@ internal static unsafe partial class LinuxFs
     public const int ENOTEMPTY = 39;
     public const int ELOOP = 40;
     public const int EOPNOTSUPP = 95;
+    public const int EDQUOT = 122;
     public const int EPERM = 1;
 
     private static readonly bool _arm = RuntimeInformation.ProcessArchitecture == Architecture.Arm64;

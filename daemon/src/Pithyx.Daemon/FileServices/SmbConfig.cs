@@ -37,14 +37,15 @@ public enum SmbShareKind
 /// <param name="Writers">User names with read and write access, administrators included.</param>
 /// <param name="Encrypt">Clients must encrypt.</param>
 /// <param name="Kind">A shared folder, the users' homes or the folder of all homes.</param>
-public sealed record SmbShare(string Name, string Path, IReadOnlyList<string> Readers, IReadOnlyList<string> Writers, bool Encrypt, SmbShareKind Kind = SmbShareKind.Share);
+/// <param name="PreviousVersions">Shows the daily restore points as previous versions (D411).</param>
+public sealed record SmbShare(string Name, string Path, IReadOnlyList<string> Readers, IReadOnlyList<string> Writers, bool Encrypt, SmbShareKind Kind = SmbShareKind.Share, bool PreviousVersions = true);
 
 /// <summary>
 /// Renders <c>/etc/samba/smb.conf</c> from SQLite (D287): SMB3 only, signing required, no guests, no NetBIOS, no
 /// printers. ACL editing over SMB is off, so rights change only in Pithyx (D102); the POSIX ACLs of D286 decide what a
 /// user may do. Each share hides the recycle bin (<c>veto files</c>), moves deletes into it with <c>vfs_recycle</c>
 /// (<see cref="SmbRecycle"/> turns them into recycle bin items), shows the daily restore points as previous versions
-/// (<c>shadow_copy2</c>) and reports writes and deletes to the journal (<c>full_audit</c>, read by
+/// (<c>shadow_copy2</c>, unless a shared folder hides them, D411) and reports writes and deletes to the journal (<c>full_audit</c>, read by
 /// <see cref="FileServiceActivity"/>). Manual settings go into <see cref="LocalInclude"/>, which Pithyx never writes.
 /// </summary>
 public static class SmbConfig
@@ -167,13 +168,14 @@ public static class SmbConfig
             Line(text, "directory mask", "0770");
             Line(text, "veto files", $"/{Files.FsPath.TrashFolder}/");
             Line(text, "delete veto files", "no");
+            var shadow = share.PreviousVersions ? " shadow_copy2" : "";
             if (share.Kind == SmbShareKind.Homes)
             {
-                Line(text, "vfs objects", "full_audit catia fruit streams_xattr shadow_copy2");
+                Line(text, "vfs objects", $"full_audit catia fruit streams_xattr{shadow}");
             }
             else
             {
-                Line(text, "vfs objects", "full_audit catia fruit streams_xattr shadow_copy2 recycle");
+                Line(text, "vfs objects", $"full_audit catia fruit streams_xattr{shadow} recycle");
                 Line(text, "recycle:repository", $"{Files.FsPath.TrashFolder}/{RecycleFolder}/%U");
                 Line(text, "recycle:keeptree", "yes");
                 Line(text, "recycle:versions", "yes");
@@ -181,10 +183,13 @@ public static class SmbConfig
                 Line(text, "recycle:directory_mode", "0700");
                 Line(text, "recycle:subdir_mode", "0700");
             }
-            Line(text, "shadow:snapdir", ".zfs/snapshot");
-            Line(text, "shadow:format", $"{Storage.Snapshots.SnapshotNames.Prefix}{Storage.Snapshots.SnapshotKinds.Daily}-%Y%m%dT%H%M%SZ");
-            Line(text, "shadow:localtime", "no");
-            Line(text, "shadow:sort", "desc");
+            if (share.PreviousVersions)
+            {
+                Line(text, "shadow:snapdir", ".zfs/snapshot");
+                Line(text, "shadow:format", $"{Storage.Snapshots.SnapshotNames.Prefix}{Storage.Snapshots.SnapshotKinds.Daily}-%Y%m%dT%H%M%SZ");
+                Line(text, "shadow:localtime", "no");
+                Line(text, "shadow:sort", "desc");
+            }
             Line(text, "full_audit:prefix", "%U|%S");
             Line(text, "full_audit:success", "pwrite_send unlinkat renameat mkdirat");
             Line(text, "full_audit:failure", "none");

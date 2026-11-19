@@ -93,6 +93,7 @@ public sealed partial class FileServiceSync(
         var shares = (await connection.QueryAsync<(long Id, string Name, string Path, string Dataset, long Smb, long Sftp, long Encrypt)>(
             "SELECT id, name, path, dataset, smb, sftp, smb_encrypt FROM shares WHERE dataset IS NOT NULL AND home = 0 ORDER BY id")).ToList();
         var homeRows = (await Homes.RowsAsync(connection)).Where(row => row.Dataset is not null).ToList();
+        var noVersions = (await connection.QueryAsync<long>("SELECT id FROM shares WHERE previous_versions = 0")).ToHashSet();
         var pool = await connection.ExecuteScalarAsync<string?>("SELECT value FROM settings WHERE key = @key", new { key = Homes.PoolSetting });
         var homesRoot = pool is null ? null : pools.Current.Datasets.FirstOrDefault(dataset => dataset.Name == Storage.Zfs.HomePlans.HomesDataset(pool)) is { Mounted: true, MountPoint: { } mount } ? mount : null;
         // Apps (D409) only while its app pool can be used; it is real mode here, so the pool's pithyx/apps decides.
@@ -102,7 +103,7 @@ public sealed partial class FileServiceSync(
         var apps = appsRow is { Smb: 1 } row && Apps.AppsShare.Unavailable(appsPool, pools.Current, pools.Available, useZfs: true) is null
             ? new AppsSmbShare(row.Id, row.Path, row.Encrypt == 1)
             : null;
-        return Plan(settings.Smb == 1, settings.Workgroup, settings.Sftp == 1, settings.Ssh == 1, users, shares, pools.Current, pools.Available, homeRows, homesRoot, apps) with
+        return Plan(settings.Smb == 1, settings.Workgroup, settings.Sftp == 1, settings.Ssh == 1, users, shares, pools.Current, pools.Available, homeRows, homesRoot, apps, noVersions) with
         {
             NetbiosName = SmbConfig.NetbiosName(Environment.MachineName),
         };
@@ -114,7 +115,8 @@ public sealed partial class FileServiceSync(
     /// offer the protocol. A user who signs in over SSH with a shell (SSH logins on and the SSH login right) uses SFTP
     /// as an ordinary SSH user and gets no SFTP view. Every user with a home gets it as <c>home</c>; administrators also
     /// get <c>homes</c> with every home (D348): over SMB the folder <paramref name="homesRoot"/>, over SFTP one
-    /// folder per home. Apps (D409) is offered over SMB only, to the users with access and the SMB right.
+    /// folder per home. Apps (D409) is offered over SMB only, to the users with access and the SMB right. The shared
+    /// folders in <paramref name="noVersions"/> show no previous versions over SMB (D411).
     /// </summary>
     public static FileServicePlan Plan(
         bool smbEnabled,
@@ -127,7 +129,8 @@ public sealed partial class FileServiceSync(
         bool poolsAvailable,
         IReadOnlyList<HomeRow>? homes = null,
         string? homesRoot = null,
-        AppsSmbShare? apps = null)
+        AppsSmbShare? apps = null,
+        IReadOnlySet<long>? noVersions = null)
     {
         ArgumentNullException.ThrowIfNull(users);
         ArgumentNullException.ThrowIfNull(shares);
@@ -143,7 +146,8 @@ public sealed partial class FileServiceSync(
             share.Path,
             [.. smbUsers.Where(user => user.Permissions.Share(share.Id) == ShareAccess.Read).Select(user => user.Username)],
             [.. smbUsers.Where(user => user.Permissions.Share(share.Id) == ShareAccess.ReadWrite).Select(user => user.Username)],
-            share.Encrypt == 1)).ToList();
+            share.Encrypt == 1,
+            PreviousVersions: noVersions?.Contains(share.Id) != true)).ToList();
         var entries = available.Where(share => share.Sftp == 1 && !string.Equals(share.Name, Homes.OwnName, StringComparison.OrdinalIgnoreCase) && !string.Equals(share.Name, Homes.AllName, StringComparison.OrdinalIgnoreCase))
             .SelectMany(share => sftpUsers.Where(user => user.Permissions.Share(share.Id) != ShareAccess.None).Select(user => new SftpViewEntry(user.Username, share.Name, share.Path)))
             .ToList();

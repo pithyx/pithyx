@@ -254,6 +254,7 @@ export function FilesApp({ app }: { app: PithyxApp }) {
   const appsShare = shareList.find((candidate) => candidate.kind === 'apps');
   const inApps = share?.kind === 'apps';
   const atAppsTop = inApps && path === '';
+  const versions = share !== undefined && share.previousVersions !== false;
   const appsFolders = useQuery({
     queryKey: appsKey,
     queryFn: () => filesCall(app, 'internal.files.appsFolders', {}),
@@ -899,7 +900,7 @@ export function FilesApp({ app }: { app: PithyxApp }) {
         }
         break;
       case 'versions':
-        if (entry !== undefined && shareId !== null && !inApps) {
+        if (entry !== undefined && shareId !== null && versions) {
           setVersionsOf({ share: shareId, path: joinPath(path, entry.name), name: entry.name });
         }
         break;
@@ -1596,7 +1597,7 @@ export function FilesApp({ app }: { app: PithyxApp }) {
             entry={detailEntry}
             thumbnail={detailEntry === undefined ? null : thumbnailOf(detailEntry)}
             format={app.format}
-            versions={!inApps}
+            versions={versions}
             onAction={act}
           />
         )}
@@ -1650,6 +1651,7 @@ export function FilesApp({ app }: { app: PithyxApp }) {
           writable={writable}
           openOnly={atHomes}
           withoutTrash={inApps}
+          withoutVersions={!versions}
           canPaste={clipboard !== null}
           appActions={appActions.map((offered) => ({
             label: manifestText(offered.action.label, i18n.language),

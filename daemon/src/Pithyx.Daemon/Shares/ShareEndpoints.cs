@@ -17,6 +17,9 @@ public static class ShareEndpoints
         services.AddSingleton(provider => provider.GetRequiredService<ShareChanges>().Definition());
         services.AddSingleton<SharePlanner>();
         services.AddHostedService<ShareChangePublisher>();
+        services.AddSingleton<ShareQuotas>();
+        services.AddHostedService(provider => provider.GetRequiredService<ShareQuotas>());
+        services.AddSingleton(provider => ShareQuotas.Definition(provider.GetRequiredService<ShareQuotas>));
         return services;
     }
 
@@ -40,7 +43,7 @@ public static class ShareEndpoints
         shares.MapPatch("/{shareId:long}", UpdateAsync)
             .RequireAuthorization(Policies.Admin)
             .WithName("UpdateShare")
-            .WithDescription("Administrators only. Changes the name shown, the description and whether SMB and SFTP offer the share (and whether SMB clients must encrypt); the folder and the dataset stay where they are.");
+            .WithDescription("Administrators only. Changes the name shown, the description, whether SMB, SFTP, WebDAV and FTP offer the share (and whether SMB clients must encrypt) and whether SMB and Files show its daily restore points as previous versions; the folder and the dataset stay where they are.");
         shares.MapGet("/{shareId:long}/grants", GrantsAsync)
             .RequireAuthorization(Policies.Admin)
             .WithName("GetShareGrants")
@@ -53,6 +56,14 @@ public static class ShareEndpoints
             .RequireAuthorization(Policies.Admin)
             .WithName("SetShareRestorePoints")
             .WithDescription("Administrators only. Switches the shared folder's daily restore points (snapshots of its dataset kept 7 days) on or off. A folder share without a dataset answers fs.share.no_dataset.");
+        shares.MapGet("/{shareId:long}/quotas", QuotasAsync)
+            .RequireAuthorization(Policies.Admin)
+            .WithName("GetShareQuotas")
+            .WithDescription("Administrators only. Every user who may write to the shared folder and every user with a quota there, with the space the files they own take and their quota (D411). The space is read after writes and pool events and announced on shares/quotas; null until it was read. Homes answer fs.share.not_found, Apps fs.share.system, a folder share fs.share.no_dataset.");
+        shares.MapPut("/{shareId:long}/quotas/{userId:long}", SetQuotaAsync)
+            .RequireAuthorization(Policies.Admin)
+            .WithName("SetShareQuota")
+            .WithDescription("Administrators only. Sets a user's quota on the shared folder (at least 1 MiB, fs.quota.invalid otherwise) or removes it with null, and applies it to the dataset before it answers. ZFS counts every file the user owns there and refuses writes over the quota with fs.quota.exceeded, a few seconds late.");
         shares.MapPost("/plans", PlanAsync)
             .RequireAuthorization(Policies.Admin)
             .WithName("PlanShareAction")
@@ -135,6 +146,12 @@ public static class ShareEndpoints
         changes.Announce();
         return TypedResults.NoContent();
     }
+
+    private static async Task<Ok<ShareQuotaList>> QuotasAsync(long shareId, ShareQuotas quotas, HttpContext context, CancellationToken cancellationToken) =>
+        TypedResults.Ok(await quotas.ListAsync(context.User, shareId, cancellationToken));
+
+    private static async Task<Ok<ShareQuotaList>> SetQuotaAsync(long shareId, long userId, ShareQuotaRequest request, ShareQuotas quotas, HttpContext context, CancellationToken cancellationToken) =>
+        TypedResults.Ok(await quotas.SetAsync(context.User, shareId, userId, request, cancellationToken));
 
     private static async Task<Ok<StoragePlanPreview>> PlanAsync(
         SharePlanRequest request,

@@ -68,7 +68,28 @@
       "everybody": "alle Benutzer",
       "effective": "bekommt insgesamt: {access}",
       "webdav": "Über WebDAV anbieten",
-      "ftp": "Über FTP anbieten"
+      "ftp": "Über FTP anbieten",
+      "keeping": "Papierkorb und frühere Versionen",
+      "previousVersions": "Frühere Versionen zeigen",
+      "previousVersionsHint": "Dateien und SMB-Clients bieten die täglichen Wiederherstellungspunkte dieses Ordners als frühere Versionen an. Ausgeschaltet bleiben die Wiederherstellungspunkte, und unter Speicher für Fortgeschrittene kannst du den Ordner weiter auf einen zurücksetzen.",
+      "trashRetention": "Gelöschtes aufbewahren (Tage)",
+      "trashRetentionHint": "0 bewahrt es auf, bis der Papierkorb geleert wird. Gilt auch für das, was schon darin liegt.",
+      "trashRetentionInvalid": "Gib eine ganze Zahl von 0 bis {max, number} Tagen ein."
+    },
+    "quotas": {
+      "title": "Quotas",
+      "intro": "Wie viel jeder Benutzer in diesem Ordner speichern darf. Eine Quota zählt die Dateien, die dem Benutzer gehören, auch über SMB oder SFTP geschriebene, und die Box bemerkt sie ein paar Sekunden später.",
+      "empty": "Außer Administratoren darf niemand in diesen Ordner schreiben.",
+      "usage": "belegt {used} von {quota}",
+      "unknown": "unbekannt",
+      "none": "Keine Grenze",
+      "limited": "Quota",
+      "edit": "Quota",
+      "editLabel": "Quota von {name}",
+      "dialogTitle": "Quota von {name} in diesem Ordner",
+      "size": "Quota",
+      "sizeHint": "Mindestens {min}.",
+      "save": "Speichern"
     },
     "deleteDialog": {
       "title": "{name} löschen",

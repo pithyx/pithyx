@@ -36,7 +36,7 @@ Klicke mit der rechten Maustaste auf ein Element für sein Menü: **Öffnen**, *
 
 ### Frühere Versionen
 
-Hat ein Administrator für den freigegebenen Ordner Wiederherstellungspunkte eingeschaltet, speichert die Box einmal am Tag eine Kopie und hält sie 7 Tage lang vor. Klicke mit der rechten Maustaste auf eine Datei oder einen Ordner und wähle **Frühere Versionen**, um sie zu sehen. Wähle einen Tag und dann **Aktuelle Version ersetzen**, oder stelle sie neben der aktuellen wieder her, mit dem Datum im Namen. Das Wiederherstellen braucht Schreibzugriff auf den Ordner. Gibt es keine Wiederherstellungspunkte, sagt die Liste, dass es noch keine früheren Versionen gibt.
+Hat ein Administrator für den freigegebenen Ordner Wiederherstellungspunkte eingeschaltet, speichert die Box einmal am Tag eine Kopie und hält sie 7 Tage lang vor. Klicke mit der rechten Maustaste auf eine Datei oder einen Ordner und wähle **Frühere Versionen**, um sie zu sehen. Wähle einen Tag und dann **Aktuelle Version ersetzen**, oder stelle sie neben der aktuellen wieder her, mit dem Datum im Namen. Das Wiederherstellen braucht Schreibzugriff auf den Ordner. Gibt es keine Wiederherstellungspunkte, sagt die Liste, dass es noch keine früheren Versionen gibt. Ein Administrator kann frühere Versionen für einen freigegebenen Ordner auch ausschalten; dann bietet Dateien sie dort nicht an.
 
 Wiederherstellungspunkte liegen auf denselben Platten wie die Dateien. Sie ersetzen kein Backup auf einem anderen Gerät.
 
@@ -54,7 +54,7 @@ Gut zu wissen:
 
 - Du brauchst Schreibzugriff auf den freigegebenen Ordner.
 - Dateien werden nacheinander hochgeladen.
-- Es gibt keine Begrenzung der Dateigröße außer dem freien Platz des Pools.
+- Es gibt keine Begrenzung der Dateigröße außer dem freien Platz des Pools und deiner Quota im freigegebenen Ordner, falls ein Administrator eine gesetzt hat ([`fs.quota.exceeded`](/de/docs/reference/errors/#fs.quota.exceeded)).
 - Eine Datei erscheint im Ordner erst, wenn sie vollständig angekommen ist. Bricht die Verbindung ab, wird nichts gespeichert, und du lädst die Datei erneut hoch. Ein Fortsetzen gibt es nicht.
 - Die hochgeladene Datei gehört deinem Konto auf der Box.
 - Gibt es einen Namen schon, fragt Dateien, was zu tun ist (siehe unten).

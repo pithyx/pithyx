@@ -69,6 +69,14 @@ public static class ZfsDatasetPlans
         return [new PlanStep(new CommandRequest("zfs", ["set", .. properties.Select(property => $"{property.Key}={property.Value}"), Single(dataset)]), [])];
     }
 
+    /// <summary>Sets the quota of a uid on a dataset in bytes (D411), or removes it with null.</summary>
+    public static CommandRequest SetUserQuota(string dataset, long uid, long? bytes)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegative(uid);
+        var value = bytes is { } quota ? quota.ToString(CultureInfo.InvariantCulture) : "none";
+        return new CommandRequest("zfs", ["set", $"userquota@{uid.ToString(CultureInfo.InvariantCulture)}={value}", Single(dataset)]);
+    }
+
     /// <summary>
     /// Destroys a dataset; <c>-r</c> takes its children and snapshots with it and is passed only when the caller listed
     /// them. Never <c>-R</c> (clones of its snapshots elsewhere) and never <c>-f</c> (forced unmount).
