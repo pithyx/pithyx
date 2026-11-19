@@ -27,7 +27,7 @@ public sealed class ShareQuotaIntegrationTests
         await vdevs.RunAsync("zfs", ["create", dataset]);
         var mountPoint = (await vdevs.RunAsync("zfs", ["get", "-H", "-o", "value", "mountpoint", dataset])).Trim();
 
-        var set = ZfsUserSpaces.Set(dataset, Uid, Quota);
+        var set = ZfsDatasetPlans.SetUserQuota(dataset, Uid, Quota);
         await vdevs.RunAsync(set.FileName, set.Arguments);
         var read = ZfsUserSpaces.Read([dataset], [Uid]);
         var before = ZfsUserSpaces.Parse(await vdevs.RunAsync(read.FileName, read.Arguments))[dataset][Uid];
@@ -60,7 +60,7 @@ public sealed class ShareQuotaIntegrationTests
         var after = ZfsUserSpaces.Parse(await vdevs.RunAsync(read.FileName, read.Arguments))[dataset][Uid];
         Assert.True(after.UsedBytes >= Quota, $"used {after.UsedBytes}");
 
-        var remove = ZfsUserSpaces.Set(dataset, Uid, null);
+        var remove = ZfsDatasetPlans.SetUserQuota(dataset, Uid, null);
         await vdevs.RunAsync(remove.FileName, remove.Arguments);
         Assert.Null(ZfsUserSpaces.Parse(await vdevs.RunAsync(read.FileName, read.Arguments))[dataset][Uid].QuotaBytes);
     }

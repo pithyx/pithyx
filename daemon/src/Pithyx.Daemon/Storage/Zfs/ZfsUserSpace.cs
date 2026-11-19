@@ -27,10 +27,6 @@ public static class ZfsUserSpaces
         return new("zfs", ["get", "-j", "--json-int", "-t", "filesystem", string.Join(',', properties), .. names]);
     }
 
-    /// <summary>Sets the quota of a uid on a dataset in bytes, or removes it with null.</summary>
-    public static CommandRequest Set(string dataset, long uid, long? bytes) =>
-        new("zfs", ["set", $"{Quota(uid)}={(bytes is { } value ? value.ToString(CultureInfo.InvariantCulture) : "none")}", Dataset(dataset)]);
-
     /// <summary>The space of each uid by dataset, from the output of <see cref="Read"/>; 0 as a quota is none.</summary>
     public static IReadOnlyDictionary<string, IReadOnlyDictionary<long, ZfsUserSpace>> Parse(string json)
     {
@@ -86,7 +82,7 @@ public static class ZfsUserSpaces
                 long? want = wanted.TryGetValue((dataset, uid), out var bytes) ? bytes : null;
                 if (spaces.GetValueOrDefault(uid)?.QuotaBytes != want)
                 {
-                    changes.Add(Set(dataset, uid, want));
+                    changes.Add(ZfsDatasetPlans.SetUserQuota(Dataset(dataset), uid, want));
                 }
             }
         }

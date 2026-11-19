@@ -43,7 +43,7 @@ public sealed class ZfsUserSpaceTests
             ["get", "-j", "--json-int", "-t", "filesystem", "userused@60001,userquota@60001,userused@60002,userquota@60002,userused@60003,userquota@60003", Fixture, "pithyxtestfs/pithyx"],
             read.Arguments);
         Assert.Throws<ArgumentException>(() => ZfsUserSpaces.Read([], [60001]));
-        Assert.Throws<ArgumentException>(() => ZfsUserSpaces.Set("-o", 60001, null));
+        Assert.Throws<ArgumentException>(() => ZfsDatasetPlans.SetUserQuota("-o", 60001, null));
     }
 
     [Fact]
