@@ -15,7 +15,7 @@ command -v pebble >/dev/null || { echo "acme-pebble: install the Debian package 
 
 scratch="$(mktemp -d)"
 pids=()
-# shellcheck disable=SC2317 # called by the EXIT trap
+# shellcheck disable=SC2317,SC2329 # called by the EXIT trap
 cleanup() {
   for pid in "${pids[@]}"; do kill "$pid" 2>/dev/null || true; done
   rm -rf "$scratch"
