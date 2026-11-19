@@ -17,7 +17,7 @@
 #
 # Writes one Markdown report (stdout, and --report <file>). Exits non-zero when a check failed.
 # Functions called through check and wait_for look unreachable to shellcheck.
-# shellcheck disable=SC2317
+# shellcheck disable=SC2317,SC2329
 set -euo pipefail
 export LC_ALL=C.UTF-8
 
