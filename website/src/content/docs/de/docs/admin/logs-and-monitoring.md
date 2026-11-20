@@ -43,7 +43,7 @@ Das Speicherabbild ist die Ausnahme: Es enthält alles, was der Daemon im Speich
 
 Die Box erstellt das Paket als Job (auch in der Job-Liste) und schreibt es unter `/var/cache/pithyx/support/` auf die Systemplatte; ohne genug freien Platz startet sie nicht (`system.support.no_space`). Die Box behält ein Paket: Ein neues ersetzt das alte, und ein zweiter Job, während einer läuft, wird abgelehnt (`system.support.busy`). **Herunterladen** speichert die Zip-Datei `pithyx-support-<host>-<datum>-<uhrzeit>.zip`; sie bleibt eine Stunde auf der Box oder bis **Von der Box löschen** und ist nach einem Neustart weg. Die Box schickt sie nirgendwohin: Du gibst die Datei selbst weiter. Jedes Paket wird mit seinen Teilen im Audit-Protokoll vermerkt.
 
-Die Zip-Datei enthält `manifest.json` (Zeit, Host, Version, die Teile und die Dateien, die es nicht gab) und `failures.json` (was nicht gelesen werden konnte und warum, etwa ein Befehl, den es auf der Box nicht gibt), dann einen Ordner pro Teil: `system/`, `storage/`, `network/`, `configuration/` (mit `database/<tabelle>.json`), `logs/` (`log-center.jsonl`, `kernel.txt`), `apps/` und `memory/`.
+Die Zip-Datei enthält `manifest.json` (Zeit, Host, Version, die Teile und die Dateien, die es nicht gab) und `failures.json` (was nicht gelesen werden konnte und warum, etwa ein Befehl, den es auf der Box nicht gibt, oder `standby` für eine Platte, die schläft: Für ihre SMART-Daten wird sie nicht geweckt), dann einen Ordner pro Teil: `system/`, `storage/`, `network/`, `configuration/` (mit `database/<tabelle>.json`), `logs/` (`log-center.jsonl`, `kernel.txt`), `apps/` und `memory/`.
 
 ## Der Ressourcenmonitor
 

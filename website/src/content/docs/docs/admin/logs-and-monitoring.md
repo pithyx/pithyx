@@ -43,7 +43,7 @@ The memory dump is the exception: it holds everything the daemon had in memory, 
 
 The box makes the bundle as a job (in the jobs list too) and writes it under `/var/cache/pithyx/support/` on the system disk; it refuses to start without enough free space (`system.support.no_space`). The box keeps one bundle: making a new one replaces the old one, and a second job while one runs is refused (`system.support.busy`). **Download** saves the zip file `pithyx-support-<host>-<date>-<time>.zip`; it stays on the box for one hour or until **Delete from the box**, and is gone after a restart. The box never sends it anywhere: you share the file yourself. Every bundle is recorded in the audit log with its parts.
 
-The zip holds `manifest.json` (time, host, version, the parts and the files that did not exist) and `failures.json` (what could not be read and why, for example a command missing on the box), then one folder per part: `system/`, `storage/`, `network/`, `configuration/` (with `database/<table>.json`), `logs/` (`log-center.jsonl`, `kernel.txt`), `apps/` and `memory/`.
+The zip holds `manifest.json` (time, host, version, the parts and the files that did not exist) and `failures.json` (what could not be read and why, for example a command missing on the box, or `standby` for a disk that sleeps: it is not woken for its SMART data), then one folder per part: `system/`, `storage/`, `network/`, `configuration/` (with `database/<table>.json`), `logs/` (`log-center.jsonl`, `kernel.txt`), `apps/` and `memory/`.
 
 ## The Resource Monitor
 
