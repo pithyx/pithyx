@@ -171,16 +171,16 @@ public sealed partial class LogService(
         return legacy.Count == 0 ? query : query with { Sources = sources.Union(legacy, StringComparer.Ordinal).ToHashSet(StringComparer.Ordinal) };
     }
 
-    /// <summary>Every matching entry, newest first, as JSON lines or as text, up to <see cref="MaxExportEntries"/>.</summary>
-    public async Task ExportAsync(LogQuery query, bool text, Stream output, CancellationToken cancellationToken)
+    /// <summary>Every matching entry, newest first, as JSON lines or as text, up to <paramref name="maxEntries"/>.</summary>
+    public async Task ExportAsync(LogQuery query, bool text, Stream output, CancellationToken cancellationToken, int maxEntries = MaxExportEntries)
     {
         ArgumentNullException.ThrowIfNull(query);
         await using var writer = new StreamWriter(output, new UTF8Encoding(false), leaveOpen: true);
         var page = query with { Limit = MaxLimit };
         var written = 0;
-        while (written < MaxExportEntries)
+        while (written < maxEntries)
         {
-            var result = await QueryAsync(page, cancellationToken);
+            var result = await QueryAsync(page with { Limit = Math.Min(MaxLimit, maxEntries - written) }, cancellationToken);
             foreach (var entry in result.Entries)
             {
                 await writer.WriteLineAsync(text ? TextLine(entry) : JsonSerializer.Serialize(entry, ExportJson.Options));

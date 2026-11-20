@@ -8099,6 +8099,152 @@
         }
       }
     },
+    "/api/system/support-bundle": {
+      "get": {
+        "tags": [
+          "System"
+        ],
+        "description": "Administrators only. The support bundle on the box, kept for an hour, and the job making a new one.",
+        "operationId": "GetSupportBundle",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SupportBundleState"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "System"
+        ],
+        "description": "Administrators only. Starts the job that makes a support bundle of the chosen parts; it replaces the bundle on the box. Secrets never go in, except in the memory dump, which needs a step-up.",
+        "operationId": "CreateSupportBundle",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSupportBundleRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Job"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/system/support-bundle/{id}/download": {
+      "get": {
+        "tags": [
+          "System"
+        ],
+        "description": "Administrators only. The support bundle as a zip file.",
+        "operationId": "DownloadSupportBundle",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/zip": {
+                "schema": {
+                  "type": "string",
+                  "format": "byte"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/system/support-bundle/{id}": {
+      "delete": {
+        "tags": [
+          "System"
+        ],
+        "description": "Administrators only. Deletes the support bundle from the box.",
+        "operationId": "DeleteSupportBundle",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/apps": {
       "get": {
         "tags": [
@@ -13029,6 +13175,35 @@
           }
         }
       },
+      "CreateSupportBundleRequest": {
+        "required": [
+          "parts"
+        ],
+        "type": "object",
+        "properties": {
+          "parts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SupportBundlePart"
+            },
+            "description": "What the bundle holds; at least one part."
+          },
+          "password": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The administrator's password for the step-up a memory dump needs; empty while a step-up holds."
+          },
+          "totpCode": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The current authenticator code for the step-up, with two-factor sign-in on."
+          }
+        }
+      },
       "CustomCertificateRequest": {
         "required": [
           "certificatePem",
@@ -14309,6 +14484,9 @@
           "system.backup.too_new",
           "system.internal.unexpected",
           "system.origin.forbidden",
+          "system.support.busy",
+          "system.support.no_space",
+          "system.support.not_found",
           "system.time.apply_failed",
           "system.time.server_invalid",
           "system.time.servers_too_many",
@@ -22597,6 +22775,98 @@
           "app"
         ],
         "description": "Who a grant is for. Apps join in M4; until then nothing grants to them."
+      },
+      "SupportBundleInfo": {
+        "required": [
+          "id",
+          "fileName",
+          "sizeBytes",
+          "parts",
+          "failures",
+          "createdAt",
+          "expiresAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Names the bundle in the download URL."
+          },
+          "fileName": {
+            "type": "string",
+            "description": "The name the download gets."
+          },
+          "sizeBytes": {
+            "type": "integer",
+            "description": "The size of the file.",
+            "format": "int64"
+          },
+          "parts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SupportBundlePart"
+            },
+            "description": "The parts it holds."
+          },
+          "failures": {
+            "type": "integer",
+            "description": "Commands or files that could not be read; the bundle names each in `failures.json`.",
+            "format": "int32"
+          },
+          "createdAt": {
+            "type": "string",
+            "description": "When it was made, UTC.",
+            "format": "date-time"
+          },
+          "expiresAt": {
+            "type": "string",
+            "description": "When the box deletes it, UTC.",
+            "format": "date-time"
+          }
+        },
+        "description": "The bundle on the box, ready to download until ExpiresAt."
+      },
+      "SupportBundlePart": {
+        "enum": [
+          "system",
+          "storage",
+          "network",
+          "configuration",
+          "logs",
+          "apps",
+          "memoryDump"
+        ],
+        "description": "A part of a support bundle (D412); the administrator leaves out any of them."
+      },
+      "SupportBundleState": {
+        "required": [
+          "bundle",
+          "jobId"
+        ],
+        "type": "object",
+        "properties": {
+          "bundle": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "The bundle ready to download, or none.",
+                "$ref": "#/components/schemas/SupportBundleInfo"
+              }
+            ],
+            "description": "The bundle on the box, ready to download until ExpiresAt."
+          },
+          "jobId": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "The job making a bundle right now, or none.",
+            "format": "int64"
+          }
+        },
+        "description": "The bundle the box keeps, if any, and the job making a new one."
       },
       "SystemInfo": {
         "required": [

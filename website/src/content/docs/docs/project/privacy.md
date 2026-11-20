@@ -28,4 +28,4 @@ The website has no analytics and no tracking scripts, and loads its fonts and al
 
 ## Support bundles
 
-Pithyx does not have support bundles yet.
+An administrator can make a support bundle in the Log Center for someone who helps with a problem. It stays on the box for one hour and leaves it only when the administrator downloads and shares the file. It never holds passwords, keys or tokens, but it does hold user names, folder names, addresses and host names; an optional memory dump holds everything the daemon had in memory and needs the password. See [Support bundles](/docs/admin/logs-and-monitoring/#support-bundles).

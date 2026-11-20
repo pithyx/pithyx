@@ -149,7 +149,7 @@ export interface InternalMethods {
 }
 
 /** Administrator apps another core app may open, for example Settings opening the Store. */
-const adminApps = [coreAppIds.settings, coreAppIds.store] as const;
+const adminApps = [coreAppIds.settings, coreAppIds.store, coreAppIds.logs] as const;
 export type AdminApp = (typeof adminApps)[number];
 
 /** Sent to the app when pools or disks changed; the app reads them again. */

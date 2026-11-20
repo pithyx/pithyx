@@ -32,6 +32,55 @@
     "text": "Als Text exportieren",
     "jsonl": "Als JSON-Zeilen exportieren"
   },
+  "support": {
+    "open": "Support-Paket",
+    "title": "Support-Paket erstellen",
+    "intro": "Ein Support-Paket enthält, was jemand braucht, der dir bei einem Problem hilft. Passwörter, Schlüssel und Tokens kommen nie hinein; Benutzernamen, Ordnernamen, Adressen und Hostnamen schon. Nichts verlässt die Box, bis du die Datei selbst weitergibst.",
+    "parts": "Was hineinkommt",
+    "part": {
+      "system": {
+        "label": "System",
+        "hint": "Version, Betriebssystem, Hardware, installierte Pakete und fehlgeschlagene Dienste."
+      },
+      "storage": {
+        "label": "Speicher",
+        "hint": "Pools, Datasets, Snapshots, Laufwerke und ihre Zustandsdaten."
+      },
+      "network": {
+        "label": "Netzwerk",
+        "hint": "Adressen, Routen, Firewall-Regeln und Nameserver."
+      },
+      "configuration": {
+        "label": "Einstellungen",
+        "hint": "Die Einstellungen der Box, Benutzer, Gruppen, freigegebene Ordner und Apps sowie die Konfigurationsdateien, die sie schreibt, ohne Geheimnisse."
+      },
+      "logs": {
+        "label": "Protokolle",
+        "hint": "Die Einträge des Protokoll-Centers der letzten 7 Tage und die Meldungen des Kernels seit dem letzten Start."
+      },
+      "apps": {
+        "label": "App-Container",
+        "hint": "Welche Container der Apps es gibt und in welchem Zustand sie sind."
+      },
+      "memoryDump": {
+        "label": "Speicherabbild des Servers",
+        "hint": "Nur wenn ein Entwickler danach fragt. Groß, und es enthält Geheimnisse."
+      }
+    },
+    "dumpWarning": "Ein Speicherabbild enthält alles, was der Server in diesem Moment im Speicher hatte, auch Passwörter, Schlüssel und die Anmeldungen anderer Benutzer. Gib es nur jemandem, dem du vertraust, und lösche es danach.",
+    "stepUp": "{twoFactor, select, true {Bestätige mit deinem Passwort und dem Code aus deiner Authenticator-App.} other {Bestätige mit deinem Passwort.}}",
+    "password": "Dein Passwort",
+    "code": "Code",
+    "create": "Erstellen",
+    "createAgain": "Neu erstellen",
+    "working": "Das Support-Paket wird erstellt…",
+    "ready": "{size}, bleibt bis {expires} auf der Box.",
+    "failures": "{count, plural, one {# Element konnte nicht gelesen werden; das Paket nennt es in failures.json.} other {# Elemente konnten nicht gelesen werden; das Paket nennt sie in failures.json.}}",
+    "share": "Lade die Datei herunter und schicke sie selbst an die Person, die dir hilft.",
+    "download": "Herunterladen",
+    "delete": "Von der Box löschen",
+    "close": "Schließen"
+  },
   "loading": "Protokolle werden geladen…",
   "empty": "Keine Einträge passen zu diesen Filtern.",
   "details": {

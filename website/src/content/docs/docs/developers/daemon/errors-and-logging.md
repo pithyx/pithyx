@@ -58,4 +58,4 @@ App log entries are rate limited per app: a burst of 200, then 20 per second.
 
 The logger replaces the value of any property whose name matches `password`, `passphrase`, `secret`, `token`, `cookie`, `authorization`, `recovery_key` or `totp` (case-insensitive, at any depth) with `***`. In text values it masks `pithyx-token=`, `pithyx-ticket=` and bearer credentials. Command arguments listed as sensitive are masked and standard input is never logged. Passwords are stored as Argon2id hashes and sessions as SHA-256.
 
-Pithyx does not have support bundles yet.
+Support bundles (`SupportBundles/`, D412, endpoints under `/api/system/support-bundle`) add a second line of defense for what they copy: `SupportDatabase` classifies every table and column (a test fails when a migration adds one it does not know), keeps only an allowlist of settings and drops JSON properties whose names look like a secret, and configuration files lose the values of lines with a password, key or token. See [Support bundles](/docs/admin/logs-and-monitoring/#support-bundles).

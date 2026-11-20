@@ -261,7 +261,14 @@
     "uptime": "Running for",
     "unknown": "Not reported",
     "uptimeValue": "{days, plural, =0 {} one {# day, } other {# days, }}{hours, plural, one {# hour} other {# hours}}, {minutes, plural, one {# minute} other {# minutes}}",
-    "section": "This box"
+    "section": "This box",
+    "support": {
+      "section": "Support",
+      "intro": "When you ask someone for help with a problem, a support bundle gives them what they need to find it.",
+      "label": "Support bundle",
+      "hint": "Created and downloaded in the Log Center. Passwords and keys never go into it.",
+      "open": "Open in the Log Center"
+    }
   },
   "fileServices": {
     "intro": "File services let other computers open your shared folders over the network. Users sign in with their Pithyx user name and password.",

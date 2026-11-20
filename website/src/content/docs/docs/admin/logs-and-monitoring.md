@@ -1,6 +1,6 @@
 ---
 title: 'Logs and monitoring'
-description: 'The Log Center, the Resource Monitor and notifications: what they show, how long data is kept and what they cost.'
+description: 'The Log Center, support bundles, the Resource Monitor and notifications: what they show, how long data is kept and what they cost.'
 status: ready
 audience: admin
 sidebar:
@@ -22,6 +22,28 @@ Logs are stored in a database on the system disk under `/var/log/pithyx/`, so th
 The daemon also writes JSON files `/var/log/pithyx/daemon.json*`, rolling at 20 MB with 10 files. Secrets are masked in logs.
 
 App messages arrive through the SDK: `info`, `warn` and `error` always, `debug` only while an administrator turned it on in the app's detail. A message is at most 4000 characters, with at most 20 data fields; an app may log 20 messages per second (burst 200). Backend container output lands in the source `app/<id>`. A line on stdout is info, a line on stderr a warning, and a line that is a JSON object with a string `level` (`debug` or `trace`, `info`, `warn` or `warning`, `error`, `fatal` or `critical`) keeps that level. Such a JSON line shows its `message` (or `msg`) as the message and its other fields (at most 32, each cut to 1024 characters) as data; a W3C `traceparent` field ties it to the request, so searching the request id finds it next to the daemon's lines. A `debug` line is kept only while an administrator turned debug messages on for the app.
+
+## Support bundles
+
+When you ask someone for help with a problem, a support bundle gives them what they need to find it. **Support bundle** in the Log Center's toolbar opens the dialog; Settings > **Info Center** > **Support** leads there too. Administrators only.
+
+Choose the parts that go in (all but the memory dump are on by default):
+
+- **System**: version, operating system, hardware, installed packages and failed services.
+- **Storage**: pools, datasets, snapshots, disks and their SMART data (read with `smartctl -n standby`, so sleeping disks stay asleep).
+- **Network**: addresses, routes, firewall rules and name servers.
+- **Settings**: the box's database (settings, users, groups, shared folders, apps, jobs, the audit log) and the configuration files it writes, such as `smb.conf`.
+- **Logs**: the Log Center's entries of the last 7 days (at most 200 000) and the kernel's last 5000 messages since the last start.
+- **App containers**: which containers of the apps exist and their state.
+- **Memory dump of the server**: only when a developer asks for it.
+
+Passwords, password hashes, two-factor secrets, passkeys, sessions, private keys, tokens, the configuration of notification channels and passwords in URLs never go in; neither do app data, desktop layouts, notifications, the recycle bin or recent files. A setting the bundle does not know is kept with its value replaced by `(omitted)`, and lines with a password, key or token in the configuration files lose their value. User names, folder names, IP addresses and host names stay readable, because finding a problem usually needs them: look at the file before you share it.
+
+The memory dump is the exception: it holds everything the daemon had in memory, including passwords, keys and other users' sign-ins, and can be as large as the daemon's memory. The dialog warns about it and asks for your password (and the two-factor code, if you sign in with one) before it makes one. Share a dump only with someone you trust, and delete it afterwards.
+
+The box makes the bundle as a job (in the jobs list too) and writes it under `/var/cache/pithyx/support/` on the system disk; it refuses to start without enough free space (`system.support.no_space`). The box keeps one bundle: making a new one replaces the old one, and a second job while one runs is refused (`system.support.busy`). **Download** saves the zip file `pithyx-support-<host>-<date>-<time>.zip`; it stays on the box for one hour or until **Delete from the box**, and is gone after a restart. The box never sends it anywhere: you share the file yourself. Every bundle is recorded in the audit log with its parts.
+
+The zip holds `manifest.json` (time, host, version, the parts and the files that did not exist) and `failures.json` (what could not be read and why, for example a command missing on the box), then one folder per part: `system/`, `storage/`, `network/`, `configuration/` (with `database/<table>.json`), `logs/` (`log-center.jsonl`, `kernel.txt`), `apps/` and `memory/`.
 
 ## The Resource Monitor
 

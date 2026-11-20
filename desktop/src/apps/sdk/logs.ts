@@ -13,9 +13,26 @@ export type LogStatus = components['schemas']['LogStatus'];
 export type LogLevelName = LogEntry['level'];
 export type LogCount = components['schemas']['LogCount'];
 export type LogsAdded = components['schemas']['LogsAdded'];
+export type SupportBundlePart = components['schemas']['SupportBundlePart'];
+export type SupportBundleState = components['schemas']['SupportBundleState'];
+export type Job = components['schemas']['Job'];
+
+/** Every part of a support bundle in the order the dialog lists them (D412). */
+export const SUPPORT_PARTS: readonly SupportBundlePart[] = [
+  'system',
+  'storage',
+  'network',
+  'configuration',
+  'logs',
+  'apps',
+  'memoryDump',
+];
 
 /** The entries of every write while the Log Center follows `system/logs`. */
 export const LOGS_ADDED = 'internal.admin.logs.added';
+
+/** The job making a support bundle, on every change while the Log Center follows it. */
+export const SUPPORT_JOB = 'internal.admin.logs.supportJob';
 
 /** The filters of GET /api/logs; every one is optional. */
 export interface LogFilter {
@@ -37,6 +54,14 @@ interface LogMethods {
   'internal.admin.logs.settings': { params: Record<string, never>; result: LogStatus };
   'internal.admin.logs.setSettings': { params: LogSettings; result: LogStatus };
   'internal.admin.logs.export': { params: LogFilter & { format: 'jsonl' | 'text' }; result: null };
+  'internal.admin.logs.support': { params: Record<string, never>; result: SupportBundleState };
+  'internal.admin.logs.support.create': {
+    params: { parts: SupportBundlePart[]; password?: string; totpCode?: string };
+    result: Job;
+  };
+  'internal.admin.logs.support.follow': { params: { jobId: number }; result: null };
+  'internal.admin.logs.support.download': { params: { id: string }; result: null };
+  'internal.admin.logs.support.delete': { params: { id: string }; result: null };
 }
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -69,6 +94,23 @@ function isSettings(value: unknown): value is LogSettings {
   );
 }
 
+const isPart = (value: unknown): value is SupportBundlePart =>
+  SUPPORT_PARTS.some((part) => part === value);
+
+const hasId = (value: unknown) =>
+  isRecord(value) && typeof value.id === 'string' && /^[\w-]{1,64}$/.test(value.id);
+
+/** Starts a download the browser streams to disk; a plain link keeps the session cookie. */
+function download(href: string) {
+  const link = document.createElement('a');
+  link.href = href;
+  link.download = '';
+  link.rel = 'noopener';
+  document.body.append(link);
+  link.click();
+  link.remove();
+}
+
 /** The query string of a filter; arrays repeat their key, as the daemon expects. */
 export function logQuery(filter: LogFilter & { format?: string }): string {
   const query = new URLSearchParams();
@@ -91,9 +133,16 @@ export function logsHost(emit: (event: string, data?: unknown) => void): {
   close: () => void;
 } {
   let stop: (() => void) | null = null;
+  let stopJob: (() => void) | null = null;
   const unwatch = () => {
     stop?.();
     stop = null;
+  };
+  const follow = (jobId: number) => {
+    stopJob?.();
+    stopJob = realtime.listen(`jobs/${String(jobId)}`, (data) => {
+      emit(SUPPORT_JOB, data);
+    });
   };
   return {
     extensions: {
@@ -147,19 +196,66 @@ export function logsHost(emit: (event: string, data?: unknown) => void): {
         validate: (value) =>
           isFilter(value) && (value as { format?: unknown }).format !== undefined,
         handle: (params) => {
-          // A plain link keeps the session cookie and lets the browser stream the file to disk.
-          const link = document.createElement('a');
-          link.href = `/api/logs/export?${logQuery(params as LogFilter)}`;
-          link.download = '';
-          link.rel = 'noopener';
-          document.body.append(link);
-          link.click();
-          link.remove();
+          download(`/api/logs/export?${logQuery(params as LogFilter)}`);
           return null;
         },
       },
+      'internal.admin.logs.support': {
+        validate: isRecord,
+        handle: () => daemon(async () => unwrap(await api.GET('/api/system/support-bundle'))),
+      },
+      'internal.admin.logs.support.create': {
+        validate: (value) =>
+          isRecord(value) &&
+          Array.isArray(value.parts) &&
+          value.parts.every(isPart) &&
+          (value.password === undefined || typeof value.password === 'string') &&
+          (value.totpCode === undefined || typeof value.totpCode === 'string'),
+        handle: (params) =>
+          daemon(async () => {
+            const job = unwrap(
+              await api.POST('/api/system/support-bundle', {
+                body: params as LogMethods['internal.admin.logs.support.create']['params'],
+              }),
+            );
+            follow(job.id);
+            return job;
+          }),
+      },
+      'internal.admin.logs.support.follow': {
+        validate: (value) => isRecord(value) && Number.isSafeInteger(value.jobId),
+        handle: (params) => {
+          follow((params as { jobId: number }).jobId);
+          return Promise.resolve(null);
+        },
+      },
+      'internal.admin.logs.support.download': {
+        validate: hasId,
+        handle: (params) => {
+          download(
+            `/api/system/support-bundle/${encodeURIComponent((params as { id: string }).id)}/download`,
+          );
+          return null;
+        },
+      },
+      'internal.admin.logs.support.delete': {
+        validate: hasId,
+        handle: (params) =>
+          daemon(async () => {
+            unwrap(
+              await api.DELETE('/api/system/support-bundle/{id}', {
+                params: { path: { id: (params as { id: string }).id } },
+              }),
+            );
+            return null;
+          }),
+      },
     },
-    close: unwatch,
+    close: () => {
+      unwatch();
+      stopJob?.();
+      stopJob = null;
+    },
   };
 }
 
@@ -167,6 +263,13 @@ export function logsHost(emit: (event: string, data?: unknown) => void): {
 export function onLogs(app: PithyxApp, handler: (added: LogsAdded) => void): () => void {
   return app.on(LOGS_ADDED as unknown as EventName, (data) => {
     handler(data as unknown as LogsAdded);
+  });
+}
+
+/** The job making a support bundle, on every change while the Log Center follows it. */
+export function onSupportJob(app: PithyxApp, handler: (job: Job) => void): () => void {
+  return app.on(SUPPORT_JOB as unknown as EventName, (data) => {
+    handler(data as unknown as Job);
   });
 }
 

@@ -711,6 +711,11 @@
     "origin": {
       "forbidden": "Die Anfrage kam von einer anderen Website und wurde abgelehnt."
     },
+    "support": {
+      "busy": "Es wird schon ein Support-Paket erstellt. Warte, bis es fertig ist.",
+      "no_space": "Auf dem Systemlaufwerk ist zu wenig Platz für das Support-Paket: {neededBytes, number} Bytes werden gebraucht, {availableBytes, number} sind frei.",
+      "not_found": "Das Support-Paket ist nicht mehr da: Es wurde nach einer Stunde gelöscht, durch ein neueres ersetzt, oder der Server wurde neu gestartet. Erstelle ein neues."
+    },
     "time": {
       "apply_failed": "Die Zeiteinstellung konnte nicht übernommen werden ({command} endete mit Exit-Code {exitCode}). Die Details stehen im Log.",
       "server_invalid": "„{server}“ ist weder ein Hostname noch eine Adresse.",

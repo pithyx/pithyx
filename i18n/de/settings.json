@@ -261,7 +261,14 @@
     "uptime": "Läuft seit",
     "unknown": "Nicht gemeldet",
     "uptimeValue": "{days, plural, =0 {} one {# Tag, } other {# Tagen, }}{hours, plural, one {# Stunde} other {# Stunden}}, {minutes, plural, one {# Minute} other {# Minuten}}",
-    "section": "Diese Box"
+    "section": "Diese Box",
+    "support": {
+      "section": "Support",
+      "intro": "Wenn du jemanden um Hilfe bei einem Problem bittest, gibt ein Support-Paket alles, was zum Finden nötig ist.",
+      "label": "Support-Paket",
+      "hint": "Wird im Protokoll-Center erstellt und heruntergeladen. Passwörter und Schlüssel kommen nie hinein.",
+      "open": "Im Protokoll-Center öffnen"
+    }
   },
   "fileServices": {
     "intro": "Mit Dateidiensten öffnen andere Computer deine freigegebenen Ordner über das Netzwerk. Benutzer melden sich mit ihrem Pithyx-Benutzernamen und Passwort an.",

@@ -63,6 +63,7 @@ export { default as IconKey } from '@tabler/icons-react/dist/esm/icons/IconKey.m
 export { default as IconLanguage } from '@tabler/icons-react/dist/esm/icons/IconLanguage.mjs';
 export { default as IconLayoutBottombar } from '@tabler/icons-react/dist/esm/icons/IconLayoutBottombar.mjs';
 export { default as IconLayoutGrid } from '@tabler/icons-react/dist/esm/icons/IconLayoutGrid.mjs';
+export { default as IconLifebuoy } from '@tabler/icons-react/dist/esm/icons/IconLifebuoy.mjs';
 export { default as IconLink } from '@tabler/icons-react/dist/esm/icons/IconLink.mjs';
 export { default as IconListDetails } from '@tabler/icons-react/dist/esm/icons/IconListDetails.mjs';
 export { default as IconLoader2 } from '@tabler/icons-react/dist/esm/icons/IconLoader2.mjs';
