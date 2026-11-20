@@ -20,7 +20,9 @@ test('the menu finds files by name and shows all of them in Files', async ({ pag
 
   await results.getByRole('option', { name: 'Show all in Files' }).click();
   const files = page.getByRole('region', { name: /Files$/ });
-  const hits = files.getByRole('grid', { name: 'Search results for “zephyr”' });
+  await expect(files.getByRole('grid', { name: 'Search results for “zephyr”' })).toBeVisible();
+  // The table is named after the search, which changes while typing.
+  const hits = files.getByRole('grid', { name: /^Search results for/ });
   // A header row and the three matches.
   await expect(hits.getByRole('row')).toHaveCount(4);
   await expect(files.getByText('3 matches')).toBeVisible();
