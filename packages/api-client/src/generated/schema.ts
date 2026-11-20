@@ -1343,6 +1343,23 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/api/files/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Files and folders whose name contains every word of q, ignoring case, in the shared folders the caller can read and the caller's own home (other users' homes and Apps are not searched, also for administrators). The best matches come first: the whole name, then names that start with the search, then a word in the name. limit defaults to 50 (at most 200). Names only; every hit is checked on disk, so size and modified are as the entry is now. complete is false while a place is still being indexed. */
+        get: operations["SearchFiles"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/groups": {
         parameters: {
             query?: never;
@@ -7451,6 +7468,38 @@ export type components = {
              */
             version: number;
         };
+        /** @description A file or folder whose name matched a search. */
+        SearchHit: {
+            /** @description File or folder. */
+            kind: components["schemas"]["FileKind"];
+            /**
+             * Format: date-time
+             * @description Last change of the content as it is now, UTC.
+             */
+            modified: string;
+            /** @description Its name. */
+            name: string;
+            /** @description Relative to the share, with its name as the last part. */
+            path: string;
+            /**
+             * Format: int64
+             * @description The share it is in.
+             */
+            share: number;
+            /**
+             * Format: int64
+             * @description Bytes for files, 0 for folders, as it is now.
+             */
+            size: number;
+        };
+        SearchResults: {
+            /** @description False while a searched place has not been read completely once since it was added, so hits may be missing. */
+            complete: boolean;
+            /** @description The best matches first: the whole name, then names that start with the search, then a word in the name, then the rest. */
+            hits: components["schemas"]["SearchHit"][];
+            /** @description Whether there are more matches than were returned; a longer search narrows them. */
+            more: boolean;
+        };
         ServerMessage: components["schemas"]["AckMessage"] | components["schemas"]["SnapshotMessage"] | components["schemas"]["EventMessage"] | components["schemas"]["ErrorMessage"];
         /** @description What the signed-in user may do outside shared folders, for the desktop: which apps it shows and whether the power menu is there. */
         SessionPermissions: {
@@ -12166,6 +12215,38 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    SearchFiles: {
+        parameters: {
+            query?: {
+                limit?: number;
+                q?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SearchResults"];
+                };
             };
             /** @description Problem details with a stable error code. */
             default: {

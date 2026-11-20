@@ -399,7 +399,7 @@
   outline: none;
 }
 
-.entry[data-selected] {
+.entry[data-first] {
   background: var(--color-accent-subtle);
 }
 

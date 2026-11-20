@@ -36,7 +36,8 @@ public sealed partial class HomeService(
     ShareChanges shareChanges,
     TimeProvider time,
     ILogger<HomeService> logger,
-    FolderWatches? watches = null)
+    FolderWatches? watches = null,
+    Files.Search.SearchIndex? search = null)
 {
     /// <summary>The smallest quota besides none; ZFS refuses one below the space a dataset needs for itself.</summary>
     public const long MinimumQuotaBytes = 1024 * 1024;
@@ -207,7 +208,7 @@ public sealed partial class HomeService(
     private async Task MoveOneAsync(string target, string root, HomeRow row, CancellationToken cancellationToken)
     {
         var path = Path.Combine(root, row.Folder);
-        await ReleaseAsync(row.Path, cancellationToken);
+        using var released = await ReleaseAsync(row.Path, cancellationToken);
         if (!options.UseZfs)
         {
             using (await homes.LockAsync(cancellationToken))
@@ -227,7 +228,7 @@ public sealed partial class HomeService(
         await PointAsync(row, path, dataset);
         await commands.RunAsync(HomePlans.DestroySnapshot(dataset, snapshot), CancellationToken.None);
         // The views of the old place go before it is destroyed; nothing writes there since it is read-only.
-        await ReleaseAsync(row.Path, CancellationToken.None);
+        using var releasedOld = await ReleaseAsync(row.Path, CancellationToken.None);
         if ((await commands.RunAsync(HomePlans.Destroy(source), CancellationToken.None)).ExitCode != 0)
         {
             LogLeftover(source);
@@ -399,7 +400,7 @@ public sealed partial class HomeService(
         var parent = Path.GetDirectoryName(row.Path)!;
         var path = Path.Combine(parent, folder);
         string? dataset = null;
-        await ReleaseAsync(row.Path, cancellationToken);
+        using var released = await ReleaseAsync(row.Path, cancellationToken);
         using var held = await homes.LockAsync(cancellationToken);
         if (options.UseZfs && row.Pool is { } pool)
         {
@@ -428,7 +429,7 @@ public sealed partial class HomeService(
     /// <summary>Destroys a home with its snapshots and removes its row with its recycle bin rows.</summary>
     private async Task DestroyAsync(HomeRow row, CancellationToken cancellationToken)
     {
-        await ReleaseAsync(row.Path, cancellationToken);
+        using var released = await ReleaseAsync(row.Path, cancellationToken);
         using var held = await homes.LockAsync(cancellationToken);
         if (options.UseZfs && row.Dataset is { } dataset)
         {
@@ -451,11 +452,16 @@ public sealed partial class HomeService(
         shareChanges.Announce();
     }
 
-    /// <summary>Lets go of everything that holds a home's folder: the Files watches and the SFTP views.</summary>
-    private async Task ReleaseAsync(string path, CancellationToken cancellationToken)
+    /// <summary>
+    /// Lets go of everything that holds a home's folder: the Files watches, the SFTP views and, until the result is
+    /// disposed, the search index.
+    /// </summary>
+    private async Task<IDisposable?> ReleaseAsync(string path, CancellationToken cancellationToken)
     {
+        var hold = search?.Hold([path]);
         watches?.ReleaseBelow([path]);
         await views.ReleaseAsync(path, cancellationToken);
+        return hold;
     }
 
     private Task RunAsync(CommandRequest request, CancellationToken cancellationToken) => RunAsync(commands, request, cancellationToken);

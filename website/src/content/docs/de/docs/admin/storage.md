@@ -53,7 +53,7 @@ Der Assistent empfiehlt einen Aufbau: bei einer Platte einzeln, bei zwei Platten
 
 Der Pool-Name beginnt mit einem Kleinbuchstaben, danach folgen Kleinbuchstaben, Ziffern, `-` oder `_`, höchstens 32 Zeichen. Die Namen `mirror`, `raidz`, `raidz1` bis `raidz3`, `draid`, `spare`, `log`, `cache`, `special`, `dedup` und `pithyx` sowie Namen, die mit `c0` beginnen, sind reserviert.
 
-Jeder neue Pool bekommt dieselben Optionen: `ashift=12`, `compression=lz4`, `xattr=sa`, `acltype=posixacl`, `atime=off`, `normalization=formD`. Danach legt Pithyx seine Dataset-Struktur unter `<pool>/pithyx` an: `shares`, `homes`, `apps`, `system` und `cache` (Kontingent 2,5 GiB, keine Kompression, keine automatischen Snapshots). Ein Pool, den Pithyx nicht angelegt hat, hat kein Dataset `pithyx`, und Pithyx legt darauf nichts an ([`storage.pool.not_prepared`](/de/docs/reference/errors/#storage.pool.not_prepared)).
+Jeder neue Pool bekommt dieselben Optionen: `ashift=12`, `compression=lz4`, `xattr=sa`, `acltype=posixacl`, `atime=off`, `normalization=formD`. Danach legt Pithyx seine Dataset-Struktur unter `<pool>/pithyx` an: `shares`, `homes`, `apps`, `system` und `cache` (die Vorschaubilder und der Namensindex der Dateisuche, Kontingent 2,5 GiB, keine Kompression, keine automatischen Snapshots). Ein Pool, den Pithyx nicht angelegt hat, hat kein Dataset `pithyx`, und Pithyx legt darauf nichts an ([`storage.pool.not_prepared`](/de/docs/reference/errors/#storage.pool.not_prepared)).
 
 Weitere Pool-Aktionen: **Ersetzen…** (fragt immer nach der Seriennummer), **Hot Spare hinzufügen…**, **Spare entfernen** und **Pool löschen…**.
 

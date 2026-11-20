@@ -53,7 +53,7 @@ The wizard recommends a layout: one disk single, two disks mirror, three to five
 
 The pool name starts with a lowercase letter, then lowercase letters, digits, `-` or `_`, at most 32 characters. The names `mirror`, `raidz`, `raidz1` to `raidz3`, `draid`, `spare`, `log`, `cache`, `special`, `dedup` and `pithyx`, and names that start with `c0`, are reserved.
 
-Every new pool gets the same options: `ashift=12`, `compression=lz4`, `xattr=sa`, `acltype=posixacl`, `atime=off`, `normalization=formD`. Pithyx then creates its dataset layout below `<pool>/pithyx`: `shares`, `homes`, `apps`, `system` and `cache` (quota 2.5 GiB, no compression, no automatic snapshots). A pool that Pithyx did not create has no `pithyx` dataset, and Pithyx creates nothing on it ([`storage.pool.not_prepared`](/docs/reference/errors/#storage.pool.not_prepared)).
+Every new pool gets the same options: `ashift=12`, `compression=lz4`, `xattr=sa`, `acltype=posixacl`, `atime=off`, `normalization=formD`. Pithyx then creates its dataset layout below `<pool>/pithyx`: `shares`, `homes`, `apps`, `system` and `cache` (the thumbnails and the file search's index of names, quota 2.5 GiB, no compression, no automatic snapshots). A pool that Pithyx did not create has no `pithyx` dataset, and Pithyx creates nothing on it ([`storage.pool.not_prepared`](/docs/reference/errors/#storage.pool.not_prepared)).
 
 Other pool actions: **Replace…** (always asks for the serial), **Add hot spare…**, **Remove spare** and **Destroy pool…**.
 

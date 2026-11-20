@@ -189,5 +189,15 @@
     "runningTitle": "{count, plural, one {Die App läuft} other {Die Apps laufen}}",
     "runningBody": "{apps} {count, plural, one {läuft und hat diese Dateien vielleicht geöffnet} other {laufen und haben diese Dateien vielleicht geöffnet}}. Sie jetzt zu ändern, kann die Daten der App beschädigen. Wenn du unsicher bist, deaktiviere die App zuerst im Store.",
     "runningConfirm": "Trotzdem ändern"
+  },
+  "find": {
+    "title": "Suchergebnisse für „{query}“",
+    "crumb": "Suche",
+    "label": "Alle Orte durchsuchen",
+    "start": "Gib einen Namen ein, um alle Orte zu durchsuchen, die du öffnen kannst.",
+    "empty": "Kein Name an deinen Orten enthält „{query}“.",
+    "everywhere": "Alle Orte durchsuchen",
+    "incomplete": "Einige Orte werden noch zum ersten Mal gelesen, daher können Treffer fehlen.",
+    "more": "{count, plural, one {Der beste Treffer} other {Die besten # Treffer}}; gib mehr ein, um sie einzugrenzen."
   }
 }

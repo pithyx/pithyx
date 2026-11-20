@@ -9,6 +9,7 @@ import {
 } from '../apps/files/defaultAction';
 import { useFileDefaults } from '../apps/files/fileDefaults';
 import { noteRecentFile, RECENT_PLACE } from '../apps/files/recent';
+import { SEARCH_PLACE } from '../apps/files/search';
 import { coreAppIds } from '../apps/ids';
 import { useInstalledApps } from '../apps/installed';
 import { viewKindOf } from '../apps/viewer/kinds';
@@ -84,6 +85,13 @@ export function showInFiles(share: number, folder: string, select?: string): voi
 export function showRecentInFiles(): void {
   openApp(coreAppIds.files, undefined, {
     session: { share: RECENT_PLACE, path: '', view: 'folder' },
+  });
+}
+
+/** Opens Files with a search over every place (D413). */
+export function showSearchInFiles(query: string): void {
+  openApp(coreAppIds.files, undefined, {
+    session: { share: SEARCH_PLACE, path: query, view: 'folder' },
   });
 }
 
