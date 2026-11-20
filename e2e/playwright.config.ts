@@ -1,4 +1,4 @@
-import { mkdtempSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { defineConfig, devices } from '@playwright/test';
@@ -9,6 +9,11 @@ process.env.PITHYX_E2E_DATA ??= mkdtempSync(join(tmpdir(), 'pithyx-e2e-'));
 const dataDirectory = process.env.PITHYX_E2E_DATA;
 // The signed update files of tools/release/fixtures offer 0.2.0-beta.3, so the simulated box reports an older version.
 writeFileSync(join(dataDirectory, 'release'), 'PITHYX_VERSION=0.1.0-dev.3\n');
+// Names for the file search (D413): without fanotify in simulation, the index reads them with its first walk at start.
+const searchFolder = join(dataDirectory, 'shares', 'shared', 'e2e-search');
+mkdirSync(join(searchFolder, 'Zephyr plans'), { recursive: true });
+writeFileSync(join(searchFolder, 'zephyr-notes.txt'), 'notes');
+writeFileSync(join(searchFolder, 'Zephyr plans', 'zephyr budget.ods'), 'budget');
 // 7484 by default; PITHYX_E2E_PORT runs the suite next to a daemon that already uses it (a dev unit).
 const port = process.env.PITHYX_E2E_PORT ?? '7484';
 // The installer of the live system runs as a second daemon on the next port.

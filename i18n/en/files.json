@@ -189,5 +189,15 @@
     "runningTitle": "{count, plural, one {The app is running} other {The apps are running}}",
     "runningBody": "{apps} {count, plural, one {is running and may have these files open} other {are running and may have these files open}}. Changing them now can damage the app's data. If you are not sure, disable the app in the Store first.",
     "runningConfirm": "Change anyway"
+  },
+  "find": {
+    "title": "Search results for “{query}”",
+    "crumb": "Search",
+    "label": "Search all places",
+    "start": "Type a name to search every place you can open.",
+    "empty": "No name in your places has “{query}” in it.",
+    "everywhere": "Search all places",
+    "incomplete": "Some places are still being read for the first time, so matches may be missing.",
+    "more": "{count, plural, one {The best # match} other {The best # matches}}; type more to narrow them."
   }
 }

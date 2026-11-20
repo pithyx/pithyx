@@ -1,4 +1,4 @@
-import { IconPalette, IconUserCog } from '../ui/icons';
+import { IconFolder, IconPalette, IconSearch, IconUserCog } from '../ui/icons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { unwrap, type components } from '@pithyx/api-client';
 import {
@@ -39,7 +39,14 @@ import { useReportLanguage } from '../notifications/language';
 import { BoxStatus } from '../shell/BoxStatus';
 import { StartMenu } from '../shell/StartMenu';
 import { StartTiles } from '../shell/StartTiles';
-import { openTarget, showInFiles, showRecentInFiles } from '../items/fileTargets';
+import {
+  fileIcon,
+  openTarget,
+  showInFiles,
+  showRecentInFiles,
+  showSearchInFiles,
+} from '../items/fileTargets';
+import { useFileSearch } from '../apps/files/search';
 import { Taskbar } from '../shell/Taskbar';
 import type { RunningApp } from '../shell/types';
 import { setNotificationPanelOpen } from '../shell/toasts';
@@ -74,6 +81,12 @@ type User = components['schemas']['UserInfo'];
 // The account menu opens from the profile in the start menu, which sits next to the taskbar.
 /** The id of a menu search result that opens a page of Settings: the prefix and the page. */
 const SETTINGS_RESULT = 'settings:';
+/** The id of a file found by the menu's search: the prefix and its index in the hits. */
+const FILE_RESULT = 'file:';
+/** The id of the menu's last file result, which opens the search in Files. */
+const FILE_SEARCH_ALL = 'files:all';
+/** How many files the menu shows; Files shows the rest. */
+const MENU_FILE_HITS = 5;
 
 /**
  * The account menu: who is signed in, Personal settings (D392) and the appearance, which people switch often. It opens
@@ -487,6 +500,32 @@ export function Desktop({ user, entering }: { user: User; entering: boolean }) {
         }))
       : [];
 
+  // Files (D413): the best few names, then the way to all of them in Files.
+  const fileSearch = useFileSearch(query, { limit: MENU_FILE_HITS, enabled: startOpen });
+  const fileHits = needle === '' ? [] : (fileSearch?.hits ?? []);
+  // The same list the menu's folder tiles read; a hit's location starts with its place's name.
+  const menuShares = useQuery({
+    queryKey: ['start', 'shares'],
+    queryFn: async () => unwrap(await api.GET('/api/shares')),
+    enabled: startOpen && fileHits.length > 0,
+  });
+  const shareNames = new Map((menuShares.data ?? []).map((share) => [share.id, share.name]));
+  const filesFound = [
+    ...fileHits.map((hit, index) => {
+      const folder = hit.path.includes('/') ? hit.path.slice(0, hit.path.lastIndexOf('/')) : '';
+      const place = shareNames.get(hit.share) ?? '';
+      return {
+        id: `${FILE_RESULT}${String(index)}`,
+        name: hit.name,
+        detail: folder === '' ? place : `${place}/${folder}`,
+        icon: hit.kind === 'folder' ? IconFolder : fileIcon(hit.name),
+      };
+    }),
+    ...(fileHits.length > 0 || fileSearch?.complete === false
+      ? [{ id: FILE_SEARCH_ALL, name: t('start.showAllFiles'), icon: IconSearch }]
+      : []),
+  ];
+
   return (
     <UiProvider locale={locale}>
       <DesktopShell
@@ -574,7 +613,7 @@ export function Desktop({ user, entering }: { user: User; entering: boolean }) {
                 query={query}
                 onQueryChange={setQuery}
                 groups={startGroups}
-                results={{ apps: matches, settings: settingsFound, files: [] }}
+                results={{ apps: matches, settings: settingsFound, files: filesFound }}
                 tiles={
                   <StartTiles
                     isAdmin={permissions.admin}
@@ -623,7 +662,16 @@ export function Desktop({ user, entering }: { user: User; entering: boolean }) {
                   setPowerAction(action);
                 }}
                 onOpen={(id) => {
-                  if (id.startsWith(SETTINGS_RESULT)) {
+                  if (id === FILE_SEARCH_ALL) {
+                    closeStart(false);
+                    showSearchInFiles(query.trim());
+                  } else if (id.startsWith(FILE_RESULT)) {
+                    const hit = fileHits[Number(id.slice(FILE_RESULT.length))];
+                    closeStart(false);
+                    if (hit !== undefined) {
+                      void openTarget(hit.share, hit.path);
+                    }
+                  } else if (id.startsWith(SETTINGS_RESULT)) {
                     closeStart(false);
                     openApp(coreAppIds.settings, {
                       args: { page: id.slice(SETTINGS_RESULT.length) },

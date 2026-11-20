@@ -61,6 +61,7 @@ import {
   IconMenu2,
   IconPencil,
   IconRefresh,
+  IconSearch,
   IconScissors,
   IconServer2,
   IconTrash,
@@ -113,6 +114,8 @@ import { createTransfers, type Transfers } from './transfers';
 import { TrashView, trashKey } from './TrashView';
 import { clearRecentFiles, RECENT_PLACE, useRecentFiles, type RecentFile } from './recent';
 import { RecentView } from './RecentView';
+import { SEARCH_PLACE, useFileSearch, type SearchHit } from './search';
+import { SearchView } from './SearchView';
 import { VersionsDialog } from './VersionsDialog';
 import { createThumbnails, thumbnailKey } from './thumbnails';
 import {
@@ -237,12 +240,16 @@ export function FilesApp({ app }: { app: PithyxApp }) {
   const atHomes = place.share === HOMES && userHomes.length > 0;
   const recent = useRecentFiles();
   const atRecent = place.share === RECENT_PLACE && recent !== undefined;
+  // A search over every place keeps its text as the place's path, so back, forward and the layout bring it back.
+  const atSearch = place.share === SEARCH_PLACE;
+  const everywhere = atSearch ? place.path : '';
+  const found = useFileSearch(everywhere, { limit: 200, enabled: atSearch });
   // Each home is a share of its own (its trash, versions and pool), so the homes are listed as folders that open it.
   const homeEntries: FileEntry[] = userHomes
     .map((home): FileEntry => ({ name: home.name, kind: 'folder', size: 0, modified: '' }))
     .sort((a, b) => compareEntries(a, b, sort.key, sort.order));
   const share: ShareInfo | undefined =
-    atHomes || atRecent
+    atHomes || atRecent || atSearch
       ? undefined
       : (shareList.find((candidate) => candidate.id === place.share) ?? shareList[0]);
   const shareId = share?.id ?? null;
@@ -322,11 +329,13 @@ export function FilesApp({ app }: { app: PithyxApp }) {
     ? t('shares.homes')
     : atRecent
       ? t('recent.title')
-      : view === 'trash'
-        ? t('trash')
-        : path === ''
-          ? (share?.name ?? '')
-          : nameOf(path);
+      : atSearch
+        ? t('find.title', { query: everywhere.trim() })
+        : view === 'trash'
+          ? t('trash')
+          : path === ''
+            ? (share?.name ?? '')
+            : nameOf(path);
 
   // The window title and the saved place follow the folder on screen (the window manager and the layout live
   // outside React).
@@ -338,10 +347,12 @@ export function FilesApp({ app }: { app: PithyxApp }) {
   useEffect(() => {
     if (atRecent) {
       void app.session.save({ share: RECENT_PLACE, path: '', view: 'folder', layout });
+    } else if (atSearch) {
+      void app.session.save({ share: SEARCH_PLACE, path: everywhere, view: 'folder', layout });
     } else if (shareId !== null) {
       void app.session.save({ share: shareId, path, view, layout });
     }
-  }, [app, atRecent, shareId, path, view, layout]);
+  }, [app, atRecent, atSearch, everywhere, shareId, path, view, layout]);
   // Thumbnails rendered by the daemon arrive as events: syncing with the SDK.
   useEffect(() => onThumbnails(app, thumbnails.receive), [app, thumbnails]);
   const thumbnailSize = layout === 'grid' ? 'large' : 'small';
@@ -755,7 +766,7 @@ export function FilesApp({ app }: { app: PithyxApp }) {
     }
   }
 
-  async function openRecent(file: RecentFile) {
+  async function openRecent(file: Pick<RecentFile, 'share' | 'path' | 'size' | 'modified'>) {
     const entry: FileEntry = {
       name: nameOf(file.path),
       kind: 'file',
@@ -783,8 +794,8 @@ export function FilesApp({ app }: { app: PithyxApp }) {
     }
   }
 
-  /** Shows a recent file in its folder, selected. */
-  function showRecent(file: RecentFile) {
+  /** Shows a recent file or a search hit in its folder, selected. */
+  function showRecent(file: Pick<RecentFile, 'share' | 'path'>) {
     const target = {
       share: String(file.share),
       path: parentOf(file.path),
@@ -795,6 +806,20 @@ export function FilesApp({ app }: { app: PithyxApp }) {
       at: `${target.share}:${target.path}:folder`,
       selection: selectOnly(nameOf(file.path)),
     });
+  }
+
+  /** Opens a search hit: a file as in its folder, a folder by going into it. */
+  function openHit(hit: SearchHit) {
+    if (hit.kind === 'folder') {
+      go({ share: String(hit.share), path: hit.path, view: 'folder' });
+    } else {
+      void openRecent(hit);
+    }
+  }
+
+  /** Leaves the folder's own search for a search over every place with the same text. */
+  function searchEverywhere(text: string) {
+    go({ share: SEARCH_PLACE, path: text, view: 'folder' });
   }
 
   async function open(entry: FileEntry) {
@@ -1085,7 +1110,7 @@ export function FilesApp({ app }: { app: PithyxApp }) {
               <IconClearAll size={18} stroke={1.75} aria-hidden />
               <span className={styles.viewLabel}>{t('recent.clear')}</span>
             </Button>
-          ) : view === 'folder' ? (
+          ) : view === 'folder' && !atSearch ? (
             <>
               <Button
                 size="sm"
@@ -1224,6 +1249,11 @@ export function FilesApp({ app }: { app: PithyxApp }) {
               {t('recent.title')}
             </span>
           )}
+          {atSearch && (
+            <span className={styles.crumb} aria-current="page">
+              {t('find.crumb')}
+            </span>
+          )}
           {(atHomes || inUserHome) && (
             <button
               type="button"
@@ -1280,7 +1310,7 @@ export function FilesApp({ app }: { app: PithyxApp }) {
         <IconButton
           label={t('refresh')}
           size="sm"
-          isDisabled={view !== 'folder' || atRecent}
+          isDisabled={view !== 'folder' || atRecent || atSearch}
           onPress={refresh}
         >
           <IconRefresh size={18} stroke={1.75} />
@@ -1292,9 +1322,44 @@ export function FilesApp({ app }: { app: PithyxApp }) {
             placeholder={t('search', { folder: title })}
             value={search}
             onChange={setSearch}
+            onSubmit={() => {
+              if (searching) {
+                searchEverywhere(search.trim());
+              }
+            }}
+          />
+        )}
+        {searching && !atSearch && (
+          <Button
+            size="sm"
+            variant="quiet"
+            onPress={() => {
+              searchEverywhere(search.trim());
+            }}
+          >
+            <IconSearch size={18} stroke={1.75} aria-hidden />
+            <span className={styles.viewLabel}>{t('find.everywhere')}</span>
+          </Button>
+        )}
+        {atSearch && (
+          <SearchField
+            className={styles.search}
+            label={t('find.label')}
+            placeholder={t('find.label')}
+            value={everywhere}
+            onChange={(text) => {
+              setPlace({ share: SEARCH_PLACE, path: text, view: 'folder' });
+            }}
+            autoFocus
           />
         )}
       </div>
+      {atSearch && found !== undefined && !found.complete && (
+        <p className={styles.infoBar}>
+          <IconInfoCircle size={16} stroke={1.75} aria-hidden />
+          {t('find.incomplete')}
+        </p>
+      )}
       {view === 'folder' && share !== undefined && atAppsTop ? (
         <p className={styles.infoBar}>
           <IconInfoCircle size={16} stroke={1.75} aria-hidden />
@@ -1446,7 +1511,16 @@ export function FilesApp({ app }: { app: PithyxApp }) {
           )}
         </nav>
         <div className={styles.main}>
-          {atRecent ? (
+          {atSearch ? (
+            <SearchView
+              hits={found?.hits ?? []}
+              shares={shareList}
+              query={everywhere.trim()}
+              format={app.format}
+              onOpen={openHit}
+              onShow={showRecent}
+            />
+          ) : atRecent ? (
             <RecentView
               files={recent}
               shares={shareList}
@@ -1592,7 +1666,7 @@ export function FilesApp({ app }: { app: PithyxApp }) {
             />
           )}
         </div>
-        {detailsOpen && view === 'folder' && !atRecent && (
+        {detailsOpen && view === 'folder' && !atRecent && !atSearch && (
           <DetailsPane
             entry={detailEntry}
             thumbnail={detailEntry === undefined ? null : thumbnailOf(detailEntry)}
@@ -1608,20 +1682,26 @@ export function FilesApp({ app }: { app: PithyxApp }) {
         text={
           atRecent
             ? t('items', { count: recent.length })
-            : atHomes
-              ? count > 0
-                ? t('selected', { count })
-                : searching
-                  ? t('searchResults', { count: homeList.length })
-                  : t('items', { count: userHomes.length })
-              : view === 'trash'
+            : atSearch
+              ? found === undefined
                 ? ''
-                : (announcement ??
-                  (count > 0
-                    ? t('selected', { count })
-                    : searching
-                      ? t('searchResults', { count: folder.total })
-                      : t('items', { count: folder.total })))
+                : found.more
+                  ? t('find.more', { count: found.hits.length })
+                  : t('searchResults', { count: found.hits.length })
+              : atHomes
+                ? count > 0
+                  ? t('selected', { count })
+                  : searching
+                    ? t('searchResults', { count: homeList.length })
+                    : t('items', { count: userHomes.length })
+                : view === 'trash'
+                  ? ''
+                  : (announcement ??
+                    (count > 0
+                      ? t('selected', { count })
+                      : searching
+                        ? t('searchResults', { count: folder.total })
+                        : t('items', { count: folder.total })))
         }
         onCancel={(job) => {
           void app.jobs.cancel(job).catch(report);

@@ -126,7 +126,8 @@
     "updatesAvailable": "Pithyx {version} ist verfügbar",
     "systemTile": "System",
     "poolState": "{state, select, ONLINE {Intakt} DEGRADED {Beeinträchtigt} other {Braucht Aufmerksamkeit}}",
-    "recentEmpty": "Dateien, die du öffnest, erscheinen hier."
+    "recentEmpty": "Dateien, die du öffnest, erscheinen hier.",
+    "showAllFiles": "Alle in Dateien zeigen"
   },
   "window": {
     "minimize": "Minimieren",
