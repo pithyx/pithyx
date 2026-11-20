@@ -147,6 +147,17 @@ public sealed class SupportBundleTests : IAsyncLifetime
     }
 
     [Theory]
+    [InlineData(0, null)]
+    [InlineData(2, "standby")]
+    [InlineData(4, "exit")]
+    [InlineData(1, "exit")]
+    [InlineData(64, null)]
+    [InlineData(8 | 16 | 128, null)]
+    [InlineData(4 | 64, "exit")]
+    public void OnlySmartctlsBitsForAnUnreadDiskCountAsAFailure(int exitCode, string? reason) =>
+        Assert.Equal(reason, SupportBundleService.SmartctlFailure(exitCode));
+
+    [Theory]
     [InlineData("    wpa-psk hunter2\n", "    wpa-psk (omitted)\n")]
     [InlineData("PrivateKey = abc=\n", "PrivateKey = (omitted)\n")]
     [InlineData("PresharedKey=abc\n", "PresharedKey=(omitted)\n")]
