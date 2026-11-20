@@ -392,6 +392,54 @@
         }
       }
     },
+    "/api/files/search": {
+      "get": {
+        "tags": [
+          "Files"
+        ],
+        "description": "Files and folders whose name contains every word of q, ignoring case, in the shared folders the caller can read and the caller's own home (other users' homes and Apps are not searched, also for administrators). The best matches come first: the whole name, then names that start with the search, then a word in the name. limit defaults to 50 (at most 200). Names only; every hit is checked on disk, so size and modified are as the entry is now. complete is false while a place is still being indexed.",
+        "operationId": "SearchFiles",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchResults"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/files/recent": {
       "get": {
         "tags": [
@@ -20366,6 +20414,72 @@
             "type": "integer",
             "description": "Its version, for `If-Match` on the next save.",
             "format": "int64"
+          }
+        }
+      },
+      "SearchHit": {
+        "required": [
+          "share",
+          "path",
+          "name",
+          "kind",
+          "size",
+          "modified"
+        ],
+        "type": "object",
+        "properties": {
+          "share": {
+            "type": "integer",
+            "description": "The share it is in.",
+            "format": "int64"
+          },
+          "path": {
+            "type": "string",
+            "description": "Relative to the share, with its name as the last part."
+          },
+          "name": {
+            "type": "string",
+            "description": "Its name."
+          },
+          "kind": {
+            "description": "File or folder.",
+            "$ref": "#/components/schemas/FileKind"
+          },
+          "size": {
+            "type": "integer",
+            "description": "Bytes for files, 0 for folders, as it is now.",
+            "format": "int64"
+          },
+          "modified": {
+            "type": "string",
+            "description": "Last change of the content as it is now, UTC.",
+            "format": "date-time"
+          }
+        },
+        "description": "A file or folder whose name matched a search."
+      },
+      "SearchResults": {
+        "required": [
+          "hits",
+          "complete",
+          "more"
+        ],
+        "type": "object",
+        "properties": {
+          "hits": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SearchHit"
+            },
+            "description": "The best matches first: the whole name, then names that start with the search, then a word in the name, then the rest."
+          },
+          "complete": {
+            "type": "boolean",
+            "description": "False while a searched place has not been read completely once since it was added, so hits may be missing."
+          },
+          "more": {
+            "type": "boolean",
+            "description": "Whether there are more matches than were returned; a longer search narrows them."
           }
         }
       },

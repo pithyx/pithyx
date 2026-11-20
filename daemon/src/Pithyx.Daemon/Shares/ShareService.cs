@@ -318,6 +318,17 @@ public sealed class ShareService(SqliteConnectionFactory connections, TimeProvid
             new { path = Canonical(path), now });
     }
 
+    /// <summary>
+    /// The shared folders and homes the name index covers (D413), with whether each can be read now; Apps and other
+    /// system shares stay out. Not for callers with a user: who may see a hit is decided per search.
+    /// </summary>
+    public async Task<IReadOnlyList<IndexRoot>> ListIndexRootsAsync(CancellationToken cancellationToken)
+    {
+        await using var connection = await connections.OpenAsync(cancellationToken);
+        var rows = await connection.QueryAsync<Row>(new CommandDefinition(RowSelect + " WHERE system IS NULL", cancellationToken: cancellationToken));
+        return [.. rows.Select(row => new IndexRoot(row.Id, row.Path, row.Dataset, UnavailableReason(row) is null))];
+    }
+
     /// <summary>Every share's id, name and folder, for the storage planner's checks. Not for callers with a user.</summary>
     public async Task<IReadOnlyList<(long Id, string Name, string Path)>> ListPathsAsync(CancellationToken cancellationToken)
     {

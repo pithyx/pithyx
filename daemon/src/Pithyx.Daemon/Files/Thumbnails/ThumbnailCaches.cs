@@ -39,10 +39,11 @@ public sealed class ThumbnailCaches : IDisposable
     }
 
     /// <summary>
-    /// Where the thumbnails of a share's files go: the cache dataset of the pool that holds the share, null when that
-    /// dataset is missing or not mounted, and <paramref name="fallback"/> when no pool holds the share.
+    /// Where the thumbnails (or other derived data, <paramref name="folder"/>) of a share's files go: the cache dataset
+    /// of the pool that holds the share, null when that dataset is missing or not mounted, and
+    /// <paramref name="fallback"/> when no pool holds the share.
     /// </summary>
-    public static string? DirectoryFor(PoolList pools, string sharePath, string? fallback)
+    public static string? DirectoryFor(PoolList pools, string sharePath, string? fallback, string folder = Folder)
     {
         ArgumentNullException.ThrowIfNull(pools);
         ArgumentNullException.ThrowIfNull(sharePath);
@@ -54,7 +55,7 @@ public sealed class ThumbnailCaches : IDisposable
             return fallback;
         }
         var cache = pools.Datasets.FirstOrDefault(dataset => dataset.Name == DatasetOf(holder.Pool));
-        return cache is { Mounted: true, MountPoint: { } cacheMount } ? Path.Combine(cacheMount, Folder) : null;
+        return cache is { Mounted: true, MountPoint: { } cacheMount } ? Path.Combine(cacheMount, folder) : null;
     }
 
     private static bool IsAtOrBelow(string path, string mount) =>

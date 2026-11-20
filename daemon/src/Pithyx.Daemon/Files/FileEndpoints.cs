@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.Net.Http.Headers;
 using Pithyx.Daemon.Auth;
 using Pithyx.Daemon.Errors;
+using Pithyx.Daemon.Files.Search;
 using Pithyx.Daemon.Files.Thumbnails;
 using Pithyx.Daemon.Hosting;
 
@@ -39,11 +40,22 @@ public static class FileEndpoints
             provider.GetRequiredService<DeploymentEnvironment>().Kind == DeploymentKind.Dev
                 ? Path.Combine(provider.GetRequiredService<DaemonPaths>().CacheDirectory, ThumbnailCaches.Folder)
                 : null));
+        services.AddSingleton(provider => new SearchIndex(
+            provider.GetRequiredService<Shares.ShareService>(),
+            provider.GetRequiredService<Shares.ShareChanges>(),
+            provider.GetRequiredService<Storage.PoolInventory>(),
+            provider.GetRequiredService<TimeProvider>(),
+            provider.GetRequiredService<DeploymentEnvironment>().Kind == DeploymentKind.Dev
+                ? Path.Combine(provider.GetRequiredService<DaemonPaths>().CacheDirectory, SearchStore.Folder)
+                : null,
+            provider.GetRequiredService<ILogger<SearchIndex>>()));
+        services.AddSingleton<FileSearch>();
         services.AddSingleton<ThumbnailService>();
         services.AddSingleton(provider => ThumbnailService.Definition(provider.GetRequiredService<Shares.ShareService>()));
         if (!BuildTimeDocument.IsGenerating)
         {
             services.AddHostedService(provider => provider.GetRequiredService<ThumbnailService>());
+            services.AddHostedService(provider => provider.GetRequiredService<SearchIndex>());
         }
         return services;
     }
@@ -58,6 +70,14 @@ public static class FileEndpoints
                 + "checked now: read on the sources for copy, write on the sources for move and delete, write on the target. "
                 + "Deleting moves to the share's recycle bin unless permanent is true. onConflict decides about names that exist in the target: fail (default), skip, "
                 + "overwrite (folders are merged) or rename.");
+        api.MapGet("/files/search", SearchAsync)
+            .WithTags("Files")
+            .WithName("SearchFiles")
+            .WithDescription(
+                "Files and folders whose name contains every word of q, ignoring case, in the shared folders the caller can read and the caller's own home "
+                + "(other users' homes and Apps are not searched, also for administrators). The best matches come first: the whole name, then names that start "
+                + $"with the search, then a word in the name. limit defaults to {FileSearch.DefaultLimit} (at most {FileSearch.MaxLimit}). Names only; "
+                + "every hit is checked on disk, so size and modified are as the entry is now. complete is false while a place is still being indexed.");
         api.MapGet("/files/recent", ListRecentAsync)
             .WithTags("Files")
             .WithName("ListRecentFiles")
@@ -137,6 +157,9 @@ public static class FileEndpoints
 
     private static async Task<Ok<IReadOnlyList<RecentFile>>> ListRecentAsync(RecentFiles recent, HttpContext context, CancellationToken cancellationToken) =>
         TypedResults.Ok(await recent.ListAsync(context.User, cancellationToken));
+
+    private static async Task<Ok<SearchResults>> SearchAsync(string? q, int? limit, FileSearch search, HttpContext context, CancellationToken cancellationToken) =>
+        TypedResults.Ok(await search.SearchAsync(context.User, q, limit, cancellationToken));
 
     private static async Task<NoContent> RecordRecentAsync(RecentFileRequest request, RecentFiles recent, HttpContext context, CancellationToken cancellationToken)
     {

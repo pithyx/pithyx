@@ -49,6 +49,13 @@ public sealed record NewShare(string Name, string Path);
 /// <param name="PreviousVersions">Whether the share shows previous versions (D411).</param>
 public sealed record ResolvedShare(long Id, string Name, string Path, ShareAccess Access, ShareKind Kind = ShareKind.Share, bool PreviousVersions = true);
 
+/// <summary>A shared folder or home the name index covers (D413).</summary>
+/// <param name="Id">The share.</param>
+/// <param name="Path">Its folder on the host.</param>
+/// <param name="Dataset">The ZFS dataset the folder is on, null for a folder share outside a pool.</param>
+/// <param name="Available">Whether its files can be read now (its pool imported, unlocked and mounted).</param>
+public sealed record IndexRoot(long Id, string Path, string? Dataset, bool Available);
+
 /// <summary>A share with what the Shared folders page shows. Administrators only.</summary>
 /// <param name="Id">Stable id.</param>
 /// <param name="Name">Name shown to users.</param>
