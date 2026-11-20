@@ -28,6 +28,7 @@ import {
 import {
   IconApps,
   IconDownload,
+  IconLifebuoy,
   IconListDetails,
   IconPlayerPause,
   IconPlayerPlay,
@@ -61,6 +62,7 @@ import {
 } from './filters';
 import styles from './Logs.module.css';
 import { LogSettingsDialog } from './LogSettingsDialog';
+import { SupportBundleDialog } from './SupportBundleDialog';
 import { useFormatLocale } from '../../i18n';
 
 const PAGE = 200;
@@ -89,6 +91,7 @@ export function LogsApp({ app }: SdkAppProps) {
   const [searchText, setSearchText] = useState('');
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [supportOpen, setSupportOpen] = useState(() => asksForSupport(app.context.launch.args));
   const [live, setLive] = useState(true);
   const [frameView, setFrameView] = useState<'navigation' | 'page'>('page');
   const sourceName = useSourceName();
@@ -96,6 +99,17 @@ export function LogsApp({ app }: SdkAppProps) {
   const entriesKey = ['logs', 'entries', filter] as const;
   const from = rangeStart(view.range, now);
   const countsKey = ['logs', 'counts', from ?? ALL] as const;
+
+  // Settings > Info Center opens the Log Center with the support bundle's dialog.
+  useEffect(
+    () =>
+      app.on('launch', (launch) => {
+        if (asksForSupport(launch.args)) {
+          setSupportOpen(true);
+        }
+      }),
+    [app],
+  );
 
   // Typing filters after a short pause, so every key does not ask the daemon: syncing with a timer.
   useEffect(() => {
@@ -334,6 +348,14 @@ export function LogsApp({ app }: SdkAppProps) {
             </MenuTrigger>
             <Button
               onPress={() => {
+                setSupportOpen(true);
+              }}
+            >
+              <IconLifebuoy size={18} stroke={1.75} aria-hidden />
+              {t('support.open')}
+            </Button>
+            <Button
+              onPress={() => {
                 setSettingsOpen(true);
               }}
             >
@@ -377,6 +399,14 @@ export function LogsApp({ app }: SdkAppProps) {
           </div>
         )}
       </AppFrame>
+      {supportOpen && (
+        <SupportBundleDialog
+          app={app}
+          onClose={() => {
+            setSupportOpen(false);
+          }}
+        />
+      )}
       {settingsOpen && (
         <LogSettingsDialog
           app={app}
@@ -388,6 +418,11 @@ export function LogsApp({ app }: SdkAppProps) {
       )}
     </>
   );
+}
+
+/** Whether the launch arguments ask for the support bundle's dialog. */
+function asksForSupport(args: unknown): boolean {
+  return (args as { page?: unknown } | null)?.page === 'support';
 }
 
 /** Live entries, newest first, before the first page, without the ones it already has. */

@@ -22,6 +22,7 @@ public sealed class AuditLog(SqliteConnectionFactory connections, LogStore logs,
     public const string StepUpFailed = "auth.step_up.failed";
     public const string ElevatedGranted = "app.elevated.granted";
     public const string ElevatedRevoked = "app.elevated.revoked";
+    public const string SupportBundleCreated = "support.bundle.created";
 
     /// <summary>Records what <paramref name="actor"/> did; null for the box itself.</summary>
     public async Task RecordAsync(ClaimsPrincipal? actor, string action, string? target, IReadOnlyDictionary<string, string>? parameters, CancellationToken cancellationToken)

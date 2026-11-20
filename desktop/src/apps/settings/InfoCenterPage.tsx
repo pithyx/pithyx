@@ -1,16 +1,21 @@
 import type { PithyxApp } from '@pithyx/sdk';
 import { useQuery } from '@tanstack/react-query';
-import { FormRow, FormSection } from '@pithyx/ui';
+import { Button, FormRow, FormSection } from '@pithyx/ui';
 import { useTranslation } from 'react-i18next';
 import { formatBytes } from '../../desktop/format';
 import { ErrorNotice } from '../../errors/ErrorNotice';
 import { useFormatLocale } from '../../i18n';
+import { coreAppIds } from '../ids';
+import { internalCall } from '../sdk/internal';
 import { systemCall } from '../sdk/system';
 import { describeProblem } from '../storage/shared';
 import styles from './Settings.module.css';
 import { uptime } from './uptime';
 
-/** Info Center: what runs on this box. Pithyx version and commit, system, machine, processor, memory, uptime. */
+/**
+ * Info Center: what runs on this box. Pithyx version and commit, system, machine, processor, memory, uptime; and the
+ * way to the support bundle in the Log Center (D412).
+ */
 export function InfoCenterPage({ app }: { app: PithyxApp }) {
   const { t } = useTranslation('settings');
   const locale = useFormatLocale();
@@ -48,6 +53,20 @@ export function InfoCenterPage({ app }: { app: PithyxApp }) {
           ))}
         </FormSection>
       )}
+      <FormSection title={t('info.support.section')} note={t('info.support.intro')}>
+        <FormRow label={t('info.support.label')} hint={t('info.support.hint')}>
+          <Button
+            onPress={() => {
+              void internalCall(app, 'internal.admin.openApp', {
+                app: coreAppIds.logs,
+                page: 'support',
+              });
+            }}
+          >
+            {t('info.support.open')}
+          </Button>
+        </FormRow>
+      </FormSection>
     </div>
   );
 }

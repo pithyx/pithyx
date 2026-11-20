@@ -1975,6 +1975,21 @@
       "params": {},
       "expected": "The request came from another website and was rejected."
     },
+    "system.support.busy": {
+      "params": {},
+      "expected": "A support bundle is being created already. Wait until it is ready."
+    },
+    "system.support.no_space": {
+      "params": {
+        "neededBytes": 2147483648,
+        "availableBytes": 536870912
+      },
+      "expected": "The system disk has too little free space for the support bundle: 2,147,483,648 bytes are needed, 536,870,912 are free."
+    },
+    "system.support.not_found": {
+      "params": {},
+      "expected": "The support bundle is gone: it was deleted after an hour, replaced by a newer one, or the server restarted. Create a new one."
+    },
     "system.time.apply_failed": {
       "params": {
         "command": "timedatectl",

@@ -1642,6 +1642,18 @@ public static class ErrorCodes
     [ErrorStatus(HttpStatusCode.Forbidden)]
     public const string SystemOriginForbidden = "system.origin.forbidden";
 
+    /// <summary>A support bundle is being made already (D412).</summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string SystemSupportBusy = "system.support.busy";
+
+    /// <summary>The support bundle is gone: it expired after an hour, a newer one replaced it, or the daemon restarted.</summary>
+    [ErrorStatus(HttpStatusCode.NotFound)]
+    public const string SystemSupportNotFound = "system.support.not_found";
+
+    /// <summary>The system disk has too little free space for the bundle; <c>params.neededBytes</c>, <c>params.availableBytes</c>.</summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string SystemSupportNoSpace = "system.support.no_space";
+
     /// <summary>Applying a time setting failed; <c>params.command</c> and <c>params.exitCode</c> say which command.</summary>
     [ErrorStatus(HttpStatusCode.BadGateway)]
     public const string SystemTimeApplyFailed = "system.time.apply_failed";
