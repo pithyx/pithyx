@@ -321,7 +321,7 @@ public sealed partial class SupportBundleService : IDisposable
         foreach (var disk in _disks.Current.Disks)
         {
             // -n standby: a sleeping disk stays asleep and answers nothing.
-            await CommandAsync(bundle, $"storage/smart/{FileSafe(disk.Name)}.json", new CommandRequest("smartctl", ["-n", "standby", "-j", "-x", disk.Path], TimeSpan.FromSeconds(30)), cancellationToken);
+            await CommandAsync(bundle, $"storage/smart/{FileSafe(disk.Name)}.json", new CommandRequest("smartctl", ["-n", "standby", "-j", "-x", disk.Path], TimeSpan.FromSeconds(30)), cancellationToken, SmartctlFailure);
         }
     }
 
@@ -448,7 +448,15 @@ public sealed partial class SupportBundleService : IDisposable
         }
     }
 
-    private async Task CommandAsync(Bundle bundle, string name, CommandRequest request, CancellationToken cancellationToken)
+    /// <summary>
+    /// Why smartctl's exit status means the disk was not read, or null when it was. The status is a bit mask: bits 0
+    /// and 2 say it could not read the disk, bit 1 with <c>-n standby</c> that the disk sleeps, and bits 3 to 7 only
+    /// report what it found (failing health, logged errors), which its output holds in full.
+    /// </summary>
+    public static string? SmartctlFailure(int exitCode) =>
+        (exitCode & 0b10) != 0 ? "standby" : (exitCode & 0b101) != 0 ? "exit" : null;
+
+    private async Task CommandAsync(Bundle bundle, string name, CommandRequest request, CancellationToken cancellationToken, Func<int, string?>? failure = null)
     {
         try
         {
@@ -457,9 +465,9 @@ public sealed partial class SupportBundleService : IDisposable
             {
                 bundle.Text(name, result.StandardOutput);
             }
-            if (result.ExitCode != 0)
+            if ((failure is null ? (result.ExitCode != 0 ? "exit" : null) : failure(result.ExitCode)) is { } reason)
             {
-                bundle.Fail(name, "exit", new { command = request.FileName, exitCode = result.ExitCode, error = Truncate(result.StandardError) });
+                bundle.Fail(name, reason, new { command = request.FileName, exitCode = result.ExitCode, error = Truncate(result.StandardError) });
             }
         }
         catch (Exception exception) when (exception is not OperationCanceledException || !cancellationToken.IsCancellationRequested)
