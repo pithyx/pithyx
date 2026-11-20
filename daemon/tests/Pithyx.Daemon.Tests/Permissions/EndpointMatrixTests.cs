@@ -97,6 +97,7 @@ public sealed partial class EndpointMatrixTests : IDisposable
         ["ListRecentFiles"] = Need.AnyUser,
         ["RecordRecentFile"] = Need.AnyUser,
         ["ClearRecentFiles"] = Need.AnyUser,
+        ["SearchFiles"] = Need.AnyUser,
         ["ListFileVersions"] = Need.AnyUser,
         ["RestoreFileVersion"] = Need.AnyUser,
         ["RequestThumbnails"] = Need.AnyUser,

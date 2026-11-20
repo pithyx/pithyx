@@ -10,7 +10,7 @@ const dataDirectory = process.env.PITHYX_E2E_DATA;
 // The signed update files of tools/release/fixtures offer 0.2.0-beta.3, so the simulated box reports an older version.
 writeFileSync(join(dataDirectory, 'release'), 'PITHYX_VERSION=0.1.0-dev.3\n');
 // Names for the file search (D413): without fanotify in simulation, the index reads them with its first walk at start.
-const searchFolder = join(dataDirectory, 'shares', 'shared', 'e2e-search');
+const searchFolder = join(dataDirectory, 'shares', 'shared', 'e2e-find');
 mkdirSync(join(searchFolder, 'Zephyr plans'), { recursive: true });
 writeFileSync(join(searchFolder, 'zephyr-notes.txt'), 'notes');
 writeFileSync(join(searchFolder, 'Zephyr plans', 'zephyr budget.ods'), 'budget');

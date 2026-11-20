@@ -11,11 +11,11 @@ test('the menu finds files by name and shows all of them in Files', async ({ pag
 
   const results = menu.getByRole('listbox', { name: 'Search results' });
   await expect(results.getByRole('option', { name: /^Zephyr plans/ })).toContainText(
-    'Shared/e2e-search',
+    'Shared/e2e-find',
   );
   await expect(results.getByRole('option', { name: /^zephyr-notes\.txt/ })).toBeVisible();
   await expect(results.getByRole('option', { name: /^zephyr budget\.ods/ })).toContainText(
-    'Shared/e2e-search/Zephyr plans',
+    'Shared/e2e-find/Zephyr plans',
   );
 
   await results.getByRole('option', { name: 'Show all in Files' }).click();
