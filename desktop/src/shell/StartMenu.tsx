@@ -235,8 +235,6 @@ export function StartMenu({
               <ListBox
                 aria-label={t('start.resultsLabel')}
                 className={styles.list}
-                selectionMode="single"
-                defaultSelectedKeys={firstId === undefined ? [] : [firstId]}
                 onAction={(key) => onOpen?.(String(key))}
               >
                 {resultGroups.map((group) => (
@@ -248,6 +246,8 @@ export function StartMenu({
                         id={entry.id}
                         className={styles.entry}
                         textValue={entry.name}
+                        // What Enter in the search field opens; a selection would turn a click into selecting.
+                        data-first={entry.id === firstId || undefined}
                       >
                         <EntryIcon entry={entry} />
                         <span className={styles.entryText}>

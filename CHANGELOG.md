@@ -16,6 +16,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Fixed
 
+- Pithyx menu: a click on a search result opens it again; it only selected the entry, so apps, Settings pages and files opened only with Enter (#391).
 - Settings > **Shared folders**: the **Offer over WebDAV** and **Offer over FTP** switches of a shared folder apply again; they flipped back after a moment and changed nothing (#383).
 - WebSocket: a topic's first `event` no longer comes before its `snap`. A change made while the snapshot is read is held and follows it, and one already in the snapshot is dropped (#339).
 - pithyx.org: the tab of the landing page says "Pithyx" instead of "Pithyx | Pithyx", and the icon is served under a new name (`/pithyx-icon.svg`), so browsers that kept the old light tile load the current one.
