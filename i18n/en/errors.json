@@ -711,6 +711,11 @@
     "origin": {
       "forbidden": "The request came from another website and was rejected."
     },
+    "support": {
+      "busy": "A support bundle is being created already. Wait until it is ready.",
+      "no_space": "The system disk has too little free space for the support bundle: {neededBytes, number} bytes are needed, {availableBytes, number} are free.",
+      "not_found": "The support bundle is gone: it was deleted after an hour, replaced by a newer one, or the server restarted. Create a new one."
+    },
     "time": {
       "apply_failed": "The time setting could not be applied ({command} ended with exit code {exitCode}). The log has the details.",
       "server_invalid": "“{server}” is neither a host name nor an address.",

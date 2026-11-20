@@ -26,6 +26,6 @@ Pithyx ist dafür gebaut, vollständig auf deinem eigenen Rechner zu laufen: Es 
 
 Die Webseite hat keine Analyse und keine Tracking-Skripte und lädt ihre Schriften und alle anderen Dateien von ihrem eigenen Host: Es gibt weder einen externen Schriftdienst noch ein CDN.
 
-## Support-Bundles
+## Support-Pakete
 
-Pithyx hat noch keine Support-Bundles.
+Ein Administrator kann im Protokoll-Center ein Support-Paket für jemanden erstellen, der bei einem Problem hilft. Es bleibt eine Stunde auf der Box und verlässt sie nur, wenn der Administrator die Datei herunterlädt und weitergibt. Es enthält nie Passwörter, Schlüssel oder Tokens, wohl aber Benutzernamen, Ordnernamen, Adressen und Hostnamen; ein optionales Speicherabbild enthält alles, was der Daemon im Speicher hatte, und braucht das Passwort. Siehe [Support-Pakete](/de/docs/admin/logs-and-monitoring/#support-pakete).

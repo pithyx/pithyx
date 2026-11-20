@@ -6,7 +6,7 @@ These rules are binding. If a rule blocks you, stop and ask; never work around i
 
 ## Principles
 
-- 100 percent local: no telemetry, phone-home, cloud accounts or project-run services the box depends on. Crash reports stay on the box; the user shares a support bundle manually (support bundles are planned, not built yet).
+- 100 percent local: no telemetry, phone-home, cloud accounts or project-run services the box depends on. Crash reports stay on the box; the user shares a support bundle manually (D412).
 - Fresh installs only, no import from other NAS systems.
 - Never hard-block administrators or catalogs from a capability (D388): a risky right gets friction in proportion to its risk and informed consent, not a refusal. Refuse only what cannot work technically (a wrong architecture, a right that is not built).
 
@@ -24,8 +24,8 @@ These rules are binding. If a rule blocks you, stop and ask; never work around i
 ## Current state
 
 - Version `1.0.0` (codename Pyxis) is released: the tag `v1.0.0` on `stable`, a GitHub pre-release with the ISO and the GPL sources, on the stable channel and marked beta (D366); fixes come as 1.0.x. The repositories of the organization are public since 2026-10-18, and the docs are published from `stable` at pithyx.org.
-- Built: HTTPS on 7484 with the box as its own certificate authority (D346), the reverse proxy on 443 and 80 with redirect hosts and TCP/UDP streams (D347), storage (ZFS pools, disks, SMART, snapshots, scrubs, pool encryption with the key vault and USB sticks, D384, D385), users, groups and permissions, home folders (D348), shared folders with SMB, SFTP, WebDAV and FTP, the web desktop with Files and Settings, the app runtime (SDK, manifest, Docker backends, proxy, Store with signed catalogs), network settings, firewall, config backup, the web installer, the ISO build and signed system updates with automatic rollback.
-- Not built: NFS, VMs, support bundles; of the elevated app rights (D311, D387, D388) only `host.full` is refused with `app.elevated.unsupported`.
+- Built: HTTPS on 7484 with the box as its own certificate authority (D346), the reverse proxy on 443 and 80 with redirect hosts and TCP/UDP streams (D347), storage (ZFS pools, disks, SMART, snapshots, scrubs, pool encryption with the key vault and USB sticks, D384, D385), users, groups and permissions, home folders (D348), shared folders with SMB, SFTP, WebDAV and FTP, the web desktop with Files and Settings, the app runtime (SDK, manifest, Docker backends, proxy, Store with signed catalogs), network settings, firewall, config backup, support bundles (D412), the web installer, the ISO build and signed system updates with automatic rollback.
+- Not built: NFS, VMs; of the elevated app rights (D311, D387, D388) only `host.full` is refused with `app.elevated.unsupported`.
 - Docs pages under `website/` are all `ready` (checked against the code); new pages start as `draft` until checked.
 - The migrations are numbered SQL files in `daemon/`. Decisions are logged as D-numbers in `DECISIONS.md` (D269 on; earlier ones are in their pull requests), in number order, with the next free number at its top.
 
@@ -110,7 +110,7 @@ website/  landing page and docs at pithyx.org (Astro + Starlight, GitHub Pages, 
 
 - Every HTTP request and WebSocket message has a request id (W3C traceparent, `Activity`), propagated to jobs, every `ICommandRunner` call and proxied app backends.
 - Every external command logs command, args, exit code, duration, truncated stdout/stderr. Structured JSON logs only (Serilog), no string concatenation.
-- Secrets always masked. Support bundles (planned, not built yet): logs, config, system info without secrets; memory dumps only by explicit opt-in with a warning.
+- Secrets always masked. Support bundles (D412, Log Center): logs, config, system info without secrets (every table and setting classified in `SupportDatabase`); memory dumps only by explicit opt-in with a warning and a step-up.
 - The UI never shows the request id; it goes to the console and logs.
 
 ## Users and security

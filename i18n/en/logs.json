@@ -32,6 +32,55 @@
     "text": "Export as text",
     "jsonl": "Export as JSON lines"
   },
+  "support": {
+    "open": "Support bundle",
+    "title": "Create a support bundle",
+    "intro": "A support bundle holds what someone helping you needs to find a problem. Passwords, keys and tokens never go into it; user names, folder names, addresses and host names do. Nothing leaves the box until you share the file yourself.",
+    "parts": "What goes in",
+    "part": {
+      "system": {
+        "label": "System",
+        "hint": "Version, operating system, hardware, installed packages and failed services."
+      },
+      "storage": {
+        "label": "Storage",
+        "hint": "Pools, datasets, snapshots, disks and their health data."
+      },
+      "network": {
+        "label": "Network",
+        "hint": "Addresses, routes, firewall rules and name servers."
+      },
+      "configuration": {
+        "label": "Settings",
+        "hint": "The box's settings, users, groups, shared folders and apps, and the configuration files it writes, without secrets."
+      },
+      "logs": {
+        "label": "Logs",
+        "hint": "The Log Center's entries of the last 7 days and the kernel's messages since the last start."
+      },
+      "apps": {
+        "label": "App containers",
+        "hint": "Which containers of the apps exist and their state."
+      },
+      "memoryDump": {
+        "label": "Memory dump of the server",
+        "hint": "Only when a developer asks for it. Large, and it holds secrets."
+      }
+    },
+    "dumpWarning": "A memory dump holds everything the server had in memory at that moment, including passwords, keys and the sign-ins of other users. Share it only with someone you trust, and delete it afterwards.",
+    "stepUp": "{twoFactor, select, true {Confirm with your password and the code from your authenticator app.} other {Confirm with your password.}}",
+    "password": "Your password",
+    "code": "Code",
+    "create": "Create",
+    "createAgain": "Create again",
+    "working": "Creating the support bundle…",
+    "ready": "{size}, kept on the box until {expires}.",
+    "failures": "{count, plural, one {# item could not be read; the bundle names it in failures.json.} other {# items could not be read; the bundle names them in failures.json.}}",
+    "share": "Download the file and send it to the person helping you yourself.",
+    "download": "Download",
+    "delete": "Delete from the box",
+    "close": "Close"
+  },
   "loading": "Loading logs…",
   "empty": "No entries match these filters.",
   "details": {

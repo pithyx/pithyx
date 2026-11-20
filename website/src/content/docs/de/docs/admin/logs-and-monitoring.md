@@ -1,6 +1,6 @@
 ---
 title: 'Logs und Überwachung'
-description: 'Das Protokoll-Center, der Ressourcenmonitor und Benachrichtigungen: was sie zeigen, wie lange Daten bleiben und was sie kosten.'
+description: 'Das Protokoll-Center, Support-Pakete, der Ressourcenmonitor und Benachrichtigungen: was sie zeigen, wie lange Daten bleiben und was sie kosten.'
 status: ready
 audience: admin
 sidebar:
@@ -22,6 +22,28 @@ Logs liegen in einer Datenbank auf der Systemplatte unter `/var/log/pithyx/`, fu
 Der Daemon schreibt außerdem JSON-Dateien `/var/log/pithyx/daemon.json*`, die bei 20 MB rotieren, mit 10 Dateien. Geheimnisse werden in Logs maskiert.
 
 App-Meldungen kommen über das SDK an: `info`, `warn` und `error` immer, `debug` nur, solange ein Administrator es in den Details der App eingeschaltet hat. Eine Meldung hat höchstens 4000 Zeichen und höchstens 20 Datenfelder; eine App darf 20 Meldungen pro Sekunde loggen (Spitze 200). Die Ausgabe von Backend-Containern landet in der Quelle `app/<id>`. Eine Zeile auf stdout ist Info, eine Zeile auf stderr eine Warnung, und eine Zeile, die ein JSON-Objekt mit einem Text `level` ist (`debug` oder `trace`, `info`, `warn` oder `warning`, `error`, `fatal` oder `critical`), behält diese Stufe. Eine solche JSON-Zeile zeigt ihr `message` (oder `msg`) als Meldung und ihre übrigen Felder (höchstens 32, jedes auf 1024 Zeichen gekürzt) als Daten; ein W3C-Feld `traceparent` verbindet sie mit der Anfrage, sodass die Suche nach der Request-ID sie neben den Zeilen des Daemons findet. Eine `debug`-Zeile bleibt nur, solange ein Administrator die Debug-Meldungen der App eingeschaltet hat.
+
+## Support-Pakete
+
+Wenn du jemanden um Hilfe bei einem Problem bittest, gibt ein Support-Paket alles, was zum Finden nötig ist. **Support-Paket** in der Werkzeugleiste des Protokoll-Centers öffnet den Dialog; Einstellungen > **Info-Center** > **Support** führt auch dorthin. Nur für Administratoren.
+
+Wähle die Teile, die hineinkommen (alle außer dem Speicherabbild sind standardmäßig an):
+
+- **System**: Version, Betriebssystem, Hardware, installierte Pakete und fehlgeschlagene Dienste.
+- **Speicher**: Pools, Datasets, Snapshots, Laufwerke und ihre SMART-Daten (gelesen mit `smartctl -n standby`, sodass schlafende Platten weiterschlafen).
+- **Netzwerk**: Adressen, Routen, Firewall-Regeln und Nameserver.
+- **Einstellungen**: die Datenbank der Box (Einstellungen, Benutzer, Gruppen, freigegebene Ordner, Apps, Jobs, das Audit-Protokoll) und die Konfigurationsdateien, die sie schreibt, etwa `smb.conf`.
+- **Protokolle**: die Einträge des Protokoll-Centers der letzten 7 Tage (höchstens 200 000) und die letzten 5000 Meldungen des Kernels seit dem letzten Start.
+- **App-Container**: welche Container der Apps es gibt und in welchem Zustand sie sind.
+- **Speicherabbild des Servers**: nur wenn ein Entwickler danach fragt.
+
+Passwörter, Passwort-Hashes, Geheimnisse der Zwei-Faktor-Anmeldung, Passkeys, Sitzungen, private Schlüssel, Tokens, die Konfiguration der Benachrichtigungskanäle und Passwörter in URLs kommen nie hinein; App-Daten, Desktop-Layouts, Benachrichtigungen, der Papierkorb und zuletzt verwendete Dateien auch nicht. Eine Einstellung, die das Paket nicht kennt, bleibt drin, ihr Wert wird aber durch `(omitted)` ersetzt, und Zeilen mit einem Passwort, Schlüssel oder Token in den Konfigurationsdateien verlieren ihren Wert. Benutzernamen, Ordnernamen, IP-Adressen und Hostnamen bleiben lesbar, weil man sie zum Finden eines Problems meist braucht: Sieh dir die Datei an, bevor du sie weitergibst.
+
+Das Speicherabbild ist die Ausnahme: Es enthält alles, was der Daemon im Speicher hatte, auch Passwörter, Schlüssel und die Anmeldungen anderer Benutzer, und kann so groß sein wie der Speicher des Daemons. Der Dialog warnt davor und fragt nach deinem Passwort (und dem Zwei-Faktor-Code, wenn du dich mit einem anmeldest), bevor er eines erstellt. Gib ein Speicherabbild nur jemandem, dem du vertraust, und lösche es danach.
+
+Die Box erstellt das Paket als Job (auch in der Job-Liste) und schreibt es unter `/var/cache/pithyx/support/` auf die Systemplatte; ohne genug freien Platz startet sie nicht (`system.support.no_space`). Die Box behält ein Paket: Ein neues ersetzt das alte, und ein zweiter Job, während einer läuft, wird abgelehnt (`system.support.busy`). **Herunterladen** speichert die Zip-Datei `pithyx-support-<host>-<datum>-<uhrzeit>.zip`; sie bleibt eine Stunde auf der Box oder bis **Von der Box löschen** und ist nach einem Neustart weg. Die Box schickt sie nirgendwohin: Du gibst die Datei selbst weiter. Jedes Paket wird mit seinen Teilen im Audit-Protokoll vermerkt.
+
+Die Zip-Datei enthält `manifest.json` (Zeit, Host, Version, die Teile und die Dateien, die es nicht gab) und `failures.json` (was nicht gelesen werden konnte und warum, etwa ein Befehl, den es auf der Box nicht gibt), dann einen Ordner pro Teil: `system/`, `storage/`, `network/`, `configuration/` (mit `database/<tabelle>.json`), `logs/` (`log-center.jsonl`, `kernel.txt`), `apps/` und `memory/`.
 
 ## Der Ressourcenmonitor
 
