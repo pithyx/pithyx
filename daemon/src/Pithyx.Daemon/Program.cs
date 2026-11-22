@@ -4,6 +4,7 @@ using Pithyx.Daemon;
 using Pithyx.Daemon.Apps;
 using Pithyx.Daemon.Auth;
 using Pithyx.Daemon.Backup;
+using Pithyx.Daemon.Backups;
 using Pithyx.Daemon.Commands;
 using Pithyx.Daemon.Database;
 using Pithyx.Daemon.Errors;
@@ -133,6 +134,7 @@ builder.Services.AddPithyxInstaller(installer);
 builder.Services.AddPithyxBackup(mode == DaemonMode.Real
     ? new BackupOptions(Apply: true, TlsDirectory: Path.Combine(Path.GetDirectoryName(paths.DatabasePath) ?? ".", "tls"), SshDirectory: "/etc/ssh", ShadowPath: "/etc/shadow", WorkDirectory: "/run/pithyx/backup")
     : new BackupOptions(Apply: false, TlsDirectory: Path.Combine(Path.GetDirectoryName(paths.DatabasePath) ?? ".", "tls"), SshDirectory: null, ShadowPath: null, WorkDirectory: Path.Combine(Path.GetDirectoryName(paths.DatabasePath) ?? ".", "backup-work")));
+builder.Services.AddPithyxBackups();
 builder.Services.AddPithyxSupport(new SupportBundleOptions(Path.Combine(paths.CacheDirectory, "support"), MemoryDumps: mode == DaemonMode.Real));
 builder.Services.AddSingleton<DiskInventory>();
 builder.Services.AddSingleton(services => services.GetRequiredService<DiskInventory>().Definition());
@@ -320,6 +322,7 @@ if (!installer.Active)
     api.MapUpsEndpoints();
     api.MapPowerEndpoint();
     api.MapBackupEndpoints();
+    api.MapBackupTargetEndpoints();
     api.MapSupportEndpoints();
     api.MapAppEndpoints();
     Pithyx.Daemon.Apps.Catalog.StoreEndpoints.MapStoreEndpoints(api);

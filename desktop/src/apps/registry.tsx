@@ -1,6 +1,7 @@
 import {
   IconActivity,
   IconBuildingStore,
+  IconCloudUpload,
   IconFolders,
   IconInfoCircle,
   IconListDetails,
@@ -154,6 +155,22 @@ export const coreApps: readonly AppEntry[] = [
       import('./preferences/PreferencesApp').then(({ PreferencesApp }) => ({
         default: PreferencesApp,
       })),
+    ),
+  },
+  {
+    id: coreAppIds.backup,
+    icon: IconCloudUpload,
+    tone: 'rose',
+    adminOnly: true,
+    window: {
+      instances: 'single',
+      defaultSize: { width: 860, height: 640 },
+      minSize: { width: 320, height: 360 },
+    },
+    Component: lazy(() =>
+      Promise.all([import('./backup/BackupWindow'), loadTranslations('backup')]).then(
+        ([{ BackupWindow }]) => ({ default: BackupWindow }),
+      ),
     ),
   },
   {

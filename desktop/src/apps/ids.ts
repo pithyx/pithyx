@@ -13,6 +13,7 @@ export const coreAppIds = {
   about: 'org.pithyx.about',
   preferences: 'org.pithyx.preferences',
   store: 'org.pithyx.store',
+  backup: 'org.pithyx.backup',
 } as const;
 
 const PREFIX = 'org.pithyx.';
@@ -20,7 +21,7 @@ const PREFIX = 'org.pithyx.';
 // The short ids the core apps had before migration 0022 (files, viewer, ...); later core apps never had one.
 const legacyIds: ReadonlySet<string> = new Set(
   Object.values(coreAppIds)
-    .filter((id) => id !== coreAppIds.preferences)
+    .filter((id) => id !== coreAppIds.preferences && id !== coreAppIds.backup)
     .map((id) => id.slice(PREFIX.length)),
 );
 

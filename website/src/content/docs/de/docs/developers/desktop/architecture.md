@@ -50,6 +50,7 @@ Kern-Apps sind in `desktop/src/apps/registry.tsx` aufgeführt; ihre IDs stehen i
 | `org.pithyx.viewer`   | Betrachter        | berechtigte Benutzer, nur mit einer Datei geöffnet | multi     |
 | `org.pithyx.about`    | Über Pithyx       | alle                                               | single    |
 | `org.pithyx.store`    | Store             | Administratoren                                    | single    |
+| `org.pithyx.backup`   | Backup            | Administratoren                                    | single    |
 
 Kern-Apps nutzen dieselbe `@pithyx/sdk`-API wie Apps von Drittanbietern, aber im eigenen Kontext des Desktops: `CoreSdkApp` verbindet das Fenster über ein prozessinternes Paar von Endpunkten statt über einen `MessageChannel` mit dem Host. Die App bekommt dasselbe `PithyxApp`-Objekt. Kern-Apps dürfen zusätzlich interne Host-Methoden nutzen, die nicht Teil des öffentlichen SDK sind. Apps von Drittanbietern laufen in einem `<iframe sandbox="allow-scripts allow-forms">` ohne `allow-same-origin`; ihre Identität stammt vom Message-Port, nie aus den Nachrichtendaten.
 

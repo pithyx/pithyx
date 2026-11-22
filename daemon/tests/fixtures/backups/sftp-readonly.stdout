@@ -1,0 +1,2 @@
+sftp> cd "/usr"
+sftp> put "/tmp/pithyx-backup-0123456789abcdef/empty" ".pithyx-test-abc"

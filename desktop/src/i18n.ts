@@ -4,6 +4,7 @@ import { initReactI18next, useTranslation } from 'react-i18next';
 import { icuFormat } from './icuFormat';
 import { desktopNamespaces, signInNamespaces } from './i18nNamespaces';
 import type auth from '../../i18n/en/auth.json';
+import type backup from '../../i18n/en/backup.json';
 import type desktop from '../../i18n/en/desktop.json';
 import type errors from '../../i18n/en/errors.json';
 import type files from '../../i18n/en/files.json';
@@ -24,6 +25,7 @@ import type viewer from '../../i18n/en/viewer.json';
 export interface Resources {
   desktop: typeof desktop;
   auth: typeof auth;
+  backup: typeof backup;
   errors: typeof errors;
   files: typeof files;
   installer: typeof installer;

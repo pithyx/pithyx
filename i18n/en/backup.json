@@ -1,0 +1,71 @@
+{
+  "targets": {
+    "title": "Targets",
+    "toolbar": "Targets",
+    "add": "Add target",
+    "intro": "A target is a server the box sends backups to over SSH, for example a storage box you rent or another Linux server. Each target gets its own key, and the box connects only to the server whose host key you confirmed.",
+    "empty": "No target yet. Add the server your backups should go to.",
+    "loading": "Loading targets",
+    "list": "Targets",
+    "status": {
+      "ok": "Connected",
+      "failed": "Connection failed",
+      "untested": "Not tested"
+    },
+    "address": "{user}@{host}, port {port}",
+    "folder": "Folder {path}",
+    "loginFolder": "Login folder",
+    "tested": "Tested {time}",
+    "publicKey": "Public key of this target",
+    "publicKeyHint": "Add this line to the file .ssh/authorized_keys of the user on the server. The box signs in only with this key and stores no password.",
+    "copy": "Copy key",
+    "copied": "Copied",
+    "copyFailed": "Select the key and copy it by hand.",
+    "hostKey": "Host key",
+    "hostKeyValue": "{type}, fingerprint {fingerprint}",
+    "test": "Test connection",
+    "edit": "Edit",
+    "delete": "Delete",
+    "checkHostKey": "Check new host key",
+    "testPassed": "The box signed in, opened the folder and wrote a test file."
+  },
+  "form": {
+    "name": "Name",
+    "nameHint": "How the target is named in the Backup app",
+    "host": "Server",
+    "hostHint": "Host name or IP address",
+    "port": "SSH port",
+    "portHint": "Usually 22; some storage providers use 23 for SSH",
+    "user": "User",
+    "path": "Folder on the server",
+    "pathHint": "Relative to the user's login folder, or from / on. Empty for the login folder. The test creates it if it is missing.",
+    "cancel": "Cancel",
+    "back": "Back",
+    "next": "Next",
+    "close": "Close",
+    "save": "Save"
+  },
+  "add": {
+    "title": "Add target",
+    "fingerprints": "The server offered these host keys. Compare the fingerprint with the one your provider or the server's administrator shows you (on the server itself: ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub). Save only if it matches: the box will connect to no other server for this target.",
+    "hostKey": "Host key to confirm",
+    "confirm": "Fingerprint matches, save",
+    "saved": "{name} is saved. Add its public key on the server, then test the connection."
+  },
+  "edit": {
+    "title": "Edit {name}",
+    "moved": "The server or port changed, so the box needs the new server's host key confirmed."
+  },
+  "hostKey": {
+    "title": "Check the host key of {name}",
+    "intro": "The server now offers another host key than the one you confirmed. That is expected after the server was reinstalled or moved; otherwise someone may be posing as it. Compare the new fingerprint with the one your provider shows before you accept it.",
+    "pinned": "Confirmed so far",
+    "offered": "Offered now",
+    "accept": "Fingerprint matches, accept"
+  },
+  "delete": {
+    "title": "Delete {name}?",
+    "text": "The box forgets the target and its key. Remove the public key from the server's authorized_keys as well; backups already on the server stay there.",
+    "confirm": "Delete"
+  }
+}

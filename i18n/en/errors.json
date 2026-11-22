@@ -149,6 +149,20 @@
       "reserved": "The user name {username} is reserved for the system."
     }
   },
+  "backup": {
+    "host_key": {
+      "scan_failed": "The box could not read the server's host keys ({reason, select, dns {the name is unknown} timeout {it took too long} other {nothing answered on this port, or it offered no usable key}})."
+    },
+    "target": {
+      "auth_failed": "The server refused the box's key. Put the target's public key into the user's authorized_keys on the server and check the user name.",
+      "host_key_changed": "The server answered with another host key than the one confirmed for this target, so the box did not connect. Check with the server's administrator before you confirm the new key.",
+      "invalid": "This setting of the target is not valid: {field, select, name {name} host {server} port {port} user {user} path {folder} hostKey {host key} other {{field}}}.",
+      "name_taken": "Another target is already named {name}.",
+      "not_found": "This backup target no longer exists.",
+      "not_writable": "The box signed in but cannot use the folder {path} on the server ({reason, select, path {it does not exist and could not be made} other {no file can be written there}}).",
+      "unreachable": "The box could not reach the server ({reason, select, dns {the name is unknown} refused {the port is closed} timeout {no answer} network {no route to it} other {the connection failed}})."
+    }
+  },
   "desktop": {
     "device": {
       "not_found": "No saved desktop was found for that device. It may have expired."

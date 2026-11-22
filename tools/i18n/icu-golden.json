@@ -466,6 +466,51 @@
       },
       "expected": "The user name root is reserved for the system."
     },
+    "backup.host_key.scan_failed": {
+      "params": {
+        "reason": "dns"
+      },
+      "expected": "The box could not read the server's host keys (the name is unknown)."
+    },
+    "backup.target.auth_failed": {
+      "params": {},
+      "expected": "The server refused the box's key. Put the target's public key into the user's authorized_keys on the server and check the user name."
+    },
+    "backup.target.host_key_changed": {
+      "params": {
+        "fingerprint": "SHA256:+DiY3wvvV6TuJJhbpZisF/zLDA0zPMSvHdkr4UvCOqU"
+      },
+      "expected": "The server answered with another host key than the one confirmed for this target, so the box did not connect. Check with the server's administrator before you confirm the new key."
+    },
+    "backup.target.invalid": {
+      "params": {
+        "field": "hostKey"
+      },
+      "expected": "This setting of the target is not valid: host key."
+    },
+    "backup.target.name_taken": {
+      "params": {
+        "name": "Storage box"
+      },
+      "expected": "Another target is already named Storage box."
+    },
+    "backup.target.not_found": {
+      "params": {},
+      "expected": "This backup target no longer exists."
+    },
+    "backup.target.not_writable": {
+      "params": {
+        "reason": "path",
+        "path": "backups/pithyx"
+      },
+      "expected": "The box signed in but cannot use the folder backups/pithyx on the server (it does not exist and could not be made)."
+    },
+    "backup.target.unreachable": {
+      "params": {
+        "reason": "refused"
+      },
+      "expected": "The box could not reach the server (the port is closed)."
+    },
     "desktop.device.not_found": {
       "params": {},
       "expected": "No saved desktop was found for that device. It may have expired."

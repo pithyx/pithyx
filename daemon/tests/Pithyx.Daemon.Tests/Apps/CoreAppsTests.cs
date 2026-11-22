@@ -23,13 +23,14 @@ public sealed class CoreAppsTests
         Assert.Equal(CoreApps.Files, CoreApps.LegacyIds["files"]);
         Assert.Equal(CoreApps.Logs, CoreApps.LegacyIds["logs"]);
         Assert.False(CoreApps.LegacyIds.ContainsKey("demo"));
-        // Every core app but Personal settings had a short id, and so did Storage, a group of Settings since D402.
-        Assert.Equal(CoreApps.All.Count - 1 + 1, CoreApps.LegacyIds.Count);
+        // Every core app but Personal settings and Backup had a short id, and so did Storage, a group of Settings since D402.
+        Assert.Equal(CoreApps.All.Count - 2 + 1, CoreApps.LegacyIds.Count);
         Assert.Equal(CoreApps.Storage, CoreApps.LegacyIds["storage"]);
         Assert.DoesNotContain(CoreApps.Storage, CoreApps.All);
         Assert.False(CoreApps.LegacyIds.ContainsKey("disks"));
-        // Personal settings came after the rename and never had a short id.
+        // Personal settings and Backup came after the rename and never had a short id.
         Assert.False(CoreApps.LegacyIds.ContainsKey("preferences"));
         Assert.Null(CoreApps.LegacyIdOf(CoreApps.Preferences));
+        Assert.Null(CoreApps.LegacyIdOf(CoreApps.Backup));
     }
 }

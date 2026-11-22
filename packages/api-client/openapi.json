@@ -8099,6 +8099,296 @@
         }
       }
     },
+    "/api/backups/targets": {
+      "get": {
+        "tags": [
+          "Backups"
+        ],
+        "description": "Administrators only. Every backup target with its confirmed host key, the public half of its SSH key and its last connection test.",
+        "operationId": "ListBackupTargets",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BackupTargetList"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Backups"
+        ],
+        "description": "Administrators only. Saves a target with the host key the administrator confirmed and makes its own SSH key; its public half goes into the server's authorized_keys.",
+        "operationId": "CreateBackupTarget",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BackupTargetRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BackupTarget"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/backups/targets/host-keys": {
+      "post": {
+        "tags": [
+          "Backups"
+        ],
+        "description": "Administrators only. Reads the host keys the server offers, with their SHA-256 fingerprints, for the administrator to compare before a target is saved. Nothing is stored.",
+        "operationId": "ScanBackupHostKeys",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BackupHostKeyScanRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BackupHostKeyScan"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/backups/targets/{id}": {
+      "put": {
+        "tags": [
+          "Backups"
+        ],
+        "description": "Administrators only. Changes a target. A new host or port needs the new server's confirmed host key; the SSH key stays.",
+        "operationId": "UpdateBackupTarget",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BackupTargetRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BackupTarget"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Backups"
+        ],
+        "description": "Administrators only. Removes the target and its SSH key. The public key stays in the server's authorized_keys until it is removed there.",
+        "operationId": "DeleteBackupTarget",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/backups/targets/{id}/host-key": {
+      "put": {
+        "tags": [
+          "Backups"
+        ],
+        "description": "Administrators only. Pins a new host key after the administrator compared its fingerprint, for example after the server was reinstalled.",
+        "operationId": "SetBackupTargetHostKey",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BackupHostKeyRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BackupTarget"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/backups/targets/{id}/test": {
+      "post": {
+        "tags": [
+          "Backups"
+        ],
+        "description": "Administrators only. Signs in to the target with its key, creates its folder if missing, writes and removes a test file, and keeps the outcome in lastTest.",
+        "operationId": "TestBackupTarget",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BackupTarget"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/system/support-bundle": {
       "get": {
         "tags": [
@@ -12758,9 +13048,82 @@
           "system",
           "certificates",
           "apps",
-          "reverseProxy"
+          "reverseProxy",
+          "backups"
         ],
         "description": "A part of the configuration that can be restored on its own."
+      },
+      "BackupHostKey": {
+        "required": [
+          "type",
+          "key",
+          "fingerprint"
+        ],
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "The key type, for example `ssh-ed25519`."
+          },
+          "key": {
+            "type": "string",
+            "description": "The key as `&lt;type&gt; &lt;base64&gt;`, the form a target stores and a request sends back."
+          },
+          "fingerprint": {
+            "type": "string",
+            "description": "The SHA-256 fingerprint as OpenSSH prints it, `SHA256:...`."
+          }
+        },
+        "description": "A host key of a server."
+      },
+      "BackupHostKeyRequest": {
+        "required": [
+          "hostKey"
+        ],
+        "type": "object",
+        "properties": {
+          "hostKey": {
+            "type": "string",
+            "description": "As `&lt;type&gt; &lt;base64&gt;` or a known_hosts line."
+          }
+        },
+        "description": "The new host key of a target, after the administrator checked its fingerprint."
+      },
+      "BackupHostKeyScan": {
+        "required": [
+          "keys"
+        ],
+        "type": "object",
+        "properties": {
+          "keys": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BackupHostKey"
+            }
+          }
+        },
+        "description": "The host keys the server offered, Ed25519 first."
+      },
+      "BackupHostKeyScanRequest": {
+        "required": [
+          "host"
+        ],
+        "type": "object",
+        "properties": {
+          "host": {
+            "type": "string",
+            "description": "A host name, IPv4 or IPv6 address."
+          },
+          "port": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "The SSH port; 22 when left out.",
+            "format": "int32"
+          }
+        },
+        "description": "A server whose host keys the box reads before a target is saved."
       },
       "BackupSummary": {
         "required": [
@@ -12816,6 +13179,185 @@
           }
         },
         "description": "A backup the daemon decrypted and checked, kept for a restore for 15 minutes."
+      },
+      "BackupTarget": {
+        "required": [
+          "id",
+          "name",
+          "kind",
+          "host",
+          "port",
+          "user",
+          "path",
+          "hostKey",
+          "publicKey",
+          "createdAt",
+          "lastTest"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Stable id.",
+            "format": "int64"
+          },
+          "name": {
+            "type": "string",
+            "description": "The name the administrator gave it, unique on the box."
+          },
+          "kind": {
+            "description": "How the box reaches it.",
+            "$ref": "#/components/schemas/BackupTargetKind"
+          },
+          "host": {
+            "type": "string",
+            "description": "The server's name or address."
+          },
+          "port": {
+            "type": "integer",
+            "description": "The SSH port.",
+            "format": "int32"
+          },
+          "user": {
+            "type": "string",
+            "description": "The user the box signs in as."
+          },
+          "path": {
+            "type": "string",
+            "description": "The folder on the server, relative to the user's login folder or absolute; empty for the login folder."
+          },
+          "hostKey": {
+            "description": "The host key the administrator confirmed; the box accepts no other.",
+            "$ref": "#/components/schemas/BackupHostKey"
+          },
+          "publicKey": {
+            "type": "string",
+            "description": "The public half of the target's own SSH key, the line for the server's `authorized_keys`."
+          },
+          "createdAt": {
+            "type": "string",
+            "description": "When it was added, UTC.",
+            "format": "date-time"
+          },
+          "lastTest": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "The last connection test, or none yet.",
+                "$ref": "#/components/schemas/BackupTargetTest"
+              }
+            ],
+            "description": "The outcome of a target's last connection test."
+          }
+        },
+        "description": "A place backups go to."
+      },
+      "BackupTargetKind": {
+        "enum": [
+          "sftp"
+        ],
+        "description": "How the box reaches a backup target. Only SFTP for now (#393); more kinds come later (#398)."
+      },
+      "BackupTargetList": {
+        "required": [
+          "targets"
+        ],
+        "type": "object",
+        "properties": {
+          "targets": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BackupTarget"
+            }
+          }
+        },
+        "description": "Every backup target, by name."
+      },
+      "BackupTargetRequest": {
+        "required": [
+          "name",
+          "host",
+          "user"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "1 to 64 characters, unique on the box."
+          },
+          "host": {
+            "type": "string",
+            "description": "A host name, IPv4 or IPv6 address."
+          },
+          "user": {
+            "type": "string",
+            "description": "The user on the server."
+          },
+          "port": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "The SSH port; 22 when left out.",
+            "format": "int32"
+          },
+          "path": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The folder on the server; empty or left out for the login folder."
+          },
+          "hostKey": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The host key the administrator confirmed, as `&lt;type&gt; &lt;base64&gt;` or a known_hosts line. Required for a\nnew target and when the host or port changes; left out, a change keeps the key."
+          }
+        },
+        "description": "A new target, or the changes to one."
+      },
+      "BackupTargetTest": {
+        "required": [
+          "testedAt",
+          "succeeded",
+          "errorCode",
+          "errorParams"
+        ],
+        "type": "object",
+        "properties": {
+          "testedAt": {
+            "type": "string",
+            "description": "When it ran, UTC.",
+            "format": "date-time"
+          },
+          "succeeded": {
+            "type": "boolean",
+            "description": "The box signed in, created the folder if needed, and wrote and removed a test file."
+          },
+          "errorCode": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Why it failed: `backup.target.unreachable`, `backup.target.host_key_changed`, `backup.target.auth_failed` or `backup.target.not_writable`."
+          },
+          "errorParams": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "The error's params.",
+                "$ref": "#/components/schemas/JsonElement"
+              }
+            ]
+          }
+        },
+        "description": "The outcome of a target's last connection test."
       },
       "BondMode": {
         "enum": [
@@ -14204,6 +14746,14 @@
           "auth.totp.not_enrolled",
           "auth.username.invalid",
           "auth.username.reserved",
+          "backup.host_key.scan_failed",
+          "backup.target.auth_failed",
+          "backup.target.host_key_changed",
+          "backup.target.invalid",
+          "backup.target.name_taken",
+          "backup.target.not_found",
+          "backup.target.not_writable",
+          "backup.target.unreachable",
           "desktop.device.not_found",
           "desktop.file_default.invalid",
           "desktop.file_default.limit_reached",
@@ -24882,6 +25432,9 @@
     },
     {
       "name": "Storage"
+    },
+    {
+      "name": "Backups"
     },
     {
       "name": "Store"

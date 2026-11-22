@@ -846,6 +846,10 @@
       "reverseProxy": {
         "title": "Reverse proxy",
         "description": "Proxy hosts, redirect hosts, streams and what unknown names get; uploaded certificates come with the certificates"
+      },
+      "backups": {
+        "title": "Backup targets",
+        "description": "The servers the Backup app sends backups to, with their SSH keys and confirmed host keys"
       }
     },
     "steps": {

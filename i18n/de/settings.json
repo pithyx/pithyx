@@ -846,6 +846,10 @@
       "reverseProxy": {
         "title": "Reverse Proxy",
         "description": "Proxy-Hosts, Weiterleitungs-Hosts, Streams und was unbekannte Namen bekommen; hochgeladene Zertifikate kommen mit den Zertifikaten"
+      },
+      "backups": {
+        "title": "Backup-Ziele",
+        "description": "Die Server, an die die App Backup sichert, mit ihren SSH-Schlüsseln und bestätigten Host-Schlüsseln"
       }
     },
     "steps": {
