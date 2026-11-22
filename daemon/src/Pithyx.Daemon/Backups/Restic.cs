@@ -30,12 +30,28 @@ public static class ResticCommands
     public const string ProgressFps = "0.5";
 
     /// <summary>
-    /// Mounts each snapshot over its mountpoint, then runs the rest. Runs in a private mount namespace, so nobody else
-    /// sees the mounts and they go away with the process.
+    /// Where the namespace script mounts the snapshots before it binds them over their live folders. A tmpfs is mounted
+    /// on it inside the namespace, so the host only ever sees the empty folder.
+    /// </summary>
+    public const string StageDirectory = "/run/pithyx/backup-stage";
+
+    /// <summary>
+    /// Mounts each snapshot read-only on an empty folder of a private tmpfs and binds it over the dataset's mountpoint
+    /// (ZFS refuses to mount over a folder that is not empty), then runs the rest. Runs in a private mount namespace, so
+    /// nobody else sees the mounts and they go away with the process. Never goes through <c>.zfs/snapshot</c>, whose
+    /// automounts would reach every bind of the share on the host and keep the snapshot busy.
     /// </summary>
     public const string MountScript =
         """
-        while [ "$1" != "--" ]; do mount -t zfs -o ro "$1" "$2" || exit 70; shift 2; done
+        stage=$1
+        shift
+        mkdir -p "$stage" && mount -t tmpfs -o mode=0700,size=64k pithyx-backup "$stage" || exit 70
+        i=0
+        while [ "$1" != "--" ]; do
+          i=$((i + 1))
+          mkdir "$stage/$i" && mount -t zfs -o ro "$1" "$stage/$i" && mount --bind "$stage/$i" "$2" || exit 70
+          shift 2
+        done
         shift
         exec "$@"
         """;
@@ -102,12 +118,12 @@ public static class ResticCommands
 
     /// <summary>
     /// <c>unshare</c>'s arguments that mount the snapshots in a private namespace and then run <paramref name="command"/>.
-    /// Parents are mounted before their children.
+    /// Parents are mounted before their children; a child's mountpoint is then a folder in the parent's snapshot.
     /// </summary>
     public static IReadOnlyList<string> InNamespace(IReadOnlyList<SnapshotMount> mounts, IReadOnlyList<string> command)
     {
         ArgumentNullException.ThrowIfNull(mounts);
-        var arguments = new List<string> { "--mount", "--propagation", "private", "--", "sh", "-c", MountScript, "sh" };
+        var arguments = new List<string> { "--mount", "--propagation", "private", "--", "sh", "-c", MountScript, "sh", StageDirectory };
         foreach (var mount in mounts.OrderBy(mount => mount.Mountpoint.Length).ThenBy(mount => mount.Mountpoint, StringComparer.Ordinal))
         {
             arguments.AddRange([mount.Snapshot, mount.Mountpoint]);

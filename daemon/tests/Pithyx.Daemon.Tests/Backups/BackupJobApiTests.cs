@@ -153,7 +153,7 @@ public sealed class BackupJobApiTests : IAsyncLifetime
         var snapshot = Assert.Single(_commands.Calls, call => call is { FileName: "zfs", Arguments: ["snapshot", ..] }).Arguments[1];
         Assert.Matches("^pithyxtestm@pithyx-backup-[0-9]{8}T[0-9]{6}Z$", snapshot);
         var backup = Assert.Single(_commands.Calls, call => call.FileName == "unshare");
-        Assert.Equal([snapshot, SharePath, "--", "env"], backup.Arguments.Skip(8).Take(4));
+        Assert.Equal([snapshot, SharePath, "--", "env"], backup.Arguments.Skip(9).Take(4));
         Assert.Equal(Path.Combine(SharePath, "Photos"), backup.Arguments[^1]);
         Assert.Contains(Path.Combine(CacheRoot, id.ToString(System.Globalization.CultureInfo.InvariantCulture)), backup.Arguments);
         var destroyed = _commands.Calls.Where(call => call is { FileName: "zfs", Arguments: ["destroy", ..] }).Select(call => call.Arguments[1]).ToList();

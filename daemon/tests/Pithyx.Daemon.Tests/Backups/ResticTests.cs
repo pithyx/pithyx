@@ -45,8 +45,8 @@ public sealed class ResticTests
             ["env", .. ResticCommands.Env(backup)]);
 
         Assert.Equal(["-r", "x", "backup", "--group-by", "", "--host", "box", "--exclude", "*.tmp", "--exclude", "cache/", "--", "/tank/shares/media", "/tank/homes/anna/Photos"], backup);
-        Assert.Equal(["--mount", "--propagation", "private", "--", "sh", "-c", ResticCommands.MountScript, "sh"], command.Take(8));
-        Assert.Equal(["tank/homes/anna@pithyx-backup-20261122T200000Z", "/tank/homes/anna", "tank/shares/media@pithyx-backup-20261122T200000Z", "/tank/shares/media", "--", "env"], command.Skip(8).Take(6));
+        Assert.Equal(["--mount", "--propagation", "private", "--", "sh", "-c", ResticCommands.MountScript, "sh", "/run/pithyx/backup-stage"], command.Take(9));
+        Assert.Equal(["tank/homes/anna@pithyx-backup-20261122T200000Z", "/tank/homes/anna", "tank/shares/media@pithyx-backup-20261122T200000Z", "/tank/shares/media", "--", "env"], command.Skip(9).Take(6));
         Assert.Equal("restic", command[command.ToList().IndexOf("restic")]);
     }
 
