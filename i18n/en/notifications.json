@@ -1,18 +1,5 @@
 {
   "storage": {
-    "scrub": {
-      "finished": {
-        "title": "Scrub finished",
-        "body": "Pool {pool} was checked. {errors, plural, =0 {No errors found.} one {# error found.} other {# errors found.}}"
-      }
-    },
-    "disk": {
-      "warm": {
-        "title": "Disk getting warm",
-        "body": "Disk {disk} in {pool} reports {temperature, number} °C. Check the airflow.",
-        "action": "Show disk"
-      }
-    },
     "alert": {
       "poolDegraded": {
         "title": "Pool {pool} is degraded",
@@ -99,13 +86,6 @@
     }
   },
   "apps": {
-    "update": {
-      "available": {
-        "title": "Update available",
-        "body": "{app} {version} is ready to install.",
-        "action": "Install"
-      }
-    },
     "device": {
       "missing": {
         "title": "A device of {app} is missing",
@@ -124,10 +104,6 @@
       "title": "Some windows were not restored",
       "body": "{count, plural, one {# window belongs} other {# windows belong}} to an app that is no longer available."
     },
-    "copied": {
-      "title": "Desktop loaded",
-      "body": "The windows from {device} are now open here."
-    },
     "saveFailed": {
       "title": "Window arrangement not saved",
       "body": "The daemon did not save the layout of this desktop. Your windows stay open."
@@ -139,6 +115,10 @@
     "noteKept": {
       "title": "Note text kept",
       "body": "{count, plural, one {A note was changed on another device while you wrote on it. Your text is on a new note next to it.} other {# notes were changed on another device while you wrote on them. Your texts are on new notes next to them.}}"
+    },
+    "copied": {
+      "title": "Desktop loaded",
+      "body": "The windows from {device} are now open here."
     }
   },
   "app": {
@@ -281,27 +261,27 @@
     "alert": {
       "runFailed": {
         "title": "Backup {job} failed",
-        "body": "The last run of {job} did not finish, so nothing new was saved. Open the Backup app to see why.",
+        "body": "Nothing new was saved. The Backup app shows why.",
         "action": "Open Backup"
       },
       "runWarning": {
         "title": "Backup {job} skipped files",
-        "body": "{job} saved a new version, but {warnings, plural, =0 {some files} one {# file or folder} other {# files or folders}} could not be read. The Log Center names them.",
+        "body": "{warnings, plural, =0 {Some files} one {# file} other {# files}} could not be read. The Log Center names them.",
         "action": "Open Backup"
       },
       "overdue": {
         "title": "Backup {job} is overdue",
-        "body": "{job} has had no successful run for {days, plural, one {# day} other {# days}}. Check the job and its target.",
+        "body": "No successful run for {days, plural, one {# day} other {# days}}. Check the job and its target.",
         "action": "Open Backup"
       },
       "checkFailed": {
         "title": "Check of {job} failed",
-        "body": "The check of the repository of {job} did not pass. Open the Backup app to see why.",
+        "body": "The repository did not pass its check. The Backup app shows why.",
         "action": "Open Backup"
       },
       "hostKeyChanged": {
         "title": "Target {target} has a new host key",
-        "body": "The server of {target} answered with another host key, so the box did not connect and no backup reached it. Check with the server's administrator before you confirm the new key.",
+        "body": "The box did not connect, so no backup reached it. Ask the server's administrator before you confirm the key.",
         "action": "Open Backup"
       }
     }

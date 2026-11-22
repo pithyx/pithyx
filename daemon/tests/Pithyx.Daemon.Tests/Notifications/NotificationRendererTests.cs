@@ -12,10 +12,10 @@ public sealed class NotificationRendererTests
     [Fact]
     public void NumbersFollowTheLanguage()
     {
-        var parameters = Params(new { disk = "sda", pool = "tank", temperature = 1234.5 });
+        var parameters = Params(new { pool = "tank", percent = 1234.5 });
 
-        Assert.Equal("Disk sda in tank reports 1,234.5 °C. Check the airflow.", NotificationRenderer.Render("en", "storage.disk.warm", parameters, null, "nas").Body);
-        Assert.Equal("Laufwerk sda in tank meldet 1.234,5 °C. Prüf die Belüftung.", NotificationRenderer.Render("de", "storage.disk.warm", parameters, null, "nas").Body);
+        Assert.Equal("tank is 1,234.5 % full. Free some space soon, or writes will fail.", NotificationRenderer.Render("en", "storage.alert.capacityCritical", parameters, null, "nas").Body);
+        Assert.Equal("tank ist zu 1.234,5 % belegt. Gib bald Platz frei, sonst schlagen Schreibvorgänge fehl.", NotificationRenderer.Render("de", "storage.alert.capacityCritical", parameters, null, "nas").Body);
     }
 
     [Fact]

@@ -1,18 +1,5 @@
 {
   "storage": {
-    "scrub": {
-      "finished": {
-        "title": "Scrub abgeschlossen",
-        "body": "Pool {pool} wurde geprüft. {errors, plural, =0 {Keine Fehler gefunden.} one {# Fehler gefunden.} other {# Fehler gefunden.}}"
-      }
-    },
-    "disk": {
-      "warm": {
-        "title": "Laufwerk wird warm",
-        "body": "Laufwerk {disk} in {pool} meldet {temperature, number} °C. Prüf die Belüftung.",
-        "action": "Laufwerk anzeigen"
-      }
-    },
     "alert": {
       "poolDegraded": {
         "title": "Pool {pool} ist beeinträchtigt",
@@ -99,13 +86,6 @@
     }
   },
   "apps": {
-    "update": {
-      "available": {
-        "title": "Update verfügbar",
-        "body": "{app} {version} kann installiert werden.",
-        "action": "Installieren"
-      }
-    },
     "device": {
       "missing": {
         "title": "Ein Gerät von {app} fehlt",
@@ -124,10 +104,6 @@
       "title": "Einige Fenster wurden nicht wiederhergestellt",
       "body": "{count, plural, one {# Fenster gehört} other {# Fenster gehören}} zu einer App, die nicht mehr verfügbar ist."
     },
-    "copied": {
-      "title": "Desktop geladen",
-      "body": "Die Fenster von {device} sind jetzt hier geöffnet."
-    },
     "saveFailed": {
       "title": "Fensteranordnung nicht gespeichert",
       "body": "Der Daemon hat das Layout dieses Desktops nicht gespeichert. Deine Fenster bleiben offen."
@@ -139,6 +115,10 @@
     "noteKept": {
       "title": "Notiztext behalten",
       "body": "{count, plural, one {Eine Notiz wurde auf einem anderen Gerät geändert, während du darauf geschrieben hast. Dein Text steht auf einer neuen Notiz daneben.} other {# Notizen wurden auf einem anderen Gerät geändert, während du darauf geschrieben hast. Deine Texte stehen auf neuen Notizen daneben.}}"
+    },
+    "copied": {
+      "title": "Desktop geladen",
+      "body": "Die Fenster von {device} sind jetzt hier geöffnet."
     }
   },
   "app": {
@@ -281,27 +261,27 @@
     "alert": {
       "runFailed": {
         "title": "Backup {job} fehlgeschlagen",
-        "body": "Der letzte Lauf von {job} wurde nicht fertig, es wurde nichts Neues gesichert. Öffne die Backup-App, um den Grund zu sehen.",
+        "body": "Es wurde nichts Neues gesichert. Die App Backup zeigt den Grund.",
         "action": "Backup öffnen"
       },
       "runWarning": {
         "title": "Backup {job} hat Dateien ausgelassen",
-        "body": "{job} hat eine neue Version gesichert, aber {warnings, plural, =0 {einige Dateien} one {# Datei oder Ordner} other {# Dateien oder Ordner}} ließen sich nicht lesen. Das Log Center nennt sie.",
+        "body": "{warnings, plural, =0 {Einige Dateien} one {# Datei} other {# Dateien}} ließen sich nicht lesen. Das Log Center nennt sie.",
         "action": "Backup öffnen"
       },
       "overdue": {
         "title": "Backup {job} ist überfällig",
-        "body": "{job} hatte seit {days, plural, one {# Tag} other {# Tagen}} keinen erfolgreichen Lauf. Prüf den Job und sein Ziel.",
+        "body": "Seit {days, plural, one {# Tag} other {# Tagen}} kein erfolgreicher Lauf. Prüf den Auftrag und sein Ziel.",
         "action": "Backup öffnen"
       },
       "checkFailed": {
         "title": "Prüfung von {job} fehlgeschlagen",
-        "body": "Die Prüfung des Repositorys von {job} ist nicht bestanden. Öffne die Backup-App, um den Grund zu sehen.",
+        "body": "Das Repository hat die Prüfung nicht bestanden. Die App Backup zeigt den Grund.",
         "action": "Backup öffnen"
       },
       "hostKeyChanged": {
         "title": "Ziel {target} hat einen neuen Host-Schlüssel",
-        "body": "Der Server von {target} hat mit einem anderen Host-Schlüssel geantwortet. Die Box hat sich deshalb nicht verbunden, und kein Backup ist dort angekommen. Kläre das mit der Person, die den Server betreut, bevor du den neuen Schlüssel bestätigst.",
+        "body": "Die Box hat sich nicht verbunden, also kam kein Backup an. Frag die Person, die den Server betreut, bevor du den Schlüssel bestätigst.",
         "action": "Backup öffnen"
       }
     }
