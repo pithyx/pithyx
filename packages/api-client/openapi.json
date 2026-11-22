@@ -13771,9 +13771,6 @@
           "yearly": {
             "type": "integer",
             "format": "int32"
-          },
-          "keepsAll": {
-            "type": "boolean"
           }
         },
         "description": "How many versions a job keeps after each successful run (restic's `forget`). 0 keeps none of that kind; all 0 keeps everything."

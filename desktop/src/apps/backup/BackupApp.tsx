@@ -1,11 +1,22 @@
 import type { PithyxApp } from '@pithyx/sdk';
-import { AppFrame, Button, Card, StatusBadge, Toolbar, type StatusTone } from '@pithyx/ui';
+import {
+  AppFrame,
+  Button,
+  Card,
+  NavList,
+  StatusBadge,
+  Toolbar,
+  type AppFrameView,
+  type NavGroup,
+  type StatusTone,
+} from '@pithyx/ui';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ErrorNotice } from '../../errors/ErrorNotice';
 import { useFormatLocale } from '../../i18n';
 import {
+  IconArchive,
   IconKey,
   IconPencil,
   IconPlugConnected,
@@ -14,7 +25,9 @@ import {
   IconTrash,
 } from '../../ui/icons';
 import type { SdkAppProps } from '../sdk/CoreSdkApp';
-import { backupsCall, targetsKey, type BackupTarget } from '../sdk/backups';
+import { backupsCall, targetsKey, type BackupJob, type BackupTarget } from '../sdk/backups';
+import { DeleteJobDialog, JobDialog, KeyDialog } from './JobDialogs';
+import { JobsPage } from './JobsPage';
 import { describeProblem, formatDate } from '../storage/shared';
 import {
   AddTargetDialog,
@@ -26,8 +39,15 @@ import {
 } from './TargetDialogs';
 import styles from './Backup.module.css';
 
+type Page = 'jobs' | 'targets';
+
 type Opened =
-  { kind: 'add' } | { kind: 'edit' | 'hostKey' | 'delete'; target: BackupTarget } | null;
+  | { kind: 'add' }
+  | { kind: 'edit' | 'hostKey' | 'delete'; target: BackupTarget }
+  | { kind: 'addJob' }
+  | { kind: 'editJob' | 'deleteJob'; job: BackupJob }
+  | { kind: 'key'; job: BackupJob; key: string }
+  | null;
 
 /** Every backup target; the Backup app's calls replace a changed target in it. */
 function useTargets(app: PithyxApp) {
@@ -38,62 +58,108 @@ function useTargets(app: PithyxApp) {
 }
 
 /**
- * The Backup app (D414): the targets backups go to, each a server reached over SSH with its own key and the host key
- * the administrator confirmed. Administrators only; backup jobs, runs and restores follow (#394, #395).
+ * The Backup app (D414, D415): the jobs that back up shared folders and homes with restic from ZFS snapshots, and the
+ * targets they go to, each a server reached over SSH with its own key and the host key the administrator confirmed.
+ * Administrators only; restores follow (#395).
  */
 export function BackupApp({ app }: SdkAppProps) {
   const { t } = useTranslation('backup');
   const targets = useTargets(app);
+  const [page, setPage] = useState<Page>('jobs');
+  const [view, setView] = useState<AppFrameView>('page');
   const [opened, setOpened] = useState<Opened>(null);
   const close = () => {
     setOpened(null);
   };
-  const add = () => {
-    setOpened({ kind: 'add' });
-  };
+  const targetList = targets.data?.targets;
+  const groups: NavGroup[] = [
+    {
+      id: 'backup',
+      items: [
+        {
+          id: 'jobs',
+          label: t('nav.jobs'),
+          icon: <IconArchive size={18} stroke={1.75} aria-hidden />,
+        },
+        {
+          id: 'targets',
+          label: t('nav.targets'),
+          icon: <IconServer size={18} stroke={1.75} aria-hidden />,
+          ...(targetList === undefined ? {} : { count: targetList.length }),
+        },
+      ],
+    },
+  ];
 
   return (
     <>
       <AppFrame
-        title={t('targets.title')}
+        view={view}
+        onViewChange={setView}
+        pageKey={page}
+        navigation={
+          <NavList
+            aria-label={t('nav.label')}
+            searchable={false}
+            groups={groups}
+            selectedId={page}
+            onSelect={(id) => {
+              setPage(id === 'targets' ? 'targets' : 'jobs');
+              setView('page');
+            }}
+          />
+        }
+        title={t(`${page}.title`)}
         toolbar={
-          <Toolbar aria-label={t('targets.toolbar')}>
-            <Button variant="primary" onPress={add}>
-              <IconPlus size={18} stroke={1.75} aria-hidden />
-              {t('targets.add')}
-            </Button>
+          <Toolbar aria-label={t(`${page}.toolbar`)}>
+            {page === 'jobs' ? (
+              <Button
+                variant="primary"
+                isDisabled={targetList === undefined || targetList.length === 0}
+                onPress={() => {
+                  setOpened({ kind: 'addJob' });
+                }}
+              >
+                <IconPlus size={18} stroke={1.75} aria-hidden />
+                {t('jobs.add')}
+              </Button>
+            ) : (
+              <Button
+                variant="primary"
+                onPress={() => {
+                  setOpened({ kind: 'add' });
+                }}
+              >
+                <IconPlus size={18} stroke={1.75} aria-hidden />
+                {t('targets.add')}
+              </Button>
+            )}
           </Toolbar>
         }
       >
-        <div className={styles.page}>
-          <p className={styles.muted}>{t('targets.intro')}</p>
-          {targets.isError && <ErrorNotice error={describeProblem(targets.error)} />}
-          {targets.isPending && <p className={styles.muted}>{t('targets.loading')}</p>}
-          {targets.data?.targets.length === 0 && (
-            <div className={styles.empty}>
-              <p className={styles.muted}>{t('targets.empty')}</p>
-              <Button onPress={add}>
-                <IconPlus size={16} stroke={1.75} aria-hidden />
-                {t('targets.add')}
-              </Button>
-            </div>
-          )}
-          {targets.data !== undefined && targets.data.targets.length > 0 && (
-            <div className={styles.targets} role="list" aria-label={t('targets.list')}>
-              {targets.data.targets.map((target) => (
-                <div key={target.id} role="listitem">
-                  <TargetCard
-                    app={app}
-                    target={target}
-                    onOpen={(kind) => {
-                      setOpened({ kind, target });
-                    }}
-                  />
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+        {page === 'jobs' ? (
+          <JobsPage
+            app={app}
+            targets={targetList}
+            onAdd={() => {
+              setOpened({ kind: 'addJob' });
+            }}
+            onOpen={(kind, job) => {
+              setOpened({ kind: kind === 'edit' ? 'editJob' : 'deleteJob', job });
+            }}
+          />
+        ) : (
+          <TargetsPage
+            app={app}
+            targets={targets}
+            onAdd={() => {
+              setOpened({ kind: 'add' });
+            }}
+            onOpen={(kind, target) => {
+              setOpened({ kind, target });
+            }}
+          />
+        )}
       </AppFrame>
       {opened?.kind === 'add' && <AddTargetDialog app={app} onClose={close} />}
       {opened?.kind === 'edit' && (
@@ -105,7 +171,74 @@ export function BackupApp({ app }: SdkAppProps) {
       {opened?.kind === 'delete' && (
         <DeleteTargetDialog app={app} target={opened.target} onClose={close} />
       )}
+      {(opened?.kind === 'addJob' || opened?.kind === 'editJob') && (
+        <JobDialog
+          app={app}
+          {...(opened.kind === 'editJob' ? { job: opened.job } : {})}
+          targets={targetList ?? []}
+          onClose={close}
+          onCreated={(job, key) => {
+            setOpened({ kind: 'key', job, key });
+          }}
+        />
+      )}
+      {opened?.kind === 'deleteJob' && (
+        <DeleteJobDialog app={app} job={opened.job} onClose={close} />
+      )}
+      {opened?.kind === 'key' && (
+        <KeyDialog
+          job={opened.job}
+          repositoryKey={opened.key}
+          targetName={targetList?.find((target) => target.id === opened.job.targetId)?.name ?? ''}
+          onClose={close}
+        />
+      )}
     </>
+  );
+}
+
+function TargetsPage({
+  app,
+  targets,
+  onAdd,
+  onOpen,
+}: {
+  app: PithyxApp;
+  targets: ReturnType<typeof useTargets>;
+  onAdd: () => void;
+  onOpen: (kind: 'edit' | 'hostKey' | 'delete', target: BackupTarget) => void;
+}) {
+  const { t } = useTranslation('backup');
+  return (
+    <div className={styles.page}>
+      <p className={styles.muted}>{t('targets.intro')}</p>
+      {targets.isError && <ErrorNotice error={describeProblem(targets.error)} />}
+      {targets.isPending && <p className={styles.muted}>{t('targets.loading')}</p>}
+      {targets.data?.targets.length === 0 && (
+        <div className={styles.empty}>
+          <p className={styles.muted}>{t('targets.empty')}</p>
+          <Button onPress={onAdd}>
+            <IconPlus size={16} stroke={1.75} aria-hidden />
+            {t('targets.add')}
+          </Button>
+        </div>
+      )}
+      {targets.data !== undefined && targets.data.targets.length > 0 && (
+        <ul className={styles.targets} aria-label={t('targets.list')}>
+          {targets.data.targets.map((target) => (
+            <li key={target.id}>
+              <TargetCard
+                app={app}
+                target={target}
+                onOpen={(kind) => {
+                  onOpen(kind, target);
+                }}
+              />
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
   );
 }
 
@@ -204,25 +337,27 @@ function TargetCard({
         </>
       }
     >
-      {last !== null && !last.succeeded && last.errorCode !== null && (
-        <ErrorNotice
-          error={describeProblem({
-            code: last.errorCode,
-            params: (last.errorParams ?? {}) as Record<string, unknown>,
-            requestId: '',
-          })}
-        />
-      )}
-      {test.isError && <ErrorNotice error={describeProblem(test.error)} />}
-      <PublicKey app={app} publicKey={target.publicKey} />
-      <div className={styles.field}>
-        <span className={styles.fieldLabel}>{t('targets.hostKey')}</span>
-        <span className={`${styles.mono} ${styles.breakable}`}>
-          {t('targets.hostKeyValue', {
-            type: target.hostKey.type,
-            fingerprint: target.hostKey.fingerprint,
-          })}
-        </span>
+      <div className={styles.cardBody}>
+        {last !== null && !last.succeeded && last.errorCode !== null && (
+          <ErrorNotice
+            error={describeProblem({
+              code: last.errorCode,
+              params: (last.errorParams ?? {}) as Record<string, unknown>,
+              requestId: '',
+            })}
+          />
+        )}
+        {test.isError && <ErrorNotice error={describeProblem(test.error)} />}
+        <PublicKey app={app} publicKey={target.publicKey} />
+        <div className={styles.field}>
+          <span className={styles.fieldLabel}>{t('targets.hostKey')}</span>
+          <span className={`${styles.mono} ${styles.breakable}`}>
+            {t('targets.hostKeyValue', {
+              type: target.hostKey.type,
+              fingerprint: target.hostKey.fingerprint,
+            })}
+          </span>
+        </div>
       </div>
     </Card>
   );

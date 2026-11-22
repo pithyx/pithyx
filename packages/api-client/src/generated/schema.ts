@@ -4767,7 +4767,6 @@ export type components = {
             daily: number;
             /** Format: int32 */
             hourly: number;
-            keepsAll: boolean;
             /** Format: int32 */
             last: number;
             /** Format: int32 */

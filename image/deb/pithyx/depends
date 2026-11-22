@@ -15,6 +15,8 @@ sudo htop curl wget
 docker.io docker-cli docker-compose nftables
 # Store catalogs (D328): git fetches them, openssh-client reaches private ones with their deploy key.
 git openssh-client
+# Backups (D414, D415): restic for versioned backups over SFTP, rsync for mirrors and pulls over SSH.
+restic rsync
 # Console, region and administration.
 locales console-setup keyboard-configuration kbd tzdata ca-certificates iproute2 iputils-ping qrencode
 inotify-tools less nano procps zstd

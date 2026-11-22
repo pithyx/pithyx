@@ -4,6 +4,7 @@ import type { RecentFile } from '../apps/files/recent';
 import {
   IconActivity,
   IconBuildingStore,
+  IconCloudUpload,
   IconFileText,
   IconFileTypePdf,
   IconFileZip,
@@ -30,6 +31,7 @@ export const appDefinitions = {
   settings: { id: coreAppIds.settings, icon: IconSettings, tone: 'graphite' },
   store: { id: coreAppIds.store, icon: IconBuildingStore, tone: 'indigo' },
   preferences: { id: coreAppIds.preferences, icon: IconUserCog, tone: 'ocean' },
+  backup: { id: coreAppIds.backup, icon: IconCloudUpload, tone: 'rose' },
   // The one app of the official catalog (pithyx/apps-official), with its own icon; no invented apps (#367).
   editor: { id: 'org.pithyx.editor', icon: editorIcon, tone: 'petrol', name: 'Editor' },
 } satisfies Record<string, Omit<AppInfo, 'name'> & { name?: string }>;

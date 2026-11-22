@@ -8,6 +8,14 @@ export type BackupTarget = components['schemas']['BackupTarget'];
 export type BackupTargetList = components['schemas']['BackupTargetList'];
 export type BackupHostKey = components['schemas']['BackupHostKey'];
 export type BackupTargetRequest = components['schemas']['BackupTargetRequest'];
+export type BackupJob = components['schemas']['BackupJob'];
+export type BackupJobSettings = components['schemas']['BackupJobSettings'];
+export type BackupJobCreated = components['schemas']['BackupJobCreated'];
+export type BackupJobCreateRequest = components['schemas']['BackupJobCreateRequest'];
+export type BackupRetention = components['schemas']['BackupRetention'];
+export type BackupRun = components['schemas']['BackupRun'];
+export type BackupSourceOption = components['schemas']['BackupSourceOption'];
+type BoardJob = components['schemas']['Job'];
 
 /** The Backup app's calls, outside the public SDK; the daemon checks the administrator right on every request behind them. */
 interface BackupMethods {
@@ -31,9 +39,36 @@ interface BackupMethods {
   /** Signs in, creates the folder if missing, writes and removes a test file; the outcome is the target's `lastTest`. */
   'internal.admin.backups.test': { params: { id: number }; result: BackupTarget };
   'internal.admin.backups.delete': { params: { id: number }; result: null };
+  /** The shared folders and homes a job can back up. */
+  'internal.admin.backups.sources': {
+    params: Record<string, never>;
+    result: { sources: BackupSourceOption[] };
+  };
+  'internal.admin.backups.jobs': { params: Record<string, never>; result: { jobs: BackupJob[] } };
+  /** Makes the job's repository with a new key, returned only here, or connects to one with `existingKey`. */
+  'internal.admin.backups.createJob': { params: BackupJobCreateRequest; result: BackupJobCreated };
+  'internal.admin.backups.updateJob': {
+    params: { id: number; settings: BackupJobSettings };
+    result: BackupJob;
+  };
+  /** Deletes the job and its key; the repository stays on the target. */
+  'internal.admin.backups.deleteJob': { params: { id: number }; result: null };
+  'internal.admin.backups.runs': { params: { id: number }; result: { runs: BackupRun[] } };
+  /** Starts a run or a check now; it goes on the job board. */
+  'internal.admin.backups.start': {
+    params: { id: number; kind: 'run' | 'check' };
+    result: BoardJob;
+  };
+  /** Cancels a running run or check through its job on the board. */
+  'internal.admin.backups.cancel': { params: { boardJobId: number }; result: null };
 }
 
 export const targetsKey = ['backups', 'targets'] as const;
+export const jobsKey = ['backups', 'jobs'] as const;
+export const sourcesKey = ['backups', 'sources'] as const;
+
+/** A job's runs and checks. */
+export const runsKey = (id: number) => ['backups', 'runs', id] as const;
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -63,6 +98,57 @@ function body(params: BackupTargetRequest): BackupTargetRequest {
     ...(params.port === undefined ? {} : { port: params.port }),
     ...(params.path === undefined ? {} : { path: params.path }),
     ...(params.hostKey === undefined ? {} : { hostKey: params.hostKey }),
+  };
+}
+
+const isStringArray = (value: unknown) =>
+  value === undefined ||
+  value === null ||
+  (Array.isArray(value) && value.every((item) => typeof item === 'string'));
+
+const isRetention = (value: unknown) =>
+  isRecord(value) &&
+  ['last', 'hourly', 'daily', 'weekly', 'monthly', 'yearly'].every((key) =>
+    Number.isSafeInteger(value[key]),
+  );
+
+const isSettings = (value: unknown): value is BackupJobSettings =>
+  isRecord(value) &&
+  typeof value.name === 'string' &&
+  typeof value.schedule === 'string' &&
+  typeof value.enabled === 'boolean' &&
+  Array.isArray(value.sources) &&
+  value.sources.every(
+    (source) =>
+      isRecord(source) && Number.isSafeInteger(source.shareId) && typeof source.path === 'string',
+  ) &&
+  isRetention(value.retention) &&
+  (value.checkSchedule === undefined ||
+    value.checkSchedule === null ||
+    typeof value.checkSchedule === 'string') &&
+  Number.isSafeInteger(value.checkReadPercent) &&
+  Number.isSafeInteger(value.uploadLimitKib) &&
+  Number.isSafeInteger(value.downloadLimitKib) &&
+  (value.overdueHours === undefined ||
+    value.overdueHours === null ||
+    Number.isSafeInteger(value.overdueHours)) &&
+  isStringArray(value.excludes);
+
+/** The settings as the daemon takes them, without anything else the caller passed along. */
+function settingsBody(settings: BackupJobSettings): BackupJobSettings {
+  const { last, hourly, daily, weekly, monthly, yearly } = settings.retention;
+  return {
+    name: settings.name,
+    sources: settings.sources.map(({ shareId, path }) => ({ shareId, path })),
+    schedule: settings.schedule,
+    enabled: settings.enabled,
+    retention: { last, hourly, daily, weekly, monthly, yearly },
+    checkSchedule: settings.checkSchedule ?? null,
+    checkReadPercent: settings.checkReadPercent,
+    uploadLimitKib: settings.uploadLimitKib,
+    downloadLimitKib: settings.downloadLimitKib,
+    overdueHours: settings.overdueHours ?? null,
+    excludes: settings.excludes ?? [],
   };
 }
 
@@ -138,6 +224,101 @@ export function backupsHost(): HostExtensions {
           unwrap(
             await api.DELETE('/api/backups/targets/{id}', {
               params: { path: { id: (params as { id: number }).id } },
+            }),
+          );
+          return null;
+        }),
+    },
+    'internal.admin.backups.sources': {
+      validate: isRecord,
+      handle: () => daemon(async () => unwrap(await api.GET('/api/backups/sources'))),
+    },
+    'internal.admin.backups.jobs': {
+      validate: isRecord,
+      handle: () => daemon(async () => unwrap(await api.GET('/api/backups/jobs'))),
+    },
+    'internal.admin.backups.createJob': {
+      validate: (value) =>
+        isRecord(value) &&
+        Number.isSafeInteger(value.targetId) &&
+        typeof value.repository === 'string' &&
+        (value.existingKey === undefined ||
+          value.existingKey === null ||
+          typeof value.existingKey === 'string') &&
+        isSettings(value.settings),
+      handle: (params) =>
+        daemon(async () => {
+          const request = params as BackupJobCreateRequest;
+          return unwrap(
+            await api.POST('/api/backups/jobs', {
+              body: {
+                targetId: request.targetId,
+                repository: request.repository,
+                existingKey: request.existingKey ?? null,
+                settings: settingsBody(request.settings),
+              },
+            }),
+          );
+        }),
+    },
+    'internal.admin.backups.updateJob': {
+      validate: (value) => hasId(value) && isSettings((value as { settings?: unknown }).settings),
+      handle: (params) =>
+        daemon(async () => {
+          const { id, settings } =
+            params as BackupMethods['internal.admin.backups.updateJob']['params'];
+          return unwrap(
+            await api.PUT('/api/backups/jobs/{id}', {
+              params: { path: { id } },
+              body: settingsBody(settings),
+            }),
+          );
+        }),
+    },
+    'internal.admin.backups.deleteJob': {
+      validate: hasId,
+      handle: (params) =>
+        daemon(async () => {
+          unwrap(
+            await api.DELETE('/api/backups/jobs/{id}', {
+              params: { path: { id: (params as { id: number }).id } },
+            }),
+          );
+          return null;
+        }),
+    },
+    'internal.admin.backups.runs': {
+      validate: hasId,
+      handle: (params) =>
+        daemon(async () =>
+          unwrap(
+            await api.GET('/api/backups/jobs/{id}/runs', {
+              params: { path: { id: (params as { id: number }).id }, query: { limit: 20 } },
+            }),
+          ),
+        ),
+    },
+    'internal.admin.backups.start': {
+      validate: (value) =>
+        isRecord(value) && (value.kind === 'run' || value.kind === 'check') && hasId(value),
+      handle: (params) =>
+        daemon(async () => {
+          const { id, kind } = params as BackupMethods['internal.admin.backups.start']['params'];
+          const options = { params: { path: { id } } };
+          return unwrap(
+            kind === 'run'
+              ? await api.POST('/api/backups/jobs/{id}/run', options)
+              : await api.POST('/api/backups/jobs/{id}/check', options),
+          );
+        }),
+    },
+    'internal.admin.backups.cancel': {
+      validate: (value) => isRecord(value) && Number.isSafeInteger(value.boardJobId),
+      handle: (params) =>
+        daemon(async () => {
+          unwrap(
+            await api.POST('/api/jobs/{id}/cancel', {
+              params: { path: { id: (params as { boardJobId: number }).boardJobId } },
             }),
           );
           return null;

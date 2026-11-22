@@ -848,8 +848,8 @@
         "description": "Proxy-Hosts, Weiterleitungs-Hosts, Streams und was unbekannte Namen bekommen; hochgeladene Zertifikate kommen mit den Zertifikaten"
       },
       "backups": {
-        "title": "Backup-Ziele",
-        "description": "Die Server, an die die App Backup sichert, mit ihren SSH-Schlüsseln und bestätigten Host-Schlüsseln"
+        "title": "App Backup",
+        "description": "Die Ziele der App Backup mit ihren SSH-Schlüsseln und bestätigten Host-Schlüsseln und ihre Aufträge mit ihren Repository-Schlüsseln und Läufen"
       }
     },
     "steps": {

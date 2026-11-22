@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Pithyx.Daemon.Backups;
 
@@ -20,6 +21,7 @@ public sealed record BackupRetention(int Last, int Hourly, int Daily, int Weekly
     /// <summary>A new job's: a week of daily, a month of weekly and a year of monthly versions.</summary>
     public static BackupRetention Default { get; } = new(0, 0, 7, 4, 12, 0);
 
+    [JsonIgnore]
     public bool KeepsAll => Last == 0 && Hourly == 0 && Daily == 0 && Weekly == 0 && Monthly == 0 && Yearly == 0;
 }
 

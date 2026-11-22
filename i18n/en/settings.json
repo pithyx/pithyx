@@ -848,8 +848,8 @@
         "description": "Proxy hosts, redirect hosts, streams and what unknown names get; uploaded certificates come with the certificates"
       },
       "backups": {
-        "title": "Backup targets",
-        "description": "The servers the Backup app sends backups to, with their SSH keys and confirmed host keys"
+        "title": "Backup app",
+        "description": "The targets of the Backup app with their SSH keys and confirmed host keys, and its jobs with their repository keys and runs"
       }
     },
     "steps": {

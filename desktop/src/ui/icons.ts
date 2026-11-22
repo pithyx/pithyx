@@ -132,3 +132,5 @@ export { default as IconSchool } from '@tabler/icons-react/dist/esm/icons/IconSc
 export { default as IconCoin } from '@tabler/icons-react/dist/esm/icons/IconCoin.mjs';
 export { default as IconDeviceGamepad2 } from '@tabler/icons-react/dist/esm/icons/IconDeviceGamepad2.mjs';
 export { default as IconBooks } from '@tabler/icons-react/dist/esm/icons/IconBooks.mjs';
+export { default as IconShieldCheck } from '@tabler/icons-react/dist/esm/icons/IconShieldCheck.mjs';
+export { default as IconArchive } from '@tabler/icons-react/dist/esm/icons/IconArchive.mjs';

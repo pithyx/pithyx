@@ -39,12 +39,14 @@ Rules for `daemon/`; the root `CLAUDE.md` applies as well.
 /run/pithyx/sftp/    SFTP views: one chroot per user with bind mounts of its shared folders and homes (home, for administrators homes/<folder>), rebuilt at start
 /run/pithyx/backup/  a checked configuration backup's database until it is restored (tmpfs, never on a disk)
 /run/pithyx/docker-proxy/  <id>.sock: an app's Docker socket of the filtering proxy (D387), while its backend runs
+/run/pithyx/backup-stage  a backup run's tmpfs with its snapshots, only inside the run's private mount namespace (D415); empty on the host
 /run/pithyx/usb-key/  where a USB stick with pool keys is mounted while its key files are read or written (D385), unmounted right after
 /<pool>/homes/<user>  a user's home (dataset <pool>/pithyx/homes/<user> on the home pool, setting homes.pool, D348); a deleted user's kept home is <user>.deleted-<uid>
 /<pool>/.pithyx/     app data, volumes
 /<pool>/.pithyx/apps/<id>/  one app (dataset <pool>/pithyx/apps/<id>): versions/<version>, current, volumes/, run/
 /<pool>/.pithyx/docker/     Docker's data root on the app pool (setting apps.pool, chosen at the first install)
 /<pool>/.pithyx/cache/  the pool's thumbnails and other derived data (<pool>/pithyx/cache, hidden)
+/<pool>/.pithyx/backup-cache/  restic's cache of the backup jobs whose first source is on this pool (dataset <pool>/pithyx/backup-cache, D415)
 /<pool>/.pithyx/system/logs/  the optional log archive (archive.db)
 ```
 
