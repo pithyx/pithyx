@@ -50,6 +50,7 @@ Core apps are listed in `desktop/src/apps/registry.tsx`; their ids are in `apps/
 | `org.pithyx.viewer`   | Viewer           | granted users, opened with a file only | multi     |
 | `org.pithyx.about`    | About Pithyx     | everyone                               | single    |
 | `org.pithyx.store`    | Store            | administrators                         | single    |
+| `org.pithyx.backup`   | Backup           | administrators                         | single    |
 
 Core apps use the same `@pithyx/sdk` API as third-party apps, but in the desktop's own context: `CoreSdkApp` connects the window to the host through an in-process pair of endpoints instead of a `MessageChannel`. The app gets the same `PithyxApp` object. Core apps may also use extra internal host methods that are not part of the public SDK. Third-party apps run in an `<iframe sandbox="allow-scripts allow-forms">` without `allow-same-origin`; their identity comes from the message port, never from message data.
 

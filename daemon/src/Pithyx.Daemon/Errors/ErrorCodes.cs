@@ -468,6 +468,50 @@ public static class ErrorCodes
     [ErrorStatus(HttpStatusCode.BadRequest)]
     public const string AuthUsernameReserved = "auth.username.reserved";
 
+    /// <summary>
+    /// The server's host keys could not be read; <c>params.reason</c> is <c>dns</c> (the name is unknown) or <c>none</c>
+    /// (nothing answered on the port, or it offered no key of a known type), <c>timeout</c> when it took too long.
+    /// </summary>
+    [ErrorStatus(HttpStatusCode.BadGateway)]
+    public const string BackupHostKeyScanFailed = "backup.host_key.scan_failed";
+
+    /// <summary>The box signed in, but the server refused its key: it is not in the user's authorized_keys, or the user is wrong.</summary>
+    [ErrorStatus(HttpStatusCode.BadGateway)]
+    public const string BackupTargetAuthFailed = "backup.target.auth_failed";
+
+    /// <summary>
+    /// The server answered with another host key than the one confirmed for the target, so the box did not connect;
+    /// <c>params.fingerprint</c> is the key it sent, when ssh named it.
+    /// </summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string BackupTargetHostKeyChanged = "backup.target.host_key_changed";
+
+    /// <summary>A setting of a backup target is not valid; <c>params.field</c> names it (name, host, port, user, path, hostKey).</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string BackupTargetInvalid = "backup.target.invalid";
+
+    /// <summary>Another backup target has this name already; <c>params.name</c>.</summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string BackupTargetNameTaken = "backup.target.name_taken";
+
+    /// <summary>No backup target with this id; <c>params.id</c>.</summary>
+    [ErrorStatus(HttpStatusCode.NotFound)]
+    public const string BackupTargetNotFound = "backup.target.not_found";
+
+    /// <summary>
+    /// The box signed in, but cannot use the target's folder <c>params.path</c>: <c>params.reason</c> is <c>path</c> (it
+    /// does not exist and could not be made, or may not be entered) or <c>write</c> (no file can be written there).
+    /// </summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string BackupTargetNotWritable = "backup.target.not_writable";
+
+    /// <summary>
+    /// The box could not reach the target's server; <c>params.reason</c> is <c>dns</c>, <c>refused</c>, <c>timeout</c>,
+    /// <c>network</c> or <c>failed</c>.
+    /// </summary>
+    [ErrorStatus(HttpStatusCode.BadGateway)]
+    public const string BackupTargetUnreachable = "backup.target.unreachable";
+
     [ErrorStatus(HttpStatusCode.NotFound)]
     public const string DesktopDeviceNotFound = "desktop.device.not_found";
 

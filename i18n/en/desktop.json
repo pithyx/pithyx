@@ -229,7 +229,8 @@
         "logs": "Log Center",
         "about": "About Pithyx",
         "store": "Store",
-        "preferences": "Personal settings"
+        "preferences": "Personal settings",
+        "backup": "Backup"
       }
     },
     "users": "Users"

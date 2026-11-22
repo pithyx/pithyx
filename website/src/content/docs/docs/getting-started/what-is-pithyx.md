@@ -23,7 +23,7 @@ Pithyx 1.0 is marked beta: we consider it stable, but it has not yet proven itse
 - **Backup of the configuration.** Settings, users and shared folder definitions can be saved to an encrypted file and restored after a reinstall. See [Backup and restore](/docs/admin/backup/).
 - **Network settings in the browser**, including bonds and VLANs, with a confirmation timer that rolls back a change that cuts you off. See [Network](/docs/admin/network/).
 
-The core apps are Files, Viewer, Settings, Resource Monitor, Log Center, About Pithyx and the Store.
+The core apps are Files, Viewer, Settings, Resource Monitor, Log Center, About Pithyx, the Store and Backup.
 
 ## How it is built
 

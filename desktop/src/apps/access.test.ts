@@ -39,6 +39,8 @@ describe('isAppAllowed', () => {
     expect(isAppAllowed(coreAppIds.settings, admin)).toBe(true);
     expect(isAppAllowed(coreAppIds.store, user)).toBe(false);
     expect(isAppAllowed(coreAppIds.store, admin)).toBe(true);
+    expect(isAppAllowed(coreAppIds.backup, user)).toBe(false);
+    expect(isAppAllowed(coreAppIds.backup, admin)).toBe(true);
   });
 
   it('gives granted core apps by their grant, and every app to administrators', () => {

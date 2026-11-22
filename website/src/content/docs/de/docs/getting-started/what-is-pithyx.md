@@ -23,7 +23,7 @@ Pithyx 1.0 ist als Beta gekennzeichnet: Wir halten es für stabil, aber es hat s
 - **Backup der Konfiguration.** Einstellungen, Benutzer und die Definitionen der freigegebenen Ordner lassen sich in einer verschlüsselten Datei sichern und nach einer Neuinstallation wiederherstellen. Siehe [Konfigurationsbackup](/de/docs/admin/backup/).
 - **Netzwerkeinstellungen im Browser**, auch Bonds und VLANs, mit einem Bestätigungs-Timer, der eine Änderung zurücknimmt, die dich aussperren würde. Siehe [Netzwerk](/de/docs/admin/network/).
 
-Die Kern-Apps sind Dateien, Betrachter, Einstellungen, Ressourcenmonitor, Protokoll-Center, Über Pithyx und der Store.
+Die Kern-Apps sind Dateien, Betrachter, Einstellungen, Ressourcenmonitor, Protokoll-Center, Über Pithyx, der Store und Backup.
 
 ## Wie es gebaut ist
 

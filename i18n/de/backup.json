@@ -1,0 +1,71 @@
+{
+  "targets": {
+    "title": "Ziele",
+    "toolbar": "Ziele",
+    "add": "Ziel hinzufügen",
+    "intro": "Ein Ziel ist ein Server, an den die Box Backups über SSH schickt, zum Beispiel eine gemietete Storage-Box oder ein anderer Linux-Server. Jedes Ziel bekommt einen eigenen Schlüssel, und die Box verbindet sich nur mit dem Server, dessen Host-Schlüssel du bestätigt hast.",
+    "empty": "Noch kein Ziel. Füge den Server hinzu, auf den deine Backups sollen.",
+    "loading": "Ziele werden geladen",
+    "list": "Ziele",
+    "status": {
+      "ok": "Verbunden",
+      "failed": "Verbindung fehlgeschlagen",
+      "untested": "Nicht getestet"
+    },
+    "address": "{user}@{host}, Port {port}",
+    "folder": "Ordner {path}",
+    "loginFolder": "Anmeldeordner",
+    "tested": "Getestet {time}",
+    "publicKey": "Öffentlicher Schlüssel dieses Ziels",
+    "publicKeyHint": "Trag diese Zeile in die Datei .ssh/authorized_keys des Benutzers auf dem Server ein. Die Box meldet sich nur mit diesem Schlüssel an und speichert kein Passwort.",
+    "copy": "Schlüssel kopieren",
+    "copied": "Kopiert",
+    "copyFailed": "Markier den Schlüssel und kopier ihn von Hand.",
+    "hostKey": "Host-Schlüssel",
+    "hostKeyValue": "{type}, Fingerabdruck {fingerprint}",
+    "test": "Verbindung testen",
+    "edit": "Bearbeiten",
+    "delete": "Löschen",
+    "checkHostKey": "Neuen Host-Schlüssel prüfen",
+    "testPassed": "Die Box hat sich angemeldet, den Ordner geöffnet und eine Testdatei geschrieben."
+  },
+  "form": {
+    "name": "Name",
+    "nameHint": "So heißt das Ziel in der App Backup",
+    "host": "Server",
+    "hostHint": "Hostname oder IP-Adresse",
+    "port": "SSH-Port",
+    "portHint": "Meist 22; manche Speicheranbieter nutzen 23 für SSH",
+    "user": "Benutzer",
+    "path": "Ordner auf dem Server",
+    "pathHint": "Relativ zum Anmeldeordner des Benutzers oder ab /. Leer für den Anmeldeordner. Der Test legt ihn an, wenn er fehlt.",
+    "cancel": "Abbrechen",
+    "back": "Zurück",
+    "next": "Weiter",
+    "close": "Schließen",
+    "save": "Speichern"
+  },
+  "add": {
+    "title": "Ziel hinzufügen",
+    "fingerprints": "Der Server hat diese Host-Schlüssel angeboten. Vergleich den Fingerabdruck mit dem, den dir dein Anbieter oder die Person zeigt, die den Server betreut (auf dem Server selbst: ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub). Speichere nur, wenn er übereinstimmt: Die Box verbindet sich für dieses Ziel mit keinem anderen Server.",
+    "hostKey": "Zu bestätigender Host-Schlüssel",
+    "confirm": "Fingerabdruck stimmt, speichern",
+    "saved": "{name} ist gespeichert. Trag seinen öffentlichen Schlüssel auf dem Server ein und teste dann die Verbindung."
+  },
+  "edit": {
+    "title": "{name} bearbeiten",
+    "moved": "Server oder Port haben sich geändert, deshalb braucht die Box den bestätigten Host-Schlüssel des neuen Servers."
+  },
+  "hostKey": {
+    "title": "Host-Schlüssel von {name} prüfen",
+    "intro": "Der Server bietet jetzt einen anderen Host-Schlüssel an als den, den du bestätigt hast. Das ist normal, wenn der Server neu installiert oder umgezogen wurde; sonst gibt sich vielleicht jemand als er aus. Vergleich den neuen Fingerabdruck mit dem, den dein Anbieter zeigt, bevor du ihn annimmst.",
+    "pinned": "Bisher bestätigt",
+    "offered": "Jetzt angeboten",
+    "accept": "Fingerabdruck stimmt, annehmen"
+  },
+  "delete": {
+    "title": "{name} löschen?",
+    "text": "Die Box vergisst das Ziel und seinen Schlüssel. Entferne den öffentlichen Schlüssel auch aus den authorized_keys auf dem Server; Backups, die schon dort liegen, bleiben erhalten.",
+    "confirm": "Löschen"
+  }
+}

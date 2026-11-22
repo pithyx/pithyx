@@ -20,6 +20,7 @@ const CATEGORY_ORDER: readonly BackupCategory[] = [
   'certificates',
   'apps',
   'reverseProxy',
+  'backups',
 ];
 
 /**

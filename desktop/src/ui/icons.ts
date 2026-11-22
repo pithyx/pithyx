@@ -36,6 +36,7 @@ export { default as IconDevices } from '@tabler/icons-react/dist/esm/icons/IconD
 export { default as IconDots } from '@tabler/icons-react/dist/esm/icons/IconDots.mjs';
 export { default as IconClock } from '@tabler/icons-react/dist/esm/icons/IconClock.mjs';
 export { default as IconCloudDownload } from '@tabler/icons-react/dist/esm/icons/IconCloudDownload.mjs';
+export { default as IconCloudUpload } from '@tabler/icons-react/dist/esm/icons/IconCloudUpload.mjs';
 export { default as IconDownload } from '@tabler/icons-react/dist/esm/icons/IconDownload.mjs';
 export { default as IconExternalLink } from '@tabler/icons-react/dist/esm/icons/IconExternalLink.mjs';
 export { default as IconEye } from '@tabler/icons-react/dist/esm/icons/IconEye.mjs';
