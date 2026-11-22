@@ -27,7 +27,8 @@ import {
 import type { SdkAppProps } from '../sdk/CoreSdkApp';
 import { backupsCall, targetsKey, type BackupJob, type BackupTarget } from '../sdk/backups';
 import { DeleteJobDialog, JobDialog, KeyDialog } from './JobDialogs';
-import { JobsPage } from './JobsPage';
+import { EmptyCard } from './EmptyCard';
+import { JobsPage, useBackupJobs } from './JobsPage';
 import { describeProblem, formatDate } from '../storage/shared';
 import {
   AddTargetDialog,
@@ -72,6 +73,22 @@ export function BackupApp({ app }: SdkAppProps) {
     setOpened(null);
   };
   const targetList = targets.data?.targets;
+  const jobs = useBackupJobs(app);
+  const addTarget = () => {
+    setOpened({ kind: 'add' });
+  };
+  const addJob = () => {
+    setOpened({ kind: 'addJob' });
+  };
+  // The primary action sits in the toolbar only beside a list; an empty list offers it in its own place.
+  const toolbarAction =
+    page === 'targets'
+      ? targetList !== undefined && targetList.length > 0
+        ? { label: t('targets.add'), onPress: addTarget }
+        : undefined
+      : jobs.data !== undefined && jobs.data.jobs.length > 0
+        ? { label: t('jobs.add'), onPress: addJob }
+        : undefined;
   const groups: NavGroup[] = [
     {
       id: 'backup',
@@ -111,38 +128,25 @@ export function BackupApp({ app }: SdkAppProps) {
         }
         title={t(`${page}.title`)}
         toolbar={
-          <Toolbar aria-label={t(`${page}.toolbar`)}>
-            {page === 'jobs' ? (
-              <Button
-                variant="primary"
-                isDisabled={targetList === undefined || targetList.length === 0}
-                onPress={() => {
-                  setOpened({ kind: 'addJob' });
-                }}
-              >
+          toolbarAction === undefined ? undefined : (
+            <Toolbar aria-label={t(`${page}.toolbar`)}>
+              <Button variant="primary" onPress={toolbarAction.onPress}>
                 <IconPlus size={18} stroke={1.75} aria-hidden />
-                {t('jobs.add')}
+                {toolbarAction.label}
               </Button>
-            ) : (
-              <Button
-                variant="primary"
-                onPress={() => {
-                  setOpened({ kind: 'add' });
-                }}
-              >
-                <IconPlus size={18} stroke={1.75} aria-hidden />
-                {t('targets.add')}
-              </Button>
-            )}
-          </Toolbar>
+            </Toolbar>
+          )
         }
       >
         {page === 'jobs' ? (
           <JobsPage
             app={app}
+            jobs={jobs}
             targets={targetList}
-            onAdd={() => {
-              setOpened({ kind: 'addJob' });
+            onAdd={addJob}
+            onAddTarget={() => {
+              setPage('targets');
+              addTarget();
             }}
             onOpen={(kind, job) => {
               setOpened({ kind: kind === 'edit' ? 'editJob' : 'deleteJob', job });
@@ -152,9 +156,7 @@ export function BackupApp({ app }: SdkAppProps) {
           <TargetsPage
             app={app}
             targets={targets}
-            onAdd={() => {
-              setOpened({ kind: 'add' });
-            }}
+            onAdd={addTarget}
             onOpen={(kind, target) => {
               setOpened({ kind, target });
             }}
@@ -211,17 +213,17 @@ function TargetsPage({
   const { t } = useTranslation('backup');
   return (
     <div className={styles.page}>
-      <p className={styles.muted}>{t('targets.intro')}</p>
+      <p className={styles.intro}>{t('targets.intro')}</p>
       {targets.isError && <ErrorNotice error={describeProblem(targets.error)} />}
       {targets.isPending && <p className={styles.muted}>{t('targets.loading')}</p>}
       {targets.data?.targets.length === 0 && (
-        <div className={styles.empty}>
-          <p className={styles.muted}>{t('targets.empty')}</p>
-          <Button onPress={onAdd}>
-            <IconPlus size={16} stroke={1.75} aria-hidden />
-            {t('targets.add')}
-          </Button>
-        </div>
+        <EmptyCard
+          icon={<IconServer size={24} stroke={1.75} />}
+          title={t('targets.emptyTitle')}
+          text={t('targets.empty')}
+          action={t('targets.add')}
+          onAction={onAdd}
+        />
       )}
       {targets.data !== undefined && targets.data.targets.length > 0 && (
         <ul className={styles.targets} aria-label={t('targets.list')}>

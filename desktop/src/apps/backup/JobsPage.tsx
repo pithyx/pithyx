@@ -20,7 +20,7 @@ import {
   IconArchive,
   IconPencil,
   IconPlayerPlay,
-  IconPlus,
+  IconServer,
   IconShieldCheck,
   IconTrash,
   IconX,
@@ -35,6 +35,7 @@ import {
   type BackupTarget,
 } from '../sdk/backups';
 import { describeProblem, formatDate } from '../storage/shared';
+import { EmptyCard } from './EmptyCard';
 import styles from './Backup.module.css';
 
 type BoardJob = components['schemas']['Job'];
@@ -48,7 +49,8 @@ function useActiveRuns(): ReadonlyMap<number, BoardJob> {
 }
 
 /** Every job; a run that starts or ends on the board reads the list again. */
-export function useBackupJobs(app: PithyxApp, active: ReadonlyMap<number, BoardJob>) {
+export function useBackupJobs(app: PithyxApp) {
+  const active = useActiveRuns();
   return useQuery({
     queryKey: [...jobsKey, [...active.keys()].join(',')],
     queryFn: () => backupsCall(app, 'internal.admin.backups.jobs', {}),
@@ -414,18 +416,21 @@ function JobCard({
 /** The jobs: one card each, with its state, its last runs and what can be done with it. */
 export function JobsPage({
   app,
+  jobs,
   targets,
   onAdd,
+  onAddTarget,
   onOpen,
 }: {
   app: PithyxApp;
+  jobs: ReturnType<typeof useBackupJobs>;
   targets: readonly BackupTarget[] | undefined;
   onAdd: () => void;
+  onAddTarget: () => void;
   onOpen: (kind: 'edit' | 'delete', job: BackupJob) => void;
 }) {
   const { t } = useTranslation('backup');
   const board = useActiveRuns();
-  const jobs = useBackupJobs(app, board);
   const sources = useQuery({
     queryKey: sourcesKey,
     queryFn: () => backupsCall(app, 'internal.admin.backups.sources', {}),
@@ -433,24 +438,31 @@ export function JobsPage({
   const names = new Map(sources.data?.sources.map((source) => [source.shareId, source.name]));
   // A folder deleted since the job was saved has no name any more; the run then fails with the source's error.
   const shareName = (shareId: number) => names.get(shareId) ?? t('jobs.sourceGone');
-  const noTargets = targets?.length === 0;
 
   return (
     <div className={styles.page}>
-      <p className={styles.muted}>{t('jobs.intro')}</p>
+      <p className={styles.intro}>{t('jobs.intro')}</p>
       {jobs.isError && <ErrorNotice error={describeProblem(jobs.error)} />}
       {jobs.isPending && <p className={styles.muted}>{t('jobs.loading')}</p>}
-      {jobs.data?.jobs.length === 0 && (
-        <div className={styles.empty}>
-          <p className={styles.muted}>{noTargets ? t('jobs.noTargets') : t('jobs.empty')}</p>
-          {!noTargets && (
-            <Button onPress={onAdd}>
-              <IconPlus size={16} stroke={1.75} aria-hidden />
-              {t('jobs.add')}
-            </Button>
-          )}
-        </div>
-      )}
+      {jobs.data?.jobs.length === 0 &&
+        targets !== undefined &&
+        (targets.length === 0 ? (
+          <EmptyCard
+            icon={<IconServer size={24} stroke={1.75} />}
+            title={t('jobs.noTargetsTitle')}
+            text={t('jobs.noTargets')}
+            action={t('targets.add')}
+            onAction={onAddTarget}
+          />
+        ) : (
+          <EmptyCard
+            icon={<IconArchive size={24} stroke={1.75} />}
+            title={t('jobs.emptyTitle')}
+            text={t('jobs.empty')}
+            action={t('jobs.add')}
+            onAction={onAdd}
+          />
+        ))}
       {jobs.data !== undefined && jobs.data.jobs.length > 0 && (
         <ul className={styles.targets} aria-label={t('jobs.list')}>
           {jobs.data.jobs.map((job) => (

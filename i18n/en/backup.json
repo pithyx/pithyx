@@ -4,7 +4,8 @@
     "toolbar": "Targets",
     "add": "Add target",
     "intro": "A target is a server the box sends backups to over SSH, for example a storage box you rent or another Linux server. Each target gets its own key, and the box connects only to the server whose host key you confirmed.",
-    "empty": "No target yet. Add the server your backups should go to.",
+    "emptyTitle": "No target yet",
+    "empty": "Add the server your backups should go to.",
     "loading": "Loading targets",
     "list": "Targets",
     "status": {
@@ -80,8 +81,10 @@
     "list": "Jobs",
     "loading": "Loading jobs",
     "intro": "A job backs up folders of shared folders and homes to a target on a schedule. Each run first takes a ZFS snapshot, so the backup shows one moment, and keeps as many versions as you set.",
-    "empty": "No job yet. Add one to back up shared folders or homes.",
-    "noTargets": "Add a target first: a job needs a server to back up to.",
+    "emptyTitle": "No job yet",
+    "empty": "Add the first job to back up shared folders and homes.",
+    "noTargetsTitle": "No target yet",
+    "noTargets": "A job needs a server to back up to. Add a target first.",
     "status": {
       "running": "Backing up",
       "checking": "Checking",

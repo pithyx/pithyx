@@ -4,7 +4,8 @@
     "toolbar": "Ziele",
     "add": "Ziel hinzufügen",
     "intro": "Ein Ziel ist ein Server, an den die Box Backups über SSH schickt, zum Beispiel eine gemietete Storage-Box oder ein anderer Linux-Server. Jedes Ziel bekommt einen eigenen Schlüssel, und die Box verbindet sich nur mit dem Server, dessen Host-Schlüssel du bestätigt hast.",
-    "empty": "Noch kein Ziel. Füge den Server hinzu, auf den deine Backups sollen.",
+    "emptyTitle": "Noch kein Ziel",
+    "empty": "Füge den Server hinzu, auf den deine Backups sollen.",
     "loading": "Ziele werden geladen",
     "list": "Ziele",
     "status": {
@@ -80,8 +81,10 @@
     "list": "Aufträge",
     "loading": "Aufträge werden geladen",
     "intro": "Ein Auftrag sichert Ordner aus freigegebenen Ordnern und Home-Ordnern nach Zeitplan auf ein Ziel. Jeder Lauf macht zuerst einen ZFS-Snapshot, damit das Backup einen Zeitpunkt zeigt, und behält so viele Versionen, wie du einstellst.",
-    "empty": "Noch kein Auftrag. Füge einen hinzu, um freigegebene Ordner oder Home-Ordner zu sichern.",
-    "noTargets": "Füge zuerst ein Ziel hinzu: Ein Auftrag braucht einen Server, auf den er sichert.",
+    "emptyTitle": "Noch kein Auftrag",
+    "empty": "Füge den ersten Auftrag hinzu, um freigegebene Ordner und Home-Ordner zu sichern.",
+    "noTargetsTitle": "Noch kein Ziel",
+    "noTargets": "Ein Auftrag braucht einen Server, auf den er sichert. Füge zuerst ein Ziel hinzu.",
     "status": {
       "running": "Sichert",
       "checking": "Prüft",

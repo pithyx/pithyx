@@ -191,6 +191,18 @@ export const backupAnswers: ExtraAnswers = {
   }),
 };
 
+/** A box that has targets but no job yet. */
+export const backupNoJobsAnswers: ExtraAnswers = {
+  ...backupAnswers,
+  'internal.admin.backups.jobs': () => ({ jobs: [] }),
+};
+
+/** A box that has neither a target nor a job: the Backup app's first start. */
+export const backupEmptyAnswers: ExtraAnswers = {
+  ...backupNoJobsAnswers,
+  'internal.admin.backups.targets': () => ({ targets: [] }),
+};
+
 type BoardJob = components['schemas']['Job'];
 
 /** The run of the first job on the job board, as an administrator gets it on the `jobs` topic. */

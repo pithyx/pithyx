@@ -22,7 +22,12 @@ import {
   sampleTrashed,
   storeAnswers,
 } from './appSamples';
-import { backupAnswers, seedRunningBackup } from './backupSample';
+import {
+  backupAnswers,
+  backupEmptyAnswers,
+  backupNoJobsAnswers,
+  seedRunningBackup,
+} from './backupSample';
 import { CoreAppScene, type ScriptStep } from './CoreAppScene';
 import { sampleNetwork, type ExtraAnswers } from './storageSample';
 import type { ScreenDefinition } from './screens';
@@ -358,6 +363,52 @@ export const appScreens: ScreenDefinition[] = [
         answers={backupAnswers}
         seed={seedRunningBackup}
         script={[{ press: 'Details', inside: 'Documents' }]}
+      />
+    ),
+  },
+  {
+    id: 'backup-empty',
+    group: 'apps',
+    title: 'Backup: first start',
+    description:
+      'The jobs page of a box without a target: the empty list says a job needs a target first and offers to add one.',
+    render: (context) => (
+      <CoreAppScene
+        context={context}
+        app="backup"
+        Component={BackupApp}
+        answers={backupEmptyAnswers}
+      />
+    ),
+  },
+  {
+    id: 'backup-jobs-empty',
+    group: 'apps',
+    title: 'Backup: no job yet',
+    description:
+      'The jobs page of a box with targets but no job: the empty list offers to add the first job.',
+    render: (context) => (
+      <CoreAppScene
+        context={context}
+        app="backup"
+        Component={BackupApp}
+        answers={backupNoJobsAnswers}
+      />
+    ),
+  },
+  {
+    id: 'backup-targets-empty',
+    group: 'apps',
+    title: 'Backup: no target yet',
+    description:
+      'The targets page without a target: the empty list offers to add the first server.',
+    render: (context) => (
+      <CoreAppScene
+        context={context}
+        app="backup"
+        Component={BackupApp}
+        answers={backupEmptyAnswers}
+        script={[{ press: 'backup:nav.targets' }]}
       />
     ),
   },
