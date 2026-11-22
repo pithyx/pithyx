@@ -276,5 +276,34 @@
         "body": "Let's Encrypt hat es nicht erneuert. Einstellungen > Reverse Proxy zeigt, warum; die Box versucht es später noch einmal, und das aktuelle Zertifikat gilt bis zu seinem Ende."
       }
     }
+  },
+  "backup": {
+    "alert": {
+      "runFailed": {
+        "title": "Backup {job} fehlgeschlagen",
+        "body": "Der letzte Lauf von {job} wurde nicht fertig, es wurde nichts Neues gesichert. Öffne die Backup-App, um den Grund zu sehen.",
+        "action": "Backup öffnen"
+      },
+      "runWarning": {
+        "title": "Backup {job} hat Dateien ausgelassen",
+        "body": "{job} hat eine neue Version gesichert, aber {warnings, plural, =0 {einige Dateien} one {# Datei oder Ordner} other {# Dateien oder Ordner}} ließen sich nicht lesen. Das Log Center nennt sie.",
+        "action": "Backup öffnen"
+      },
+      "overdue": {
+        "title": "Backup {job} ist überfällig",
+        "body": "{job} hatte seit {days, plural, one {# Tag} other {# Tagen}} keinen erfolgreichen Lauf. Prüf den Job und sein Ziel.",
+        "action": "Backup öffnen"
+      },
+      "checkFailed": {
+        "title": "Prüfung von {job} fehlgeschlagen",
+        "body": "Die Prüfung des Repositorys von {job} ist nicht bestanden. Öffne die Backup-App, um den Grund zu sehen.",
+        "action": "Backup öffnen"
+      },
+      "hostKeyChanged": {
+        "title": "Ziel {target} hat einen neuen Host-Schlüssel",
+        "body": "Der Server von {target} hat mit einem anderen Host-Schlüssel geantwortet. Die Box hat sich deshalb nicht verbunden, und kein Backup ist dort angekommen. Kläre das mit der Person, die den Server betreut, bevor du den neuen Schlüssel bestätigst.",
+        "action": "Backup öffnen"
+      }
+    }
   }
 }

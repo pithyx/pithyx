@@ -56,6 +56,7 @@ public sealed partial class JobService
         """;
 
     private readonly Channel<JobEntry> _queue = Channel.CreateUnbounded<JobEntry>(new UnboundedChannelOptions { SingleReader = true });
+    private readonly Channel<JobEntry> _ownSlots = Channel.CreateUnbounded<JobEntry>(new UnboundedChannelOptions { SingleReader = true });
     private readonly SqliteConnectionFactory _connections;
     private readonly JobBoard _board;
     private readonly TopicHub _hub;
@@ -87,6 +88,9 @@ public sealed partial class JobService
 
     internal ChannelReader<JobEntry> Queue => _queue.Reader;
 
+    /// <summary>Jobs started with <see cref="JobOptions.OwnSlot"/>: they start at once, beside the shared slots.</summary>
+    internal ChannelReader<JobEntry> OwnSlots => _ownSlots.Reader;
+
     /// <summary>
     /// Persists a queued job for <paramref name="userId"/> and returns it. <see cref="JobRunner"/> runs
     /// <paramref name="work"/> later inside an activity with the current request id. Work that throws a
@@ -94,8 +98,9 @@ public sealed partial class JobService
     /// the job as cancelled; any other exception fails it with <see cref="ErrorCodes.SystemInternalUnexpected"/>.
     /// <paramref name="parameters"/> are serialized to JSON and returned with the job, for example the paths of a copy.
     /// </summary>
-    public async Task<Job> StartAsync(long userId, string kind, object? parameters, Func<JobContext, Task> work, CancellationToken cancellationToken)
+    public async Task<Job> StartAsync(long userId, string kind, object? parameters, Func<JobContext, Task> work, CancellationToken cancellationToken, JobOptions? options = null)
     {
+        options ??= JobOptions.Default;
         ArgumentException.ThrowIfNullOrEmpty(kind);
         ArgumentNullException.ThrowIfNull(work);
         var requestId = Tracing.CurrentRequestId is { Length: > 0 } current ? current : ActivityTraceId.CreateRandom().ToHexString();
@@ -113,13 +118,13 @@ public sealed partial class JobService
                 new { userId, kind, parametersJson, requestId, createdAt = SessionService.Format(now) });
         }
 
-        var entry = new JobEntry(id, userId, kind, Element(parametersJson), requestId, now, work);
+        var entry = new JobEntry(id, userId, kind, Element(parametersJson), requestId, now, work) { Notify = options.Notify };
         _board.Add(entry);
         var job = entry.Snapshot();
         LogQueued(id, kind, userId);
         Publish(entry, job);
         // Unbounded: writing only fails once the daemon stops, and then the next start marks the job as interrupted.
-        _queue.Writer.TryWrite(entry);
+        (options.OwnSlot ? _ownSlots : _queue).Writer.TryWrite(entry);
         return job;
     }
 
@@ -470,7 +475,10 @@ public sealed partial class JobService
             }
             Publish(entry, entry.Snapshot());
         }
-        await NotifyFinishedAsync(entry.UserId, entry.Id, entry.Kind, final.State, final.ErrorCode, final.ErrorParams);
+        if (entry.Notify)
+        {
+            await NotifyFinishedAsync(entry.UserId, entry.Id, entry.Kind, final.State, final.ErrorCode, final.ErrorParams);
+        }
     }
 
     private void Publish(JobEntry entry, Job job)

@@ -468,6 +468,67 @@ public static class ErrorCodes
     [ErrorStatus(HttpStatusCode.BadRequest)]
     public const string AuthUsernameReserved = "auth.username.reserved";
 
+    /// <summary>The integrity check found damage in the repository; restic's output is in the Log Center.</summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string BackupCheckFailed = "backup.check.failed";
+
+    /// <summary>A backup job runs or checks already; <c>params.name</c>. One run per job at a time.</summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string BackupJobBusy = "backup.job.busy";
+
+    /// <summary>
+    /// A setting of a backup job is not valid; <c>params.field</c> names it (name, sources, schedule, retention,
+    /// excludes, checkSchedule, checkReadPercent, uploadLimitKib, downloadLimitKib, overdueHours, repository, existingKey).
+    /// </summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string BackupJobInvalid = "backup.job.invalid";
+
+    /// <summary>Another backup job has this name already; <c>params.name</c>.</summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string BackupJobNameTaken = "backup.job.name_taken";
+
+    /// <summary>No backup job with this id; <c>params.id</c>.</summary>
+    [ErrorStatus(HttpStatusCode.NotFound)]
+    public const string BackupJobNotFound = "backup.job.not_found";
+
+    /// <summary>
+    /// The target's folder <c>params.path</c> holds a repository already. Connect to it with its key, or choose another
+    /// folder.
+    /// </summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string BackupRepositoryExists = "backup.repository.exists";
+
+    /// <summary>Another process holds the repository's lock, for example a run of another box; restic says so for a while after a crash too.</summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string BackupRepositoryLocked = "backup.repository.locked";
+
+    /// <summary>No repository in the target's folder <c>params.path</c>.</summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string BackupRepositoryNotFound = "backup.repository.not_found";
+
+    /// <summary>The key does not open the repository.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string BackupRepositoryWrongKey = "backup.repository.wrong_key";
+
+    /// <summary>
+    /// restic stopped with an error the box does not know, <c>params.exitCode</c>, or took too long
+    /// (<c>params.reason</c> <c>timeout</c>). Its output is in the Log Center.
+    /// </summary>
+    [ErrorStatus(HttpStatusCode.BadGateway)]
+    public const string BackupRunFailed = "backup.run.failed";
+
+    /// <summary>
+    /// A source cannot be backed up now: <c>params.reason</c> is <c>unavailable</c> (its pool is locked or missing),
+    /// <c>missing</c> (the folder <c>params.path</c> is gone) or <c>snapshot</c> (its snapshot could not be taken or
+    /// mounted); <c>params.share</c> names the shared folder or home.
+    /// </summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string BackupSourceUnavailable = "backup.source.unavailable";
+
+    /// <summary>The shared folder <c>params.share</c> is not a dataset of a pool, so the box cannot take a snapshot to back it up from.</summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string BackupSourceUnsupported = "backup.source.unsupported";
+
     /// <summary>
     /// The server's host keys could not be read; <c>params.reason</c> is <c>dns</c> (the name is unknown) or <c>none</c>
     /// (nothing answered on the port, or it offered no key of a known type), <c>timeout</c> when it took too long.
@@ -485,6 +546,10 @@ public static class ErrorCodes
     /// </summary>
     [ErrorStatus(HttpStatusCode.Conflict)]
     public const string BackupTargetHostKeyChanged = "backup.target.host_key_changed";
+
+    /// <summary>Backup jobs use the target; <c>params.jobs</c> names them. Delete them first.</summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string BackupTargetInUse = "backup.target.in_use";
 
     /// <summary>A setting of a backup target is not valid; <c>params.field</c> names it (name, host, port, user, path, hostKey).</summary>
     [ErrorStatus(HttpStatusCode.BadRequest)]

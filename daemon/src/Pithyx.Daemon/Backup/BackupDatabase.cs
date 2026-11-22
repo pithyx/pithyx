@@ -34,7 +34,10 @@ public enum BackupCategory
     /// </summary>
     ReverseProxy,
 
-    /// <summary>The backup app's targets with their SSH keys and confirmed host keys (D414).</summary>
+    /// <summary>
+    /// The backup app's targets with their SSH keys and confirmed host keys (D414), and its jobs with their repository
+    /// keys and runs (D415), so a restored box reads its backups again.
+    /// </summary>
     Backups,
 }
 
@@ -60,7 +63,7 @@ public static class BackupDatabase
         [BackupCategory.Certificates] = ["tls_issued"],
         [BackupCategory.Apps] = ["apps", "app_permissions", "app_elevated", "storage_mappings", "app_storage", "catalogs"],
         [BackupCategory.ReverseProxy] = ["proxy_hosts", "proxy_redirects", "proxy_streams"],
-        [BackupCategory.Backups] = ["backup_targets"],
+        [BackupCategory.Backups] = ["backup_targets", "backup_jobs", "backup_runs"],
     }.ToFrozenDictionary();
 
     /// <summary>Rows of the <c>settings</c> table by category.</summary>

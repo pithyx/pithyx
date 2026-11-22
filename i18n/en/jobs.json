@@ -70,6 +70,8 @@
     "system_support_bundle": "Creating a support bundle",
     "system_rollback": "Rolling back Pithyx",
     "homes_move": "Moving home folders to another pool",
-    "homes_release": "Moving a home folder into a shared folder"
+    "homes_release": "Moving a home folder into a shared folder",
+    "backup_run": "Backing up",
+    "backup_check": "Checking a backup"
   }
 }

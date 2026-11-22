@@ -70,6 +70,8 @@
     "system_support_bundle": "Support-Paket wird erstellt",
     "system_rollback": "Pithyx wird zurückgesetzt",
     "homes_move": "Home-Ordner ziehen auf einen anderen Pool um",
-    "homes_release": "Home-Ordner wird in einen freigegebenen Ordner verschoben"
+    "homes_release": "Home-Ordner wird in einen freigegebenen Ordner verschoben",
+    "backup_run": "Sichern",
+    "backup_check": "Backup prüfen"
   }
 }

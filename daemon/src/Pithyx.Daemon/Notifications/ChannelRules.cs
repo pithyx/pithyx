@@ -169,6 +169,7 @@ public static class ChannelRules
                 _ when kind.StartsWith("storage.", StringComparison.Ordinal) => NotificationCategory.Storage,
                 _ when kind.StartsWith("apps.", StringComparison.Ordinal) || kind.StartsWith("store.", StringComparison.Ordinal) => NotificationCategory.Apps,
                 "system.update" or "system.rollback" => NotificationCategory.Updates,
+                _ when kind.StartsWith("backup.", StringComparison.Ordinal) => NotificationCategory.Backups,
                 _ => NotificationCategory.System,
             };
         }
@@ -176,7 +177,7 @@ public static class ChannelRules
         {
             _ when code.StartsWith("storage.", StringComparison.Ordinal) => NotificationCategory.Storage,
             _ when code.StartsWith("update.", StringComparison.Ordinal) || code.StartsWith("apps.update.", StringComparison.Ordinal) || code.StartsWith("store.updates.", StringComparison.Ordinal) => NotificationCategory.Updates,
-            _ when code.StartsWith("system.backup.", StringComparison.Ordinal) => NotificationCategory.Backups,
+            _ when code.StartsWith("system.backup.", StringComparison.Ordinal) || code.StartsWith("backup.", StringComparison.Ordinal) => NotificationCategory.Backups,
             _ when code.StartsWith("auth.", StringComparison.Ordinal) || code == Permissions.AppsAccess.GrantedCode => NotificationCategory.Security,
             _ when code.StartsWith("app.", StringComparison.Ordinal) || code.StartsWith("apps.", StringComparison.Ordinal) || code.StartsWith("store.", StringComparison.Ordinal) => NotificationCategory.Apps,
             _ => NotificationCategory.System,

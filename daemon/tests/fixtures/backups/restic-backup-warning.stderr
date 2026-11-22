@@ -1,0 +1,2 @@
+{"message_type":"error","error":{"message":"open /tank/shares/media/src/sub/locked: permission denied"},"during":"archival","item":"/tank/shares/media/src/sub/locked"}
+{"message_type":"exit_error","code":3,"message":"Warning: at least one source file could not be read"}

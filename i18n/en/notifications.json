@@ -276,5 +276,34 @@
         "body": "Let's Encrypt did not renew it. Settings > Reverse proxy shows why; the box tries again later, and the current certificate stays until it ends."
       }
     }
+  },
+  "backup": {
+    "alert": {
+      "runFailed": {
+        "title": "Backup {job} failed",
+        "body": "The last run of {job} did not finish, so nothing new was saved. Open the Backup app to see why.",
+        "action": "Open Backup"
+      },
+      "runWarning": {
+        "title": "Backup {job} skipped files",
+        "body": "{job} saved a new version, but {warnings, plural, =0 {some files} one {# file or folder} other {# files or folders}} could not be read. The Log Center names them.",
+        "action": "Open Backup"
+      },
+      "overdue": {
+        "title": "Backup {job} is overdue",
+        "body": "{job} has had no successful run for {days, plural, one {# day} other {# days}}. Check the job and its target.",
+        "action": "Open Backup"
+      },
+      "checkFailed": {
+        "title": "Check of {job} failed",
+        "body": "The check of the repository of {job} did not pass. Open the Backup app to see why.",
+        "action": "Open Backup"
+      },
+      "hostKeyChanged": {
+        "title": "Target {target} has a new host key",
+        "body": "The server of {target} answered with another host key, so the box did not connect and no backup reached it. Check with the server's administrator before you confirm the new key.",
+        "action": "Open Backup"
+      }
+    }
   }
 }

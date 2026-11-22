@@ -65,6 +65,9 @@ export function sourceApp(
   if (notification.code.startsWith('store.')) {
     return coreAppIds.store;
   }
+  if (notification.code.startsWith('backup.')) {
+    return coreAppIds.backup;
+  }
   const kind = notification.params.kind;
   if (notification.code.startsWith('jobs.') && typeof kind === 'string') {
     return kind.startsWith('files.')
@@ -73,7 +76,9 @@ export function sourceApp(
         ? coreAppIds.settings
         : kind.startsWith('apps.') || kind.startsWith('store.')
           ? coreAppIds.store
-          : undefined;
+          : kind.startsWith('backup.')
+            ? coreAppIds.backup
+            : undefined;
   }
   return undefined;
 }

@@ -10,6 +10,14 @@ namespace Pithyx.Daemon.Commands;
 /// A second command that reads this one's stdout, like <c>zfs send | zfs receive</c>, without a shell. The result is
 /// the second command's output; it fails when either command fails.
 /// </param>
+/// <param name="OutputLine">
+/// Called with each line of stdout as it arrives, for progress; the result then keeps only the last
+/// <see cref="StreamedOutputTail"/> characters of stdout.
+/// </param>
+/// <param name="Interruptible">
+/// On cancel or timeout the command first gets SIGINT and <see cref="InterruptGrace"/> to clean up (restic removes its
+/// repository lock), and is killed only after that.
+/// </param>
 public sealed record CommandRequest(
     string FileName,
     IReadOnlyList<string> Arguments,
@@ -17,8 +25,14 @@ public sealed record CommandRequest(
     IReadOnlySet<int>? SensitiveArgumentIndexes = null,
     string? StandardInput = null,
     bool SecretOutput = false,
-    CommandRequest? PipeTo = null)
+    CommandRequest? PipeTo = null,
+    Action<string>? OutputLine = null,
+    bool Interruptible = false)
 {
+    public const int StreamedOutputTail = 64 * 1024;
+
+    public static readonly TimeSpan InterruptGrace = TimeSpan.FromSeconds(30);
+
     private const int MaxLoggedOutputLength = 4096;
 
     /// <summary>

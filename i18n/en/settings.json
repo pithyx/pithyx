@@ -1243,6 +1243,15 @@
             "cancelled": "Task of the box cancelled",
             "interrupted": "Task of the box interrupted"
           }
+        },
+        "backup": {
+          "alert": {
+            "runFailed": "Backup failed",
+            "runWarning": "Backup skipped files",
+            "overdue": "Backup overdue",
+            "checkFailed": "Backup check failed",
+            "hostKeyChanged": "Backup target's host key changed"
+          }
         }
       }
     }

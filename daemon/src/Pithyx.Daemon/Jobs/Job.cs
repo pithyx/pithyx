@@ -62,3 +62,14 @@ public sealed record Job(
 
 /// <summary>Snapshot of the <c>jobs</c> topic: the signed-in user's queued and running jobs, oldest first.</summary>
 public sealed record JobList(IReadOnlyList<Job> Jobs);
+
+/// <summary>How a job is run.</summary>
+/// <param name="OwnSlot">
+/// Starts at once instead of waiting for one of the <see cref="JobRunner.MaxConcurrentJobs"/> shared slots: for work
+/// that may take hours and must not hold up copies of users, such as a backup run.
+/// </param>
+/// <param name="Notify">Whether the end of the job is a notification of its own; off for modules that report the outcome themselves.</param>
+public sealed record JobOptions(bool OwnSlot = false, bool Notify = true)
+{
+    public static JobOptions Default { get; } = new();
+}

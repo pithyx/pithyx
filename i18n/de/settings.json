@@ -1243,6 +1243,15 @@
             "cancelled": "Aufgabe der Box abgebrochen",
             "interrupted": "Aufgabe der Box unterbrochen"
           }
+        },
+        "backup": {
+          "alert": {
+            "runFailed": "Backup fehlgeschlagen",
+            "runWarning": "Backup hat Dateien ausgelassen",
+            "overdue": "Backup überfällig",
+            "checkFailed": "Prüfung eines Backups fehlgeschlagen",
+            "hostKeyChanged": "Host-Schlüssel eines Backup-Ziels geändert"
+          }
         }
       }
     }

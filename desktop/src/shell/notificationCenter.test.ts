@@ -75,6 +75,12 @@ describe('the app of a notification', () => {
     expect(sourceApp({ app: null, code: 'storage.alert.resolved', params: {} })).toBe(
       'org.pithyx.settings',
     );
+    expect(sourceApp({ app: null, code: 'backup.alert.overdue', params: {} })).toBe(
+      'org.pithyx.backup',
+    );
+    expect(sourceApp({ app: null, code: 'jobs.job.failed', params: { kind: 'backup.run' } })).toBe(
+      'org.pithyx.backup',
+    );
     expect(
       sourceApp({ app: null, code: 'jobs.job.succeeded', params: { kind: 'test.work' } }),
     ).toBe(undefined);

@@ -120,19 +120,9 @@ public sealed partial class BackupSsh(ICommandRunner commands)
             return null;
         }
         var error = result.StandardError;
-        if (error.Contains("REMOTE HOST IDENTIFICATION HAS CHANGED", StringComparison.Ordinal)
-            || error.Contains("Host key verification failed", StringComparison.Ordinal))
+        if (ConnectionFailure(error) is { Code: not ErrorCodes.BackupTargetUnreachable } refused)
         {
-            var parameters = new Dictionary<string, object?>();
-            if (OfferedFingerprint().Match(error) is { Success: true } offered)
-            {
-                parameters["fingerprint"] = offered.Groups["fingerprint"].Value;
-            }
-            return new PithyxException(ErrorCodes.BackupTargetHostKeyChanged, parameters);
-        }
-        if (error.Contains("Permission denied (", StringComparison.Ordinal) || error.Contains("Too many authentication failures", StringComparison.Ordinal))
-        {
-            return new PithyxException(ErrorCodes.BackupTargetAuthFailed);
+            return refused;
         }
         if (result.ExitCode == 255 || !result.StandardOutput.Contains("sftp> ", StringComparison.Ordinal))
         {
@@ -150,6 +140,36 @@ public sealed partial class BackupSsh(ICommandRunner commands)
             // The login folder has no name of its own; ~ is how SSH users know it.
             ["path"] = path.Length == 0 ? "~" : path,
         });
+    }
+
+    /// <summary>
+    /// What ssh's messages in <paramref name="standardError"/> say about a connection that failed: a changed host key, a
+    /// refused key, or a server it could not reach; null when they name none of these.
+    /// </summary>
+    public static PithyxException? ConnectionFailure(string standardError)
+    {
+        ArgumentNullException.ThrowIfNull(standardError);
+        if (standardError.Contains("REMOTE HOST IDENTIFICATION HAS CHANGED", StringComparison.Ordinal)
+            || standardError.Contains("Host key verification failed", StringComparison.Ordinal))
+        {
+            var parameters = new Dictionary<string, object?>();
+            if (OfferedFingerprint().Match(standardError) is { Success: true } offered)
+            {
+                parameters["fingerprint"] = offered.Groups["fingerprint"].Value;
+            }
+            return new PithyxException(ErrorCodes.BackupTargetHostKeyChanged, parameters);
+        }
+        if (standardError.Contains("Permission denied (", StringComparison.Ordinal) || standardError.Contains("Too many authentication failures", StringComparison.Ordinal))
+        {
+            return new PithyxException(ErrorCodes.BackupTargetAuthFailed);
+        }
+        var reason =
+            standardError.Contains("Could not resolve hostname", StringComparison.Ordinal) ? "dns"
+            : standardError.Contains("Connection refused", StringComparison.Ordinal) ? "refused"
+            : standardError.Contains("Connection timed out", StringComparison.Ordinal) || standardError.Contains("Operation timed out", StringComparison.Ordinal) ? "timeout"
+            : standardError.Contains("No route to host", StringComparison.Ordinal) || standardError.Contains("Network is unreachable", StringComparison.Ordinal) ? "network"
+            : null;
+        return reason is null ? null : Unreachable(reason);
     }
 
     /// <summary>The error a stored test outcome carries, as JSON for the table.</summary>

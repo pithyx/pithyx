@@ -323,6 +323,7 @@ if (!installer.Active)
     api.MapPowerEndpoint();
     api.MapBackupEndpoints();
     api.MapBackupTargetEndpoints();
+    api.MapBackupJobEndpoints();
     api.MapSupportEndpoints();
     api.MapAppEndpoints();
     Pithyx.Daemon.Apps.Catalog.StoreEndpoints.MapStoreEndpoints(api);

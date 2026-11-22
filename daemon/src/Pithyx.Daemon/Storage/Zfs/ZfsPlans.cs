@@ -150,6 +150,24 @@ public static partial class ZfsPlans
         return $"{pool}/pithyx/apps/{appId}";
     }
 
+    /// <summary>
+    /// restic's caches of the backup jobs (D415) on a pool, mounted at <c>/&lt;pool&gt;/.pithyx/backup-cache</c>: never
+    /// shown, never snapshotted, no quota (a cache grows with its repository), rebuildable. <c>-p</c> succeeds when it
+    /// exists already.
+    /// </summary>
+    public static CommandRequest CreateBackupCacheDataset(string pool)
+    {
+        if (!DatasetName().IsMatch(pool))
+        {
+            throw new ArgumentException($"Not a pool name: {pool}.", nameof(pool));
+        }
+        return new("zfs",
+        [
+            "create", "-p", "-o", $"mountpoint=/{pool}/.pithyx/backup-cache", "-o", "compression=off", "-o", "atime=off",
+            "-o", "com.sun:auto-snapshot=false", $"{pool}/pithyx/backup-cache",
+        ]);
+    }
+
     /// <summary>The cache dataset for a pool set up before it existed (<see cref="Files.Thumbnails.ThumbnailCacheProvisioner"/>).</summary>
     public static CommandRequest CreateCacheDataset(string pool) => new("zfs", ["create", .. CacheDataset(pool)]);
 

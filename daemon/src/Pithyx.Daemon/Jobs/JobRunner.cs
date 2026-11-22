@@ -24,6 +24,7 @@ public sealed class JobRunner(JobService jobs) : BackgroundService
     {
         using var slots = new SemaphoreSlim(MaxConcurrentJobs, MaxConcurrentJobs);
         var running = new List<Task>();
+        var ownSlots = RunOwnSlotsAsync(stoppingToken);
         try
         {
             while (await jobs.Queue.WaitToReadAsync(stoppingToken))
@@ -54,6 +55,29 @@ public sealed class JobRunner(JobService jobs) : BackgroundService
         catch (OperationCanceledException)
         {
             // Shutting down. Running jobs see the same token and end as interrupted.
+        }
+        await Task.WhenAll(running);
+        await ownSlots;
+    }
+
+    /// <summary>Starts every job of <see cref="JobOptions.OwnSlot"/> as soon as it is queued.</summary>
+    private async Task RunOwnSlotsAsync(CancellationToken stoppingToken)
+    {
+        var running = new List<Task>();
+        try
+        {
+            while (await jobs.OwnSlots.WaitToReadAsync(stoppingToken))
+            {
+                while (jobs.OwnSlots.TryRead(out var entry))
+                {
+                    running.RemoveAll(task => task.IsCompleted);
+                    running.Add(Task.Run(() => jobs.RunAsync(entry, stoppingToken), CancellationToken.None));
+                }
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            // Shutting down; running jobs end as interrupted.
         }
         await Task.WhenAll(running);
     }
