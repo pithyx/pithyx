@@ -564,6 +564,21 @@
   min-width: 0;
 }
 
+.overview .panelHead {
+  flex-wrap: wrap;
+}
+
+.overview .panelTitle {
+  flex: 1 0 auto;
+}
+
+@container backup-overview (width < 600px) {
+  .calendarPanel .legend {
+    order: 1;
+    flex-basis: 100%;
+  }
+}
+
 .calendar {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
