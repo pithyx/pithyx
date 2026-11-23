@@ -179,11 +179,14 @@
       "wrong_key": "Der Schlüssel öffnet dieses Repository nicht."
     },
     "run": {
-      "failed": "Das Backup ist fehlgeschlagen ({reason, select, timeout {es hat zu lange gedauert} other {restic endete mit Code {exitCode}}}). Details stehen im Log Center."
+      "failed": "Das Backup ist fehlgeschlagen ({reason, select, timeout {es hat zu lange gedauert} output {die Antwort von restic war nicht lesbar} other {restic endete mit Code {exitCode}}}). Details stehen im Log Center."
     },
     "source": {
       "unavailable": "Der Ordner {share} lässt sich gerade nicht sichern ({reason, select, missing {er existiert nicht} snapshot {sein Snapshot ließ sich nicht anlegen} other {sein Pool ist nicht verfügbar}}).",
       "unsupported": "Der Ordner {share} liegt auf keinem Pool, deshalb kann die Box ihn nicht aus einem Snapshot sichern."
+    },
+    "version": {
+      "not_found": "Diese Version gibt es nicht mehr. Die Aufbewahrung des Backups hat sie vielleicht gelöscht."
     }
   },
   "desktop": {

@@ -95,6 +95,43 @@ public sealed class BackupRestic(ICommandRunner commands)
         }
     }
 
+    /// <summary>Every version in the repository. Throws a connection or repository error.</summary>
+    public async Task<IReadOnlyList<ResticSnapshot>> SnapshotsAsync(ResticRepository repository, CancellationToken cancellationToken)
+    {
+        var result = await RunAsync(repository, ResticCommands.Snapshots, null, SetupTimeout, null, cancellationToken);
+        if (ResticOutput.Failure(result.ExitCode, result.StandardError, repository.RemotePath) is { } error)
+        {
+            throw error;
+        }
+        return ResticVersions.Snapshots(result.StandardOutput)
+            ?? throw new PithyxException(ErrorCodes.BackupRunFailed, new Dictionary<string, object?> { ["reason"] = "output" });
+    }
+
+    /// <summary>What changed between two versions; null when restic could not tell.</summary>
+    public async Task<ResticDiff?> DiffAsync(ResticRepository repository, string from, string to, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var result = await RunAsync(repository, global => ResticCommands.Diff(global, from, to), null, StatsTimeout, null, cancellationToken);
+            return result.ExitCode == 0 ? ResticVersions.Diff(result.StandardOutput) : null;
+        }
+        catch (TimeoutException)
+        {
+            return null;
+        }
+    }
+
+    /// <summary>Protects a version or releases it. Returns its new id, or null when restic changed nothing. Throws a connection or repository error.</summary>
+    public async Task<string?> ProtectAsync(ResticRepository repository, string snapshot, bool protect, CancellationToken cancellationToken)
+    {
+        var result = await RunAsync(repository, global => ResticCommands.Protect(global, snapshot, protect), null, SetupTimeout, null, cancellationToken);
+        if (ResticOutput.Failure(result.ExitCode, result.StandardError, repository.RemotePath) is { } error)
+        {
+            throw error;
+        }
+        return ResticVersions.TagChanged(result.StandardOutput);
+    }
+
     public async Task<CommandResult> CheckAsync(ResticRepository repository, int readPercent, ResticReport report, CancellationToken cancellationToken) =>
         await RunAsync(repository, global => ResticCommands.Check(global, readPercent), null, CheckTimeout, line => ResticOutput.Read(line, report), cancellationToken, report);
 

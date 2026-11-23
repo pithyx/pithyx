@@ -179,11 +179,14 @@
       "wrong_key": "The key does not open this repository."
     },
     "run": {
-      "failed": "The backup failed ({reason, select, timeout {it took too long} other {restic ended with code {exitCode}}}). The Log Center has the details."
+      "failed": "The backup failed ({reason, select, timeout {it took too long} output {restic's answer could not be read} other {restic ended with code {exitCode}}}). The Log Center has the details."
     },
     "source": {
       "unavailable": "The folder {share} cannot be backed up now ({reason, select, missing {it does not exist} snapshot {its snapshot could not be taken} other {its pool is not available}}).",
       "unsupported": "The folder {share} is not on a pool, so the box cannot back it up from a snapshot."
+    },
+    "version": {
+      "not_found": "This version no longer exists. The backup's retention may have deleted it."
     }
   },
   "desktop": {

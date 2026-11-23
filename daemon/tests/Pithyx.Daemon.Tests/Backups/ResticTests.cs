@@ -55,7 +55,7 @@ public sealed class ResticTests
     {
         Assert.Null(ResticCommands.Forget([], new BackupRetention(0, 0, 0, 0, 0, 0)));
         Assert.Equal(
-            ["forget", "--prune", "--group-by", "", "--keep-last", "2", "--keep-daily", "7", "--keep-weekly", "4", "--keep-monthly", "12"],
+            ["forget", "--prune", "--group-by", "", "--keep-tag", "pithyx-protected", "--keep-last", "2", "--keep-daily", "7", "--keep-weekly", "4", "--keep-monthly", "12"],
             ResticCommands.Forget([], new BackupRetention(2, 0, 7, 4, 12, 0)));
         Assert.Equal(["check", "--with-cache", "--read-data-subset=5%"], ResticCommands.Check([], 5));
         Assert.Equal(["check", "--with-cache"], ResticCommands.Check([], 0));

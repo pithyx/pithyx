@@ -577,6 +577,10 @@ public static class ErrorCodes
     [ErrorStatus(HttpStatusCode.BadGateway)]
     public const string BackupTargetUnreachable = "backup.target.unreachable";
 
+    /// <summary>The backup has no version with this id; it was deleted by the retention since. <c>params.id</c>.</summary>
+    [ErrorStatus(HttpStatusCode.NotFound)]
+    public const string BackupVersionNotFound = "backup.version.not_found";
+
     [ErrorStatus(HttpStatusCode.NotFound)]
     public const string DesktopDeviceNotFound = "desktop.device.not_found";
 
