@@ -7,7 +7,7 @@ sidebar:
   order: 11
 ---
 
-Die App **Backup** für Administratoren schickt Kopien deiner Dateien auf andere Rechner. Ihr erster Teil sind die **Ziele**: die Server, auf die Backups gehen. Ein Ziel ist jeder Server, an dem du dich über SSH mit SFTP anmelden kannst, zum Beispiel eine gemietete Storage-Box oder ein anderer Linux-Server. [Backup-Aufträge](/de/docs/admin/backup-jobs/) schicken Ordner nach Zeitplan an ein Ziel.
+Die App **Backup** für Administratoren schickt Kopien deiner Dateien auf andere Rechner. Ihr erster Teil sind die **Ziele**: die Server, auf die Backups gehen. Ein Ziel ist jeder Server, an dem du dich über SSH mit SFTP anmelden kannst, zum Beispiel eine gemietete Storage-Box oder ein anderer Linux-Server. [Box-Backups](/de/docs/admin/backup-jobs/) schicken Ordner nach Zeitplan an ein Ziel.
 
 ## Ein Ziel hinzufügen
 
@@ -32,13 +32,13 @@ Wenn du Server, Port, Benutzer, Ordner oder Host-Schlüssel änderst, gilt der l
 
 ## Wenn sich der Host-Schlüssel ändert
 
-Die Box verbindet sich nur mit dem Server, dessen Host-Schlüssel du bestätigt hast. Antwortet der Server mit einem anderen Schlüssel, bricht jede Verbindung mit `backup.target.host_key_changed` ab. Trifft ein Lauf oder eine Prüfung eines Auftrags darauf, bekommen die Administratoren das Ereignis **Host-Schlüssel eines Backup-Ziels geändert**. Das ist normal, wenn der Server neu installiert oder auf andere Hardware umgezogen wurde; sonst gibt sich vielleicht jemand als er aus. **Neuen Host-Schlüssel prüfen** auf der Karte des Ziels zeigt den bestätigten Fingerabdruck neben denen, die der Server jetzt anbietet. Nimm den neuen erst an, wenn du ihn mit dem Fingerabdruck verglichen hast, den dein Anbieter zeigt.
+Die Box verbindet sich nur mit dem Server, dessen Host-Schlüssel du bestätigt hast. Antwortet der Server mit einem anderen Schlüssel, bricht jede Verbindung mit `backup.target.host_key_changed` ab. Trifft ein Lauf oder eine Prüfung eines Backups darauf, bekommen die Administratoren das Ereignis **Host-Schlüssel eines Backup-Ziels geändert**. Das ist normal, wenn der Server neu installiert oder auf andere Hardware umgezogen wurde; sonst gibt sich vielleicht jemand als er aus. **Neuen Host-Schlüssel prüfen** auf der Karte des Ziels zeigt den bestätigten Fingerabdruck neben denen, die der Server jetzt anbietet. Nimm den neuen erst an, wenn du ihn mit dem Fingerabdruck verglichen hast, den dein Anbieter zeigt.
 
 Auch wenn du Server oder Port eines Ziels änderst, musst du den Host-Schlüssel des neuen Servers bestätigen.
 
 ## Ein Ziel löschen
 
-**Löschen** entfernt das Ziel und seinen Schlüssel von der Box. Ein Ziel, das noch Aufträge nutzen, lässt sich nicht löschen ([`backup.target.in_use`](/de/docs/reference/errors/#backup.target.in_use)); lösche zuerst die Aufträge. Entferne seinen öffentlichen Schlüssel auch aus den `authorized_keys` auf dem Server; Backups, die schon dort liegen, bleiben erhalten.
+**Löschen** entfernt das Ziel und seinen Schlüssel von der Box. Ein Ziel, das noch Box-Backups nutzen, lässt sich nicht löschen ([`backup.target.in_use`](/de/docs/reference/errors/#backup.target.in_use)); lösche zuerst diese Backups. Entferne seinen öffentlichen Schlüssel auch aus den `authorized_keys` auf dem Server; Backups, die schon dort liegen, bleiben erhalten.
 
 ## Konfigurations-Backup
 

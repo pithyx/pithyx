@@ -2412,29 +2412,29 @@
     },
     "backup.check.failed": {
       "params": {},
-      "expected": "The check found errors in the repository. Run another check; if it fails again, start a new repository for this job."
+      "expected": "The check found errors in the repository. Run another check; if it fails again, start a new repository for this backup."
     },
     "backup.job.busy": {
       "params": {
         "name": "Media"
       },
-      "expected": "The job Media is running right now. Wait until it is done or cancel it."
+      "expected": "The backup Media is running right now. Wait until it is done or cancel it."
     },
     "backup.job.invalid": {
       "params": {
         "field": "checkSchedule"
       },
-      "expected": "This setting of the job is not valid: check schedule."
+      "expected": "This setting of the backup is not valid: check schedule."
     },
     "backup.job.name_taken": {
       "params": {
         "name": "Media"
       },
-      "expected": "Another job is already named Media."
+      "expected": "Another backup is already named Media."
     },
     "backup.job.not_found": {
       "params": {},
-      "expected": "This backup job no longer exists."
+      "expected": "This backup no longer exists."
     },
     "backup.repository.exists": {
       "params": {
@@ -2481,7 +2481,7 @@
       "params": {
         "jobs": "Media, Photos"
       },
-      "expected": "Jobs still use this target: Media, Photos. Delete them first."
+      "expected": "These backups still use this target: Media, Photos. Delete them first."
     }
   },
   "cases": [

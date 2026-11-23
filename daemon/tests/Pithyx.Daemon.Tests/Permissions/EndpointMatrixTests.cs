@@ -272,6 +272,7 @@ public sealed partial class EndpointMatrixTests : IDisposable
         ["TestBackupTarget"] = Need.Admin,
         ["DeleteBackupTarget"] = Need.Admin,
         ["ListBackupSources"] = Need.Admin,
+        ["ListBackupHistory"] = Need.Admin,
         ["ListBackupJobs"] = Need.Admin,
         ["GetBackupJob"] = Need.Admin,
         ["CreateBackupJob"] = Need.Admin,

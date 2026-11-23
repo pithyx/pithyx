@@ -184,17 +184,28 @@ public sealed class ResticReport
     /// <summary>Files and folders restic could not read.</summary>
     public int Warnings { get; set; }
 
-    /// <summary>The first few of them, for the log.</summary>
-    public List<string> WarningItems { get; } = [];
+    /// <summary>The first of them with restic's message, for the log and the run's details.</summary>
+    public List<ResticUnreadable> WarningItems { get; } = [];
 
     /// <summary>Errors a check found.</summary>
     public int CheckErrors { get; set; }
 }
 
+/// <summary>A file or folder restic could not read: its path as restic saw it and restic's message.</summary>
+public sealed record ResticUnreadable(string Item, string Message)
+{
+    /// <summary>Why, as the run's details name it: <c>permission</c>, <c>missing</c> (gone while the run read it) or <c>other</c>.</summary>
+    public string Reason =>
+        Message.Contains("permission denied", StringComparison.OrdinalIgnoreCase) ? "permission"
+        : Message.Contains("no such file", StringComparison.OrdinalIgnoreCase) ? "missing"
+        : "other";
+}
+
 /// <summary>restic's JSON lines and exit codes (D415), pure.</summary>
 public static class ResticOutput
 {
-    private const int KeptWarningItems = 20;
+    /// <summary>Unreadable files kept per run.</summary>
+    public const int KeptWarningItems = 100;
 
     /// <summary>Reads one line of stdout or stderr into <paramref name="report"/>. Returns whether it was a progress line.</summary>
     public static bool Read(string line, ResticReport report)
@@ -233,7 +244,8 @@ public static class ResticOutput
                     report.Warnings++;
                     if (report.WarningItems.Count < KeptWarningItems)
                     {
-                        report.WarningItems.Add(String(root, "item") ?? (root.TryGetProperty("error", out var error) ? String(error, "message") ?? "" : ""));
+                        var message = root.TryGetProperty("error", out var error) ? String(error, "message") ?? "" : "";
+                        report.WarningItems.Add(new ResticUnreadable(String(root, "item") ?? "", message));
                     }
                     return false;
                 default:

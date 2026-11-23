@@ -192,3 +192,273 @@
 .fieldset > legend {
   padding: 0;
 }
+
+.title {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.direction {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 1px var(--space-2);
+  border-radius: var(--radius-tag);
+  font-family: var(--font-sans);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  line-height: 1.5;
+  white-space: nowrap;
+}
+
+.out {
+  background: var(--color-accent-subtle);
+  color: var(--color-accent);
+}
+
+.in {
+  background: var(--color-surface-3);
+  color: var(--color-text);
+}
+
+.route {
+  display: inline-flex;
+  min-width: 0;
+  max-width: 100%;
+  align-items: center;
+  gap: var(--space-1);
+  white-space: nowrap;
+}
+
+.route > svg {
+  flex: none;
+}
+
+.routeName {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.routeArrow {
+  color: var(--color-text-muted);
+}
+
+.visuallyHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.name {
+  font-weight: var(--font-weight-medium);
+}
+
+.twoLines {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.twoLines > * {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.badgeRow {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.days {
+  display: inline-flex;
+  gap: 2px;
+  vertical-align: middle;
+}
+
+.day {
+  width: 6px;
+  height: 18px;
+  border-radius: 1px;
+  background: var(--color-surface-3);
+}
+
+.day[data-state='succeeded'] {
+  background: var(--color-success);
+}
+
+.day[data-state='warning'],
+.day[data-state='interrupted'] {
+  background: var(--color-warning);
+}
+
+.day[data-state='failed'] {
+  background: var(--color-danger);
+}
+
+.day[data-state='cancelled'] {
+  background: var(--color-neutral-state);
+}
+
+.details {
+  display: grid;
+  align-content: start;
+  gap: var(--space-3);
+  font-size: var(--font-size-sm);
+}
+
+.detailsHead {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.detailsName {
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
+}
+
+.detailsTitle {
+  margin: var(--space-2) 0 0;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+}
+
+.facts {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: var(--space-1) var(--space-3);
+  margin: 0;
+}
+
+.facts dt {
+  color: var(--color-text-muted);
+}
+
+.facts dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.panel {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  background: var(--color-surface-1);
+}
+
+.panelHead {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.panelTitle {
+  flex: 1;
+  margin: 0;
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
+}
+
+.panelBody {
+  padding: var(--space-3) var(--space-4);
+}
+
+.runningList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.running {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+}
+
+.running + .running {
+  border-top: 1px solid var(--color-border);
+}
+
+.runningHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.runningName {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.runningFacts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-6);
+  margin: 0;
+  font-size: var(--font-size-sm);
+}
+
+.runningFacts dt {
+  color: var(--color-text-muted);
+}
+
+.runningFacts dd {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--font-weight-medium);
+}
+
+.sectionTitle {
+  margin: var(--space-2) 0 0;
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
+}
+
+.unreadable {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.unreadable > li {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.unreadable > li > :last-child {
+  flex: none;
+}
+
+/* A narrow table never scrolls sideways (DataTable), so its routes and two-line cells wrap instead of cutting off. */
+@container pithyx-table (width < 600px) {
+  .route {
+    flex-wrap: wrap;
+    white-space: normal;
+  }
+
+  /* Text only: a state badge stays on one line. */
+  .twoLines > .name,
+  .twoLines > .muted {
+    white-space: normal;
+  }
+}

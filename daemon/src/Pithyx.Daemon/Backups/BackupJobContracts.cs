@@ -92,8 +92,14 @@ public enum BackupRunTrigger
     Manual,
 }
 
+/// <summary>A file or folder a backup run could not read, so it is missing from that version.</summary>
+/// <param name="Path">The shared folder's or home's name and the path below it, with <c>/</c> between the parts.</param>
+/// <param name="Reason"><c>permission</c> (the box may not read it), <c>missing</c> (it went away while the run read it) or <c>other</c>.</param>
+public sealed record BackupUnreadable(string Path, string Reason);
+
 /// <summary>One run or check of a job.</summary>
 /// <param name="Id">Stable id.</param>
+/// <param name="JobId">The job it belongs to.</param>
 /// <param name="Kind">A backup or an integrity check.</param>
 /// <param name="Trigger">The schedule or an administrator.</param>
 /// <param name="BoardJobId">Its job on the job board, for progress and cancel while it runs.</param>
@@ -107,8 +113,10 @@ public enum BackupRunTrigger
 /// <param name="Warnings">Files or folders that could not be read.</param>
 /// <param name="ErrorCode">Why it failed.</param>
 /// <param name="ErrorParams">The error's params.</param>
+/// <param name="Unreadable">The first 100 files and folders it could not read; empty when it read everything.</param>
 public sealed record BackupRun(
     long Id,
+    long JobId,
     BackupRunKind Kind,
     BackupRunTrigger Trigger,
     long? BoardJobId,
@@ -121,9 +129,10 @@ public sealed record BackupRun(
     string? Snapshot,
     int Warnings,
     string? ErrorCode,
-    JsonElement? ErrorParams);
+    JsonElement? ErrorParams,
+    IReadOnlyList<BackupUnreadable> Unreadable);
 
-/// <summary>A job's runs and checks, newest first.</summary>
+/// <summary>Runs and checks, newest first.</summary>
 public sealed record BackupRunList(IReadOnlyList<BackupRun> Runs);
 
 /// <summary>A backup job.</summary>
@@ -166,3 +175,12 @@ public sealed record BackupSourceOption(long ShareId, string Name, bool Home, bo
 
 /// <summary>Every shared folder and home, by name.</summary>
 public sealed record BackupSourceList(IReadOnlyList<BackupSourceOption> Sources);
+
+/// <summary>Which runs the history returns.</summary>
+/// <param name="JobId">Only this job's; null for every job.</param>
+/// <param name="Kind">Only backups or only checks; null for both.</param>
+/// <param name="State">Only runs that ended so, or run now; null for all.</param>
+/// <param name="Since">Only runs that started at or after this time.</param>
+/// <param name="Before">Only runs with a smaller id, for the next page.</param>
+/// <param name="Limit">At most this many, 1 to 2000.</param>
+public sealed record BackupRunQuery(long? JobId, BackupRunKind? Kind, BackupRunState? State, DateTimeOffset? Since, long? Before, int Limit);

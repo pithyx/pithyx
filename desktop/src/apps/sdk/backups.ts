@@ -17,6 +17,16 @@ export type BackupRun = components['schemas']['BackupRun'];
 export type BackupSourceOption = components['schemas']['BackupSourceOption'];
 type BoardJob = components['schemas']['Job'];
 
+export interface BackupHistoryQuery {
+  jobId?: number;
+  kind?: BackupRun['kind'];
+  state?: BackupRun['state'];
+  /** ISO 8601 */
+  since?: string;
+  before?: number;
+  limit?: number;
+}
+
 /** The Backup app's calls, outside the public SDK; the daemon checks the administrator right on every request behind them. */
 interface BackupMethods {
   'internal.admin.backups.targets': { params: Record<string, never>; result: BackupTargetList };
@@ -54,6 +64,11 @@ interface BackupMethods {
   /** Deletes the job and its key; the repository stays on the target. */
   'internal.admin.backups.deleteJob': { params: { id: number }; result: null };
   'internal.admin.backups.runs': { params: { id: number }; result: { runs: BackupRun[] } };
+  /** The runs and checks of every job, newest first; `before` is the id of the last run of the previous page. */
+  'internal.admin.backups.history': {
+    params: BackupHistoryQuery;
+    result: { runs: BackupRun[] };
+  };
   /** Starts a run or a check now; it goes on the job board. */
   'internal.admin.backups.start': {
     params: { id: number; kind: 'run' | 'check' };
@@ -69,6 +84,10 @@ export const sourcesKey = ['backups', 'sources'] as const;
 
 /** A job's runs and checks. */
 export const runsKey = (id: number) => ['backups', 'runs', id] as const;
+
+/** The runs of every job; its queries invalidate together with every job's runs. */
+export const historyKey = (query: BackupHistoryQuery) =>
+  ['backups', 'runs', 'history', query] as const;
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -149,6 +168,18 @@ function settingsBody(settings: BackupJobSettings): BackupJobSettings {
     downloadLimitKib: settings.downloadLimitKib,
     overdueHours: settings.overdueHours ?? null,
     excludes: settings.excludes ?? [],
+  };
+}
+
+/** Only the filters that are set, so the daemon gets no empty parameters. */
+function historyQuery({ jobId, kind, state, since, before, limit }: BackupHistoryQuery) {
+  return {
+    ...(jobId === undefined ? {} : { jobId }),
+    ...(kind === undefined ? {} : { kind }),
+    ...(state === undefined ? {} : { state }),
+    ...(since === undefined ? {} : { since }),
+    ...(before === undefined ? {} : { before }),
+    ...(limit === undefined ? {} : { limit }),
   };
 }
 
@@ -294,6 +325,24 @@ export function backupsHost(): HostExtensions {
           unwrap(
             await api.GET('/api/backups/jobs/{id}/runs', {
               params: { path: { id: (params as { id: number }).id }, query: { limit: 20 } },
+            }),
+          ),
+        ),
+    },
+    'internal.admin.backups.history': {
+      validate: (value) =>
+        isRecord(value) &&
+        ['jobId', 'before', 'limit'].every(
+          (key) => value[key] === undefined || Number.isSafeInteger(value[key]),
+        ) &&
+        optionalString(value.kind) &&
+        optionalString(value.state) &&
+        optionalString(value.since),
+      handle: (params) =>
+        daemon(async () =>
+          unwrap(
+            await api.GET('/api/backups/runs', {
+              params: { query: historyQuery(params as BackupHistoryQuery) },
             }),
           ),
         ),

@@ -8420,6 +8420,85 @@
         }
       }
     },
+    "/api/backups/runs": {
+      "get": {
+        "tags": [
+          "Backups"
+        ],
+        "description": "Administrators only. The runs and checks of every job (or of jobId), newest first, optionally only of one kind, one state (the values of kind and state in a run) or since a time; before is the id of the last run of the previous page. At most limit (default 200, up to 2000).",
+        "operationId": "ListBackupHistory",
+        "parameters": [
+          {
+            "name": "jobId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "kind",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "state",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "since",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "before",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BackupRunList"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/backups/jobs": {
       "get": {
         "tags": [
@@ -13778,6 +13857,7 @@
       "BackupRun": {
         "required": [
           "id",
+          "jobId",
           "kind",
           "trigger",
           "boardJobId",
@@ -13790,13 +13870,19 @@
           "snapshot",
           "warnings",
           "errorCode",
-          "errorParams"
+          "errorParams",
+          "unreadable"
         ],
         "type": "object",
         "properties": {
           "id": {
             "type": "integer",
             "description": "Stable id.",
+            "format": "int64"
+          },
+          "jobId": {
+            "type": "integer",
+            "description": "The job it belongs to.",
             "format": "int64"
           },
           "kind": {
@@ -13885,6 +13971,13 @@
                 "$ref": "#/components/schemas/JsonElement"
               }
             ]
+          },
+          "unreadable": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BackupUnreadable"
+            },
+            "description": "The first 100 files and folders it could not read; empty when it read everything."
           }
         },
         "description": "One run or check of a job."
@@ -13909,7 +14002,7 @@
             }
           }
         },
-        "description": "A job's runs and checks, newest first."
+        "description": "Runs and checks, newest first."
       },
       "BackupRunState": {
         "enum": [
@@ -14230,6 +14323,24 @@
           }
         },
         "description": "The outcome of a target's last connection test."
+      },
+      "BackupUnreadable": {
+        "required": [
+          "path",
+          "reason"
+        ],
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "The shared folder's or home's name and the path below it, with `/` between the parts."
+          },
+          "reason": {
+            "type": "string",
+            "description": "`permission` (the box may not read it), `missing` (it went away while the run read it) or `other`."
+          }
+        },
+        "description": "A file or folder a backup run could not read, so it is missing from that version."
       },
       "BondMode": {
         "enum": [

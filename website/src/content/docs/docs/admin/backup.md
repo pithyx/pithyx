@@ -7,7 +7,7 @@ sidebar:
   order: 11
 ---
 
-Settings > **Backup and restore** saves the configuration of the box (users, shared folders, file services, schedules and more) into one password-protected file and restores it later. It does not back up the files on your pools; the **Backup** app sends those to other servers on a schedule ([Backup jobs](/docs/admin/backup-jobs/)). Configuration backups are manual: there is no schedule.
+Settings > **Backup and restore** saves the configuration of the box (users, shared folders, file services, schedules and more) into one password-protected file and restores it later. It does not back up the files on your pools; the **Backup** app sends those to other servers on a schedule ([Box backups](/docs/admin/backup-jobs/)). Configuration backups are manual: there is no schedule.
 
 ## Creating a backup
 
@@ -32,7 +32,7 @@ Categories you can choose when restoring:
 - **Certificates and keys**: the box's certificate authority and certificates, uploaded certificates of reverse proxy hosts, and the SSH host keys, when present.
 - **Reverse proxy**: proxy hosts (with Basic Auth users as hashes), redirect hosts, streams, what unknown names get, the sign-in address and the Let's Encrypt account (its certificates come with **Certificates and keys**).
 - **Apps**: the app registry, permissions, folder mappings, catalogs and the app pool. The apps' files and data stay on the pool.
-- **Backup app**: the [targets](/docs/admin/backup-targets/) of the Backup app with their SSH keys and confirmed host keys, and its [jobs](/docs/admin/backup-jobs/) with their repository keys and runs, so a restored box reads its backups again.
+- **Backup app**: the [targets](/docs/admin/backup-targets/) of the Backup app with their SSH keys and confirmed host keys, and its [box backups](/docs/admin/backup-jobs/) with their repository keys and runs, so a restored box reads its backups again.
 
 Not included: files on pools, app data, logs, Docker data, sessions, jobs, notifications and the kinds of app notifications users muted, the recycle bin index, and the network settings (cards are named differently on other hardware). The keys of encrypted pools in the key vault are never included either: after a reinstall, unlock each encrypted pool once with its key ([Encryption](/docs/admin/storage/#encryption)).
 
