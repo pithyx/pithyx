@@ -624,7 +624,9 @@
 }
 
 .calendarDay[data-outside] {
-  opacity: 0.55;
+  border-color: var(--color-border);
+  background: var(--color-surface-1);
+  color: var(--color-text-muted);
 }
 
 .calendarDay[data-today] {
