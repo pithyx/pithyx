@@ -110,10 +110,14 @@ public sealed class BackupTargetApiTests : IAsyncLifetime
         Assert.Equal(BackupSsh.Alias, call.Arguments[^1]);
         Assert.Contains("cd \"backups/pithyx\"", call.StandardInput, StringComparison.Ordinal);
 
-        _sftp = new CommandResult(0, "", "", TimeSpan.Zero);
+        Assert.Equal(JsonValueKind.Null, failed.GetProperty("space").ValueKind);
+
+        _sftp = new CommandResult(0, File.ReadAllText(Path.Combine(RepositoryFiles.Root, "daemon", "tests", "fixtures", "backups", "sftp-ok.stdout")), "", TimeSpan.Zero);
         var passed = await TestAsync(id);
         Assert.True(passed.GetProperty("lastTest").GetProperty("succeeded").GetBoolean());
         Assert.Equal(JsonValueKind.Null, passed.GetProperty("lastTest").GetProperty("errorCode").ValueKind);
+        Assert.Equal(15_718_360L * 1024, passed.GetProperty("space").GetProperty("freeBytes").GetInt64());
+        Assert.Equal(63_253_188L * 1024, passed.GetProperty("space").GetProperty("totalBytes").GetInt64());
     }
 
     [Fact]

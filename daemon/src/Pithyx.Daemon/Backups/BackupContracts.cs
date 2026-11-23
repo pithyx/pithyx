@@ -22,6 +22,12 @@ public sealed record BackupHostKey(string Type, string Key, string Fingerprint);
 /// <param name="ErrorParams">The error's params.</param>
 public sealed record BackupTargetTest(DateTimeOffset TestedAt, bool Succeeded, string? ErrorCode, JsonElement? ErrorParams);
 
+/// <summary>The space of the file system the target's folder is on, as the server reported it over SFTP.</summary>
+/// <param name="TotalBytes">Its size.</param>
+/// <param name="FreeBytes">What the target's user can still write.</param>
+/// <param name="MeasuredAt">When the server reported it: the last connection test or backup run, UTC.</param>
+public sealed record BackupTargetSpace(long TotalBytes, long FreeBytes, DateTimeOffset MeasuredAt);
+
 /// <summary>A place backups go to.</summary>
 /// <param name="Id">Stable id.</param>
 /// <param name="Name">The name the administrator gave it, unique on the box.</param>
@@ -34,6 +40,7 @@ public sealed record BackupTargetTest(DateTimeOffset TestedAt, bool Succeeded, s
 /// <param name="PublicKey">The public half of the target's own SSH key, the line for the server's <c>authorized_keys</c>.</param>
 /// <param name="CreatedAt">When it was added, UTC.</param>
 /// <param name="LastTest">The last connection test, or none yet.</param>
+/// <param name="Space">The space on the server; null until a test or run measured it, or when the server does not report it.</param>
 public sealed record BackupTarget(
     long Id,
     string Name,
@@ -45,7 +52,8 @@ public sealed record BackupTarget(
     BackupHostKey HostKey,
     string PublicKey,
     DateTimeOffset CreatedAt,
-    BackupTargetTest? LastTest);
+    BackupTargetTest? LastTest,
+    BackupTargetSpace? Space);
 
 /// <summary>Every backup target, by name.</summary>
 public sealed record BackupTargetList(IReadOnlyList<BackupTarget> Targets);

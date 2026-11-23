@@ -29,7 +29,8 @@ public sealed partial class BackupTargetService(
         """
         SELECT id AS Id, name AS Name, kind AS Kind, host AS Host, port AS Port, user_name AS UserName, path AS Path,
             host_key AS HostKey, ssh_private_key AS PrivateKey, ssh_public_key AS PublicKey, created_at AS CreatedAt,
-            tested_at AS TestedAt, test_error_code AS TestErrorCode, test_error_params AS TestErrorParams
+            tested_at AS TestedAt, test_error_code AS TestErrorCode, test_error_params AS TestErrorParams,
+            space_total_bytes AS SpaceTotalBytes, space_free_bytes AS SpaceFreeBytes, space_at AS SpaceAt
         FROM backup_targets
         """;
 
@@ -160,7 +161,7 @@ public sealed partial class BackupTargetService(
         {
             row = await RowAsync(connection, id, cancellationToken);
         }
-        var error = await ssh.ProbeAsync(Endpoint(row), row.Path, cancellationToken);
+        var (error, space) = await ssh.ProbeAsync(Endpoint(row), row.Path, cancellationToken);
         if (error is null)
         {
             LogTestSucceeded(id);
@@ -175,9 +176,41 @@ public sealed partial class BackupTargetService(
                 "UPDATE backup_targets SET tested_at = @now, test_error_code = @code, test_error_params = @parameters WHERE id = @id",
                 new { id, now = SessionService.Format(time.GetUtcNow()), code = error?.Code, parameters = error is null ? null : BackupSsh.Params(error) },
                 cancellationToken: cancellationToken));
+            if (space is not null)
+            {
+                await SaveSpaceAsync(connection, id, space, cancellationToken);
+            }
             return View(await RowAsync(connection, id, cancellationToken));
         }
     }
+
+    /// <summary>
+    /// Asks the target's server for its space after a backup run and keeps it; a server that cannot be reached or does
+    /// not report it keeps the last measurement.
+    /// </summary>
+    public async Task MeasureSpaceAsync(long id, CancellationToken cancellationToken)
+    {
+        TargetRow row;
+        await using (var connection = await connections.OpenAsync(cancellationToken))
+        {
+            row = await RowAsync(connection, id, cancellationToken);
+        }
+        if (await ssh.SpaceAsync(Endpoint(row), row.Path, cancellationToken) is not { } space)
+        {
+            LogSpaceUnknown(id);
+            return;
+        }
+        await using (var connection = await connections.OpenAsync(cancellationToken))
+        {
+            await SaveSpaceAsync(connection, id, space, cancellationToken);
+        }
+    }
+
+    private async Task SaveSpaceAsync(SqliteConnection connection, long id, SftpSpace space, CancellationToken cancellationToken) =>
+        await connection.ExecuteAsync(new CommandDefinition(
+            "UPDATE backup_targets SET space_total_bytes = @TotalBytes, space_free_bytes = @FreeBytes, space_at = @now WHERE id = @id",
+            new { id, space.TotalBytes, space.FreeBytes, now = SessionService.Format(time.GetUtcNow()) },
+            cancellationToken: cancellationToken));
 
     /// <summary>Removes the target and its SSH key; the public key stays on the server until somebody removes it there.</summary>
     public async Task DeleteAsync(ClaimsPrincipal caller, long id, CancellationToken cancellationToken)
@@ -281,7 +314,8 @@ public sealed partial class BackupTargetService(
             hostKey,
             row.PublicKey,
             SessionService.Parse(row.CreatedAt),
-            test);
+            test,
+            row is { SpaceTotalBytes: { } total, SpaceFreeBytes: { } free, SpaceAt: { } at } ? new BackupTargetSpace(total, free, SessionService.Parse(at)) : null);
     }
 
     private sealed class TargetRow
@@ -300,6 +334,9 @@ public sealed partial class BackupTargetService(
         public string? TestedAt { get; init; }
         public string? TestErrorCode { get; init; }
         public string? TestErrorParams { get; init; }
+        public long? SpaceTotalBytes { get; init; }
+        public long? SpaceFreeBytes { get; init; }
+        public string? SpaceAt { get; init; }
     }
 
     [LoggerMessage(Level = LogLevel.Information, Message = "Backup target {TargetId} added for {Host} port {Port} with host key {Fingerprint}")]
@@ -313,4 +350,7 @@ public sealed partial class BackupTargetService(
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "Backup target {TargetId} failed its connection test with {ErrorCode} {ErrorParams}")]
     private partial void LogTestFailed(long targetId, string errorCode, string errorParams);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Backup target {TargetId} did not report its space")]
+    private partial void LogSpaceUnknown(long targetId);
 }

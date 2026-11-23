@@ -8,6 +8,12 @@ namespace Pithyx.Daemon.Backups;
 /// <summary>What a target needs for a connection: where it is and the keys on both ends.</summary>
 public sealed record SshEndpoint(string Host, int Port, string User, string HostKey, string PrivateKey);
 
+/// <summary>The size of the file system behind an SFTP folder and what its user can still write, in bytes.</summary>
+public sealed record SftpSpace(long TotalBytes, long FreeBytes);
+
+/// <summary>What a target's connection test found: null for no error, and the space when the server reported it.</summary>
+public sealed record SftpProbe(PithyxException? Error, SftpSpace? Space);
+
 /// <summary>
 /// SSH for backup targets, through <see cref="ICommandRunner"/> and hardened like the catalogs' git (D414): no system or
 /// user configuration (<c>-F /dev/null</c>, <c>env -i</c>), no agent, only the target's own key, only the pinned host key
@@ -64,11 +70,12 @@ public sealed partial class BackupSsh(ICommandRunner commands)
     }
 
     /// <summary>
-    /// Signs in to the target, creates its folder if missing, writes and removes a test file. Returns null when all
-    /// worked, else the error (<see cref="ErrorCodes.BackupTargetUnreachable"/>, <see cref="ErrorCodes.BackupTargetHostKeyChanged"/>,
-    /// <see cref="ErrorCodes.BackupTargetAuthFailed"/>, <see cref="ErrorCodes.BackupTargetNotWritable"/>).
+    /// Signs in to the target, creates its folder if missing, writes and removes a test file, and asks for the space.
+    /// The error is null when all worked, else <see cref="ErrorCodes.BackupTargetUnreachable"/>,
+    /// <see cref="ErrorCodes.BackupTargetHostKeyChanged"/>, <see cref="ErrorCodes.BackupTargetAuthFailed"/> or
+    /// <see cref="ErrorCodes.BackupTargetNotWritable"/>.
     /// </summary>
-    public async Task<PithyxException?> ProbeAsync(SshEndpoint endpoint, string path, CancellationToken cancellationToken)
+    public async Task<SftpProbe> ProbeAsync(SshEndpoint endpoint, string path, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(endpoint);
         using var folder = new KeyFolder();
@@ -85,12 +92,64 @@ public sealed partial class BackupSsh(ICommandRunner commands)
         }
         catch (TimeoutException)
         {
-            return Unreachable("timeout");
+            return new SftpProbe(Unreachable("timeout"), null);
         }
-        return ProbeOutcome(result, path);
+        var error = ProbeOutcome(result, path);
+        return new SftpProbe(error, error is null ? ParseSpace(result.StandardOutput) : null);
     }
 
-    /// <summary>The sftp batch of a probe: each folder of the path made if missing (the leading <c>-</c> ignores an error), then the test file.</summary>
+    /// <summary>The space behind the target's folder; null when the server cannot be reached or does not report it.</summary>
+    public async Task<SftpSpace?> SpaceAsync(SshEndpoint endpoint, string path, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(endpoint);
+        ArgumentNullException.ThrowIfNull(path);
+        using var folder = new KeyFolder();
+        var script = (path.Length > 0 ? $"cd \"{path}\"\n" : "") + "df\n";
+        try
+        {
+            var result = await commands.RunAsync(
+                new CommandRequest("env", [.. CleanEnvironment(), "sftp", .. Options(folder, endpoint), "-b", "-", Alias], ProbeTimeout, StandardInput: script),
+                cancellationToken);
+            return result.ExitCode == 0 ? ParseSpace(result.StandardOutput) : null;
+        }
+        catch (TimeoutException)
+        {
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Reads sftp's <c>df</c> table (OpenSSH, statvfs@openssh.com): a header with Size, Used and Avail, then a line of
+    /// KiB. Null without the table, which a server without the extension leaves out.
+    /// </summary>
+    public static SftpSpace? ParseSpace(string standardOutput)
+    {
+        ArgumentNullException.ThrowIfNull(standardOutput);
+        var lines = standardOutput.Split('\n');
+        for (var index = 0; index < lines.Length - 1; index++)
+        {
+            var header = lines[index].Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            if (header is not ["Size", "Used", "Avail", ..])
+            {
+                continue;
+            }
+            var values = lines[index + 1].Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            if (values.Length >= 3
+                && long.TryParse(values[0], System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out var size)
+                && long.TryParse(values[2], System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out var available)
+                && size > 0)
+            {
+                return new SftpSpace(size * 1024, Math.Min(available, size) * 1024);
+            }
+            return null;
+        }
+        return null;
+    }
+
+    /// <summary>
+    /// The sftp batch of a probe: each folder of the path made if missing (the leading <c>-</c> ignores an error), then
+    /// the test file, then the space, whose error is ignored too (not every server has the extension).
+    /// </summary>
     public static string ProbeScript(string path, string localEmptyFile, string testFile)
     {
         ArgumentNullException.ThrowIfNull(path);
@@ -105,6 +164,7 @@ public sealed partial class BackupSsh(ICommandRunner commands)
         }
         lines.Add($"put \"{localEmptyFile}\" \"{testFile}\"");
         lines.Add($"rm \"{testFile}\"");
+        lines.Add("-df");
         return string.Join('\n', lines) + "\n";
     }
 

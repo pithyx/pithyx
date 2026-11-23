@@ -51,19 +51,30 @@ public sealed class BackupSshTests
     public void AnythingElseIsNoHostKey(string line) => Assert.Null(SshHostKeys.Parse(line));
 
     [Fact]
-    public void AProbeMakesEachFolderOfThePathThenWritesAndRemovesItsFile()
+    public void AProbeMakesEachFolderOfThePathThenWritesAndRemovesItsFileAndAsksForTheSpace()
     {
         var script = BackupSsh.ProbeScript("backups/box one", "/tmp/k/empty", ".pithyx-test-x");
 
         Assert.Equal(
-            "-mkdir \"backups\"\n-mkdir \"backups/box one\"\ncd \"backups/box one\"\nput \"/tmp/k/empty\" \".pithyx-test-x\"\nrm \".pithyx-test-x\"\n",
+            "-mkdir \"backups\"\n-mkdir \"backups/box one\"\ncd \"backups/box one\"\nput \"/tmp/k/empty\" \".pithyx-test-x\"\nrm \".pithyx-test-x\"\n-df\n",
             script);
-        Assert.Equal("put \"/e\" \"t\"\nrm \"t\"\n", BackupSsh.ProbeScript("", "/e", "t"));
+        Assert.Equal("put \"/e\" \"t\"\nrm \"t\"\n-df\n", BackupSsh.ProbeScript("", "/e", "t"));
         Assert.StartsWith("-mkdir \"/srv\"\n-mkdir \"/srv/backup\"\ncd \"/srv/backup\"\n", BackupSsh.ProbeScript("/srv/backup", "/e", "t"), StringComparison.Ordinal);
     }
 
     [Fact]
     public void ASuccessfulProbeHasNoError() => Assert.Null(BackupSsh.ProbeOutcome(Sftp("ok", 0), "backups/box one"));
+
+    [Fact]
+    public void TheSpaceComesFromSftpsDfTableInKib()
+    {
+        var space = BackupSsh.ParseSpace(Sftp("ok", 0).StandardOutput);
+
+        Assert.Equal(new SftpSpace(63_253_188L * 1024, 15_718_360L * 1024), space);
+        // A server without statvfs@openssh.com prints no table; sftp goes on after -df.
+        Assert.Null(BackupSsh.ParseSpace("sftp> rm \"t\"\nsftp> -df\n"));
+        Assert.Null(BackupSsh.ParseSpace(""));
+    }
 
     [Theory]
     [InlineData("hostkey", 255, ErrorCodes.BackupTargetHostKeyChanged, null)]

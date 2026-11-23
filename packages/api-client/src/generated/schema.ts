@@ -900,6 +900,23 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/api/backups/days": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Administrators only. The runs and checks of every job per day in the box's time zone (each with its start and end in UTC) from from to to (yyyy-MM-dd, both included, at most 400 days; left out, the last 30 days): how many succeeded, had warnings or failed, how many jobs ran and how many of them without a failure, the bytes added, and what the repositories took on their targets at the end of the day. */
+        get: operations["ListBackupDays"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/backups/jobs": {
         parameters: {
             query?: never;
@@ -995,7 +1012,7 @@ export type paths = {
             path?: never;
             cookie?: never;
         };
-        /** @description Administrators only. The runs and checks of every job (or of jobId), newest first, optionally only of one kind, one state (the values of kind and state in a run) or since a time; before is the id of the last run of the previous page. At most limit (default 200, up to 2000). */
+        /** @description Administrators only. The runs and checks of every job (or of jobId), newest first, optionally only of one kind, one state (the values of kind and state in a run), started at or after since and before until; before is the id of the last run of the previous page. At most limit (default 200, up to 2000). */
         get: operations["ListBackupHistory"];
         put?: never;
         post?: never;
@@ -4635,6 +4652,66 @@ export type components = {
          * @enum {unknown}
          */
         BackupCategory: "users" | "sharedFolders" | "storage" | "system" | "certificates" | "apps" | "reverseProxy" | "backups";
+        /** @description What the runs of one day in the box's time zone came to. */
+        BackupDay: {
+            /**
+             * Format: int64
+             * @description Bytes the day's backup runs added to the repositories.
+             */
+            addedBytes: number;
+            /**
+             * Format: date
+             * @description The day.
+             */
+            date: string;
+            /**
+             * Format: date-time
+             * @description When it ended, UTC: the next day's start.
+             */
+            end: string;
+            /**
+             * Format: int32
+             * @description Runs and checks that failed or were interrupted; cancelled ones are not counted.
+             */
+            failed: number;
+            /**
+             * Format: int32
+             * @description Jobs with a counted run or check that day.
+             */
+            jobs: number;
+            /**
+             * Format: int32
+             * @description Of these, the jobs none of whose runs failed that day.
+             */
+            jobsOk: number;
+            /**
+             * Format: int64
+             * @description What the repositories of all jobs took on their targets at the end of the day, as last measured; null before any measurement.
+             */
+            repositoryBytes: null | number;
+            /**
+             * Format: date-time
+             * @description When it began, UTC.
+             */
+            start: string;
+            /**
+             * Format: int32
+             * @description Runs and checks that succeeded.
+             */
+            succeeded: number;
+            /**
+             * Format: int32
+             * @description Runs that ended with warnings.
+             */
+            warnings: number;
+        };
+        /** @description The days of a period, oldest first, with every day in it. */
+        BackupDayList: {
+            /** @description One entry per day from the first to the last. */
+            days: components["schemas"]["BackupDay"][];
+            /** @description The box's time zone, which the days follow. */
+            timeZone: string;
+        };
         /** @description A host key of a server. */
         BackupHostKey: {
             /** @description The SHA-256 fingerprint as OpenSSH prints it, `SHA256:...`. */
@@ -4698,8 +4775,18 @@ export type components = {
             nextRunAt: null | string;
             /** @description It is enabled and had no successful run for longer than its limit. */
             overdue: boolean;
+            /**
+             * Format: int64
+             * @description The size of its newest version: the bytes its last successful run backed up.
+             */
+            protectedBytes: null | number;
             /** @description The repository's folder below the target's path. */
             repository: string;
+            /**
+             * Format: int64
+             * @description What its repository takes on the target, as the newest run that measured it found.
+             */
+            repositoryBytes: null | number;
             /** @description What it backs up and when. */
             settings: components["schemas"]["BackupJobSettings"];
             /**
@@ -4835,6 +4922,11 @@ export type components = {
             jobId: number;
             /** @description A backup or an integrity check. */
             kind: components["schemas"]["BackupRunKind"];
+            /**
+             * Format: int64
+             * @description What the repository took on the target after the run (restic stats, raw data); null when unknown.
+             */
+            repositoryBytes: null | number;
             /** @description The id of the version restic made. */
             snapshot: null | string;
             /**
@@ -4965,6 +5057,8 @@ export type components = {
             port: number;
             /** @description The public half of the target's own SSH key, the line for the server's `authorized_keys`. */
             publicKey: string;
+            /** @description The space of the file system the target's folder is on, as the server reported it over SFTP. */
+            space: null | components["schemas"]["BackupTargetSpace"];
             /** @description The user the box signs in as. */
             user: string;
         };
@@ -4997,6 +5091,24 @@ export type components = {
             port?: null | number;
             /** @description The user on the server. */
             user: string;
+        };
+        /** @description The space of the file system the target's folder is on, as the server reported it over SFTP. */
+        BackupTargetSpace: {
+            /**
+             * Format: int64
+             * @description What the target's user can still write.
+             */
+            freeBytes: number;
+            /**
+             * Format: date-time
+             * @description When the server reported it: the last connection test or backup run, UTC.
+             */
+            measuredAt: string;
+            /**
+             * Format: int64
+             * @description Its size.
+             */
+            totalBytes: number;
         };
         /** @description The outcome of a target's last connection test. */
         BackupTargetTest: {
@@ -11719,6 +11831,38 @@ export interface operations {
             };
         };
     };
+    ListBackupDays: {
+        parameters: {
+            query?: {
+                from?: string;
+                to?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BackupDayList"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
     ListBackupJobs: {
         parameters: {
             query?: never;
@@ -11980,6 +12124,7 @@ export interface operations {
                 limit?: number;
                 since?: string;
                 state?: string;
+                until?: string;
             };
             header?: never;
             path?: never;

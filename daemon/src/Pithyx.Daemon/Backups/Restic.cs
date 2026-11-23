@@ -158,6 +158,9 @@ public static class ResticCommands
         return arguments;
     }
 
+    /// <summary><c>stats</c> in raw-data mode: what the repository takes on the target after compression and deduplication.</summary>
+    public static IReadOnlyList<string> Stats(IReadOnlyList<string> global) => [.. global, "stats", "--mode", "raw-data"];
+
     /// <summary><c>check</c>, reading back <paramref name="readPercent"/> percent of the data, with the cache on the pool.</summary>
     public static IReadOnlyList<string> Check(IReadOnlyList<string> global, int readPercent)
     {
@@ -180,6 +183,9 @@ public sealed class ResticReport
     public long? Bytes { get; set; }
     public long? AddedBytes { get; set; }
     public string? Snapshot { get; set; }
+
+    /// <summary>What the repository takes on the target after the run, from <c>stats</c>.</summary>
+    public long? RepositoryBytes { get; set; }
 
     /// <summary>Files and folders restic could not read.</summary>
     public int Warnings { get; set; }
@@ -256,6 +262,31 @@ public static class ResticOutput
         {
             return false;
         }
+    }
+
+    /// <summary>The repository's stored size from the JSON of <c>stats --mode raw-data</c>; null without it.</summary>
+    public static long? RepositoryBytes(string standardOutput)
+    {
+        ArgumentNullException.ThrowIfNull(standardOutput);
+        foreach (var line in standardOutput.Split('\n'))
+        {
+            if (!line.TrimStart().StartsWith('{'))
+            {
+                continue;
+            }
+            try
+            {
+                using var document = JsonDocument.Parse(line);
+                if (document.RootElement.TryGetProperty("total_size", out var size) && size.ValueKind == JsonValueKind.Number && size.TryGetInt64(out var bytes) && bytes >= 0)
+                {
+                    return bytes;
+                }
+            }
+            catch (JsonException)
+            {
+            }
+        }
+        return null;
     }
 
     /// <summary>
