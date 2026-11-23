@@ -170,14 +170,48 @@ public sealed class BackupJobApiTests : IAsyncLifetime
     public async Task UnreadableFilesMakeAWarningAndTellTheAdministrators()
     {
         var id = await CreateJobAsync("Media");
-        _backup = new CommandResult(3, Fixture("restic-backup-warning.stdout"), Fixture("restic-backup-warning.stderr"), TimeSpan.Zero);
+        var locked = Path.Combine(SharePath, "Photos", "locked.db");
+        var gone = Path.Combine(SharePath, "Photos", "tmp");
+        var errors = string.Concat(
+            JsonSerializer.Serialize(new { message_type = "error", error = new { message = $"open {locked}: permission denied" }, during = "archival", item = locked }), "\n",
+            JsonSerializer.Serialize(new { message_type = "error", error = new { message = $"lstat {gone}: no such file or directory" }, during = "archival", item = gone }), "\n");
+        _backup = new CommandResult(3, Fixture("restic-backup-warning.stdout") + errors, Fixture("restic-backup-warning.stderr"), TimeSpan.Zero);
 
         var run = await RunAsync(id);
 
         Assert.Equal("warning", run.GetProperty("state").GetString());
-        Assert.Equal(1, run.GetProperty("warnings").GetInt32());
+        Assert.Equal(3, run.GetProperty("warnings").GetInt32());
+        var unreadable = run.GetProperty("unreadable").EnumerateArray().Select(item => (item.GetProperty("path").GetString(), item.GetProperty("reason").GetString())).ToList();
+        // restic writes the fixture's error to stderr, which is read after stdout.
+        Assert.Equal([("Media/Photos/locked.db", "permission"), ("Media/Photos/tmp", "missing"), ("/tank/shares/media/src/sub/locked", "permission")], unreadable);
         Assert.Equal(1, await NotificationsAsync(BackupJobService.RunWarningCode));
         Assert.Contains(_commands.Calls, call => call.Arguments.Contains("forget"));
+    }
+
+    [Fact]
+    public async Task TheHistoryListsTheRunsOfEveryJobNewestFirstAndFilters()
+    {
+        var media = await CreateJobAsync("Media");
+        var other = await CreateJobAsync("Other");
+        await RunAsync(media);
+        await RunAsync(other);
+        _check = new CommandResult(1, "", "Fatal: repository contains errors\n", TimeSpan.Zero);
+        await CheckAsync(media, JobState.Failed);
+
+        var all = await HistoryAsync("");
+        Assert.Equal([(media, "check"), (other, "backup"), (media, "backup")], all.Select(run => (run.GetProperty("jobId").GetInt64(), run.GetProperty("kind").GetString())));
+        Assert.Equal([media, media], (await HistoryAsync($"?jobId={media}")).Select(run => run.GetProperty("jobId").GetInt64()));
+        Assert.Equal(["backup", "backup"], (await HistoryAsync("?kind=backup")).Select(run => run.GetProperty("kind").GetString()));
+        Assert.Equal(["failed"], (await HistoryAsync("?state=failed")).Select(run => run.GetProperty("state").GetString()));
+        Assert.Empty(await HistoryAsync("?since=2999-01-01T00:00:00Z"));
+        using (var unknown = await _admin.GetAsync("/api/backups/runs?kind=Nope", Token))
+        {
+            Assert.Equal(HttpStatusCode.BadRequest, unknown.StatusCode);
+        }
+        Assert.Equal(2, (await HistoryAsync("?kind=Backup")).Count);
+        var first = Assert.Single(await HistoryAsync("?limit=1"));
+        var next = await HistoryAsync($"?limit=2&before={first.GetProperty("id").GetInt64()}");
+        Assert.Equal(all.Skip(1).Select(run => run.GetProperty("id").GetInt64()), next.Select(run => run.GetProperty("id").GetInt64()));
     }
 
     [Fact]
@@ -372,6 +406,17 @@ public sealed class BackupJobApiTests : IAsyncLifetime
         await _daemon.Services.GetRequiredService<JobService>().WaitForStateAsync(boardId, state);
         return (await RunsAsync(id))[0];
     }
+
+    private async Task CheckAsync(long id, JobState state)
+    {
+        using var started = await _admin.PostAsync($"/api/backups/jobs/{id}/check", new { });
+        Assert.Equal(HttpStatusCode.Accepted, started.StatusCode);
+        var boardId = (await started.JsonAsync()).GetProperty("id").GetInt64();
+        await _daemon.Services.GetRequiredService<JobService>().WaitForStateAsync(boardId, state);
+    }
+
+    private async Task<List<JsonElement>> HistoryAsync(string query) =>
+        [.. JsonDocument.Parse(await _admin.GetStringAsync("/api/backups/runs" + query, Token)).RootElement.GetProperty("runs").EnumerateArray()];
 
     private async Task<JsonElement> JobAsync(long id) => JsonDocument.Parse(await _admin.GetStringAsync($"/api/backups/jobs/{id}", Token)).RootElement;
 

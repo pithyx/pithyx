@@ -83,7 +83,8 @@ public sealed class ResticTests
         Assert.True(report.AddedBytes > 90_000_000);
         Assert.Equal(64, report.Snapshot!.Length);
         Assert.Equal(1, report.Warnings);
-        Assert.Equal(["/tank/shares/media/src/sub/locked"], report.WarningItems);
+        Assert.Equal([new ResticUnreadable("/tank/shares/media/src/sub/locked", "open /tank/shares/media/src/sub/locked: permission denied")], report.WarningItems);
+        Assert.Equal("permission", report.WarningItems[0].Reason);
         Assert.False(ResticOutput.Read("Fatal: something", report));
         Assert.False(ResticOutput.Read("{not json", report));
     }

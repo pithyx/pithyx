@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Http.HttpResults;
 using Pithyx.Daemon.Auth;
+using Pithyx.Daemon.Errors;
 
 namespace Pithyx.Daemon.Backups;
 
@@ -60,6 +61,10 @@ public static class BackupEndpoints
                 TypedResults.Ok(await service.SourcesAsync(cancellationToken)))
             .WithName("ListBackupSources")
             .WithDescription("Administrators only. Every shared folder and home, and whether a job can back it up: only datasets of a pool can be backed up from a snapshot.");
+        backups.MapGet("/runs", async Task<Ok<BackupRunList>> (BackupJobService service, CancellationToken cancellationToken, long? jobId, string? kind, string? state, DateTimeOffset? since, long? before, int? limit) =>
+                TypedResults.Ok(await service.HistoryAsync(new BackupRunQuery(jobId, Filter<BackupRunKind>(kind), Filter<BackupRunState>(state), since, before, limit ?? 200), cancellationToken)))
+            .WithName("ListBackupHistory")
+            .WithDescription("Administrators only. The runs and checks of every job (or of jobId), newest first, optionally only of one kind, one state (the values of kind and state in a run) or since a time; before is the id of the last run of the previous page. At most limit (default 200, up to 2000).");
         var jobs = backups.MapGroup("/jobs");
         jobs.MapGet("", async Task<Ok<BackupJobList>> (BackupJobService service, CancellationToken cancellationToken) =>
                 TypedResults.Ok(await service.ListAsync(cancellationToken)))
@@ -106,4 +111,10 @@ public static class BackupEndpoints
             .WithName("CheckBackupJob")
             .WithDescription("Administrators only. Starts the integrity check of the job's repository now as a box job, reading back the job's share of the data.");
     }
+
+    // Query values are the lowercase names the API returns; the default binding would want the C# names.
+    private static T? Filter<T>(string? value) where T : struct, Enum =>
+        value is null ? null
+        : Enum.TryParse<T>(value, ignoreCase: true, out var parsed) && !char.IsAsciiDigit(value[0]) ? parsed
+        : throw new PithyxException(ErrorCodes.RequestBodyInvalid);
 }

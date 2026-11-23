@@ -988,6 +988,23 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/api/backups/runs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Administrators only. The runs and checks of every job (or of jobId), newest first, optionally only of one kind, one state (the values of kind and state in a run) or since a time; before is the id of the last run of the previous page. At most limit (default 200, up to 2000). */
+        get: operations["ListBackupHistory"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/backups/sources": {
         parameters: {
             query?: never;
@@ -4811,6 +4828,11 @@ export type components = {
              * @description Stable id.
              */
             id: number;
+            /**
+             * Format: int64
+             * @description The job it belongs to.
+             */
+            jobId: number;
             /** @description A backup or an integrity check. */
             kind: components["schemas"]["BackupRunKind"];
             /** @description The id of the version restic made. */
@@ -4824,6 +4846,8 @@ export type components = {
             state: components["schemas"]["BackupRunState"];
             /** @description The schedule or an administrator. */
             trigger: components["schemas"]["BackupRunTrigger"];
+            /** @description The first 100 files and folders it could not read; empty when it read everything. */
+            unreadable: components["schemas"]["BackupUnreadable"][];
             /**
              * Format: int32
              * @description Files or folders that could not be read.
@@ -4835,7 +4859,7 @@ export type components = {
          * @enum {unknown}
          */
         BackupRunKind: "backup" | "check";
-        /** @description A job's runs and checks, newest first. */
+        /** @description Runs and checks, newest first. */
         BackupRunList: {
             runs: components["schemas"]["BackupRun"][];
         };
@@ -4986,6 +5010,13 @@ export type components = {
              * @description When it ran, UTC.
              */
             testedAt: string;
+        };
+        /** @description A file or folder a backup run could not read, so it is missing from that version. */
+        BackupUnreadable: {
+            /** @description The shared folder's or home's name and the path below it, with `/` between the parts. */
+            path: string;
+            /** @description `permission` (the box may not read it), `missing` (it went away while the run read it) or `other`. */
+            reason: string;
         };
         /**
          * @description How a bond uses its cards.
@@ -11916,6 +11947,42 @@ export interface operations {
             path: {
                 id: number;
             };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BackupRunList"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    ListBackupHistory: {
+        parameters: {
+            query?: {
+                before?: number;
+                jobId?: number;
+                kind?: string;
+                limit?: number;
+                since?: string;
+                state?: string;
+            };
+            header?: never;
+            path?: never;
             cookie?: never;
         };
         requestBody?: never;

@@ -53,6 +53,9 @@ public sealed partial class BackupJobService(
     /// <summary>Runs kept per job; older ones are deleted.</summary>
     public const int KeptRuns = 500;
 
+    /// <summary>The most runs one page of the history returns.</summary>
+    public const int MaxHistory = 2000;
+
     private const string SelectJob =
         """
         SELECT id AS Id, name AS Name, target_id AS TargetId, repository AS Repository, repository_key AS RepositoryKey,
@@ -68,7 +71,8 @@ public sealed partial class BackupJobService(
         """
         SELECT id AS Id, job_id AS JobId, kind AS Kind, trigger AS Trigger, board_job_id AS BoardJobId, state AS State,
             started_at AS StartedAt, finished_at AS FinishedAt, files AS Files, bytes AS Bytes, added_bytes AS AddedBytes,
-            snapshot AS Snapshot, warnings AS Warnings, error_code AS ErrorCode, error_params AS ErrorParams
+            snapshot AS Snapshot, warnings AS Warnings, error_code AS ErrorCode, error_params AS ErrorParams,
+            unreadable AS Unreadable
         FROM backup_runs
         """;
 
@@ -253,6 +257,48 @@ public sealed partial class BackupJobService(
         await RowAsync(connection, id, cancellationToken);
         var rows = await connection.QueryAsync<RunRow>(new CommandDefinition(
             SelectRun + " WHERE job_id = @id ORDER BY id DESC LIMIT @limit", new { id, limit = Math.Clamp(limit, 1, KeptRuns) }, cancellationToken: cancellationToken));
+        return new BackupRunList([.. rows.Select(View)]);
+    }
+
+    /// <summary>
+    /// The runs and checks of every job, or of one, newest first (#402): the Backup app's activity. Filters by kind, state
+    /// and start, and pages by id (<see cref="BackupRunQuery.Before"/>).
+    /// </summary>
+    public async Task<BackupRunList> HistoryAsync(BackupRunQuery query, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(query);
+        var where = new List<string>();
+        if (query.JobId is not null)
+        {
+            where.Add("job_id = @JobId");
+        }
+        if (query.Kind is not null)
+        {
+            where.Add("kind = @kind");
+        }
+        if (query.State is not null)
+        {
+            where.Add("state = @state");
+        }
+        if (query.Since is not null)
+        {
+            where.Add("started_at >= @since");
+        }
+        if (query.Before is not null)
+        {
+            where.Add("id < @Before");
+        }
+        var sql = SelectRun + (where.Count == 0 ? "" : " WHERE " + string.Join(" AND ", where)) + " ORDER BY started_at DESC, id DESC LIMIT @limit";
+        await using var connection = await connections.OpenAsync(cancellationToken);
+        var rows = await connection.QueryAsync<RunRow>(new CommandDefinition(sql, new
+        {
+            query.JobId,
+            kind = query.Kind is { } kind ? Text(kind) : null,
+            state = query.State is { } state ? Text(state) : null,
+            since = query.Since is { } since ? SessionService.Format(since.ToUniversalTime()) : null,
+            query.Before,
+            limit = Math.Clamp(query.Limit, 1, MaxHistory),
+        }, cancellationToken: cancellationToken));
         return new BackupRunList([.. rows.Select(View)]);
     }
 
@@ -446,9 +492,10 @@ public sealed partial class BackupJobService(
                 return (BackupRunState.Failed, failure);
             }
             await targets.RecordConnectionAsync(row.TargetId, CancellationToken.None);
+            ShareRelative(report, sources);
             if (report.Warnings > 0 || result.ExitCode == ResticCommands.Incomplete)
             {
-                LogUnreadable(row.Id, report.Warnings, string.Join(", ", report.WarningItems));
+                LogUnreadable(row.Id, report.Warnings, string.Join(", ", report.WarningItems.Take(20).Select(item => item.Item)));
             }
             var state = result.ExitCode == ResticCommands.Incomplete ? BackupRunState.Warning : BackupRunState.Succeeded;
             if (await restic.ForgetAsync(location, settings.Retention, context.Cancellation) is { ExitCode: not 0 } forget)
@@ -495,7 +542,7 @@ public sealed partial class BackupJobService(
             await connection.ExecuteAsync(
                 """
                 UPDATE backup_runs SET state = @state, finished_at = @now, files = @Files, bytes = @Bytes, added_bytes = @AddedBytes,
-                    snapshot = @Snapshot, warnings = @Warnings, error_code = @code, error_params = @parameters
+                    snapshot = @Snapshot, warnings = @Warnings, error_code = @code, error_params = @parameters, unreadable = @unreadable
                 WHERE id = @runId
                 """,
                 new
@@ -510,6 +557,9 @@ public sealed partial class BackupJobService(
                     report.Warnings,
                     code = error?.Code,
                     parameters = error is null ? null : BackupSsh.Params(error),
+                    unreadable = report.WarningItems.Count == 0
+                        ? null
+                        : JsonSerializer.Serialize(report.WarningItems.Select(item => new BackupUnreadable(item.Item, item.Reason)), _json),
                 });
         }
         LogRunFinished(row.Id, runId, state, error?.Code);
@@ -590,7 +640,23 @@ public sealed partial class BackupJobService(
         }
     }
 
-    private sealed record ResolvedSource(string Share, string Dataset, string Mountpoint, string Path);
+    private sealed record ResolvedSource(string Share, string Dataset, string Mountpoint, string Path, string Root);
+
+    /// <summary>Rewrites the unreadable items from the live paths restic read to the share's name and the path below it.</summary>
+    private static void ShareRelative(ResticReport report, IReadOnlyList<ResolvedSource> sources)
+    {
+        for (var index = 0; index < report.WarningItems.Count; index++)
+        {
+            var item = report.WarningItems[index];
+            var source = sources
+                .Where(source => item.Item == source.Root || item.Item.StartsWith(source.Root + "/", StringComparison.Ordinal))
+                .MaxBy(source => source.Root.Length);
+            if (source is not null)
+            {
+                report.WarningItems[index] = item with { Item = (source.Share + item.Item[source.Root.Length..]).TrimEnd('/') };
+            }
+        }
+    }
 
     /// <summary>Each source's dataset, its mountpoint and the live folder. Throws when a source cannot be backed up now.</summary>
     private async Task<List<ResolvedSource>> ResolveSourcesAsync(IReadOnlyList<BackupSource> sources, CancellationToken cancellationToken)
@@ -629,7 +695,7 @@ public sealed partial class BackupJobService(
             {
                 throw SourceUnavailable(name, "missing", source.Path);
             }
-            result.Add(new ResolvedSource(name, root.Dataset, mountpoint, path));
+            result.Add(new ResolvedSource(name, root.Dataset, mountpoint, path, root.Path.TrimEnd('/')));
         }
         return result;
     }
@@ -815,6 +881,7 @@ public sealed partial class BackupJobService(
 
     private static BackupRun View(RunRow row) => new(
         row.Id,
+        row.JobId,
         Enum.Parse<BackupRunKind>(row.Kind, ignoreCase: true),
         Enum.Parse<BackupRunTrigger>(row.Trigger, ignoreCase: true),
         row.BoardJobId,
@@ -827,7 +894,8 @@ public sealed partial class BackupJobService(
         row.Snapshot,
         (int)row.Warnings,
         row.ErrorCode,
-        row.ErrorParams is null ? null : JsonSerializer.Deserialize<JsonElement>(row.ErrorParams));
+        row.ErrorParams is null ? null : JsonSerializer.Deserialize<JsonElement>(row.ErrorParams),
+        row.Unreadable is null ? [] : JsonSerializer.Deserialize<List<BackupUnreadable>>(row.Unreadable, _json) ?? []);
 
     private static string Text<T>(T value) where T : struct, Enum => value.ToString().ToLowerInvariant();
 
@@ -874,6 +942,7 @@ public sealed partial class BackupJobService(
         public long Warnings { get; init; }
         public string? ErrorCode { get; init; }
         public string? ErrorParams { get; init; }
+        public string? Unreadable { get; init; }
     }
 
     [LoggerMessage(Level = LogLevel.Information, Message = "Backup job {JobId} added with repository {Repository} (existing: {Existing})")]
