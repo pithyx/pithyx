@@ -120,7 +120,6 @@
     "delete": "Delete",
     "name": "Name",
     "route": "From → to",
-    "kind": "Kind",
     "schedule": "Schedule",
     "lastRun": "Last run",
     "nextRun": "Next run",
@@ -314,5 +313,11 @@
     },
     "unreadableMore": "{count, plural, one {and # more file} other {and # more files}}",
     "unreadableHint": "The rest of the version is complete. Give the box read access to these files, or exclude them in the backup's settings."
+  },
+  "when": {
+    "today": "Today, {time}",
+    "tomorrow": "Tomorrow, {time}",
+    "yesterday": "Yesterday, {time}",
+    "date": "{date}, {time}"
   }
 }

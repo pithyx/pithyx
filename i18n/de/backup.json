@@ -120,7 +120,6 @@
     "delete": "Löschen",
     "name": "Name",
     "route": "Von → Nach",
-    "kind": "Art",
     "schedule": "Zeitplan",
     "lastRun": "Letzter Lauf",
     "nextRun": "Nächster Lauf",
@@ -314,5 +313,11 @@
     },
     "unreadableMore": "{count, plural, one {und # weitere Datei} other {und # weitere Dateien}}",
     "unreadableHint": "Der Rest der Version ist vollständig. Gib der Box Leserechte auf diese Dateien oder schließe sie in den Einstellungen des Backups aus."
+  },
+  "when": {
+    "today": "Heute, {time}",
+    "tomorrow": "Morgen, {time}",
+    "yesterday": "Gestern, {time}",
+    "date": "{date}, {time}"
   }
 }

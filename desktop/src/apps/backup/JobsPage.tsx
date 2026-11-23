@@ -1,6 +1,5 @@
 import type { PithyxApp } from '@pithyx/sdk';
 import {
-  Badge,
   Button,
   DataTable,
   ProgressBar,
@@ -35,7 +34,7 @@ import {
   type BackupRun,
   type BackupTarget,
 } from '../sdk/backups';
-import { describeProblem, formatDate } from '../storage/shared';
+import { describeProblem } from '../storage/shared';
 import { dayIndex, daysAgo, useActiveRuns, useBackupJobs, useHistory, type BoardJob } from './data';
 import { DirectionTag, Route, directionOf } from './Direction';
 import { EmptyCard } from './EmptyCard';
@@ -116,6 +115,24 @@ export function useSourceNames(app: PithyxApp) {
   };
 }
 
+/** A time close to now in few words: "Today, 02:06", "Tomorrow, 02:00", else the date without the year, "22.09., 22:48". */
+export function useWhen() {
+  const { t } = useTranslation('backup');
+  const locale = useFormatLocale();
+  const time = new Intl.DateTimeFormat(locale, { timeStyle: 'short' });
+  const date = new Intl.DateTimeFormat(locale, { day: '2-digit', month: '2-digit' });
+  return (value: string): string => {
+    const at = new Date(value);
+    const day = Math.round((daysAgo(0, at).getTime() - daysAgo(0).getTime()) / 86_400_000);
+    if (day === 0 || day === 1 || day === -1) {
+      return t(`when.${day === 0 ? 'today' : day === 1 ? 'tomorrow' : 'yesterday'}`, {
+        time: time.format(at),
+      });
+    }
+    return t('when.date', { date: date.format(at), time: time.format(at) });
+  };
+}
+
 export function useDuration() {
   const locale = useFormatLocale();
   const unit = (value: number, name: 'second' | 'minute' | 'hour') =>
@@ -141,10 +158,16 @@ export function runSeconds(run: BackupRun): number | undefined {
     : Math.max(0, (Date.parse(run.finishedAt) - Date.parse(run.startedAt)) / 1000);
 }
 
-/** A job's schedule in words: "Daily 02:00", "Mondays 02:00", or the cron expression. */
+/** A job's schedule in words: "Daily 2:00 AM", "Every Monday, 2:00 AM", or the cron expression. */
 export function useScheduleText() {
   const { t } = useTranslation('backup');
   const locale = useFormatLocale();
+  const clockTime = new Intl.DateTimeFormat(locale, { timeStyle: 'short' });
+  // The schedule keeps "HH:MM" in the box's time; it is shown in the user's way of writing times.
+  const at = (time: string) => {
+    const [hours = 0, minutes = 0] = time.split(':').map(Number);
+    return clockTime.format(new Date(2023, 0, 1, hours, minutes));
+  };
   return (job: BackupJob): string => {
     if (!job.settings.enabled) {
       return t('schedule.off');
@@ -154,17 +177,17 @@ export function useScheduleText() {
       case 'hourly':
         return t('schedule.hourly', { minute: String(schedule.minute).padStart(2, '0') });
       case 'daily':
-        return t('schedule.daily', { time: schedule.time });
+        return t('schedule.daily', { time: at(schedule.time) });
       case 'weekly':
         // 1 January 2023 was a Sunday, cron's day 0.
         return t('schedule.weekly', {
           day: new Intl.DateTimeFormat(locale, { weekday: 'long' }).format(
             new Date(2023, 0, 1 + schedule.day),
           ),
-          time: schedule.time,
+          time: at(schedule.time),
         });
       case 'monthly':
-        return t('schedule.monthly', { day: schedule.day, time: schedule.time });
+        return t('schedule.monthly', { day: schedule.day, time: at(schedule.time) });
       case 'custom':
         return schedule.cron;
     }
@@ -232,6 +255,7 @@ function DaysBar({ runs }: { runs: readonly BackupRun[] }) {
 function RunsTable({ app, job }: { app: PithyxApp; job: BackupJob }) {
   const { t } = useTranslation('backup');
   const locale = useFormatLocale();
+  const when = useWhen();
   const duration = useDuration();
   const runs = useQuery({
     // A new or finished run changes the job's last run, which reads the list again.
@@ -249,7 +273,7 @@ function RunsTable({ app, job }: { app: PithyxApp; job: BackupJob }) {
     {
       id: 'started',
       label: t('runs.started'),
-      cell: (run) => formatDate(run.startedAt, locale),
+      cell: (run) => when(run.startedAt),
       isRowHeader: true,
     },
     {
@@ -336,7 +360,8 @@ function JobDetails({
   sourcePath: (source: { shareId: number; path: string }) => string;
 }) {
   const { t } = useTranslation('backup');
-  const locale = useFormatLocale();
+  const when = useWhen();
+  const scheduleText = useScheduleText();
   const state = jobState(job);
   const running = runningOf(job);
   const lastCheck = job.lastCheck;
@@ -359,22 +384,22 @@ function JobDetails({
       {job.lastRun?.state === 'failed' && <RunError run={job.lastRun} />}
       {lastCheck?.state === 'failed' && <RunError run={lastCheck} />}
       <dl className={styles.facts}>
+        <dt>{t('jobs.schedule')}</dt>
+        <dd>{scheduleText(job)}</dd>
         <dt>{t('jobs.nextRun')}</dt>
-        <dd>{job.nextRunAt === null ? t('jobs.byHand') : formatDate(job.nextRunAt, locale)}</dd>
+        <dd>{job.nextRunAt === null ? t('jobs.byHand') : when(job.nextRunAt)}</dd>
         <dt>{t('jobs.lastBackup')}</dt>
-        <dd>
-          {job.lastSuccessAt === null ? t('jobs.noBackup') : formatDate(job.lastSuccessAt, locale)}
-        </dd>
+        <dd>{job.lastSuccessAt === null ? t('jobs.noBackup') : when(job.lastSuccessAt)}</dd>
         <dt>{t('jobs.check')}</dt>
         <dd>
           {lastCheck?.finishedAt != null
             ? t('jobs.lastCheck', {
-                time: formatDate(lastCheck.finishedAt, locale),
+                time: when(lastCheck.finishedAt),
                 state: t(`runs.states.${lastCheck.state}`),
               })
             : job.nextCheckAt === null
               ? t('jobs.noCheck')
-              : t('jobs.nextCheck', { time: formatDate(job.nextCheckAt, locale) })}
+              : t('jobs.nextCheck', { time: when(job.nextCheckAt) })}
         </dd>
         <dt>{t('jobs.repository')}</dt>
         <dd className={styles.mono}>
@@ -421,6 +446,7 @@ export function JobsPage({
   const board = useActiveRuns();
   const { route, sourcePath } = useSourceNames(app);
   const scheduleText = useScheduleText();
+  const when = useWhen();
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const history = useHistory(app, {
     kind: 'backup',
@@ -454,39 +480,34 @@ export function JobsPage({
     {
       id: 'name',
       label: t('jobs.name'),
-      cell: (job) => <span className={styles.name}>{job.settings.name}</span>,
+      // The kind sits below the name, so the table keeps its room for the route.
+      cell: (job) => (
+        <span className={styles.twoLines}>
+          <span className={styles.name}>{job.settings.name}</span>
+          <span className={styles.muted}>{t(`kinds.${job.kind}`)}</span>
+        </span>
+      ),
       sortValue: (job) => job.settings.name,
       isRowHeader: true,
+      width: '18%',
     },
     {
       id: 'route',
       label: t('jobs.route'),
       cell: (job) => <Route from={route(job)} to={targetOf(job)?.name ?? ''} />,
-      width: '24%',
-    },
-    {
-      id: 'kind',
-      label: t('jobs.kind'),
-      hideWhenNarrow: true,
-      cell: (job) => <Badge tone="neutral">{t(`kinds.${job.kind}`)}</Badge>,
-    },
-    {
-      id: 'schedule',
-      label: t('jobs.schedule'),
-      muted: true,
-      hideWhenNarrow: true,
-      cell: scheduleText,
+      width: '26%',
     },
     {
       id: 'last',
       label: t('jobs.lastRun'),
+      width: 128,
       cell: (job) => {
         const state = jobState(job);
         return (
           <span className={styles.twoLines}>
             <StatusBadge tone={TONES[state]}>{t(`jobs.status.${state}`)}</StatusBadge>
             {job.lastRun !== null && (
-              <span className={styles.muted}>{formatDate(job.lastRun.startedAt, locale)}</span>
+              <span className={styles.muted}>{when(job.lastRun.startedAt)}</span>
             )}
           </span>
         );
@@ -496,10 +517,15 @@ export function JobsPage({
     {
       id: 'next',
       label: t('jobs.nextRun'),
-      muted: true,
       hideWhenNarrow: true,
-      cell: (job) =>
-        job.nextRunAt === null ? t('jobs.byHand') : formatDate(job.nextRunAt, locale),
+      width: 150,
+      // The schedule sits below the next run, so the table keeps its room for the route.
+      cell: (job) => (
+        <span className={styles.twoLines}>
+          <span>{job.nextRunAt === null ? t('jobs.byHand') : when(job.nextRunAt)}</span>
+          <span className={styles.muted}>{scheduleText(job)}</span>
+        </span>
+      ),
       sortValue: (job) => job.nextRunAt ?? '',
     },
     {
@@ -507,6 +533,7 @@ export function JobsPage({
       label: t('jobs.size'),
       align: 'end',
       hideWhenNarrow: true,
+      width: 88,
       cell: (job) => {
         const bytes = sizeOf(job);
         return bytes === null ? '' : formatBytes(bytes, locale);
@@ -517,6 +544,7 @@ export function JobsPage({
       id: 'days',
       label: t('jobs.days'),
       hideWhenNarrow: true,
+      width: 144,
       cell: (job) => <DaysBar runs={runsOf.get(job.id) ?? []} />,
     },
   ];

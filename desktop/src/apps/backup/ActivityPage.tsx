@@ -15,7 +15,7 @@ import {
   type BackupTarget,
 } from '../sdk/backups';
 import { describeProblem, formatDate } from '../storage/shared';
-import { daysAgo, jobOfBoard, useActiveRuns, useHistory, type BoardJob } from './data';
+import { clock, daysAgo, jobOfBoard, useActiveRuns, useHistory, type BoardJob } from './data';
 import { DirectionTag, Route, directionOf } from './Direction';
 import {
   RUN_TONES,
@@ -25,6 +25,7 @@ import {
   useBackupJobs,
   useDuration,
   useSourceNames,
+  useWhen,
 } from './JobsPage';
 import styles from './Backup.module.css';
 
@@ -67,11 +68,11 @@ function RunningRun({
   const progress = board.progress;
   const number = new Intl.NumberFormat(locale);
   const percent = new Intl.NumberFormat(locale, { style: 'percent' });
-  const [now, setNow] = useState(() => Date.now());
+  const [now, setNow] = useState(() => clock.now());
   // Speed and time left follow the clock, which lives outside React.
   useEffect(() => {
     const timer = setInterval(() => {
-      setNow(Date.now());
+      setNow(clock.now());
     }, 5000);
     return () => {
       clearInterval(timer);
@@ -297,6 +298,7 @@ export function ActivityPage({
   const jobs = useBackupJobs(app);
   const board = useActiveRuns();
   const { route } = useSourceNames(app);
+  const when = useWhen();
   const [jobId, setJobId] = useState<number | undefined>();
   const [state, setState] = useState<BackupRun['state'] | undefined>();
   const [period, setPeriod] = useState<Period>('week');
@@ -329,28 +331,34 @@ export function ActivityPage({
     {
       id: 'started',
       label: t('runs.started'),
-      cell: (run) => formatDate(run.startedAt, locale),
+      cell: (run) => when(run.startedAt),
       isRowHeader: true,
+      width: 150,
     },
     {
       id: 'direction',
       label: t('activity.direction'),
       hideWhenNarrow: true,
+      width: 140,
       cell: (run) => (
         <DirectionTag direction={directionOf(jobById.get(run.jobId)?.kind ?? 'versioned')} />
       ),
     },
-    { id: 'backup', label: t('activity.backup'), cell: nameOf },
     {
-      id: 'kind',
-      label: t('runs.kind'),
-      muted: true,
-      hideWhenNarrow: true,
-      cell: (run) => t(`activity.kinds.${run.kind}`),
+      id: 'backup',
+      label: t('activity.backup'),
+      // The kind sits below the name, so the name keeps its room.
+      cell: (run) => (
+        <span className={styles.twoLines}>
+          <span className={styles.name}>{nameOf(run)}</span>
+          <span className={styles.muted}>{t(`activity.kinds.${run.kind}`)}</span>
+        </span>
+      ),
     },
     {
       id: 'state',
       label: t('runs.state'),
+      width: 150,
       cell: (run) => (
         <StatusBadge tone={RUN_TONES[run.state]}>{t(`runs.states.${run.state}`)}</StatusBadge>
       ),
@@ -360,6 +368,7 @@ export function ActivityPage({
       label: t('runs.files'),
       align: 'end',
       hideWhenNarrow: true,
+      width: 100,
       cell: (run) => (run.files === null ? '' : number.format(run.files)),
     },
     {
@@ -367,6 +376,7 @@ export function ActivityPage({
       label: t('runs.added'),
       align: 'end',
       hideWhenNarrow: true,
+      width: 100,
       cell: (run) => (run.addedBytes === null ? '' : formatBytes(run.addedBytes, locale)),
     },
   ];
@@ -398,7 +408,7 @@ export function ActivityPage({
       run.warnings,
       run.errorCode,
     ]);
-    const today = new Date().toISOString().slice(0, 10);
+    const today = new Date(clock.now()).toISOString().slice(0, 10);
     saveCsv(
       [header, ...rows].map((row) => row.map(csvCell).join(',')).join('\r\n') + '\r\n',
       `backup-activity-${today}.csv`,
@@ -494,6 +504,7 @@ export function ActivityPage({
         columns={columns}
         items={runs}
         getKey={(run) => run.id}
+        density="comfortable"
         selectionMode="single"
         selectedKeys={selected === undefined ? new Set() : new Set([selected.id])}
         onSelectionChange={(keys) => {

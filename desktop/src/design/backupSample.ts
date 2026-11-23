@@ -1,11 +1,15 @@
 import type { components } from '@pithyx/api-client';
 import type { BackupHistoryQuery, BackupJob, BackupRun, BackupTarget } from '../apps/sdk/backups';
+import { clock } from '../apps/backup/data';
 import { useRealtime } from '../realtime/connection';
 import { now } from './sampleData';
 import type { ExtraAnswers } from './storageSample';
 
 // Sample data of the Backup app (D414, D415, D416): two targets, three backups (one backing up right now, one fine, one
 // failed), the runs of the selected one and two weeks of history. Names of servers and folders are user data; keys and fingerprints are invented.
+
+// The Backup app counts its periods and day bars from the gallery's sample time, like the taskbar's clock.
+clock.now = () => now.getTime();
 
 const at = (hoursAgo: number) => new Date(now.getTime() - hoursAgo * 3_600_000).toISOString();
 

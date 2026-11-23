@@ -59,8 +59,11 @@ export function jobOfBoard(board: BoardJob, jobs: readonly BackupJob[]): BackupJ
 
 const DAY = 86_400_000;
 
+/** The time the app's periods, day bars and speeds count from; the design gallery sets its sample time. */
+export const clock = { now: (): number => Date.now() };
+
 /** Midnight of the day `days` before today, in the browser's time zone. */
-export function daysAgo(days: number, now = new Date()): Date {
+export function daysAgo(days: number, now = new Date(clock.now())): Date {
   const start = new Date(now);
   start.setHours(0, 0, 0, 0);
   start.setDate(start.getDate() - days);
@@ -68,7 +71,7 @@ export function daysAgo(days: number, now = new Date()): Date {
 }
 
 /** The index of the local day of `time` among the last `days` days, 0 the oldest, or -1 outside them. */
-export function dayIndex(time: string, days: number, now = new Date()): number {
+export function dayIndex(time: string, days: number, now = new Date(clock.now())): number {
   const first = daysAgo(days - 1, now);
   const start = new Date(time);
   if (start < first) {
