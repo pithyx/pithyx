@@ -161,15 +161,15 @@
       "not_found": "This backup target no longer exists.",
       "not_writable": "The box signed in but cannot use the folder {path} on the server ({reason, select, path {it does not exist and could not be made} other {no file can be written there}}).",
       "unreachable": "The box could not reach the server ({reason, select, dns {the name is unknown} refused {the port is closed} timeout {no answer} network {no route to it} other {the connection failed}}).",
-      "in_use": "Jobs still use this target: {jobs}. Delete them first."
+      "in_use": "These backups still use this target: {jobs}. Delete them first."
     },
     "check": {
-      "failed": "The check found errors in the repository. Run another check; if it fails again, start a new repository for this job."
+      "failed": "The check found errors in the repository. Run another check; if it fails again, start a new repository for this backup."
     },
     "job": {
-      "busy": "The job {name} is running right now. Wait until it is done or cancel it.",
-      "invalid": "This setting of the job is not valid: {field, select, name {name} sources {folders} schedule {schedule} checkSchedule {check schedule} retention {versions to keep} excludes {exclusions} checkReadPercent {share of data to read} uploadLimitKib {upload limit} downloadLimitKib {download limit} overdueHours {overdue after} repository {repository folder} existingKey {repository key} other {{field}}}.",
-      "name_taken": "Another job is already named {name}.",
+      "busy": "The backup {name} is running right now. Wait until it is done or cancel it.",
+      "invalid": "This setting of the backup is not valid: {field, select, name {name} sources {folders} schedule {schedule} checkSchedule {check schedule} retention {versions to keep} excludes {exclusions} checkReadPercent {share of data to read} uploadLimitKib {upload limit} downloadLimitKib {download limit} overdueHours {overdue after} repository {repository folder} existingKey {repository key} other {{field}}}.",
+      "name_taken": "Another backup is already named {name}.",
       "not_found": "This backup no longer exists."
     },
     "repository": {

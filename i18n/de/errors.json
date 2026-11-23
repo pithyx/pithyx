@@ -161,15 +161,15 @@
       "not_found": "Dieses Backup-Ziel gibt es nicht mehr.",
       "not_writable": "Die Box hat sich angemeldet, kann den Ordner {path} auf dem Server aber nicht nutzen ({reason, select, path {er existiert nicht und konnte nicht angelegt werden} other {dort lässt sich keine Datei schreiben}}).",
       "unreachable": "Die Box hat den Server nicht erreicht ({reason, select, dns {der Name ist unbekannt} refused {der Port ist zu} timeout {keine Antwort} network {kein Weg dorthin} other {die Verbindung ist fehlgeschlagen}}).",
-      "in_use": "Diese Jobs nutzen das Ziel noch: {jobs}. Lösch sie zuerst."
+      "in_use": "Diese Backups nutzen das Ziel noch: {jobs}. Lösch sie zuerst."
     },
     "check": {
-      "failed": "Die Prüfung hat Fehler im Repository gefunden. Starte eine weitere Prüfung; schlägt auch sie fehl, leg für diesen Job ein neues Repository an."
+      "failed": "Die Prüfung hat Fehler im Repository gefunden. Starte eine weitere Prüfung; schlägt auch sie fehl, leg für dieses Backup ein neues Repository an."
     },
     "job": {
-      "busy": "Der Job {name} läuft gerade. Warte, bis er fertig ist, oder brich ihn ab.",
-      "invalid": "Diese Einstellung des Jobs ist ungültig: {field, select, name {Name} sources {Ordner} schedule {Zeitplan} checkSchedule {Prüfplan} retention {aufbewahrte Versionen} excludes {Ausschlüsse} checkReadPercent {gelesener Anteil der Daten} uploadLimitKib {Upload-Grenze} downloadLimitKib {Download-Grenze} overdueHours {überfällig nach} repository {Repository-Ordner} existingKey {Repository-Schlüssel} other {{field}}}.",
-      "name_taken": "Ein anderer Job heißt schon {name}.",
+      "busy": "Das Backup {name} läuft gerade. Warte, bis es fertig ist, oder brich es ab.",
+      "invalid": "Diese Einstellung des Backups ist ungültig: {field, select, name {Name} sources {Ordner} schedule {Zeitplan} checkSchedule {Prüfplan} retention {aufbewahrte Versionen} excludes {Ausschlüsse} checkReadPercent {gelesener Anteil der Daten} uploadLimitKib {Upload-Grenze} downloadLimitKib {Download-Grenze} overdueHours {überfällig nach} repository {Repository-Ordner} existingKey {Repository-Schlüssel} other {{field}}}.",
+      "name_taken": "Ein anderes Backup heißt schon {name}.",
       "not_found": "Dieses Backup gibt es nicht mehr."
     },
     "repository": {
