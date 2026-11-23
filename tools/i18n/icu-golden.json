@@ -2434,7 +2434,7 @@
     },
     "backup.job.not_found": {
       "params": {},
-      "expected": "This backup job no longer exists."
+      "expected": "This backup no longer exists."
     },
     "backup.repository.exists": {
       "params": {

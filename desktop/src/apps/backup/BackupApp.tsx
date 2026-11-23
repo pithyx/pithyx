@@ -16,16 +16,20 @@ import { useTranslation } from 'react-i18next';
 import { ErrorNotice } from '../../errors/ErrorNotice';
 import { useFormatLocale } from '../../i18n';
 import {
-  IconArchive,
+  IconActivity,
   IconKey,
   IconPencil,
   IconPlugConnected,
   IconPlus,
   IconServer,
   IconTrash,
+  IconUpload,
 } from '../../ui/icons';
 import type { SdkAppProps } from '../sdk/CoreSdkApp';
 import { backupsCall, targetsKey, type BackupJob, type BackupTarget } from '../sdk/backups';
+import { ActivityPage } from './ActivityPage';
+import { useActiveRuns } from './data';
+import { DirectionTag } from './Direction';
 import { DeleteJobDialog, JobDialog, KeyDialog } from './JobDialogs';
 import { EmptyCard } from './EmptyCard';
 import { JobsPage, useBackupJobs } from './JobsPage';
@@ -40,7 +44,9 @@ import {
 } from './TargetDialogs';
 import styles from './Backup.module.css';
 
-type Page = 'jobs' | 'targets';
+type Page = 'activity' | 'jobs' | 'targets';
+
+const PAGES: readonly Page[] = ['activity', 'jobs', 'targets'];
 
 type Opened =
   | { kind: 'add' }
@@ -59,9 +65,10 @@ function useTargets(app: PithyxApp) {
 }
 
 /**
- * The Backup app (D414, D415): the jobs that back up shared folders and homes with restic from ZFS snapshots, and the
- * targets they go to, each a server reached over SSH with its own key and the host key the administrator confirmed.
- * Administrators only; restores follow (#395).
+ * The Backup app (D414, D415, D416): the jobs that back up shared folders and homes with restic from ZFS snapshots, the
+ * targets they go to, each a server reached over SSH with its own key and the host key the administrator confirmed,
+ * and the activity of every run. The navigation groups the pages by direction, so it is always clear which way a
+ * backup goes. Administrators only; restores follow (#395).
  */
 export function BackupApp({ app }: SdkAppProps) {
   const { t } = useTranslation('backup');
@@ -74,29 +81,45 @@ export function BackupApp({ app }: SdkAppProps) {
   };
   const targetList = targets.data?.targets;
   const jobs = useBackupJobs(app);
+  const running = [...useActiveRuns().values()].filter((job) => job.state === 'running').length;
   const addTarget = () => {
     setOpened({ kind: 'add' });
   };
   const addJob = () => {
     setOpened({ kind: 'addJob' });
   };
-  // The primary action sits in the toolbar only beside a list; an empty list offers it in its own place.
+  // The primary action of the targets sits in the toolbar only beside a list; an empty list offers it in its own place.
+  // The jobs page has its own toolbar, which also acts on the selected job.
   const toolbarAction =
-    page === 'targets'
-      ? targetList !== undefined && targetList.length > 0
-        ? { label: t('targets.add'), onPress: addTarget }
-        : undefined
-      : jobs.data !== undefined && jobs.data.jobs.length > 0
-        ? { label: t('jobs.add'), onPress: addJob }
-        : undefined;
+    page === 'targets' && targetList !== undefined && targetList.length > 0
+      ? { label: t('targets.add'), onPress: addTarget }
+      : undefined;
+  const jobCount = jobs.data?.jobs.length;
+  // "Onto this box" (servers backed up to the box) joins with the pulls of #396.
   const groups: NavGroup[] = [
     {
-      id: 'backup',
+      id: 'overview',
+      label: t('nav.overview'),
+      items: [
+        {
+          id: 'activity',
+          label: t('nav.activity'),
+          icon: <IconActivity size={18} stroke={1.75} aria-hidden />,
+          ...(running === 0
+            ? {}
+            : { count: running, countLabel: t('nav.runningCount', { count: running }) }),
+        },
+      ],
+    },
+    {
+      id: 'out',
+      label: t('nav.out'),
       items: [
         {
           id: 'jobs',
           label: t('nav.jobs'),
-          icon: <IconArchive size={18} stroke={1.75} aria-hidden />,
+          icon: <IconUpload size={18} stroke={1.75} aria-hidden />,
+          ...(jobCount === undefined ? {} : { count: jobCount }),
         },
         {
           id: 'targets',
@@ -121,15 +144,24 @@ export function BackupApp({ app }: SdkAppProps) {
             groups={groups}
             selectedId={page}
             onSelect={(id) => {
-              setPage(id === 'targets' ? 'targets' : 'jobs');
+              setPage(PAGES.find((entry) => entry === id) ?? 'jobs');
               setView('page');
             }}
           />
         }
-        title={t(`${page}.title`)}
+        title={
+          page === 'activity' ? (
+            t('activity.title')
+          ) : (
+            <span className={styles.title}>
+              {t(`${page}.title`)}
+              <DirectionTag direction="out" />
+            </span>
+          )
+        }
         toolbar={
           toolbarAction === undefined ? undefined : (
-            <Toolbar aria-label={t(`${page}.toolbar`)}>
+            <Toolbar aria-label={t('targets.toolbar')}>
               <Button variant="primary" onPress={toolbarAction.onPress}>
                 <IconPlus size={18} stroke={1.75} aria-hidden />
                 {toolbarAction.label}
@@ -138,7 +170,9 @@ export function BackupApp({ app }: SdkAppProps) {
           )
         }
       >
-        {page === 'jobs' ? (
+        {page === 'activity' ? (
+          <ActivityPage app={app} targets={targetList} />
+        ) : page === 'jobs' ? (
           <JobsPage
             app={app}
             jobs={jobs}

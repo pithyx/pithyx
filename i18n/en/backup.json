@@ -71,20 +71,24 @@
   },
   "nav": {
     "label": "Backup",
-    "jobs": "Jobs",
+    "overview": "Overview",
+    "activity": "Activity",
+    "runningCount": "{count, plural, one {# running} other {# running}}",
+    "out": "From this box",
+    "jobs": "Box backups",
     "targets": "Targets"
   },
   "jobs": {
-    "title": "Jobs",
-    "toolbar": "Jobs",
-    "add": "Add job",
-    "list": "Jobs",
-    "loading": "Loading jobs",
-    "intro": "A job backs up folders of shared folders and homes to a target on a schedule. Each run first takes a ZFS snapshot, so the backup shows one moment, and keeps as many versions as you set.",
-    "emptyTitle": "No job yet",
-    "empty": "Add the first job to back up shared folders and homes.",
+    "title": "Box backups",
+    "toolbar": "Box backups",
+    "add": "Add box backup",
+    "list": "Box backups",
+    "loading": "Loading backups",
+    "intro": "Folders of this box, backed up to a target outside it: an SFTP server or a second box. Each run first takes a ZFS snapshot, so the backup shows one moment, and keeps as many versions as you set.",
+    "emptyTitle": "No box backup yet",
+    "empty": "Add the first backup of shared folders and homes to a target.",
     "noTargetsTitle": "No target yet",
-    "noTargets": "A job needs a server to back up to. Add a target first.",
+    "noTargets": "A backup needs a server to back up to. Add a target first.",
     "status": {
       "running": "Backing up",
       "checking": "Checking",
@@ -96,10 +100,7 @@
       "cancelled": "Cancelled",
       "interrupted": "Interrupted"
     },
-    "to": "To {target}",
-    "next": "Next run {time}",
     "byHand": "Runs only by hand",
-    "lastSuccess": "Last backup {time}",
     "noBackup": "No backup yet",
     "sources": "Folders",
     "sourcePath": "{share} / {path}",
@@ -116,7 +117,19 @@
     "checkNow": "Check now",
     "cancel": "Cancel",
     "edit": "Edit",
-    "delete": "Delete"
+    "delete": "Delete",
+    "name": "Name",
+    "route": "From → to",
+    "kind": "Kind",
+    "schedule": "Schedule",
+    "lastRun": "Last run",
+    "nextRun": "Next run",
+    "size": "Size",
+    "days": "Last 14 days",
+    "daysLabel": "Last 14 days: {succeeded} without problems, {warning} with warnings, {failed} failed, {none} without a backup",
+    "details": "Details of the backup",
+    "lastBackup": "Last backup",
+    "check": "Integrity check"
   },
   "runs": {
     "title": "Recent runs",
@@ -130,7 +143,7 @@
     "added": "Added",
     "duration": "Duration",
     "kinds": {
-      "backup": "Backup",
+      "backup": "Back up",
       "check": "Check"
     },
     "states": {
@@ -140,10 +153,11 @@
       "failed": "Failed",
       "cancelled": "Cancelled",
       "interrupted": "Interrupted"
-    }
+    },
+    "kindDuration": "{kind}, {duration}"
   },
   "jobForm": {
-    "addTitle": "Add job",
+    "addTitle": "Add box backup",
     "editTitle": "Edit {name}",
     "create": "Create",
     "name": "Name",
@@ -151,7 +165,7 @@
     "targetPlaceholder": "Choose a target",
     "repository": "Repository folder",
     "repositoryHint": "Below the target's folder. The box creates the repository there with a new key, which it shows once.",
-    "repositoryFixed": "Backs up to {repository} on {target}. The target and the repository of a job stay; for another one, add a new job.",
+    "repositoryFixed": "Backs up to {repository} on {target}. The target and the repository of a backup stay; for another one, add a new backup.",
     "existing": "Use an existing repository",
     "existingKey": "Key of the repository",
     "existingKeyHint": "The key the box showed when the repository was made, for example before a reinstall.",
@@ -215,11 +229,90 @@
     "copyManually": "Select the key and copy it by hand.",
     "download": "Download",
     "stored": "I stored the key outside the box",
-    "fileIntro": "Pithyx backup key of the job {name}, repository {repository} on {target}. Keep it secret."
+    "fileIntro": "Pithyx backup key of the backup {name}, repository {repository} on {target}. Keep it secret."
   },
   "deleteJob": {
     "title": "Delete {name}?",
-    "text": "The box forgets the job, its runs and its key. The repository stays on the target; without the key nobody can read it.",
+    "text": "The box forgets the backup, its runs and its key. The repository stays on the target; without the key nobody can read it.",
     "confirm": "Delete"
+  },
+  "direction": {
+    "out": "From this box",
+    "in": "Onto this box"
+  },
+  "route": {
+    "to": "to"
+  },
+  "kinds": {
+    "versioned": "Versioned"
+  },
+  "schedule": {
+    "off": "Only by hand",
+    "hourly": "Hourly at minute {minute}",
+    "daily": "Daily {time}",
+    "weekly": "Every {day}, {time}",
+    "monthly": "Monthly on day {day}, {time}"
+  },
+  "activity": {
+    "title": "Activity",
+    "intro": "What runs now, what waits and every run so far.",
+    "runningTitle": "Running now",
+    "runningCount": "{running} running, {waiting} waiting",
+    "nothingRunning": "Nothing is running. The next runs start on their schedule.",
+    "waiting": "Waiting",
+    "kinds": {
+      "backup": "Back up",
+      "check": "Check"
+    },
+    "progress": "Progress",
+    "files": "Files",
+    "ofTotal": "{done} of {total}",
+    "speed": "Speed",
+    "perSecond": "{size}/s",
+    "left": "Time left",
+    "about": "about {duration}",
+    "historyTitle": "History",
+    "filters": "Filters of the history",
+    "filterBackup": "Backup",
+    "allBackups": "All backups",
+    "filterState": "State",
+    "allStates": "All states",
+    "filterPeriod": "Period",
+    "periods": {
+      "day": "Today",
+      "week": "Last 7 days",
+      "month": "Last 30 days",
+      "quarter": "Last 90 days",
+      "all": "All time"
+    },
+    "exportCsv": "Export as CSV",
+    "loading": "Loading runs",
+    "empty": "No run in this period.",
+    "details": "Details of the run",
+    "more": "Show more",
+    "direction": "Direction",
+    "backup": "Backup",
+    "finished": "Finished",
+    "bytes": "Size in bytes",
+    "addedBytes": "Added in bytes",
+    "warnings": "Warnings",
+    "error": "Error code",
+    "deletedJob": "Deleted backup",
+    "period": "{start} to {end}",
+    "trigger": "Started",
+    "triggers": {
+      "schedule": "On schedule",
+      "manual": "By hand"
+    },
+    "version": "Version",
+    "throughput": "Throughput",
+    "unreadableTitle": "{count, plural, one {# file not backed up} other {# files not backed up}}",
+    "reasons": {
+      "permission": "No permission",
+      "missing": "Gone while reading",
+      "other": "Could not be read"
+    },
+    "unreadableMore": "{count, plural, one {and # more file} other {and # more files}}",
+    "unreadableHint": "The rest of the version is complete. Give the box read access to these files, or exclude them in the backup's settings."
   }
 }

@@ -170,7 +170,7 @@
       "busy": "Der Job {name} läuft gerade. Warte, bis er fertig ist, oder brich ihn ab.",
       "invalid": "Diese Einstellung des Jobs ist ungültig: {field, select, name {Name} sources {Ordner} schedule {Zeitplan} checkSchedule {Prüfplan} retention {aufbewahrte Versionen} excludes {Ausschlüsse} checkReadPercent {gelesener Anteil der Daten} uploadLimitKib {Upload-Grenze} downloadLimitKib {Download-Grenze} overdueHours {überfällig nach} repository {Repository-Ordner} existingKey {Repository-Schlüssel} other {{field}}}.",
       "name_taken": "Ein anderer Job heißt schon {name}.",
-      "not_found": "Diesen Backup-Job gibt es nicht mehr."
+      "not_found": "Dieses Backup gibt es nicht mehr."
     },
     "repository": {
       "exists": "In {path} liegt schon ein Repository. Um es zu nutzen, verbinde es mit seinem Schlüssel, statt ein neues anzulegen.",

@@ -352,9 +352,9 @@ export const appScreens: ScreenDefinition[] = [
   {
     id: 'backup-jobs',
     group: 'apps',
-    title: 'Backup: jobs',
+    title: 'Backup: box backups',
     description:
-      'Three backup jobs: one backing up now with its progress, one fine with its recent runs, one overdue after a failed run.',
+      'Three backups from this box as a table with route, schedule, last and next run, size and the last 14 days: one backing up now, one fine and selected with its details and recent runs, one overdue after a failed run.',
     render: (context) => (
       <CoreAppScene
         context={context}
@@ -362,7 +362,24 @@ export const appScreens: ScreenDefinition[] = [
         Component={BackupApp}
         answers={backupAnswers}
         seed={seedRunningBackup}
-        script={[{ press: 'Details', inside: 'Documents' }]}
+        script={[{ press: 'Documents' }]}
+      />
+    ),
+  },
+  {
+    id: 'backup-activity',
+    group: 'apps',
+    title: 'Backup: activity',
+    description:
+      'The run going on now with its progress, speed and Cancel, the history of every run with filters and CSV export, and a run with warnings selected: the files it could not back up and why.',
+    render: (context) => (
+      <CoreAppScene
+        context={context}
+        app="backup"
+        Component={BackupApp}
+        answers={backupAnswers}
+        seed={seedRunningBackup}
+        script={[{ press: 'backup:nav.activity' }, { press: 'backup:runs.states.warning' }]}
       />
     ),
   },
@@ -371,7 +388,7 @@ export const appScreens: ScreenDefinition[] = [
     group: 'apps',
     title: 'Backup: first start',
     description:
-      'The jobs page of a box without a target: the empty list says a job needs a target first and offers to add one.',
+      'The box backups of a box without a target: the empty list says a backup needs a target first and offers to add one.',
     render: (context) => (
       <CoreAppScene
         context={context}
@@ -384,9 +401,9 @@ export const appScreens: ScreenDefinition[] = [
   {
     id: 'backup-jobs-empty',
     group: 'apps',
-    title: 'Backup: no job yet',
+    title: 'Backup: no backup yet',
     description:
-      'The jobs page of a box with targets but no job: the empty list offers to add the first job.',
+      'The box backups of a box with targets but no backup: the empty list offers to add the first one.',
     render: (context) => (
       <CoreAppScene
         context={context}
@@ -415,9 +432,9 @@ export const appScreens: ScreenDefinition[] = [
   {
     id: 'backup-job-new',
     group: 'apps',
-    title: 'Backup: new job',
+    title: 'Backup: new box backup',
     description:
-      'The dialog of a new job: target and repository, folders, schedule, versions to keep, the integrity check and limits.',
+      'The dialog of a new box backup: target and repository, folders, schedule, versions to keep, the integrity check and limits.',
     render: (context) => (
       <CoreAppScene
         context={context}

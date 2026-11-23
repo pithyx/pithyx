@@ -271,7 +271,7 @@
       },
       "overdue": {
         "title": "Backup {job} is overdue",
-        "body": "No successful run for {days, plural, one {# day} other {# days}}. Check the job and its target.",
+        "body": "No successful run for {days, plural, one {# day} other {# days}}. Check the backup and its target.",
         "action": "Open Backup"
       },
       "checkFailed": {

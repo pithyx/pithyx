@@ -1,11 +1,11 @@
 import type { components } from '@pithyx/api-client';
-import type { BackupJob, BackupRun, BackupTarget } from '../apps/sdk/backups';
+import type { BackupHistoryQuery, BackupJob, BackupRun, BackupTarget } from '../apps/sdk/backups';
 import { useRealtime } from '../realtime/connection';
 import { now } from './sampleData';
 import type { ExtraAnswers } from './storageSample';
 
-// Sample data of the Backup app (D414, D415): two targets, three jobs (one backing up right now, one fine, one failed)
-// and the runs of the expanded one. Names of servers and folders are user data; keys and fingerprints are invented.
+// Sample data of the Backup app (D414, D415, D416): two targets, three backups (one backing up right now, one fine, one
+// failed), the runs of the selected one and two weeks of history. Names of servers and folders are user data; keys and fingerprints are invented.
 
 const at = (hoursAgo: number) => new Date(now.getTime() - hoursAgo * 3_600_000).toISOString();
 
@@ -64,6 +64,7 @@ function run(
 ): BackupRun {
   return {
     id,
+    jobId: 2,
     kind: 'backup',
     trigger: 'schedule',
     state: 'succeeded',
@@ -77,13 +78,22 @@ function run(
     errorCode: null,
     errorParams: null,
     boardJobId: null,
+    unreadable: [],
     ...extra,
   };
 }
 
 const documentsRuns: BackupRun[] = [
   run(110, 12.5, 6),
-  run(109, 36.5, 4, { state: 'warning', warnings: 2, addedBytes: 860_000_000 }),
+  run(109, 36.5, 4, {
+    state: 'warning',
+    warnings: 2,
+    addedBytes: 860_000_000,
+    unreadable: [
+      { path: 'Documents/Taxes/2025/.~lock.return.ods#', reason: 'permission' },
+      { path: 'Documents/Scans/tmp-0412.pdf', reason: 'missing' },
+    ],
+  }),
   run(108, 60.5, 5, { addedBytes: 310_000_000 }),
   run(107, 84.5, 3, {
     kind: 'check',
@@ -123,6 +133,7 @@ export const sampleJobs: BackupJob[] = [
       { shareId: 12, path: '' },
     ]),
     lastRun: run(120, 0.4, 0, {
+      jobId: 1,
       state: 'running',
       trigger: 'manual',
       finishedAt: null,
@@ -132,7 +143,13 @@ export const sampleJobs: BackupJob[] = [
       snapshot: null,
       boardJobId: 501,
     }),
-    lastCheck: run(118, 80, 12, { kind: 'check', files: null, bytes: null, addedBytes: null }),
+    lastCheck: run(118, 80, 12, {
+      jobId: 1,
+      kind: 'check',
+      files: null,
+      bytes: null,
+      addedBytes: null,
+    }),
     lastSuccessAt: at(12.4),
     nextRunAt: at(-11.5),
     nextCheckAt: at(-80),
@@ -164,6 +181,7 @@ export const sampleJobs: BackupJob[] = [
       checkSchedule: null,
     },
     lastRun: run(115, 101, 2, {
+      jobId: 3,
       state: 'failed',
       files: null,
       bytes: null,
@@ -181,6 +199,37 @@ export const sampleJobs: BackupJob[] = [
   },
 ];
 
+// Two weeks of nightly runs of the first two backups and the weekly ones of the third, newest first.
+const olderRuns: BackupRun[] = Array.from({ length: 13 }, (_, day) => [
+  run(300 + day * 2, 24 * (day + 1) + 22, 14, {
+    jobId: 1,
+    files: 52_118,
+    bytes: 431_000_000_000,
+    addedBytes: 2_100_000_000,
+    ...(day === 8 ? { state: 'warning' as const, warnings: 1 } : {}),
+  }),
+  ...(day >= 3
+    ? [run(301 + day * 2, 24 * (day + 1) + 12.5, 5, { files: 9_840, bytes: 23_300_000_000 })]
+    : []),
+]).flat();
+const mediaRuns: BackupRun[] = [
+  ...(sampleJobs[2]?.lastRun === undefined || sampleJobs[2].lastRun === null
+    ? []
+    : [sampleJobs[2].lastRun]),
+  run(114, 101 + 168, 48, {
+    jobId: 3,
+    files: 61_004,
+    bytes: 402_000_000_000,
+    addedBytes: 22_800_000_000,
+  }),
+];
+const history: BackupRun[] = [
+  ...(sampleJobs[0]?.lastRun ? [sampleJobs[0].lastRun] : []),
+  ...documentsRuns,
+  ...mediaRuns,
+  ...olderRuns,
+].sort((a, b) => Date.parse(b.startedAt) - Date.parse(a.startedAt));
+
 /** The answers of the Backup app's calls in the gallery. */
 export const backupAnswers: ExtraAnswers = {
   'internal.admin.backups.targets': () => ({ targets: sampleTargets }),
@@ -189,6 +238,20 @@ export const backupAnswers: ExtraAnswers = {
   'internal.admin.backups.runs': (params) => ({
     runs: (params as { id: number }).id === 2 ? documentsRuns : [],
   }),
+  'internal.admin.backups.history': (params) => {
+    const { jobId, kind, state, since, limit } = params as BackupHistoryQuery;
+    return {
+      runs: history
+        .filter(
+          (entry) =>
+            (jobId === undefined || entry.jobId === jobId) &&
+            (kind === undefined || entry.kind === kind) &&
+            (state === undefined || entry.state === state) &&
+            (since === undefined || entry.startedAt >= since),
+        )
+        .slice(0, limit ?? 200),
+    };
+  },
 };
 
 /** A box that has targets but no job yet. */
@@ -216,9 +279,9 @@ export function seedRunningBackup() {
       itemsTotal: 52_118,
       bytesDone: 188_000_000_000,
       bytesTotal: 431_000_000_000,
-      currentItem: null,
+      currentItem: '/tank/photos/2026/Autumn/IMG_4412.CR3',
     },
-    parameters: null,
+    parameters: { jobId: 1, name: 'Photos and homes' },
     result: null,
     errorCode: null,
     errorParams: null,

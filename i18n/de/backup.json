@@ -71,20 +71,24 @@
   },
   "nav": {
     "label": "Backup",
-    "jobs": "Aufträge",
+    "overview": "Überblick",
+    "activity": "Aktivität",
+    "runningCount": "{count, plural, one {# läuft} other {# laufen}}",
+    "out": "Von der Box weg",
+    "jobs": "Box-Backups",
     "targets": "Ziele"
   },
   "jobs": {
-    "title": "Aufträge",
-    "toolbar": "Aufträge",
-    "add": "Auftrag hinzufügen",
-    "list": "Aufträge",
-    "loading": "Aufträge werden geladen",
-    "intro": "Ein Auftrag sichert Ordner aus freigegebenen Ordnern und Home-Ordnern nach Zeitplan auf ein Ziel. Jeder Lauf macht zuerst einen ZFS-Snapshot, damit das Backup einen Zeitpunkt zeigt, und behält so viele Versionen, wie du einstellst.",
-    "emptyTitle": "Noch kein Auftrag",
-    "empty": "Füge den ersten Auftrag hinzu, um freigegebene Ordner und Home-Ordner zu sichern.",
+    "title": "Box-Backups",
+    "toolbar": "Box-Backups",
+    "add": "Box-Backup hinzufügen",
+    "list": "Box-Backups",
+    "loading": "Backups werden geladen",
+    "intro": "Ordner dieser Box, gesichert auf ein Ziel außerhalb: einen SFTP-Server oder eine zweite Box. Jeder Lauf macht zuerst einen ZFS-Snapshot, damit das Backup einen Zeitpunkt zeigt, und behält so viele Versionen, wie du einstellst.",
+    "emptyTitle": "Noch kein Box-Backup",
+    "empty": "Füge das erste Backup von freigegebenen Ordnern und Home-Ordnern auf ein Ziel hinzu.",
     "noTargetsTitle": "Noch kein Ziel",
-    "noTargets": "Ein Auftrag braucht einen Server, auf den er sichert. Füge zuerst ein Ziel hinzu.",
+    "noTargets": "Ein Backup braucht einen Server, auf den es sichert. Füge zuerst ein Ziel hinzu.",
     "status": {
       "running": "Sichert",
       "checking": "Prüft",
@@ -96,10 +100,7 @@
       "cancelled": "Abgebrochen",
       "interrupted": "Unterbrochen"
     },
-    "to": "Nach {target}",
-    "next": "Nächster Lauf {time}",
     "byHand": "Läuft nur von Hand",
-    "lastSuccess": "Letztes Backup {time}",
     "noBackup": "Noch kein Backup",
     "sources": "Ordner",
     "sourcePath": "{share} / {path}",
@@ -116,7 +117,19 @@
     "checkNow": "Jetzt prüfen",
     "cancel": "Abbrechen",
     "edit": "Bearbeiten",
-    "delete": "Löschen"
+    "delete": "Löschen",
+    "name": "Name",
+    "route": "Von → Nach",
+    "kind": "Art",
+    "schedule": "Zeitplan",
+    "lastRun": "Letzter Lauf",
+    "nextRun": "Nächster Lauf",
+    "size": "Größe",
+    "days": "Letzte 14 Tage",
+    "daysLabel": "Letzte 14 Tage: {succeeded} ohne Probleme, {warning} mit Warnungen, {failed} fehlgeschlagen, {none} ohne Backup",
+    "details": "Details des Backups",
+    "lastBackup": "Letztes Backup",
+    "check": "Integritätsprüfung"
   },
   "runs": {
     "title": "Letzte Läufe",
@@ -130,8 +143,8 @@
     "added": "Hinzugefügt",
     "duration": "Dauer",
     "kinds": {
-      "backup": "Backup",
-      "check": "Prüfung"
+      "backup": "Sichern",
+      "check": "Prüfen"
     },
     "states": {
       "running": "Läuft",
@@ -140,10 +153,11 @@
       "failed": "Fehlgeschlagen",
       "cancelled": "Abgebrochen",
       "interrupted": "Unterbrochen"
-    }
+    },
+    "kindDuration": "{kind}, {duration}"
   },
   "jobForm": {
-    "addTitle": "Auftrag hinzufügen",
+    "addTitle": "Box-Backup hinzufügen",
     "editTitle": "{name} bearbeiten",
     "create": "Erstellen",
     "name": "Name",
@@ -151,7 +165,7 @@
     "targetPlaceholder": "Ziel wählen",
     "repository": "Ordner des Repositorys",
     "repositoryHint": "Unterhalb des Ordners des Ziels. Die Box legt das Repository dort mit einem neuen Schlüssel an, den sie einmal zeigt.",
-    "repositoryFixed": "Sichert nach {repository} auf {target}. Ziel und Repository eines Auftrags bleiben; für ein anderes legst du einen neuen Auftrag an.",
+    "repositoryFixed": "Sichert nach {repository} auf {target}. Ziel und Repository eines Backups bleiben; für ein anderes legst du ein neues Backup an.",
     "existing": "Vorhandenes Repository verwenden",
     "existingKey": "Schlüssel des Repositorys",
     "existingKeyHint": "Der Schlüssel, den die Box beim Anlegen des Repositorys gezeigt hat, zum Beispiel vor einer Neuinstallation.",
@@ -215,11 +229,90 @@
     "copyManually": "Markiere den Schlüssel und kopiere ihn von Hand.",
     "download": "Herunterladen",
     "stored": "Ich habe den Schlüssel außerhalb der Box aufbewahrt",
-    "fileIntro": "Pithyx-Backup-Schlüssel des Auftrags {name}, Repository {repository} auf {target}. Halte ihn geheim."
+    "fileIntro": "Pithyx-Backup-Schlüssel des Backups {name}, Repository {repository} auf {target}. Halte ihn geheim."
   },
   "deleteJob": {
     "title": "{name} löschen?",
-    "text": "Die Box vergisst den Auftrag, seine Läufe und seinen Schlüssel. Das Repository bleibt auf dem Ziel; ohne den Schlüssel kann es niemand lesen.",
+    "text": "Die Box vergisst das Backup, seine Läufe und seinen Schlüssel. Das Repository bleibt auf dem Ziel; ohne den Schlüssel kann es niemand lesen.",
     "confirm": "Löschen"
+  },
+  "direction": {
+    "out": "Von der Box",
+    "in": "Auf die Box"
+  },
+  "route": {
+    "to": "nach"
+  },
+  "kinds": {
+    "versioned": "Versioniert"
+  },
+  "schedule": {
+    "off": "Nur von Hand",
+    "hourly": "Stündlich zur Minute {minute}",
+    "daily": "Täglich {time}",
+    "weekly": "Jeden {day}, {time}",
+    "monthly": "Monatlich am {day}., {time}"
+  },
+  "activity": {
+    "title": "Aktivität",
+    "intro": "Was gerade läuft, was wartet und jeder Lauf der Vergangenheit.",
+    "runningTitle": "Läuft gerade",
+    "runningCount": "{running} läuft, {waiting} wartet",
+    "nothingRunning": "Gerade läuft nichts. Die nächsten Läufe starten nach ihrem Zeitplan.",
+    "waiting": "Wartet",
+    "kinds": {
+      "backup": "Sichern",
+      "check": "Prüfen"
+    },
+    "progress": "Fortschritt",
+    "files": "Dateien",
+    "ofTotal": "{done} von {total}",
+    "speed": "Geschwindigkeit",
+    "perSecond": "{size}/s",
+    "left": "Restzeit",
+    "about": "ca. {duration}",
+    "historyTitle": "Verlauf",
+    "filters": "Filter des Verlaufs",
+    "filterBackup": "Backup",
+    "allBackups": "Alle Backups",
+    "filterState": "Zustand",
+    "allStates": "Alle Zustände",
+    "filterPeriod": "Zeitraum",
+    "periods": {
+      "day": "Heute",
+      "week": "Letzte 7 Tage",
+      "month": "Letzte 30 Tage",
+      "quarter": "Letzte 90 Tage",
+      "all": "Gesamter Verlauf"
+    },
+    "exportCsv": "Als CSV exportieren",
+    "loading": "Läufe werden geladen",
+    "empty": "Kein Lauf in diesem Zeitraum.",
+    "details": "Details des Laufs",
+    "more": "Mehr anzeigen",
+    "direction": "Richtung",
+    "backup": "Backup",
+    "finished": "Beendet",
+    "bytes": "Größe in Bytes",
+    "addedBytes": "Hinzugefügt in Bytes",
+    "warnings": "Warnungen",
+    "error": "Fehlercode",
+    "deletedJob": "Gelöschtes Backup",
+    "period": "{start} bis {end}",
+    "trigger": "Gestartet",
+    "triggers": {
+      "schedule": "Nach Zeitplan",
+      "manual": "Von Hand"
+    },
+    "version": "Version",
+    "throughput": "Durchsatz",
+    "unreadableTitle": "{count, plural, one {# Datei nicht gesichert} other {# Dateien nicht gesichert}}",
+    "reasons": {
+      "permission": "Keine Rechte",
+      "missing": "Beim Lesen verschwunden",
+      "other": "Nicht lesbar"
+    },
+    "unreadableMore": "{count, plural, one {und # weitere Datei} other {und # weitere Dateien}}",
+    "unreadableHint": "Der Rest der Version ist vollständig. Gib der Box Leserechte auf diese Dateien oder schließe sie in den Einstellungen des Backups aus."
   }
 }
