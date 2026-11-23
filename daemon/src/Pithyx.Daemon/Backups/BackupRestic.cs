@@ -22,6 +22,7 @@ public sealed class BackupRestic(ICommandRunner commands)
     public static readonly TimeSpan BackupTimeout = TimeSpan.FromDays(7);
     public static readonly TimeSpan PruneTimeout = TimeSpan.FromHours(24);
     public static readonly TimeSpan CheckTimeout = TimeSpan.FromDays(2);
+    public static readonly TimeSpan StatsTimeout = TimeSpan.FromHours(1);
 
     /// <summary>Makes a new repository. Throws <see cref="ErrorCodes.BackupRepositoryExists"/> or a connection error.</summary>
     public async Task InitAsync(ResticRepository repository, CancellationToken cancellationToken)
@@ -78,6 +79,20 @@ public sealed class BackupRestic(ICommandRunner commands)
             return null;
         }
         return await RunAsync(repository, global => ResticCommands.Forget(global, retention)!, null, PruneTimeout, null, cancellationToken);
+    }
+
+    /// <summary>What the repository takes on the target; null when restic could not tell.</summary>
+    public async Task<long?> StatsAsync(ResticRepository repository, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var result = await RunAsync(repository, ResticCommands.Stats, null, StatsTimeout, null, cancellationToken);
+            return result.ExitCode == 0 ? ResticOutput.RepositoryBytes(result.StandardOutput) : null;
+        }
+        catch (TimeoutException)
+        {
+            return null;
+        }
     }
 
     public async Task<CommandResult> CheckAsync(ResticRepository repository, int readPercent, ResticReport report, CancellationToken cancellationToken) =>

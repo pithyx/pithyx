@@ -109,6 +109,7 @@ public sealed record BackupUnreadable(string Path, string Reason);
 /// <param name="Files">Files in the version.</param>
 /// <param name="Bytes">Bytes in the version.</param>
 /// <param name="AddedBytes">Bytes the run added to the repository.</param>
+/// <param name="RepositoryBytes">What the repository took on the target after the run (restic stats, raw data); null when unknown.</param>
 /// <param name="Snapshot">The id of the version restic made.</param>
 /// <param name="Warnings">Files or folders that could not be read.</param>
 /// <param name="ErrorCode">Why it failed.</param>
@@ -126,6 +127,7 @@ public sealed record BackupRun(
     long? Files,
     long? Bytes,
     long? AddedBytes,
+    long? RepositoryBytes,
     string? Snapshot,
     int Warnings,
     string? ErrorCode,
@@ -148,6 +150,8 @@ public sealed record BackupRunList(IReadOnlyList<BackupRun> Runs);
 /// <param name="LastCheck">Its newest check.</param>
 /// <param name="LastSuccessAt">When its last backup run succeeded (or ended with warnings).</param>
 /// <param name="Overdue">It is enabled and had no successful run for longer than its limit.</param>
+/// <param name="ProtectedBytes">The size of its newest version: the bytes its last successful run backed up.</param>
+/// <param name="RepositoryBytes">What its repository takes on the target, as the newest run that measured it found.</param>
 public sealed record BackupJob(
     long Id,
     BackupJobKind Kind,
@@ -160,7 +164,9 @@ public sealed record BackupJob(
     BackupRun? LastRun,
     BackupRun? LastCheck,
     DateTimeOffset? LastSuccessAt,
-    bool Overdue);
+    bool Overdue,
+    long? ProtectedBytes,
+    long? RepositoryBytes);
 
 /// <summary>Every backup job, by name.</summary>
 public sealed record BackupJobList(IReadOnlyList<BackupJob> Jobs);
@@ -181,6 +187,7 @@ public sealed record BackupSourceList(IReadOnlyList<BackupSourceOption> Sources)
 /// <param name="Kind">Only backups or only checks; null for both.</param>
 /// <param name="State">Only runs that ended so, or run now; null for all.</param>
 /// <param name="Since">Only runs that started at or after this time.</param>
+/// <param name="Until">Only runs that started before this time.</param>
 /// <param name="Before">Only runs with a smaller id, for the next page.</param>
 /// <param name="Limit">At most this many, 1 to 2000.</param>
-public sealed record BackupRunQuery(long? JobId, BackupRunKind? Kind, BackupRunState? State, DateTimeOffset? Since, long? Before, int Limit);
+public sealed record BackupRunQuery(long? JobId, BackupRunKind? Kind, BackupRunState? State, DateTimeOffset? Since, DateTimeOffset? Until, long? Before, int Limit);

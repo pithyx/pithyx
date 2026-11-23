@@ -3,3 +3,6 @@ sftp> -mkdir "backups/box one"
 sftp> cd "backups/box one"
 sftp> put "/tmp/pithyx-backup-0123456789abcdef/empty" ".pithyx-test-abc"
 sftp> rm ".pithyx-test-abc"
+sftp> -df
+        Size         Used        Avail       (root)    %Capacity
+    63253188     44289312     15718360     18963876          70%

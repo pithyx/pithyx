@@ -8425,7 +8425,7 @@
         "tags": [
           "Backups"
         ],
-        "description": "Administrators only. The runs and checks of every job (or of jobId), newest first, optionally only of one kind, one state (the values of kind and state in a run) or since a time; before is the id of the last run of the previous page. At most limit (default 200, up to 2000).",
+        "description": "Administrators only. The runs and checks of every job (or of jobId), newest first, optionally only of one kind, one state (the values of kind and state in a run), started at or after since and before until; before is the id of the last run of the previous page. At most limit (default 200, up to 2000).",
         "operationId": "ListBackupHistory",
         "parameters": [
           {
@@ -8459,6 +8459,14 @@
             }
           },
           {
+            "name": "until",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
             "name": "before",
             "in": "query",
             "schema": {
@@ -8482,6 +8490,53 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/BackupRunList"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/backups/days": {
+      "get": {
+        "tags": [
+          "Backups"
+        ],
+        "description": "Administrators only. The runs and checks of every job per day in the box's time zone (each with its start and end in UTC) from from to to (yyyy-MM-dd, both included, at most 400 days; left out, the last 30 days): how many succeeded, had warnings or failed, how many jobs ran and how many of them without a failure, the bytes added, and what the repositories took on their targets at the end of the day.",
+        "operationId": "ListBackupDays",
+        "parameters": [
+          {
+            "name": "from",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BackupDayList"
                 }
               }
             }
@@ -13492,6 +13547,98 @@
         ],
         "description": "A part of the configuration that can be restored on its own."
       },
+      "BackupDay": {
+        "required": [
+          "date",
+          "start",
+          "end",
+          "succeeded",
+          "warnings",
+          "failed",
+          "jobs",
+          "jobsOk",
+          "addedBytes",
+          "repositoryBytes"
+        ],
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "description": "The day.",
+            "format": "date"
+          },
+          "start": {
+            "type": "string",
+            "description": "When it began, UTC.",
+            "format": "date-time"
+          },
+          "end": {
+            "type": "string",
+            "description": "When it ended, UTC: the next day's start.",
+            "format": "date-time"
+          },
+          "succeeded": {
+            "type": "integer",
+            "description": "Runs and checks that succeeded.",
+            "format": "int32"
+          },
+          "warnings": {
+            "type": "integer",
+            "description": "Runs that ended with warnings.",
+            "format": "int32"
+          },
+          "failed": {
+            "type": "integer",
+            "description": "Runs and checks that failed or were interrupted; cancelled ones are not counted.",
+            "format": "int32"
+          },
+          "jobs": {
+            "type": "integer",
+            "description": "Jobs with a counted run or check that day.",
+            "format": "int32"
+          },
+          "jobsOk": {
+            "type": "integer",
+            "description": "Of these, the jobs none of whose runs failed that day.",
+            "format": "int32"
+          },
+          "addedBytes": {
+            "type": "integer",
+            "description": "Bytes the day's backup runs added to the repositories.",
+            "format": "int64"
+          },
+          "repositoryBytes": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "What the repositories of all jobs took on their targets at the end of the day, as last measured; null before any measurement.",
+            "format": "int64"
+          }
+        },
+        "description": "What the runs of one day in the box's time zone came to."
+      },
+      "BackupDayList": {
+        "required": [
+          "timeZone",
+          "days"
+        ],
+        "type": "object",
+        "properties": {
+          "timeZone": {
+            "type": "string",
+            "description": "The box's time zone, which the days follow."
+          },
+          "days": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BackupDay"
+            },
+            "description": "One entry per day from the first to the last."
+          }
+        },
+        "description": "The days of a period, oldest first, with every day in it."
+      },
       "BackupHostKey": {
         "required": [
           "type",
@@ -13577,7 +13724,9 @@
           "lastRun",
           "lastCheck",
           "lastSuccessAt",
-          "overdue"
+          "overdue",
+          "protectedBytes",
+          "repositoryBytes"
         ],
         "type": "object",
         "properties": {
@@ -13659,6 +13808,22 @@
           "overdue": {
             "type": "boolean",
             "description": "It is enabled and had no successful run for longer than its limit."
+          },
+          "protectedBytes": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "The size of its newest version: the bytes its last successful run backed up.",
+            "format": "int64"
+          },
+          "repositoryBytes": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "What its repository takes on the target, as the newest run that measured it found.",
+            "format": "int64"
           }
         },
         "description": "A backup job."
@@ -13867,6 +14032,7 @@
           "files",
           "bytes",
           "addedBytes",
+          "repositoryBytes",
           "snapshot",
           "warnings",
           "errorCode",
@@ -13940,6 +14106,14 @@
               "integer"
             ],
             "description": "Bytes the run added to the repository.",
+            "format": "int64"
+          },
+          "repositoryBytes": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "What the repository took on the target after the run (restic stats, raw data); null when unknown.",
             "format": "int64"
           },
           "snapshot": {
@@ -14157,7 +14331,8 @@
           "hostKey",
           "publicKey",
           "createdAt",
-          "lastTest"
+          "lastTest",
+          "space"
         ],
         "type": "object",
         "properties": {
@@ -14215,6 +14390,18 @@
               }
             ],
             "description": "The outcome of a target's last connection test."
+          },
+          "space": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "The space on the server; null until a test or run measured it, or when the server does not report it.",
+                "$ref": "#/components/schemas/BackupTargetSpace"
+              }
+            ],
+            "description": "The space of the file system the target's folder is on, as the server reported it over SFTP."
           }
         },
         "description": "A place backups go to."
@@ -14284,6 +14471,32 @@
           }
         },
         "description": "A new target, or the changes to one."
+      },
+      "BackupTargetSpace": {
+        "required": [
+          "totalBytes",
+          "freeBytes",
+          "measuredAt"
+        ],
+        "type": "object",
+        "properties": {
+          "totalBytes": {
+            "type": "integer",
+            "description": "Its size.",
+            "format": "int64"
+          },
+          "freeBytes": {
+            "type": "integer",
+            "description": "What the target's user can still write.",
+            "format": "int64"
+          },
+          "measuredAt": {
+            "type": "string",
+            "description": "When the server reported it: the last connection test or backup run, UTC.",
+            "format": "date-time"
+          }
+        },
+        "description": "The space of the file system the target's folder is on, as the server reported it over SFTP."
       },
       "BackupTargetTest": {
         "required": [

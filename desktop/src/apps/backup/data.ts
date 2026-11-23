@@ -4,6 +4,7 @@ import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useRealtime } from '../../realtime/connection';
 import {
   backupsCall,
+  daysKey,
   historyKey,
   jobsKey,
   type BackupHistoryQuery,
@@ -36,11 +37,22 @@ export function useBackupJobs(app: PithyxApp) {
 }
 
 /** The runs of every job; a run that starts or ends on the board reads them again. */
-export function useHistory(app: PithyxApp, query: BackupHistoryQuery) {
+export function useHistory(app: PithyxApp, query: BackupHistoryQuery, enabled = true) {
   const active = useActiveRuns();
   return useQuery({
     queryKey: [...historyKey(query), [...active.keys()].join(',')],
     queryFn: () => backupsCall(app, 'internal.admin.backups.history', query),
+    placeholderData: keepPreviousData,
+    enabled,
+  });
+}
+
+/** The runs per day from `from` to `to` (yyyy-MM-dd); a run that starts or ends on the board reads them again. */
+export function useDays(app: PithyxApp, from: string, to: string) {
+  const active = useActiveRuns();
+  return useQuery({
+    queryKey: [...daysKey(from, to), [...active.keys()].join(',')],
+    queryFn: () => backupsCall(app, 'internal.admin.backups.days', { from, to }),
     placeholderData: keepPreviousData,
   });
 }
@@ -80,4 +92,17 @@ export function dayIndex(time: string, days: number, now = new Date(clock.now())
   // Rounding absorbs the hour a change to or from daylight saving time adds or removes.
   const index = Math.round((daysAgo(0, start).getTime() - first.getTime()) / DAY);
   return index < days ? index : -1;
+}
+
+/** A day as yyyy-MM-dd in the browser's time zone, as the daemon takes it. */
+export function isoDay(date: Date): string {
+  const pad = (value: number) => String(value).padStart(2, '0');
+  return `${String(date.getFullYear())}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+}
+
+/** The day `days` after `date`, at the same local time. */
+export function addDays(date: Date, days: number): Date {
+  const next = new Date(date);
+  next.setDate(next.getDate() + days);
+  return next;
 }

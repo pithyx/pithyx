@@ -10,7 +10,7 @@ sidebar:
 
 A **box backup** in the **Backup** app sends folders of shared folders and homes from this box to a [backup target](/docs/admin/backup-targets/) on a schedule. Each run first takes a ZFS snapshot, so a backup shows one moment even while people keep working, and saves a new version into the backup's own repository on the target with [restic](https://restic.net/) over SFTP. Older versions are thinned out by the retention, and an integrity check reads the repository back on a schedule of its own. Box backups are for administrators; the box reports failed, incomplete and overdue backups to them.
 
-The app's navigation sorts backups by their direction: **From this box** holds the box backups and their targets, and every box backup carries the tag **From this box**. Backups of other servers onto this box come in a later version under their own heading. What runs now and every run so far are in [Activity](/docs/admin/backup-activity/).
+The app opens on its [Overview](/docs/admin/backup-overview/). Its navigation sorts backups by their direction: **From this box** holds the box backups and their targets, and every box backup carries the tag **From this box**. Backups of other servers onto this box come in a later version under their own heading. What runs now and every run so far are in [Activity](/docs/admin/backup-activity/).
 
 ![The Backup app, Box backups: a table of three backups with their route, last and next run, size and the last 14 days, one selected with its details and recent runs](../../../../assets/screenshots/backup-jobs.webp)
 

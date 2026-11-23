@@ -32,6 +32,7 @@ export const sampleTargets: BackupTarget[] = [
     publicKey:
       'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFh3kQ8vT2nYc5pW0bZ7xR4mL1sD9gK6aE3uJ2oN8iVf pithyx-backup@nas-living-room',
     lastTest: { succeeded: true, testedAt: at(30), errorCode: null, errorParams: null },
+    space: { totalBytes: 1_000_000_000_000, freeBytes: 390_000_000_000, measuredAt: at(12) },
     createdAt: at(24 * 40),
   },
   {
@@ -46,6 +47,7 @@ export const sampleTargets: BackupTarget[] = [
     publicKey:
       'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGq9wE2rT5yU8iO1pA4sD7fG0hJ3kL6zX9cV2bN5mQ8w pithyx-backup@nas-living-room',
     lastTest: { succeeded: true, testedAt: at(50), errorCode: null, errorParams: null },
+    space: { totalBytes: 4_000_000_000_000, freeBytes: 3_640_000_000_000, measuredAt: at(24 * 18) },
     createdAt: at(24 * 12),
   },
 ];
@@ -78,6 +80,7 @@ function run(
     files: 48_212,
     bytes: 412_000_000_000,
     addedBytes: 1_240_000_000,
+    repositoryBytes: null,
     warnings: 0,
     errorCode: null,
     errorParams: null,
@@ -158,6 +161,8 @@ export const sampleJobs: BackupJob[] = [
     nextRunAt: at(-11.5),
     nextCheckAt: at(-80),
     overdue: false,
+    protectedBytes: 431_000_000_000,
+    repositoryBytes: 395_000_000_000,
     createdAt: at(24 * 40),
   },
   {
@@ -172,6 +177,8 @@ export const sampleJobs: BackupJob[] = [
     nextRunAt: at(-11.5),
     nextCheckAt: at(-80),
     overdue: false,
+    protectedBytes: 23_400_000_000,
+    repositoryBytes: 19_800_000_000,
     createdAt: at(24 * 30),
   },
   {
@@ -199,6 +206,8 @@ export const sampleJobs: BackupJob[] = [
     nextRunAt: at(-24 * 2.5),
     nextCheckAt: null,
     overdue: true,
+    protectedBytes: 402_000_000_000,
+    repositoryBytes: 360_000_000_000,
     createdAt: at(24 * 20),
   },
 ];
@@ -242,8 +251,12 @@ export const backupAnswers: ExtraAnswers = {
   'internal.admin.backups.runs': (params) => ({
     runs: (params as { id: number }).id === 2 ? documentsRuns : [],
   }),
+  'internal.admin.backups.days': (params) => {
+    const { from, to } = params as { from: string; to: string };
+    return sampleDays(from, to);
+  },
   'internal.admin.backups.history': (params) => {
-    const { jobId, kind, state, since, limit } = params as BackupHistoryQuery;
+    const { jobId, kind, state, since, until, limit } = params as BackupHistoryQuery;
     return {
       runs: history
         .filter(
@@ -251,12 +264,68 @@ export const backupAnswers: ExtraAnswers = {
             (jobId === undefined || entry.jobId === jobId) &&
             (kind === undefined || entry.kind === kind) &&
             (state === undefined || entry.state === state) &&
-            (since === undefined || entry.startedAt >= since),
+            (since === undefined || entry.startedAt >= since) &&
+            (until === undefined || entry.startedAt < until),
         )
         .slice(0, limit ?? 200),
     };
   },
 };
+
+const DAY = 86_400_000;
+
+/** The sample's runs per day, as the daemon counts them, with the repositories growing towards today's sizes. */
+function sampleDays(from: string, to: string) {
+  const first = new Date(`${from}T00:00:00`);
+  const last = new Date(`${to}T00:00:00`);
+  const today = new Date(now);
+  today.setHours(0, 0, 0, 0);
+  const days = [];
+  for (let date = first; date <= last; date = new Date(date.getTime() + DAY)) {
+    const start = new Date(date);
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(start.getTime() + DAY);
+    const back = Math.round((today.getTime() - start.getTime()) / DAY);
+    const runs = history.filter(
+      (entry) =>
+        entry.state !== 'running' &&
+        Date.parse(entry.startedAt) >= start.getTime() &&
+        Date.parse(entry.startedAt) < end.getTime(),
+    );
+    // Beyond the two weeks of history each night backs up the two daily backups, and one in nine days warns.
+    const older = back > 14 && start < today;
+    const count = (state: BackupRun['state']) =>
+      runs.filter((entry) => entry.state === state).length;
+    const succeeded = older ? (back % 9 === 0 ? 1 : 2) : count('succeeded');
+    const warnings = older ? (back % 9 === 0 ? 1 : 0) : count('warning');
+    const failed = older ? 0 : count('failed') + count('interrupted');
+    const jobs = older ? 2 : new Set(runs.map((entry) => entry.jobId)).size;
+    const failedJobs = new Set(
+      runs
+        .filter((entry) => entry.state === 'failed' || entry.state === 'interrupted')
+        .map((entry) => entry.jobId),
+    ).size;
+    const growth = 0.85 + 0.15 * Math.min(1, Math.max(0, 1 - back / 120));
+    days.push({
+      date: `${String(start.getFullYear())}-${String(start.getMonth() + 1).padStart(2, '0')}-${String(start.getDate()).padStart(2, '0')}`,
+      start: start.toISOString(),
+      end: end.toISOString(),
+      succeeded,
+      warnings,
+      failed,
+      jobs,
+      jobsOk: jobs - (older ? 0 : failedJobs),
+      addedBytes: older
+        ? 1_400_000_000 + ((back * 7919) % 5) * 600_000_000
+        : runs.reduce(
+            (total, entry) => total + (entry.kind === 'backup' ? (entry.addedBytes ?? 0) : 0),
+            0,
+          ),
+      repositoryBytes: back < 0 ? null : Math.round(774_800_000_000 * growth),
+    });
+  }
+  return { timeZone: 'Europe/Berlin', days };
+}
 
 /** A box that has targets but no job yet. */
 export const backupNoJobsAnswers: ExtraAnswers = {

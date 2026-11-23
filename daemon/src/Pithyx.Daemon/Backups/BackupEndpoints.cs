@@ -61,10 +61,14 @@ public static class BackupEndpoints
                 TypedResults.Ok(await service.SourcesAsync(cancellationToken)))
             .WithName("ListBackupSources")
             .WithDescription("Administrators only. Every shared folder and home, and whether a job can back it up: only datasets of a pool can be backed up from a snapshot.");
-        backups.MapGet("/runs", async Task<Ok<BackupRunList>> (BackupJobService service, CancellationToken cancellationToken, long? jobId, string? kind, string? state, DateTimeOffset? since, long? before, int? limit) =>
-                TypedResults.Ok(await service.HistoryAsync(new BackupRunQuery(jobId, Filter<BackupRunKind>(kind), Filter<BackupRunState>(state), since, before, limit ?? 200), cancellationToken)))
+        backups.MapGet("/runs", async Task<Ok<BackupRunList>> (BackupJobService service, CancellationToken cancellationToken, long? jobId, string? kind, string? state, DateTimeOffset? since, DateTimeOffset? until, long? before, int? limit) =>
+                TypedResults.Ok(await service.HistoryAsync(new BackupRunQuery(jobId, Filter<BackupRunKind>(kind), Filter<BackupRunState>(state), since, until, before, limit ?? 200), cancellationToken)))
             .WithName("ListBackupHistory")
-            .WithDescription("Administrators only. The runs and checks of every job (or of jobId), newest first, optionally only of one kind, one state (the values of kind and state in a run) or since a time; before is the id of the last run of the previous page. At most limit (default 200, up to 2000).");
+            .WithDescription("Administrators only. The runs and checks of every job (or of jobId), newest first, optionally only of one kind, one state (the values of kind and state in a run), started at or after since and before until; before is the id of the last run of the previous page. At most limit (default 200, up to 2000).");
+        backups.MapGet("/days", async Task<Ok<BackupDayList>> (BackupJobService service, CancellationToken cancellationToken, string? from, string? to) =>
+                TypedResults.Ok(await service.DaysAsync(from, to, cancellationToken)))
+            .WithName("ListBackupDays")
+            .WithDescription("Administrators only. The runs and checks of every job per day in the box's time zone (each with its start and end in UTC) from from to to (yyyy-MM-dd, both included, at most 400 days; left out, the last 30 days): how many succeeded, had warnings or failed, how many jobs ran and how many of them without a failure, the bytes added, and what the repositories took on their targets at the end of the day.");
         var jobs = backups.MapGroup("/jobs");
         jobs.MapGet("", async Task<Ok<BackupJobList>> (BackupJobService service, CancellationToken cancellationToken) =>
                 TypedResults.Ok(await service.ListAsync(cancellationToken)))

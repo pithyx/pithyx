@@ -164,6 +164,49 @@ public sealed class BackupJobApiTests : IAsyncLifetime
         Assert.NotEqual(JsonValueKind.Null, job.GetProperty("lastSuccessAt").ValueKind);
         Assert.False(job.GetProperty("overdue").GetBoolean());
         Assert.Equal(0, await NotificationsAsync());
+        Assert.Equal(300_310, run.GetProperty("repositoryBytes").GetInt64());
+        Assert.Equal(300_310, job.GetProperty("repositoryBytes").GetInt64());
+        Assert.Equal(90_600_000, job.GetProperty("protectedBytes").GetInt64());
+        var stats = Assert.Single(_commands.Calls, call => call.FileName == "env" && call.Arguments.Contains("stats"));
+        Assert.Equal(["stats", "--mode", "raw-data"], stats.Arguments.TakeLast(3));
+        var target = JsonDocument.Parse(await _admin.GetStringAsync("/api/backups/targets", Token)).RootElement.GetProperty("targets")[0];
+        Assert.Equal(15_718_360L * 1024, target.GetProperty("space").GetProperty("freeBytes").GetInt64());
+    }
+
+    [Fact]
+    public async Task TheDaysCountTheRunsOfEachDayAndCarriesTheRepositorySizes()
+    {
+        var media = await CreateJobAsync("Media");
+        var other = await CreateJobAsync("Other");
+        var first = await RunAsync(media);
+        var second = await RunAsync(other);
+        _check = new CommandResult(1, "", "Fatal: repository contains errors\n", TimeSpan.Zero);
+        await CheckAsync(media, JobState.Failed);
+        // A day without runs keeps the sizes of the days before.
+        await _factory.ScalarAsync<long>("UPDATE backup_runs SET started_at = '2026-01-10T12:00:00.000Z' WHERE id = @id RETURNING id", new { id = first.GetProperty("id").GetInt64() });
+
+        var summary = JsonDocument.Parse(await _admin.GetStringAsync("/api/backups/days?from=2026-01-09&to=2026-01-11", Token)).RootElement;
+        var days = summary.GetProperty("days").EnumerateArray().ToList();
+        var recent = JsonDocument.Parse(await _admin.GetStringAsync("/api/backups/days", Token)).RootElement.GetProperty("days").EnumerateArray().ToList();
+
+        Assert.Equal(TimeZoneInfo.Local.Id, summary.GetProperty("timeZone").GetString());
+        Assert.Equal(["2026-01-09", "2026-01-10", "2026-01-11"], days.Select(day => day.GetProperty("date").GetString()));
+        Assert.Equal(days[1].GetProperty("start").GetDateTimeOffset(), days[0].GetProperty("end").GetDateTimeOffset());
+        Assert.Equal(JsonValueKind.Null, days[0].GetProperty("repositoryBytes").ValueKind);
+        Assert.Equal((1, 1, 1, 300_310L), (days[1].GetProperty("succeeded").GetInt32(), days[1].GetProperty("jobs").GetInt32(), days[1].GetProperty("jobsOk").GetInt32(), days[1].GetProperty("repositoryBytes").GetInt64()));
+        Assert.Equal(first.GetProperty("addedBytes").GetInt64(), days[1].GetProperty("addedBytes").GetInt64());
+        Assert.Equal((0, 300_310L), (days[2].GetProperty("jobs").GetInt32(), days[2].GetProperty("repositoryBytes").GetInt64()));
+        Assert.Equal(30, recent.Count);
+        var today = recent[^1];
+        Assert.Equal((1, 0, 1, 2, 1), (today.GetProperty("succeeded").GetInt32(), today.GetProperty("warnings").GetInt32(), today.GetProperty("failed").GetInt32(), today.GetProperty("jobs").GetInt32(), today.GetProperty("jobsOk").GetInt32()));
+        Assert.Equal(second.GetProperty("addedBytes").GetInt64(), today.GetProperty("addedBytes").GetInt64());
+        Assert.Equal(2 * 300_310L, today.GetProperty("repositoryBytes").GetInt64());
+        foreach (var query in new[] { "?from=2026-01-11&to=2026-01-09", "?from=2026-1-9", "?from=2025-01-01&to=2026-12-31" })
+        {
+            using var invalid = await _admin.GetAsync("/api/backups/days" + query, Token);
+            Assert.Equal(HttpStatusCode.BadRequest, invalid.StatusCode);
+            Assert.Equal(ErrorCodes.RequestBodyInvalid, await invalid.ErrorCodeAsync());
+        }
     }
 
     [Fact]
@@ -204,6 +247,8 @@ public sealed class BackupJobApiTests : IAsyncLifetime
         Assert.Equal(["backup", "backup"], (await HistoryAsync("?kind=backup")).Select(run => run.GetProperty("kind").GetString()));
         Assert.Equal(["failed"], (await HistoryAsync("?state=failed")).Select(run => run.GetProperty("state").GetString()));
         Assert.Empty(await HistoryAsync("?since=2999-01-01T00:00:00Z"));
+        Assert.Empty(await HistoryAsync("?until=2000-01-01T00:00:00Z"));
+        Assert.Equal(3, (await HistoryAsync("?until=2999-01-01T00:00:00Z")).Count);
         using (var unknown = await _admin.GetAsync("/api/backups/runs?kind=Nope", Token))
         {
             Assert.Equal(HttpStatusCode.BadRequest, unknown.StatusCode);
@@ -462,6 +507,10 @@ public sealed class BackupJobApiTests : IAsyncLifetime
                 return Ok;
             case "env" when arguments.Contains("check"):
                 return _check;
+            case "env" when arguments.Contains("stats"):
+                return new CommandResult(0, Fixture("restic-stats.stdout"), "", TimeSpan.Zero);
+            case "env" when arguments.Contains("sftp"):
+                return new CommandResult(0, Fixture("sftp-ok.stdout"), "", TimeSpan.Zero);
             case "unshare" when !_commands.Hanging.Contains("unshare --mount"):
                 return _backup;
             default:

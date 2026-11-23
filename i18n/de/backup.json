@@ -72,6 +72,7 @@
   "nav": {
     "label": "Backup",
     "overview": "Überblick",
+    "overviewPage": "Übersicht",
     "activity": "Aktivität",
     "runningCount": "{count, plural, one {# läuft} other {# laufen}}",
     "out": "Von der Box weg",
@@ -319,5 +320,62 @@
     "tomorrow": "Morgen, {time}",
     "yesterday": "Gestern, {time}",
     "date": "{date}, {time}"
+  },
+  "overview": {
+    "title": "Übersicht",
+    "toolbar": "Übersicht",
+    "period": "Zeitraum",
+    "add": "Backup hinzufügen",
+    "runAll": "Alle jetzt sichern",
+    "emptyTitle": "Noch kein Backup",
+    "empty": "Füge ein Backup von freigegebenen Ordnern und Home-Ordnern auf einen Server oder eine zweite Box hinzu.",
+    "protected": "Geschützte Daten",
+    "protectedIn": "{count, plural, one {in # Backup} other {in # Backups}}",
+    "protectedOut": "{size} von der Box weg",
+    "runs": {
+      "week": "Läufe der letzten 7 Tage",
+      "month": "Läufe der letzten 30 Tage",
+      "quarter": "Läufe der letzten 90 Tage"
+    },
+    "runsOf": "{count, plural, one {von # erfolgreich} other {von # erfolgreich}}",
+    "runsLabel": "{succeeded} erfolgreich, {warnings} mit Warnungen, {failed} fehlgeschlagen",
+    "next": "Nächster Lauf",
+    "nextNone": "Keiner geplant",
+    "used": "Belegt auf Zielen",
+    "usedOn": "{count, plural, one {auf # Ziel} other {auf # Zielen}}",
+    "spaceLabel": "Platz auf {name}",
+    "space": "{name}: {used} von {total}",
+    "calendar": {
+      "ok": "Erfolgreich",
+      "warning": "Warnungen",
+      "failed": "Fehler",
+      "previous": "Vorheriger Monat",
+      "next": "Nächster Monat",
+      "none": "Kein Backup gelaufen",
+      "future": "Kommt noch",
+      "count": "{ok}/{jobs}",
+      "ran": "{count, plural, one {# Backup gelaufen} other {# Backups gelaufen}}",
+      "failedRuns": "{count, plural, one {# Lauf fehlgeschlagen} other {# Läufe fehlgeschlagen}}",
+      "warningRuns": "{count, plural, one {# mit Warnungen} other {# mit Warnungen}}",
+      "allOk": "alle ohne Probleme"
+    },
+    "unreadable": "{count, plural, one {# Datei war nicht lesbar} other {# Dateien waren nicht lesbar}}",
+    "showActivity": "In der Aktivität zeigen",
+    "showTargets": "Ziele zeigen",
+    "show": "Ansehen",
+    "failed": "Letzter Lauf fehlgeschlagen ({time})",
+    "failedWith": "Letzter Lauf fehlgeschlagen ({time}): {error}",
+    "overdue": "Überfällig, letztes Backup {time}",
+    "overdueNever": "Überfällig, noch kein Backup",
+    "checkFailed": "Integritätsprüfung fehlgeschlagen ({time})",
+    "attention": "Braucht Aufmerksamkeit",
+    "allFine": "Nichts braucht Aufmerksamkeit",
+    "chart": {
+      "title": "Gesicherte Daten",
+      "added": "Neu hinzugefügt je Tag",
+      "size": "Belegt auf allen Zielen",
+      "label": "{days} Tage: {added} neu hinzugefügt, die Repositorys belegen {size}",
+      "unknown": "unbekannt"
+    }
   }
 }

@@ -15,6 +15,8 @@ export type BackupJobCreateRequest = components['schemas']['BackupJobCreateReque
 export type BackupRetention = components['schemas']['BackupRetention'];
 export type BackupRun = components['schemas']['BackupRun'];
 export type BackupSourceOption = components['schemas']['BackupSourceOption'];
+export type BackupDay = components['schemas']['BackupDay'];
+export type BackupDayList = components['schemas']['BackupDayList'];
 type BoardJob = components['schemas']['Job'];
 
 export interface BackupHistoryQuery {
@@ -23,6 +25,8 @@ export interface BackupHistoryQuery {
   state?: BackupRun['state'];
   /** ISO 8601 */
   since?: string;
+  /** ISO 8601, exclusive */
+  until?: string;
   before?: number;
   limit?: number;
 }
@@ -69,6 +73,11 @@ interface BackupMethods {
     params: BackupHistoryQuery;
     result: { runs: BackupRun[] };
   };
+  /** The runs per day in the box's time zone; `from` and `to` are yyyy-MM-dd, both included. */
+  'internal.admin.backups.days': {
+    params: { from?: string; to?: string };
+    result: BackupDayList;
+  };
   /** Starts a run or a check now; it goes on the job board. */
   'internal.admin.backups.start': {
     params: { id: number; kind: 'run' | 'check' };
@@ -88,6 +97,9 @@ export const runsKey = (id: number) => ['backups', 'runs', id] as const;
 /** The runs of every job; its queries invalidate together with every job's runs. */
 export const historyKey = (query: BackupHistoryQuery) =>
   ['backups', 'runs', 'history', query] as const;
+
+/** The runs per day; under the runs, so a finished run refreshes them. */
+export const daysKey = (from: string, to: string) => ['backups', 'runs', 'days', from, to] as const;
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -172,12 +184,13 @@ function settingsBody(settings: BackupJobSettings): BackupJobSettings {
 }
 
 /** Only the filters that are set, so the daemon gets no empty parameters. */
-function historyQuery({ jobId, kind, state, since, before, limit }: BackupHistoryQuery) {
+function historyQuery({ jobId, kind, state, since, until, before, limit }: BackupHistoryQuery) {
   return {
     ...(jobId === undefined ? {} : { jobId }),
     ...(kind === undefined ? {} : { kind }),
     ...(state === undefined ? {} : { state }),
     ...(since === undefined ? {} : { since }),
+    ...(until === undefined ? {} : { until }),
     ...(before === undefined ? {} : { before }),
     ...(limit === undefined ? {} : { limit }),
   };
@@ -337,7 +350,8 @@ export function backupsHost(): HostExtensions {
         ) &&
         optionalString(value.kind) &&
         optionalString(value.state) &&
-        optionalString(value.since),
+        optionalString(value.since) &&
+        optionalString(value.until),
       handle: (params) =>
         daemon(async () =>
           unwrap(
@@ -346,6 +360,24 @@ export function backupsHost(): HostExtensions {
             }),
           ),
         ),
+    },
+    'internal.admin.backups.days': {
+      validate: (value) =>
+        isRecord(value) && optionalString(value.from) && optionalString(value.to),
+      handle: (params) =>
+        daemon(async () => {
+          const { from, to } = params as BackupMethods['internal.admin.backups.days']['params'];
+          return unwrap(
+            await api.GET('/api/backups/days', {
+              params: {
+                query: {
+                  ...(from === undefined ? {} : { from }),
+                  ...(to === undefined ? {} : { to }),
+                },
+              },
+            }),
+          );
+        }),
     },
     'internal.admin.backups.start': {
       validate: (value) =>

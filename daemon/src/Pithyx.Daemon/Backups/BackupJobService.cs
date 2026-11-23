@@ -71,7 +71,7 @@ public sealed partial class BackupJobService(
         """
         SELECT id AS Id, job_id AS JobId, kind AS Kind, trigger AS Trigger, board_job_id AS BoardJobId, state AS State,
             started_at AS StartedAt, finished_at AS FinishedAt, files AS Files, bytes AS Bytes, added_bytes AS AddedBytes,
-            snapshot AS Snapshot, warnings AS Warnings, error_code AS ErrorCode, error_params AS ErrorParams,
+            repository_bytes AS RepositoryBytes, snapshot AS Snapshot, warnings AS Warnings, error_code AS ErrorCode, error_params AS ErrorParams,
             unreadable AS Unreadable
         FROM backup_runs
         """;
@@ -284,6 +284,10 @@ public sealed partial class BackupJobService(
         {
             where.Add("started_at >= @since");
         }
+        if (query.Until is not null)
+        {
+            where.Add("started_at < @until");
+        }
         if (query.Before is not null)
         {
             where.Add("id < @Before");
@@ -296,10 +300,41 @@ public sealed partial class BackupJobService(
             kind = query.Kind is { } kind ? Text(kind) : null,
             state = query.State is { } state ? Text(state) : null,
             since = query.Since is { } since ? SessionService.Format(since.ToUniversalTime()) : null,
+            until = query.Until is { } until ? SessionService.Format(until.ToUniversalTime()) : null,
             query.Before,
             limit = Math.Clamp(query.Limit, 1, MaxHistory),
         }, cancellationToken: cancellationToken));
         return new BackupRunList([.. rows.Select(View)]);
+    }
+
+    /// <summary>
+    /// The runs of every job per day in the box's time zone (#403), for the overview's calendar and chart. Running and
+    /// cancelled runs are not counted; the repositories' sizes carry over from the last run that measured them.
+    /// </summary>
+    public async Task<BackupDayList> DaysAsync(string? from, string? to, CancellationToken cancellationToken)
+    {
+        var zone = TimeZoneInfo.Local;
+        var today = DateOnly.FromDateTime(TimeZoneInfo.ConvertTime(time.GetUtcNow(), zone).DateTime);
+        var (first, last) = BackupDays.Period(from, to, today);
+        var start = BackupDays.Start(first, zone);
+        var end = BackupDays.Start(last.AddDays(1), zone);
+        await using var connection = await connections.OpenAsync(cancellationToken);
+        var rows = await connection.QueryAsync<DayRow>(new CommandDefinition(
+            """
+            SELECT job_id AS JobId, kind AS Kind, state AS State, started_at AS StartedAt, added_bytes AS AddedBytes, repository_bytes AS RepositoryBytes
+            FROM backup_runs
+            WHERE started_at < @end AND state <> 'running' AND (started_at >= @start OR repository_bytes IS NOT NULL)
+            """,
+            new { start = SessionService.Format(start), end = SessionService.Format(end) },
+            cancellationToken: cancellationToken));
+        var runs = rows.Select(row => new BackupDayRun(
+            row.JobId,
+            Enum.Parse<BackupRunKind>(row.Kind, ignoreCase: true),
+            Enum.Parse<BackupRunState>(row.State, ignoreCase: true),
+            SessionService.Parse(row.StartedAt),
+            row.AddedBytes,
+            row.RepositoryBytes));
+        return new BackupDayList(zone.Id, BackupDays.Days(runs, first, last, zone));
     }
 
     /// <summary>Starts a run or a check as a box job. Throws <see cref="ErrorCodes.BackupJobBusy"/> while one goes on.</summary>
@@ -498,12 +533,15 @@ public sealed partial class BackupJobService(
                 LogUnreadable(row.Id, report.Warnings, string.Join(", ", report.WarningItems.Take(20).Select(item => item.Item)));
             }
             var state = result.ExitCode == ResticCommands.Incomplete ? BackupRunState.Warning : BackupRunState.Succeeded;
+            PithyxException? warning = null;
             if (await restic.ForgetAsync(location, settings.Retention, context.Cancellation) is { ExitCode: not 0 } forget)
             {
                 LogForgetFailed(row.Id, forget.ExitCode, forget.StandardError.Length > 4000 ? forget.StandardError[..4000] : forget.StandardError);
-                return (BackupRunState.Warning, ResticOutput.Failure(forget.ExitCode, forget.StandardError, location.RemotePath));
+                (state, warning) = (BackupRunState.Warning, ResticOutput.Failure(forget.ExitCode, forget.StandardError, location.RemotePath));
             }
-            return (state, null);
+            report.RepositoryBytes = await restic.StatsAsync(location, context.Cancellation);
+            await targets.MeasureSpaceAsync(row.TargetId, context.Cancellation);
+            return (state, warning);
         }
         finally
         {
@@ -542,7 +580,7 @@ public sealed partial class BackupJobService(
             await connection.ExecuteAsync(
                 """
                 UPDATE backup_runs SET state = @state, finished_at = @now, files = @Files, bytes = @Bytes, added_bytes = @AddedBytes,
-                    snapshot = @Snapshot, warnings = @Warnings, error_code = @code, error_params = @parameters, unreadable = @unreadable
+                    repository_bytes = @RepositoryBytes, snapshot = @Snapshot, warnings = @Warnings, error_code = @code, error_params = @parameters, unreadable = @unreadable
                 WHERE id = @runId
                 """,
                 new
@@ -553,6 +591,7 @@ public sealed partial class BackupJobService(
                     report.Files,
                     report.Bytes,
                     report.AddedBytes,
+                    report.RepositoryBytes,
                     report.Snapshot,
                     report.Warnings,
                     code = error?.Code,
@@ -826,6 +865,14 @@ public sealed partial class BackupJobService(
         var lastSuccess = await LastSuccessAsync(connection, row.Id, cancellationToken);
         var since = lastSuccess ?? SessionService.Parse(row.CreatedAt);
         var overdue = settings.Enabled && now - since > BackupJobRules.OverdueLimit(settings.Schedule, settings.OverdueHours, now, TimeZoneInfo.Local);
+        var protectedBytes = await connection.ExecuteScalarAsync<long?>(new CommandDefinition(
+            "SELECT bytes FROM backup_runs WHERE job_id = @id AND kind = 'backup' AND state IN ('succeeded', 'warning') ORDER BY id DESC LIMIT 1",
+            new { id = row.Id },
+            cancellationToken: cancellationToken));
+        var repositoryBytes = await connection.ExecuteScalarAsync<long?>(new CommandDefinition(
+            "SELECT repository_bytes FROM backup_runs WHERE job_id = @id AND repository_bytes IS NOT NULL ORDER BY id DESC LIMIT 1",
+            new { id = row.Id },
+            cancellationToken: cancellationToken));
         return new BackupJob(
             row.Id,
             BackupJobKind.Versioned,
@@ -838,7 +885,9 @@ public sealed partial class BackupJobService(
             lastRun is null ? null : View(lastRun),
             lastCheck is null ? null : View(lastCheck),
             lastSuccess,
-            overdue);
+            overdue,
+            protectedBytes,
+            repositoryBytes);
     }
 
     private static BackupJobSettings Settings(JobRow row) => new(
@@ -891,6 +940,7 @@ public sealed partial class BackupJobService(
         row.Files,
         row.Bytes,
         row.AddedBytes,
+        row.RepositoryBytes,
         row.Snapshot,
         (int)row.Warnings,
         row.ErrorCode,
@@ -925,6 +975,16 @@ public sealed partial class BackupJobService(
         public string CreatedAt { get; init; } = "";
     }
 
+    private sealed class DayRow
+    {
+        public long JobId { get; init; }
+        public string Kind { get; init; } = "";
+        public string State { get; init; } = "";
+        public string StartedAt { get; init; } = "";
+        public long? AddedBytes { get; init; }
+        public long? RepositoryBytes { get; init; }
+    }
+
     private sealed class RunRow
     {
         public long Id { get; init; }
@@ -938,6 +998,7 @@ public sealed partial class BackupJobService(
         public long? Files { get; init; }
         public long? Bytes { get; init; }
         public long? AddedBytes { get; init; }
+        public long? RepositoryBytes { get; init; }
         public string? Snapshot { get; init; }
         public long Warnings { get; init; }
         public string? ErrorCode { get; init; }

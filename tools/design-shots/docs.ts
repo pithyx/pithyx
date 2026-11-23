@@ -54,6 +54,7 @@ export const shots: Shot[] = [
   { name: 'account-recovery-codes', screen: 'preferences-recovery-codes' },
   { name: 'i18n-language', screen: 'preferences-language' },
   { name: 'backup-checked', screen: 'settings-backup-checked' },
+  { name: 'backup-overview', screen: 'backup-overview' },
   { name: 'backup-jobs', screen: 'backup-jobs' },
   { name: 'backup-activity', screen: 'backup-activity' },
   { name: 'network-confirm', screen: 'settings-network-confirm' },
