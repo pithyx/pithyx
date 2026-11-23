@@ -33,6 +33,9 @@ internal sealed class JobEntry(long id, long userId, string kind, JsonElement? p
     public DateTimeOffset? FinishedAt { get; set; }
     public bool CancelRequested { get; set; }
 
+    /// <summary>Whether the job's end becomes a notification (<see cref="JobOptions.Notify"/>).</summary>
+    public bool Notify { get; init; } = true;
+
     /// <summary>The activity the work runs in, so progress published from a timer carries the job's request id.</summary>
     public Activity? Activity { get; set; }
 

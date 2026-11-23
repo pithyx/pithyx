@@ -2409,6 +2409,79 @@
         "reason": "No space left on device"
       },
       "expected": "The key could not be written to the USB stick PXKEYS (No space left on device). Do not rely on this stick: check it on a computer, or use another one, and keep the key you stored."
+    },
+    "backup.check.failed": {
+      "params": {},
+      "expected": "The check found errors in the repository. Run another check; if it fails again, start a new repository for this job."
+    },
+    "backup.job.busy": {
+      "params": {
+        "name": "Media"
+      },
+      "expected": "The job Media is running right now. Wait until it is done or cancel it."
+    },
+    "backup.job.invalid": {
+      "params": {
+        "field": "checkSchedule"
+      },
+      "expected": "This setting of the job is not valid: check schedule."
+    },
+    "backup.job.name_taken": {
+      "params": {
+        "name": "Media"
+      },
+      "expected": "Another job is already named Media."
+    },
+    "backup.job.not_found": {
+      "params": {},
+      "expected": "This backup job no longer exists."
+    },
+    "backup.repository.exists": {
+      "params": {
+        "path": "backups/media"
+      },
+      "expected": "There is already a repository in backups/media. To use it, connect it with its key instead of making a new one."
+    },
+    "backup.repository.locked": {
+      "params": {},
+      "expected": "Another program is using the repository right now. Try again later."
+    },
+    "backup.repository.not_found": {
+      "params": {
+        "path": "backups/media"
+      },
+      "expected": "There is no repository in backups/media."
+    },
+    "backup.repository.wrong_key": {
+      "params": {},
+      "expected": "The key does not open this repository."
+    },
+    "backup.run.failed": {
+      "params": {
+        "reason": "exit",
+        "exitCode": 1
+      },
+      "expected": "The backup failed (restic ended with code 1). The Log Center has the details."
+    },
+    "backup.source.unavailable": {
+      "params": {
+        "share": "Media",
+        "reason": "snapshot",
+        "path": ""
+      },
+      "expected": "The folder Media cannot be backed up now (its snapshot could not be taken)."
+    },
+    "backup.source.unsupported": {
+      "params": {
+        "share": "media"
+      },
+      "expected": "The folder media is not on a pool, so the box cannot back it up from a snapshot."
+    },
+    "backup.target.in_use": {
+      "params": {
+        "jobs": "Media, Photos"
+      },
+      "expected": "Jobs still use this target: Media, Photos. Delete them first."
     }
   },
   "cases": [

@@ -7,7 +7,7 @@ sidebar:
   order: 11
 ---
 
-Einstellungen > **Backup und Wiederherstellung** sichert die Konfiguration der Box (Benutzer, freigegebene Ordner, Dateidienste, Zeitpläne und mehr) in einer passwortgeschützten Datei und stellt sie später wieder her. Die Dateien auf deinen Pools sichert es nicht; die schickt die App **Backup** auf andere Server ([Backup-Ziele](/de/docs/admin/backup-targets/)). Backups sind manuell: Es gibt keinen Zeitplan.
+Einstellungen > **Backup und Wiederherstellung** sichert die Konfiguration der Box (Benutzer, freigegebene Ordner, Dateidienste, Zeitpläne und mehr) in einer passwortgeschützten Datei und stellt sie später wieder her. Die Dateien auf deinen Pools sichert es nicht; die schickt die App **Backup** nach Zeitplan auf andere Server ([Backup-Aufträge](/de/docs/admin/backup-jobs/)). Konfigurations-Backups sind manuell: Es gibt keinen Zeitplan.
 
 ## Ein Backup erstellen
 
@@ -32,7 +32,7 @@ Kategorien, die du bei der Wiederherstellung wählen kannst:
 - **Zertifikate und Schlüssel**: die Zertifizierungsstelle und die Zertifikate der Box, hochgeladene Zertifikate von Hosts des Reverse Proxys und die SSH-Host-Schlüssel, soweit vorhanden.
 - **Reverse Proxy**: Proxy-Hosts (mit Basic-Auth-Benutzern als Hashes), Weiterleitungs-Hosts, Streams, was unbekannte Namen bekommen, die Anmeldeadresse und das Let's-Encrypt-Konto (seine Zertifikate kommen mit **Zertifikate und Schlüssel**).
 - **Apps**: die App-Registry, Berechtigungen, Ordnerzuordnungen, Kataloge und der App-Pool. Die Dateien und Daten der Apps bleiben auf dem Pool.
-- **Backup-Ziele**: die Server der [App Backup](/de/docs/admin/backup-targets/) mit ihren SSH-Schlüsseln und bestätigten Host-Schlüsseln.
+- **App Backup**: die [Ziele](/de/docs/admin/backup-targets/) der App Backup mit ihren SSH-Schlüsseln und bestätigten Host-Schlüsseln und ihre [Aufträge](/de/docs/admin/backup-jobs/) mit ihren Repository-Schlüsseln und Läufen, damit eine wiederhergestellte Box ihre Backups wieder lesen kann.
 
 Nicht enthalten: Dateien auf Pools, App-Daten, Logs, Docker-Daten, Sitzungen, Jobs, Benachrichtigungen und die Arten von App-Benachrichtigungen, die Benutzer stummgeschaltet haben, der Index des Papierkorbs und die Netzwerkeinstellungen (Karten heißen auf anderer Hardware anders). Auch die Schlüssel verschlüsselter Pools im Schlüsseltresor sind nie enthalten: Entsperre nach einer Neuinstallation jeden verschlüsselten Pool einmal mit seinem Schlüssel ([Verschlüsselung](/de/docs/admin/storage/#verschlüsselung)).
 

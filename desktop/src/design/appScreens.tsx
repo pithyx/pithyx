@@ -1,6 +1,7 @@
 import type { components } from '@pithyx/api-client';
 import type { QueryClient } from '@tanstack/react-query';
 import { queryKeys } from '../api/queries';
+import { BackupApp } from '../apps/backup/BackupApp';
 import { FilesApp } from '../apps/files/FilesApp';
 import { LogsApp } from '../apps/logs/LogsApp';
 import { MonitorApp } from '../apps/monitor/MonitorApp';
@@ -21,6 +22,12 @@ import {
   sampleTrashed,
   storeAnswers,
 } from './appSamples';
+import {
+  backupAnswers,
+  backupEmptyAnswers,
+  backupNoJobsAnswers,
+  seedRunningBackup,
+} from './backupSample';
 import { CoreAppScene, type ScriptStep } from './CoreAppScene';
 import { sampleNetwork, type ExtraAnswers } from './storageSample';
 import type { ScreenDefinition } from './screens';
@@ -339,6 +346,101 @@ export const appScreens: ScreenDefinition[] = [
         Component={SettingsApp}
         launch={{ page: 'homes' }}
         answers={homesAnswers}
+      />
+    ),
+  },
+  {
+    id: 'backup-jobs',
+    group: 'apps',
+    title: 'Backup: jobs',
+    description:
+      'Three backup jobs: one backing up now with its progress, one fine with its recent runs, one overdue after a failed run.',
+    render: (context) => (
+      <CoreAppScene
+        context={context}
+        app="backup"
+        Component={BackupApp}
+        answers={backupAnswers}
+        seed={seedRunningBackup}
+        script={[{ press: 'Details', inside: 'Documents' }]}
+      />
+    ),
+  },
+  {
+    id: 'backup-empty',
+    group: 'apps',
+    title: 'Backup: first start',
+    description:
+      'The jobs page of a box without a target: the empty list says a job needs a target first and offers to add one.',
+    render: (context) => (
+      <CoreAppScene
+        context={context}
+        app="backup"
+        Component={BackupApp}
+        answers={backupEmptyAnswers}
+      />
+    ),
+  },
+  {
+    id: 'backup-jobs-empty',
+    group: 'apps',
+    title: 'Backup: no job yet',
+    description:
+      'The jobs page of a box with targets but no job: the empty list offers to add the first job.',
+    render: (context) => (
+      <CoreAppScene
+        context={context}
+        app="backup"
+        Component={BackupApp}
+        answers={backupNoJobsAnswers}
+      />
+    ),
+  },
+  {
+    id: 'backup-targets-empty',
+    group: 'apps',
+    title: 'Backup: no target yet',
+    description:
+      'The targets page without a target: the empty list offers to add the first server.',
+    render: (context) => (
+      <CoreAppScene
+        context={context}
+        app="backup"
+        Component={BackupApp}
+        answers={backupEmptyAnswers}
+        script={[{ press: 'backup:nav.targets' }]}
+      />
+    ),
+  },
+  {
+    id: 'backup-job-new',
+    group: 'apps',
+    title: 'Backup: new job',
+    description:
+      'The dialog of a new job: target and repository, folders, schedule, versions to keep, the integrity check and limits.',
+    render: (context) => (
+      <CoreAppScene
+        context={context}
+        app="backup"
+        Component={BackupApp}
+        answers={backupAnswers}
+        script={[{ press: 'backup:jobs.add' }, { show: 'backup:jobForm.addTitle' }]}
+      />
+    ),
+  },
+  {
+    id: 'backup-targets',
+    group: 'apps',
+    title: 'Backup: targets',
+    description:
+      'Two SFTP targets, each with its own key and the host key the administrator confirmed.',
+    render: (context) => (
+      <CoreAppScene
+        context={context}
+        app="backup"
+        Component={BackupApp}
+        answers={backupAnswers}
+        script={[{ press: 'backup:nav.targets' }]}
       />
     ),
   },

@@ -8265,7 +8265,7 @@
         "tags": [
           "Backups"
         ],
-        "description": "Administrators only. Removes the target and its SSH key. The public key stays in the server's authorized_keys until it is removed there.",
+        "description": "Administrators only. Removes the target and its SSH key. The public key stays in the server's authorized_keys until it is removed there. Refused with backup.target.in_use while jobs use it.",
         "operationId": "DeleteBackupTarget",
         "parameters": [
           {
@@ -8372,6 +8372,366 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/BackupTarget"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/backups/sources": {
+      "get": {
+        "tags": [
+          "Backups"
+        ],
+        "description": "Administrators only. Every shared folder and home, and whether a job can back it up: only datasets of a pool can be backed up from a snapshot.",
+        "operationId": "ListBackupSources",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BackupSourceList"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/backups/jobs": {
+      "get": {
+        "tags": [
+          "Backups"
+        ],
+        "description": "Administrators only. Every backup job with its settings, next times, last run, last check and whether it is overdue. Repository keys are never returned.",
+        "operationId": "ListBackupJobs",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BackupJobList"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Backups"
+        ],
+        "description": "Administrators only. Makes the job's restic repository on the target with a new key, returned only in this answer, or connects to an existing repository with existingKey.",
+        "operationId": "CreateBackupJob",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BackupJobCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BackupJobCreated"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/backups/jobs/{id}": {
+      "get": {
+        "tags": [
+          "Backups"
+        ],
+        "description": "Administrators only. One backup job, as in the list.",
+        "operationId": "GetBackupJob",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BackupJob"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Backups"
+        ],
+        "description": "Administrators only. Changes what a job backs up and when; its target, repository and key stay.",
+        "operationId": "UpdateBackupJob",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BackupJobSettings"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BackupJob"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Backups"
+        ],
+        "description": "Administrators only. Deletes the job, its runs and its key. The repository stays on the target; without the key nobody can read it.",
+        "operationId": "DeleteBackupJob",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/backups/jobs/{id}/runs": {
+      "get": {
+        "tags": [
+          "Backups"
+        ],
+        "description": "Administrators only. The job's runs and checks, newest first, at most limit (default 50, up to 500).",
+        "operationId": "ListBackupRuns",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BackupRunList"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/backups/jobs/{id}/run": {
+      "post": {
+        "tags": [
+          "Backups"
+        ],
+        "description": "Administrators only. Starts a run now as a box job; its progress is in the job's topic and it is cancelled through the jobs API. Refused with backup.job.busy while a run or check goes on.",
+        "operationId": "RunBackupJob",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Job"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/backups/jobs/{id}/check": {
+      "post": {
+        "tags": [
+          "Backups"
+        ],
+        "description": "Administrators only. Starts the integrity check of the job's repository now as a box job, reading back the job's share of the data.",
+        "operationId": "CheckBackupJob",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Job"
                 }
               }
             }
@@ -13125,6 +13485,518 @@
         },
         "description": "A server whose host keys the box reads before a target is saved."
       },
+      "BackupJob": {
+        "required": [
+          "id",
+          "kind",
+          "targetId",
+          "repository",
+          "settings",
+          "createdAt",
+          "nextRunAt",
+          "nextCheckAt",
+          "lastRun",
+          "lastCheck",
+          "lastSuccessAt",
+          "overdue"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Stable id.",
+            "format": "int64"
+          },
+          "kind": {
+            "description": "How it backs up.",
+            "$ref": "#/components/schemas/BackupJobKind"
+          },
+          "targetId": {
+            "type": "integer",
+            "description": "Where it backs up to.",
+            "format": "int64"
+          },
+          "repository": {
+            "type": "string",
+            "description": "The repository's folder below the target's path."
+          },
+          "settings": {
+            "description": "What it backs up and when.",
+            "$ref": "#/components/schemas/BackupJobSettings"
+          },
+          "createdAt": {
+            "type": "string",
+            "description": "UTC.",
+            "format": "date-time"
+          },
+          "nextRunAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "When the schedule runs it next; null when it is disabled.",
+            "format": "date-time"
+          },
+          "nextCheckAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "When it is checked next; null without a check schedule or when it is disabled.",
+            "format": "date-time"
+          },
+          "lastRun": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Its newest backup run, finished or running.",
+                "$ref": "#/components/schemas/BackupRun"
+              }
+            ],
+            "description": "One run or check of a job."
+          },
+          "lastCheck": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Its newest check.",
+                "$ref": "#/components/schemas/BackupRun"
+              }
+            ],
+            "description": "One run or check of a job."
+          },
+          "lastSuccessAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "When its last backup run succeeded (or ended with warnings).",
+            "format": "date-time"
+          },
+          "overdue": {
+            "type": "boolean",
+            "description": "It is enabled and had no successful run for longer than its limit."
+          }
+        },
+        "description": "A backup job."
+      },
+      "BackupJobCreateRequest": {
+        "required": [
+          "targetId",
+          "repository",
+          "settings"
+        ],
+        "type": "object",
+        "properties": {
+          "targetId": {
+            "type": "integer",
+            "description": "Where it backs up to.",
+            "format": "int64"
+          },
+          "repository": {
+            "type": "string",
+            "description": "The repository's folder below the target's path; made by the box unless ExistingKey is given."
+          },
+          "settings": {
+            "description": "What it backs up and when.",
+            "$ref": "#/components/schemas/BackupJobSettings"
+          },
+          "existingKey": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The key of a repository that exists already, for example of a reinstalled box; null makes a new repository with a new key."
+          }
+        },
+        "description": "A new job."
+      },
+      "BackupJobCreated": {
+        "required": [
+          "job",
+          "key"
+        ],
+        "type": "object",
+        "properties": {
+          "job": {
+            "description": "The job.",
+            "$ref": "#/components/schemas/BackupJob"
+          },
+          "key": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The new repository's key; null when the job connected to an existing repository."
+          }
+        },
+        "description": "A new job and the key of its new repository, which the box shows only now."
+      },
+      "BackupJobKind": {
+        "enum": [
+          "versioned"
+        ],
+        "description": "How a job backs up. Only versioned backups for now (#394); mirrors and pulls come later."
+      },
+      "BackupJobList": {
+        "required": [
+          "jobs"
+        ],
+        "type": "object",
+        "properties": {
+          "jobs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BackupJob"
+            }
+          }
+        },
+        "description": "Every backup job, by name."
+      },
+      "BackupJobSettings": {
+        "required": [
+          "name",
+          "sources",
+          "schedule",
+          "enabled",
+          "retention"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "1 to 64 characters, unique on the box."
+          },
+          "sources": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BackupSource"
+            },
+            "description": "1 to 32 folders of shared folders or homes on a pool."
+          },
+          "schedule": {
+            "type": "string",
+            "description": "When it runs: five cron fields in the box's time zone, as app schedules."
+          },
+          "enabled": {
+            "type": "boolean",
+            "description": "Whether the schedule runs it; a disabled job still runs by hand."
+          },
+          "retention": {
+            "description": "How many versions it keeps.",
+            "$ref": "#/components/schemas/BackupRetention"
+          },
+          "excludes": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "description": "restic exclude patterns, at most 100; left out, none."
+          },
+          "checkSchedule": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "When the repository's integrity is checked (cron); null for never."
+          },
+          "checkReadPercent": {
+            "type": "integer",
+            "description": "The share of the data a check reads back, 0 to 100; 0 checks only the structure.",
+            "format": "int32",
+            "default": 0
+          },
+          "uploadLimitKib": {
+            "type": "integer",
+            "description": "Upload limit in KiB/s; 0 or left out for none.",
+            "format": "int32",
+            "default": 0
+          },
+          "downloadLimitKib": {
+            "type": "integer",
+            "description": "Download limit in KiB/s; 0 or left out for none.",
+            "format": "int32",
+            "default": 0
+          },
+          "overdueHours": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "Hours without a successful run before administrators are told; null for three times the interval, at least two days.",
+            "format": "int32"
+          }
+        },
+        "description": "What an administrator sets on a job."
+      },
+      "BackupRetention": {
+        "required": [
+          "last",
+          "hourly",
+          "daily",
+          "weekly",
+          "monthly",
+          "yearly",
+          "keepsAll"
+        ],
+        "type": "object",
+        "properties": {
+          "last": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "hourly": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "daily": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "weekly": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "monthly": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "yearly": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "description": "How many versions a job keeps after each successful run (restic's `forget`). 0 keeps none of that kind; all 0 keeps everything."
+      },
+      "BackupRun": {
+        "required": [
+          "id",
+          "kind",
+          "trigger",
+          "boardJobId",
+          "state",
+          "startedAt",
+          "finishedAt",
+          "files",
+          "bytes",
+          "addedBytes",
+          "snapshot",
+          "warnings",
+          "errorCode",
+          "errorParams"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Stable id.",
+            "format": "int64"
+          },
+          "kind": {
+            "description": "A backup or an integrity check.",
+            "$ref": "#/components/schemas/BackupRunKind"
+          },
+          "trigger": {
+            "description": "The schedule or an administrator.",
+            "$ref": "#/components/schemas/BackupRunTrigger"
+          },
+          "boardJobId": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "Its job on the job board, for progress and cancel while it runs.",
+            "format": "int64"
+          },
+          "state": {
+            "description": "How it ended, or that it runs.",
+            "$ref": "#/components/schemas/BackupRunState"
+          },
+          "startedAt": {
+            "type": "string",
+            "description": "UTC.",
+            "format": "date-time"
+          },
+          "finishedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "UTC; null while it runs.",
+            "format": "date-time"
+          },
+          "files": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "Files in the version.",
+            "format": "int64"
+          },
+          "bytes": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "Bytes in the version.",
+            "format": "int64"
+          },
+          "addedBytes": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "Bytes the run added to the repository.",
+            "format": "int64"
+          },
+          "snapshot": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The id of the version restic made."
+          },
+          "warnings": {
+            "type": "integer",
+            "description": "Files or folders that could not be read.",
+            "format": "int32"
+          },
+          "errorCode": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Why it failed."
+          },
+          "errorParams": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "The error's params.",
+                "$ref": "#/components/schemas/JsonElement"
+              }
+            ]
+          }
+        },
+        "description": "One run or check of a job."
+      },
+      "BackupRunKind": {
+        "enum": [
+          "backup",
+          "check"
+        ],
+        "description": "What a run did."
+      },
+      "BackupRunList": {
+        "required": [
+          "runs"
+        ],
+        "type": "object",
+        "properties": {
+          "runs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BackupRun"
+            }
+          }
+        },
+        "description": "A job's runs and checks, newest first."
+      },
+      "BackupRunState": {
+        "enum": [
+          "running",
+          "succeeded",
+          "warning",
+          "failed",
+          "cancelled",
+          "interrupted"
+        ],
+        "description": "How a run or check ended, or that it runs."
+      },
+      "BackupRunTrigger": {
+        "enum": [
+          "schedule",
+          "manual"
+        ],
+        "description": "Why a run started."
+      },
+      "BackupSource": {
+        "required": [
+          "shareId",
+          "path"
+        ],
+        "type": "object",
+        "properties": {
+          "shareId": {
+            "type": "integer",
+            "description": "The shared folder or home, as in Files.",
+            "format": "int64"
+          },
+          "path": {
+            "type": "string",
+            "description": "The folder below it, with `/` between its parts; empty for the whole shared folder."
+          }
+        },
+        "description": "A folder a job backs up."
+      },
+      "BackupSourceList": {
+        "required": [
+          "sources"
+        ],
+        "type": "object",
+        "properties": {
+          "sources": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BackupSourceOption"
+            }
+          }
+        },
+        "description": "Every shared folder and home, by name."
+      },
+      "BackupSourceOption": {
+        "required": [
+          "shareId",
+          "name",
+          "home",
+          "supported",
+          "available"
+        ],
+        "type": "object",
+        "properties": {
+          "shareId": {
+            "type": "integer",
+            "description": "Its id.",
+            "format": "int64"
+          },
+          "name": {
+            "type": "string",
+            "description": "The shared folder's name, or `homes/&lt;user&gt;` for a home."
+          },
+          "home": {
+            "type": "boolean",
+            "description": "Whether it is a home."
+          },
+          "supported": {
+            "type": "boolean",
+            "description": "It is a dataset of a pool, so the box can back it up from a snapshot."
+          },
+          "available": {
+            "type": "boolean",
+            "description": "Its pool is there and unlocked."
+          }
+        },
+        "description": "A shared folder or home a job can back up."
+      },
       "BackupSummary": {
         "required": [
           "restoreId",
@@ -14746,9 +15618,22 @@
           "auth.totp.not_enrolled",
           "auth.username.invalid",
           "auth.username.reserved",
+          "backup.check.failed",
           "backup.host_key.scan_failed",
+          "backup.job.busy",
+          "backup.job.invalid",
+          "backup.job.name_taken",
+          "backup.job.not_found",
+          "backup.repository.exists",
+          "backup.repository.locked",
+          "backup.repository.not_found",
+          "backup.repository.wrong_key",
+          "backup.run.failed",
+          "backup.source.unavailable",
+          "backup.source.unsupported",
           "backup.target.auth_failed",
           "backup.target.host_key_changed",
+          "backup.target.in_use",
           "backup.target.invalid",
           "backup.target.name_taken",
           "backup.target.not_found",

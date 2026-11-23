@@ -20,6 +20,8 @@ public static partial class SupportDatabase
         ["app_permissions"] = None(),
         ["apps"] = Set("icon"),
         ["audit_log"] = None(),
+        ["backup_jobs"] = Set("repository_key"),
+        ["backup_runs"] = None(),
         ["backup_targets"] = Set("ssh_private_key"),
         ["catalogs"] = Set("ssh_private_key", "registry_token"),
         ["file_services"] = None(),

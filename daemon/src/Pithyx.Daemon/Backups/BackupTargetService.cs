@@ -184,6 +184,12 @@ public sealed partial class BackupTargetService(
     {
         await using var connection = await connections.OpenAsync(cancellationToken);
         var row = await RowAsync(connection, id, cancellationToken);
+        var jobs = (await connection.QueryAsync<string>(new CommandDefinition(
+            "SELECT name FROM backup_jobs WHERE target_id = @id ORDER BY name COLLATE NOCASE", new { id }, cancellationToken: cancellationToken))).ToList();
+        if (jobs.Count > 0)
+        {
+            throw new PithyxException(ErrorCodes.BackupTargetInUse, new Dictionary<string, object?> { ["jobs"] = string.Join(", ", jobs) });
+        }
         await connection.ExecuteAsync(new CommandDefinition("DELETE FROM backup_targets WHERE id = @id", new { id }, cancellationToken: cancellationToken));
         await audit.RecordAsync(caller, TargetDeleted, row.Name, new Dictionary<string, string> { ["host"] = row.Host }, cancellationToken);
         LogDeleted(id);
@@ -195,6 +201,33 @@ public sealed partial class BackupTargetService(
         await using var connection = await connections.OpenAsync(cancellationToken);
         var row = await RowAsync(connection, id, cancellationToken);
         return (Endpoint(row), row.Path);
+    }
+
+    /// <summary>
+    /// Keeps a connection failure of a backup run as the target's last test, so the Targets view shows it. Returns
+    /// whether the target's host key changed since its last test, which administrators are told about once.
+    /// </summary>
+    public async Task<bool> RecordConnectionFailureAsync(long id, PithyxException error, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(error);
+        await using var connection = await connections.OpenAsync(cancellationToken);
+        var previous = await connection.QuerySingleOrDefaultAsync<string?>(new CommandDefinition(
+            "SELECT test_error_code FROM backup_targets WHERE id = @id", new { id }, cancellationToken: cancellationToken));
+        await connection.ExecuteAsync(new CommandDefinition(
+            "UPDATE backup_targets SET tested_at = @now, test_error_code = @code, test_error_params = @parameters WHERE id = @id",
+            new { id, now = SessionService.Format(time.GetUtcNow()), code = error.Code, parameters = BackupSsh.Params(error) },
+            cancellationToken: cancellationToken));
+        return error.Code == ErrorCodes.BackupTargetHostKeyChanged && previous != ErrorCodes.BackupTargetHostKeyChanged;
+    }
+
+    /// <summary>Keeps a run's successful connection as the target's last test.</summary>
+    public async Task RecordConnectionAsync(long id, CancellationToken cancellationToken)
+    {
+        await using var connection = await connections.OpenAsync(cancellationToken);
+        await connection.ExecuteAsync(new CommandDefinition(
+            "UPDATE backup_targets SET tested_at = @now, test_error_code = NULL, test_error_params = NULL WHERE id = @id",
+            new { id, now = SessionService.Format(time.GetUtcNow()) },
+            cancellationToken: cancellationToken));
     }
 
     private static SshEndpoint Endpoint(TargetRow row) => new(row.Host, (int)row.Port, row.UserName, row.HostKey, row.PrivateKey);

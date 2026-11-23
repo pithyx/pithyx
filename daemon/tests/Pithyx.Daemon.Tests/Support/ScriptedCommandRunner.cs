@@ -52,17 +52,30 @@ public sealed class ScriptedCommandRunner : ICommandRunner
         }
         if (Handler?.Invoke(request) is { } handled)
         {
-            return Task.FromResult(handled);
+            return Task.FromResult(Streamed(request, handled));
         }
         var specific = request.Arguments.Count > 0 ? $"{request.FileName} {request.Arguments[0]}" : request.FileName;
         if (Hanging.Contains(specific))
         {
             return HangAsync(cancellationToken);
         }
-        return Task.FromResult(
+        return Task.FromResult(Streamed(request,
             Results.TryGetValue(specific, out var exact) ? exact
             : Results.TryGetValue(request.FileName, out var result) ? result
-            : new CommandResult(127, "", "not scripted", TimeSpan.Zero));
+            : new CommandResult(127, "", "not scripted", TimeSpan.Zero)));
+    }
+
+    /// <summary>Hands each line of the output to <see cref="CommandRequest.OutputLine"/>, as the real runner does.</summary>
+    private static CommandResult Streamed(CommandRequest request, CommandResult result)
+    {
+        if (request.OutputLine is { } onLine)
+        {
+            foreach (var line in result.StandardOutput.Split('\n', StringSplitOptions.RemoveEmptyEntries))
+            {
+                onLine(line);
+            }
+        }
+        return result;
     }
 
     private static async Task<CommandResult> HangAsync(CancellationToken cancellationToken)

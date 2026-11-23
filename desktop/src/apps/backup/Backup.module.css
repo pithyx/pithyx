@@ -9,13 +9,45 @@
   color: var(--color-text-muted);
 }
 
+.intro {
+  max-width: 70ch;
+  margin: 0;
+  color: var(--color-text-muted);
+}
+
 .empty {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--space-3);
+  gap: var(--space-2);
   padding: var(--space-6) var(--space-4);
+  border: 1px dashed var(--color-border-strong);
+  border-radius: var(--radius-card);
+  background: var(--color-surface-1);
   text-align: center;
+}
+
+.empty > p {
+  max-width: 48ch;
+  margin: 0 0 var(--space-2);
+  color: var(--color-text-muted);
+}
+
+.emptyIcon {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  margin-bottom: var(--space-1);
+  border-radius: var(--radius-card);
+  background: var(--color-accent-subtle);
+  color: var(--color-accent);
+}
+
+.emptyTitle {
+  margin: 0;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
 }
 
 .targets {
@@ -84,4 +116,79 @@
   border: 1px solid var(--color-warning);
   border-radius: var(--radius-sm);
   background: var(--color-warning-surface);
+}
+
+.cardBody {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4) var(--space-1);
+}
+
+.hint {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+
+.inline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: var(--space-2) var(--space-3);
+}
+
+.inline > * {
+  flex: 1 1 10rem;
+  min-width: 0;
+}
+
+.inline > button {
+  flex: none;
+}
+
+.fieldset {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.numbers {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(7rem, 1fr));
+  gap: var(--space-2) var(--space-3);
+}
+
+.textarea {
+  min-height: 4.5rem;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-1);
+  color: var(--color-text);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-sm);
+  resize: vertical;
+}
+
+.plainList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-0);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.textarea:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 1px;
+}
+
+.fieldset > legend {
+  padding: 0;
 }

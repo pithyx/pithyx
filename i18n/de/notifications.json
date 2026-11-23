@@ -1,18 +1,5 @@
 {
   "storage": {
-    "scrub": {
-      "finished": {
-        "title": "Scrub abgeschlossen",
-        "body": "Pool {pool} wurde geprüft. {errors, plural, =0 {Keine Fehler gefunden.} one {# Fehler gefunden.} other {# Fehler gefunden.}}"
-      }
-    },
-    "disk": {
-      "warm": {
-        "title": "Laufwerk wird warm",
-        "body": "Laufwerk {disk} in {pool} meldet {temperature, number} °C. Prüf die Belüftung.",
-        "action": "Laufwerk anzeigen"
-      }
-    },
     "alert": {
       "poolDegraded": {
         "title": "Pool {pool} ist beeinträchtigt",
@@ -99,13 +86,6 @@
     }
   },
   "apps": {
-    "update": {
-      "available": {
-        "title": "Update verfügbar",
-        "body": "{app} {version} kann installiert werden.",
-        "action": "Installieren"
-      }
-    },
     "device": {
       "missing": {
         "title": "Ein Gerät von {app} fehlt",
@@ -124,10 +104,6 @@
       "title": "Einige Fenster wurden nicht wiederhergestellt",
       "body": "{count, plural, one {# Fenster gehört} other {# Fenster gehören}} zu einer App, die nicht mehr verfügbar ist."
     },
-    "copied": {
-      "title": "Desktop geladen",
-      "body": "Die Fenster von {device} sind jetzt hier geöffnet."
-    },
     "saveFailed": {
       "title": "Fensteranordnung nicht gespeichert",
       "body": "Der Daemon hat das Layout dieses Desktops nicht gespeichert. Deine Fenster bleiben offen."
@@ -139,6 +115,10 @@
     "noteKept": {
       "title": "Notiztext behalten",
       "body": "{count, plural, one {Eine Notiz wurde auf einem anderen Gerät geändert, während du darauf geschrieben hast. Dein Text steht auf einer neuen Notiz daneben.} other {# Notizen wurden auf einem anderen Gerät geändert, während du darauf geschrieben hast. Deine Texte stehen auf neuen Notizen daneben.}}"
+    },
+    "copied": {
+      "title": "Desktop geladen",
+      "body": "Die Fenster von {device} sind jetzt hier geöffnet."
     }
   },
   "app": {
@@ -274,6 +254,35 @@
       "renewal_failed": {
         "title": "Zertifikat von {name} nicht erneuert",
         "body": "Let's Encrypt hat es nicht erneuert. Einstellungen > Reverse Proxy zeigt, warum; die Box versucht es später noch einmal, und das aktuelle Zertifikat gilt bis zu seinem Ende."
+      }
+    }
+  },
+  "backup": {
+    "alert": {
+      "runFailed": {
+        "title": "Backup {job} fehlgeschlagen",
+        "body": "Es wurde nichts Neues gesichert. Die App Backup zeigt den Grund.",
+        "action": "Backup öffnen"
+      },
+      "runWarning": {
+        "title": "Backup {job} hat Dateien ausgelassen",
+        "body": "{warnings, plural, =0 {Einige Dateien} one {# Datei} other {# Dateien}} ließen sich nicht lesen. Das Log Center nennt sie.",
+        "action": "Backup öffnen"
+      },
+      "overdue": {
+        "title": "Backup {job} ist überfällig",
+        "body": "Seit {days, plural, one {# Tag} other {# Tagen}} kein erfolgreicher Lauf. Prüf den Auftrag und sein Ziel.",
+        "action": "Backup öffnen"
+      },
+      "checkFailed": {
+        "title": "Prüfung von {job} fehlgeschlagen",
+        "body": "Das Repository hat die Prüfung nicht bestanden. Die App Backup zeigt den Grund.",
+        "action": "Backup öffnen"
+      },
+      "hostKeyChanged": {
+        "title": "Ziel {target} hat einen neuen Host-Schlüssel",
+        "body": "Die Box hat sich nicht verbunden, also kam kein Backup an. Frag die Person, die den Server betreut, bevor du den Schlüssel bestätigst.",
+        "action": "Backup öffnen"
       }
     }
   }

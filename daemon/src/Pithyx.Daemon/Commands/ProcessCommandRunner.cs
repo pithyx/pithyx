@@ -29,7 +29,9 @@ public sealed partial class ProcessCommandRunner(ILogger<ProcessCommandRunner> l
             await process.StandardInput.WriteAsync(input.AsMemory(), timeoutSource.Token);
         }
         process.StandardInput.Close();
-        var standardOutput = process.StandardOutput.ReadToEndAsync(CancellationToken.None);
+        var standardOutput = request.OutputLine is { } onLine
+            ? ReadLinesAsync(process.StandardOutput, onLine)
+            : process.StandardOutput.ReadToEndAsync(CancellationToken.None);
         var standardError = process.StandardError.ReadToEndAsync(CancellationToken.None);
 
         try
@@ -38,7 +40,22 @@ public sealed partial class ProcessCommandRunner(ILogger<ProcessCommandRunner> l
         }
         catch (OperationCanceledException)
         {
-            process.Kill(entireProcessTree: true);
+            if (request.Interruptible && !process.HasExited && Interrupt(process.Id))
+            {
+                using var grace = new CancellationTokenSource(CommandRequest.InterruptGrace);
+                try
+                {
+                    await process.WaitForExitAsync(grace.Token);
+                }
+                catch (OperationCanceledException)
+                {
+                    // It did not stop in time; killed below.
+                }
+            }
+            if (!process.HasExited)
+            {
+                process.Kill(entireProcessTree: true);
+            }
             LogCommandAborted(request.FileName, request.LoggableArguments, stopwatch.Elapsed);
             if (cancellationToken.IsCancellationRequested)
             {
@@ -163,6 +180,36 @@ public sealed partial class ProcessCommandRunner(ILogger<ProcessCommandRunner> l
         }
     }
 
+    /// <summary>Hands each stdout line to <paramref name="onLine"/> and keeps the tail of the output for the result and the log.</summary>
+    private async Task<string> ReadLinesAsync(StreamReader reader, Action<string> onLine)
+    {
+        var tail = new System.Text.StringBuilder();
+        while (await reader.ReadLineAsync(CancellationToken.None) is { } line)
+        {
+            try
+            {
+                onLine(line);
+            }
+            catch (Exception exception)
+            {
+                LogOutputLineFailed(exception);
+            }
+            tail.Append(line).Append('\n');
+            if (tail.Length > CommandRequest.StreamedOutputTail * 2)
+            {
+                tail.Remove(0, tail.Length - CommandRequest.StreamedOutputTail);
+            }
+        }
+        return tail.Length > CommandRequest.StreamedOutputTail ? tail.ToString(tail.Length - CommandRequest.StreamedOutputTail, CommandRequest.StreamedOutputTail) : tail.ToString();
+    }
+
+    private static bool Interrupt(int pid) => OperatingSystem.IsLinux() && Kill(pid, SignalInterrupt) == 0;
+
+    private const int SignalInterrupt = 2;
+
+    [System.Runtime.InteropServices.LibraryImport("libc", EntryPoint = "kill", SetLastError = true)]
+    private static partial int Kill(int pid, int signal);
+
     private static async Task<string?> ReadLineOrNullAsync(StreamReader reader, CancellationToken cancellationToken)
     {
         try
@@ -204,4 +251,7 @@ public sealed partial class ProcessCommandRunner(ILogger<ProcessCommandRunner> l
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "Command {Command} {Arguments} was aborted after {Duration}")]
     private partial void LogCommandAborted(string command, IReadOnlyList<string> arguments, TimeSpan duration);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Handling a line of a command's output failed")]
+    private partial void LogOutputLineFailed(Exception exception);
 }
