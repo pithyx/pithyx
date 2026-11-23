@@ -1,7 +1,7 @@
 import type { PithyxApp } from '@pithyx/sdk';
 import { Button, DataTable, Select, StatusBadge, Toolbar, type DataTableColumn } from '@pithyx/ui';
 import { useMutation } from '@tanstack/react-query';
-import { useEffect, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { formatBytes } from '../../desktop/format';
 import { ErrorNotice } from '../../errors/ErrorNotice';
@@ -155,6 +155,64 @@ function RunningRun({
   );
 }
 
+/** What runs now: each run or check on the board with its progress and **Cancel** (restic cannot pause). */
+export function RunningPanel({
+  app,
+  targets,
+}: {
+  app: PithyxApp;
+  targets: readonly BackupTarget[] | undefined;
+}) {
+  const { t } = useTranslation('backup');
+  const jobs = useBackupJobs(app);
+  const board = useActiveRuns();
+  const { route } = useSourceNames(app);
+  const titleId = useId();
+  const list = jobs.data?.jobs ?? [];
+  const active = [...board.values()].sort((a, b) =>
+    a.state === b.state ? a.id - b.id : a.state === 'running' ? -1 : 1,
+  );
+  return (
+    <section className={styles.panel} aria-labelledby={titleId}>
+      <div className={styles.panelHead}>
+        <IconActivity size={18} stroke={1.75} aria-hidden />
+        <h2 id={titleId} className={styles.panelTitle}>
+          {t('activity.runningTitle')}
+        </h2>
+        <span className={styles.muted}>
+          {t('activity.runningCount', {
+            running: active.filter((job) => job.state === 'running').length,
+            waiting: active.filter((job) => job.state === 'queued').length,
+          })}
+        </span>
+      </div>
+      {active.length === 0 ? (
+        <p className={`${styles.muted} ${styles.panelBody}`}>{t('activity.nothingRunning')}</p>
+      ) : (
+        <ul className={styles.runningList}>
+          {active.map((entry) => {
+            const job = jobOfBoard(entry, list);
+            return (
+              <RunningRun
+                key={entry.id}
+                app={app}
+                board={entry}
+                job={job}
+                target={
+                  job === undefined
+                    ? undefined
+                    : targets?.find((target) => target.id === job.targetId)
+                }
+                route={job === undefined ? '' : route(job)}
+              />
+            );
+          })}
+        </ul>
+      )}
+    </section>
+  );
+}
+
 /** The selected run: when, how it ended, what it wrote and the files it could not read. */
 function RunDetails({
   run,
@@ -296,7 +354,6 @@ export function ActivityPage({
   const { t } = useTranslation('backup');
   const locale = useFormatLocale();
   const jobs = useBackupJobs(app);
-  const board = useActiveRuns();
   const { route } = useSourceNames(app);
   const when = useWhen();
   const [jobId, setJobId] = useState<number | undefined>();
@@ -320,9 +377,6 @@ export function ActivityPage({
   const runs = history.data?.runs ?? [];
   const selected = runs.find((run) => run.id === selectedId);
   const selectedJob = selected === undefined ? undefined : jobById.get(selected.jobId);
-  const active = [...board.values()].sort((a, b) =>
-    a.state === b.state ? a.id - b.id : a.state === 'running' ? -1 : 1,
-  );
   const number = new Intl.NumberFormat(locale);
   const nameOf = (run: BackupRun) =>
     jobById.get(run.jobId)?.settings.name ?? t('activity.deletedJob');
@@ -418,39 +472,7 @@ export function ActivityPage({
   return (
     <div className={styles.page}>
       <p className={styles.intro}>{t('activity.intro')}</p>
-      <section className={styles.panel} aria-labelledby="backup-running">
-        <div className={styles.panelHead}>
-          <IconActivity size={18} stroke={1.75} aria-hidden />
-          <h2 id="backup-running" className={styles.panelTitle}>
-            {t('activity.runningTitle')}
-          </h2>
-          <span className={styles.muted}>
-            {t('activity.runningCount', {
-              running: active.filter((job) => job.state === 'running').length,
-              waiting: active.filter((job) => job.state === 'queued').length,
-            })}
-          </span>
-        </div>
-        {active.length === 0 ? (
-          <p className={`${styles.muted} ${styles.panelBody}`}>{t('activity.nothingRunning')}</p>
-        ) : (
-          <ul className={styles.runningList}>
-            {active.map((entry) => {
-              const job = jobOfBoard(entry, list);
-              return (
-                <RunningRun
-                  key={entry.id}
-                  app={app}
-                  board={entry}
-                  job={job}
-                  target={targetOf(job)}
-                  route={job === undefined ? '' : route(job)}
-                />
-              );
-            })}
-          </ul>
-        )}
-      </section>
+      <RunningPanel app={app} targets={targets} />
       <h2 className={styles.sectionTitle}>{t('activity.historyTitle')}</h2>
       <Toolbar
         aria-label={t('activity.filters')}

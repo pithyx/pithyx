@@ -71,7 +71,8 @@
   },
   "nav": {
     "label": "Backup",
-    "overview": "Overview",
+    "overview": "At a glance",
+    "overviewPage": "Overview",
     "activity": "Activity",
     "runningCount": "{count, plural, one {# running} other {# running}}",
     "out": "From this box",
@@ -319,5 +320,62 @@
     "tomorrow": "Tomorrow, {time}",
     "yesterday": "Yesterday, {time}",
     "date": "{date}, {time}"
+  },
+  "overview": {
+    "title": "Overview",
+    "toolbar": "Overview",
+    "period": "Period",
+    "add": "Add backup",
+    "runAll": "Back up all now",
+    "emptyTitle": "No backup yet",
+    "empty": "Add a backup of shared folders and homes to a server or a second box.",
+    "protected": "Protected data",
+    "protectedIn": "{count, plural, one {in # backup} other {in # backups}}",
+    "protectedOut": "{size} from this box",
+    "runs": {
+      "week": "Runs of the last 7 days",
+      "month": "Runs of the last 30 days",
+      "quarter": "Runs of the last 90 days"
+    },
+    "runsOf": "{count, plural, one {of # successful} other {of # successful}}",
+    "runsLabel": "{succeeded} succeeded, {warnings} with warnings, {failed} failed",
+    "next": "Next run",
+    "nextNone": "None planned",
+    "used": "Used on targets",
+    "usedOn": "{count, plural, one {on # target} other {on # targets}}",
+    "spaceLabel": "Space on {name}",
+    "space": "{name}: {used} of {total}",
+    "calendar": {
+      "ok": "Succeeded",
+      "warning": "Warnings",
+      "failed": "Failed",
+      "previous": "Previous month",
+      "next": "Next month",
+      "none": "No backup ran",
+      "future": "Still to come",
+      "count": "{ok}/{jobs}",
+      "ran": "{count, plural, one {# backup ran} other {# backups ran}}",
+      "failedRuns": "{count, plural, one {# run failed} other {# runs failed}}",
+      "warningRuns": "{count, plural, one {# with warnings} other {# with warnings}}",
+      "allOk": "all without problems"
+    },
+    "unreadable": "{count, plural, one {# file could not be read} other {# files could not be read}}",
+    "showActivity": "Show in activity",
+    "showTargets": "Show targets",
+    "show": "Show",
+    "failed": "Last run failed ({time})",
+    "failedWith": "Last run failed ({time}): {error}",
+    "overdue": "Overdue, last backup {time}",
+    "overdueNever": "Overdue, no backup yet",
+    "checkFailed": "Integrity check failed ({time})",
+    "attention": "Needs attention",
+    "allFine": "Nothing needs attention",
+    "chart": {
+      "title": "Backed-up data",
+      "added": "Added per day",
+      "size": "Used on all targets",
+      "label": "{days} days: {added} added, the repositories take {size}",
+      "unknown": "unknown"
+    }
   }
 }

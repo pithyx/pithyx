@@ -350,6 +350,22 @@ export const appScreens: ScreenDefinition[] = [
     ),
   },
   {
+    id: 'backup-overview',
+    group: 'apps',
+    title: 'Backup: overview',
+    description:
+      'The first page: protected data, the runs of 30 days, the next run and the space on the targets; the month in a calendar with the day of the latest failure picked, the run going on now, what needs attention and the data backed up per day.',
+    render: (context) => (
+      <CoreAppScene
+        context={context}
+        app="backup"
+        Component={BackupApp}
+        answers={backupAnswers}
+        seed={seedRunningBackup}
+      />
+    ),
+  },
+  {
     id: 'backup-jobs',
     group: 'apps',
     title: 'Backup: box backups',
@@ -362,7 +378,7 @@ export const appScreens: ScreenDefinition[] = [
         Component={BackupApp}
         answers={backupAnswers}
         seed={seedRunningBackup}
-        script={[{ press: 'Documents' }]}
+        script={[{ press: 'backup:nav.jobs' }, { press: 'Documents' }]}
       />
     ),
   },
@@ -395,6 +411,7 @@ export const appScreens: ScreenDefinition[] = [
         app="backup"
         Component={BackupApp}
         answers={backupEmptyAnswers}
+        script={[{ press: 'backup:nav.jobs' }]}
       />
     ),
   },
@@ -410,6 +427,7 @@ export const appScreens: ScreenDefinition[] = [
         app="backup"
         Component={BackupApp}
         answers={backupNoJobsAnswers}
+        script={[{ press: 'backup:nav.jobs' }]}
       />
     ),
   },
@@ -441,7 +459,11 @@ export const appScreens: ScreenDefinition[] = [
         app="backup"
         Component={BackupApp}
         answers={backupAnswers}
-        script={[{ press: 'backup:jobs.add' }, { show: 'backup:jobForm.addTitle' }]}
+        script={[
+          { press: 'backup:nav.jobs' },
+          { press: 'backup:jobs.add' },
+          { show: 'backup:jobForm.addTitle' },
+        ]}
       />
     ),
   },

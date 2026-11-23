@@ -134,3 +134,7 @@ export { default as IconDeviceGamepad2 } from '@tabler/icons-react/dist/esm/icon
 export { default as IconBooks } from '@tabler/icons-react/dist/esm/icons/IconBooks.mjs';
 export { default as IconShieldCheck } from '@tabler/icons-react/dist/esm/icons/IconShieldCheck.mjs';
 export { default as IconArchive } from '@tabler/icons-react/dist/esm/icons/IconArchive.mjs';
+export { default as IconCalendar } from '@tabler/icons-react/dist/esm/icons/IconCalendar.mjs';
+export { default as IconCircleX } from '@tabler/icons-react/dist/esm/icons/IconCircleX.mjs';
+export { default as IconChartBar } from '@tabler/icons-react/dist/esm/icons/IconChartBar.mjs';
+export { default as IconLayoutDashboard } from '@tabler/icons-react/dist/esm/icons/IconLayoutDashboard.mjs';

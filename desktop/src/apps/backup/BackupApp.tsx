@@ -18,6 +18,7 @@ import { useFormatLocale } from '../../i18n';
 import {
   IconActivity,
   IconKey,
+  IconLayoutDashboard,
   IconPencil,
   IconPlugConnected,
   IconPlus,
@@ -28,6 +29,7 @@ import {
 import type { SdkAppProps } from '../sdk/CoreSdkApp';
 import { backupsCall, targetsKey, type BackupJob, type BackupTarget } from '../sdk/backups';
 import { ActivityPage } from './ActivityPage';
+import { OverviewPage } from './OverviewPage';
 import { useActiveRuns } from './data';
 import { DirectionTag } from './Direction';
 import { DeleteJobDialog, JobDialog, KeyDialog } from './JobDialogs';
@@ -44,9 +46,9 @@ import {
 } from './TargetDialogs';
 import styles from './Backup.module.css';
 
-type Page = 'activity' | 'jobs' | 'targets';
+type Page = 'overview' | 'activity' | 'jobs' | 'targets';
 
-const PAGES: readonly Page[] = ['activity', 'jobs', 'targets'];
+const PAGES: readonly Page[] = ['overview', 'activity', 'jobs', 'targets'];
 
 type Opened =
   | { kind: 'add' }
@@ -73,7 +75,7 @@ function useTargets(app: PithyxApp) {
 export function BackupApp({ app }: SdkAppProps) {
   const { t } = useTranslation('backup');
   const targets = useTargets(app);
-  const [page, setPage] = useState<Page>('jobs');
+  const [page, setPage] = useState<Page>('overview');
   const [view, setView] = useState<AppFrameView>('page');
   const [opened, setOpened] = useState<Opened>(null);
   const close = () => {
@@ -101,6 +103,11 @@ export function BackupApp({ app }: SdkAppProps) {
       id: 'overview',
       label: t('nav.overview'),
       items: [
+        {
+          id: 'overview',
+          label: t('nav.overviewPage'),
+          icon: <IconLayoutDashboard size={18} stroke={1.75} aria-hidden />,
+        },
         {
           id: 'activity',
           label: t('nav.activity'),
@@ -144,14 +151,14 @@ export function BackupApp({ app }: SdkAppProps) {
             groups={groups}
             selectedId={page}
             onSelect={(id) => {
-              setPage(PAGES.find((entry) => entry === id) ?? 'jobs');
+              setPage(PAGES.find((entry) => entry === id) ?? 'overview');
               setView('page');
             }}
           />
         }
         title={
-          page === 'activity' ? (
-            t('activity.title')
+          page === 'overview' || page === 'activity' ? (
+            t(`${page}.title`)
           ) : (
             <span className={styles.title}>
               {t(`${page}.title`)}
@@ -170,7 +177,25 @@ export function BackupApp({ app }: SdkAppProps) {
           )
         }
       >
-        {page === 'activity' ? (
+        {page === 'overview' ? (
+          <OverviewPage
+            app={app}
+            targets={targetList}
+            onAddJob={() => {
+              // A backup needs a target; without one the overview leads to adding it first.
+              if (targetList?.length === 0) {
+                setPage('targets');
+                addTarget();
+              } else {
+                addJob();
+              }
+            }}
+            onShowPage={setPage}
+            onCheckHostKey={(target) => {
+              setOpened({ kind: 'hostKey', target });
+            }}
+          />
+        ) : page === 'activity' ? (
           <ActivityPage app={app} targets={targetList} />
         ) : page === 'jobs' ? (
           <JobsPage
