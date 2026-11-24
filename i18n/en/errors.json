@@ -163,6 +163,9 @@
       "unreachable": "The box could not reach the server ({reason, select, dns {the name is unknown} refused {the port is closed} timeout {no answer} network {no route to it} other {the connection failed}}).",
       "in_use": "These backups still use this target: {jobs}. Delete them first."
     },
+    "browse": {
+      "closed": "Browsing this backup has ended. Open the version again."
+    },
     "check": {
       "failed": "The check found errors in the repository. Run another check; if it fails again, start a new repository for this backup."
     },
@@ -178,8 +181,11 @@
       "not_found": "There is no repository in {path}.",
       "wrong_key": "The key does not open this repository."
     },
+    "restore": {
+      "failed": "The restore did not finish ({reason, select, place {no shared folder or home holds {path} now; restore it into another folder} file_system {{path} is on another file system than its shared folder} other {restic could not restore {count, plural, one {# entry} other {# entries}}; the rest is in place and the Log Center names them}})."
+    },
     "run": {
-      "failed": "The backup failed ({reason, select, timeout {it took too long} output {restic's answer could not be read} other {restic ended with code {exitCode}}}). The Log Center has the details."
+      "failed": "The backup failed ({reason, select, timeout {it took too long} output {restic's answer could not be read} mount {it could not be opened for browsing} other {restic ended with code {exitCode}}}). The Log Center has the details."
     },
     "source": {
       "unavailable": "The folder {share} cannot be backed up now ({reason, select, missing {it does not exist} snapshot {its snapshot could not be taken} other {its pool is not available}}).",

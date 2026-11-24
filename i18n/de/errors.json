@@ -163,6 +163,9 @@
       "unreachable": "Die Box hat den Server nicht erreicht ({reason, select, dns {der Name ist unbekannt} refused {der Port ist zu} timeout {keine Antwort} network {kein Weg dorthin} other {die Verbindung ist fehlgeschlagen}}).",
       "in_use": "Diese Backups nutzen das Ziel noch: {jobs}. Lösch sie zuerst."
     },
+    "browse": {
+      "closed": "Das Durchsuchen dieses Backups wurde beendet. Öffne die Version erneut."
+    },
     "check": {
       "failed": "Die Prüfung hat Fehler im Repository gefunden. Starte eine weitere Prüfung; schlägt auch sie fehl, leg für dieses Backup ein neues Repository an."
     },
@@ -178,8 +181,11 @@
       "not_found": "In {path} gibt es kein Repository.",
       "wrong_key": "Der Schlüssel öffnet dieses Repository nicht."
     },
+    "restore": {
+      "failed": "Die Wiederherstellung wurde nicht fertig ({reason, select, place {kein freigegebener Ordner und kein Home enthält {path} mehr; stelle es in einem anderen Ordner wieder her} file_system {{path} liegt auf einem anderen Dateisystem als sein freigegebener Ordner} other {restic konnte {count, plural, one {# Eintrag} other {# Einträge}} nicht wiederherstellen; der Rest ist an seinem Platz, und das Log Center nennt sie}})."
+    },
     "run": {
-      "failed": "Das Backup ist fehlgeschlagen ({reason, select, timeout {es hat zu lange gedauert} output {die Antwort von restic war nicht lesbar} other {restic endete mit Code {exitCode}}}). Details stehen im Log Center."
+      "failed": "Das Backup ist fehlgeschlagen ({reason, select, timeout {es hat zu lange gedauert} output {die Antwort von restic war nicht lesbar} mount {es ließ sich nicht zum Durchsuchen öffnen} other {restic endete mit Code {exitCode}}}). Details stehen im Log Center."
     },
     "source": {
       "unavailable": "Der Ordner {share} lässt sich gerade nicht sichern ({reason, select, missing {er existiert nicht} snapshot {sein Snapshot ließ sich nicht anlegen} other {sein Pool ist nicht verfügbar}}).",

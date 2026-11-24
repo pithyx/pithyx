@@ -1,0 +1,3 @@
+{"message_type":"status","percent_done":0.08977952177690578,"total_files":7,"files_restored":3,"total_bytes":30000015,"bytes_restored":2693387}
+{"message_type":"status","percent_done":0.848053475973262,"total_files":7,"files_restored":3,"total_bytes":30000015,"bytes_restored":25441617}
+{"message_type":"summary","total_files":7,"files_restored":13,"total_bytes":30000015,"bytes_restored":30000015}

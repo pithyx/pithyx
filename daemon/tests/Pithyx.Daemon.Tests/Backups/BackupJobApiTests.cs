@@ -38,6 +38,9 @@ public sealed class BackupJobApiTests : IAsyncLifetime
     private string _diff = "";
     private string _tag = "";
 
+    // What each version holds below the share's Photos folder, as the mount and a restore serve it.
+    private readonly Dictionary<string, Dictionary<string, string>> _stored = [];
+
     private string SharePath => Path.Combine(_root, "media");
     private string CacheRoot => Path.Combine(_root, "cache");
 
@@ -47,10 +50,12 @@ public sealed class BackupJobApiTests : IAsyncLifetime
         Directory.CreateDirectory(CacheRoot);
         _backup = new CommandResult(0, Fixture("restic-backup-warning.stdout"), "", TimeSpan.Zero);
         _commands.Handler = Answer;
+        _commands.Running = Serve;
         _daemon = _factory.WithWebHostBuilder(builder => builder.ConfigureTestServices(services =>
         {
             services.AddSingleton(new BackupSsh(_commands));
             services.AddSingleton(new BackupRestic(_commands));
+            services.AddSingleton(provider => ActivatorUtilities.CreateInstance<BackupBrowser>(provider, (ICommandRunner)_commands));
             services.AddSingleton(provider => ActivatorUtilities.CreateInstance<BackupJobService>(provider, (ICommandRunner)_commands));
         }));
         _admin = _daemon.CreateClient();
@@ -565,6 +570,138 @@ public sealed class BackupJobApiTests : IAsyncLifetime
         Assert.True(Directory.Exists(Path.Combine(CacheRoot, other.ToString(System.Globalization.CultureInfo.InvariantCulture))));
     }
 
+    [Fact]
+    public async Task AVersionIsBrowsedThroughItsMountAndRestoredNextToWhatIsThere()
+    {
+        var id = await CreateJobAsync("Media", sources: new[] { new { shareId = _shareId, path = "Photos" } });
+        var photos = Path.Combine(SharePath, "Photos");
+        _versions = JsonSerializer.Serialize(new[] { (Older, "2026-11-22T03:00:00Z"), (Made, "2026-11-23T03:00:00Z") }.Select(version => new
+        {
+            id = version.Item1,
+            time = version.Item2,
+            paths = new[] { photos },
+            summary = new { files_new = 1 },
+        })) + "\n";
+        _stored[Older] = new() { ["a.txt"] = "first", ["same.txt"] = "same" };
+        _stored[Made] = new() { ["a.txt"] = "second!", ["same.txt"] = "same", ["new/b.txt"] = "b" };
+        File.WriteAllText(Path.Combine(photos, "a.txt"), "live");
+        await RunAsync(id);
+        var versions = await VersionsAsync(id);
+        var (newest, older) = (versions[0].GetProperty("id").GetInt64(), versions[1].GetProperty("id").GetInt64());
+
+        using (var closed = await _admin.GetAsync($"/api/backups/jobs/{id}/versions/{newest}/files", Token))
+        {
+            Assert.Equal(HttpStatusCode.Conflict, closed.StatusCode);
+            Assert.Equal(ErrorCodes.BackupBrowseClosed, await closed.ErrorCodeAsync());
+        }
+        using (var browse = await _admin.PostAsync($"/api/backups/jobs/{id}/browse", null, Token))
+        {
+            Assert.Equal(HttpStatusCode.NoContent, browse.StatusCode);
+        }
+        var top = await FilesAsync(id, newest, "");
+        Assert.Equal(["Media/Photos"], top.GetProperty("entries").EnumerateArray().Select(entry => entry.GetProperty("name").GetString()));
+        var folder = await FilesAsync(id, newest, "Media/Photos");
+        Assert.True(folder.GetProperty("compared").GetBoolean());
+        Assert.Equal(
+            ["new folder added", "a.txt file modified", "same.txt file "],
+            folder.GetProperty("entries").EnumerateArray().Select(entry =>
+                $"{entry.GetProperty("name").GetString()} {entry.GetProperty("kind").GetString()} {(entry.GetProperty("change").ValueKind == JsonValueKind.Null ? "" : entry.GetProperty("change").GetString())}"));
+        Assert.False((await FilesAsync(id, older, "Media/Photos")).GetProperty("compared").GetBoolean());
+
+        var history = JsonDocument.Parse(await _admin.GetStringAsync($"/api/backups/jobs/{id}/history?path=Media/Photos/a.txt", Token)).RootElement;
+        Assert.Equal(4, history.GetProperty("current").GetProperty("size").GetInt64());
+        Assert.Equal([7L, 5L], history.GetProperty("versions").EnumerateArray().Select(version => version.GetProperty("size").GetInt64()));
+        Assert.Equal("second!", await _admin.GetStringAsync($"/api/backups/jobs/{id}/versions/{newest}/content?path=Media/Photos/a.txt", Token));
+        using (var zip = await _admin.GetAsync($"/api/backups/jobs/{id}/versions/{newest}/content?path=Media/Photos/new", Token))
+        {
+            Assert.Equal("application/zip", zip.Content.Headers.ContentType?.MediaType);
+            using var archive = new System.IO.Compression.ZipArchive(await zip.Content.ReadAsStreamAsync(Token));
+            Assert.Equal(["new/b.txt"], archive.Entries.Select(entry => entry.FullName).Where(name => !name.EndsWith('/')));
+        }
+        using (var outside = await _admin.GetAsync($"/api/backups/jobs/{id}/versions/{newest}/files?path=Media/../etc", Token))
+        {
+            Assert.Equal(HttpStatusCode.NotFound, outside.StatusCode);
+        }
+        Assert.Contains(("backup.version.downloaded", "Media"), await AuditAsync());
+
+        using (var none = await _admin.PostAsJsonAsync($"/api/backups/jobs/{id}/restore", new { versionId = newest, paths = Array.Empty<string>(), conflict = "keepBoth" }, Token))
+        {
+            Assert.Equal(HttpStatusCode.BadRequest, none.StatusCode);
+        }
+        await RestoreAsync(id, new { versionId = newest, paths = RestoredTogether, conflict = "keepBoth" });
+
+        Assert.Equal("live", File.ReadAllText(Path.Combine(photos, "a.txt")));
+        Assert.Equal("second!", File.ReadAllText(Path.Combine(photos, "a (version 2026-11-23 03.00 UTC).txt")));
+        Assert.Equal("b", File.ReadAllText(Path.Combine(photos, "new", "b.txt")));
+        Assert.DoesNotContain(Directory.EnumerateDirectories(SharePath), folder => Path.GetFileName(folder).StartsWith(".pithyx-restore-", StringComparison.Ordinal));
+        Assert.Contains(("backup.version.restored", "Media"), await AuditAsync());
+        var restore = Assert.Single(_commands.Calls, call => call.Arguments.Contains("restore"));
+        Assert.Equal(["--include", photos + "/a.txt", "--include", photos + "/new", "--", Made], restore.Arguments.TakeLast(6));
+
+        // Into another folder each entry goes under its name; overwrite replaces the file there.
+        Directory.CreateDirectory(Path.Combine(SharePath, "Restored"));
+        File.WriteAllText(Path.Combine(SharePath, "Restored", "a.txt"), "old copy");
+        await RestoreAsync(id, new { versionId = older, paths = RestoredAlone, destination = new { shareId = _shareId, path = "Restored" }, conflict = "overwrite" });
+        Assert.Equal("first", File.ReadAllText(Path.Combine(SharePath, "Restored", "a.txt")));
+
+        // A run closes the session, so its prune is not held off by the mount.
+        await RunAsync(id);
+        using var after = await _admin.GetAsync($"/api/backups/jobs/{id}/versions/{newest}/files", Token);
+        Assert.Equal(ErrorCodes.BackupBrowseClosed, await after.ErrorCodeAsync());
+    }
+
+    private async Task<JsonElement> FilesAsync(long id, long versionId, string path) =>
+        JsonDocument.Parse(await _admin.GetStringAsync($"/api/backups/jobs/{id}/versions/{versionId}/files?path={Uri.EscapeDataString(path)}", Token)).RootElement;
+
+    private async Task RestoreAsync(long id, object request)
+    {
+        using var started = await _admin.PostAsJsonAsync($"/api/backups/jobs/{id}/restore", request, Token);
+        Assert.Equal(HttpStatusCode.Accepted, started.StatusCode);
+        var boardId = (await started.JsonAsync()).GetProperty("id").GetInt64();
+        await _daemon.Services.GetRequiredService<JobService>().WaitForStateAsync(boardId, JobState.Succeeded);
+    }
+
+    // restic mount: every version under ids/<id>/<stored path>, ready once written, serving until it is stopped.
+    private Task<CommandResult>? Serve(CommandRequest request, CancellationToken cancellationToken)
+    {
+        if (request.FileName != "env" || !request.Arguments.Contains("mount"))
+        {
+            return null;
+        }
+        var mountpoint = request.Arguments[^1];
+        foreach (var (snapshot, files) in _stored)
+        {
+            WriteVersion(Path.Combine(mountpoint, "ids", snapshot), snapshot);
+        }
+        request.OutputLine?.Invoke("Now serving the repository at " + mountpoint);
+        return ServeAsync(cancellationToken);
+
+        static async Task<CommandResult> ServeAsync(CancellationToken cancellationToken)
+        {
+            await Task.Delay(Timeout.Infinite, cancellationToken);
+            return Ok;
+        }
+    }
+
+    private void WriteVersion(string root, string snapshot, IReadOnlyList<string>? only = null)
+    {
+        var photos = Path.Combine(SharePath, "Photos");
+        foreach (var (name, content) in _stored[snapshot])
+        {
+            var stored = photos + "/" + name;
+            if (only is not null && !only.Any(path => stored == path || stored.StartsWith(path + "/", StringComparison.Ordinal)))
+            {
+                continue;
+            }
+            var file = root + stored;
+            Directory.CreateDirectory(Path.GetDirectoryName(file)!);
+            File.WriteAllText(file, content);
+        }
+    }
+
+    private static readonly string[] RestoredTogether = ["Media/Photos/a.txt", "Media/Photos/new"];
+    private static readonly string[] RestoredAlone = ["Media/Photos/a.txt"];
+
     private static readonly string[] ProtectedTags = ["pithyx-protected"];
 
     private const string Older = "87a0dfd8476bc24184b206c7749be24060391a4e45be004cad25ce7344530962";
@@ -655,6 +792,20 @@ public sealed class BackupJobApiTests : IAsyncLifetime
                 return new CommandResult(0, _diff, "", TimeSpan.Zero);
             case "env" when arguments.Contains("tag"):
                 return new CommandResult(0, _tag, "", TimeSpan.Zero);
+            case "env" when arguments.Contains("restore"):
+                var list = arguments.ToList();
+                var includes = list.Select((argument, index) => (argument, index)).Where(pair => pair.argument == "--include").Select(pair => list[pair.index + 1]).ToList();
+                WriteVersion(list[list.IndexOf("--target") + 1], list[^1], includes);
+                return Ok;
+            case "fusermount3":
+                foreach (var entry in Directory.EnumerateFileSystemEntries(arguments[^1]))
+                {
+                    if (Directory.Exists(entry))
+                    {
+                        Directory.Delete(entry, recursive: true);
+                    }
+                }
+                return Ok;
             case "env" when arguments.Contains("check"):
                 return _check;
             case "env" when arguments.Contains("stats"):

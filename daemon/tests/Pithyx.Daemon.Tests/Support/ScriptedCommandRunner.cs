@@ -41,6 +41,9 @@ public sealed class ScriptedCommandRunner : ICommandRunner
     /// <summary>Answers a command before <see cref="Results"/> are looked at, for example per device; null passes it on.</summary>
     public Func<CommandRequest, CommandResult?>? Handler { get; set; }
 
+    /// <summary>Answers a command that keeps running until it is cancelled, like a mount; null passes it on.</summary>
+    public Func<CommandRequest, CancellationToken, Task<CommandResult>?>? Running { get; set; }
+
     /// <summary>Streams a line to the running <c>udevadm monitor</c>, or to another streaming program.</summary>
     public void Push(string line, string program = "udevadm") => Stream(program).Writer.TryWrite(line);
 
@@ -49,6 +52,10 @@ public sealed class ScriptedCommandRunner : ICommandRunner
         lock (_calls)
         {
             _calls.Add(request);
+        }
+        if (Running?.Invoke(request, cancellationToken) is { } running)
+        {
+            return running;
         }
         if (Handler?.Invoke(request) is { } handled)
         {

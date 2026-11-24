@@ -1,16 +1,21 @@
 using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.Net.Http.Headers;
 using Pithyx.Daemon.Auth;
 using Pithyx.Daemon.Errors;
+using Pithyx.Daemon.Files;
 
 namespace Pithyx.Daemon.Backups;
 
 /// <summary>The backup app's API (#392, D414). Administrators only.</summary>
 public static class BackupEndpoints
 {
-    public static IServiceCollection AddPithyxBackups(this IServiceCollection services) =>
+    public static IServiceCollection AddPithyxBackups(this IServiceCollection services, BackupBrowserOptions browse) =>
         services.AddSingleton<BackupSsh>()
             .AddSingleton<BackupTargetService>()
             .AddSingleton<BackupRestic>()
+            .AddSingleton(browse)
+            .AddSingleton<BackupBrowser>()
+            .AddHostedService(provider => provider.GetRequiredService<BackupBrowser>())
             .AddSingleton<BackupJobService>()
             .AddSingleton<BackupScheduler>()
             .AddHostedService(provider => provider.GetRequiredService<BackupScheduler>());
@@ -122,6 +127,31 @@ public static class BackupEndpoints
                 TypedResults.Ok(await service.ProtectAsync(context.User, id, versionId, request.Protected, cancellationToken)))
             .WithName("ProtectBackupVersion")
             .WithDescription("Administrators only. Protects a version so the retention never deletes it, or releases it again (restic's tag pithyx-protected). Refused with backup.job.busy while a run or check goes on.");
+        jobs.MapPost("/{id:long}/browse", async Task<NoContent> (long id, BackupJobService service, CancellationToken cancellationToken) =>
+            {
+                await service.BrowseAsync(id, cancellationToken);
+                return TypedResults.NoContent();
+            })
+            .WithName("BrowseBackupJob")
+            .WithDescription("Administrators only. Opens the job's repository for browsing, or keeps an open session for another ten minutes: reads its versions again and mounts it read-only on the box. A session ends ten minutes after its last request and before a run, a check or a change of a version; reading then answers backup.browse.closed. Refused with backup.job.busy while a run or check goes on.");
+        jobs.MapGet("/{id:long}/versions/{versionId:long}/files", async Task<Ok<BackupFileList>> (long id, long versionId, string? path, BackupJobService service, CancellationToken cancellationToken) =>
+                TypedResults.Ok(await service.FilesAsync(id, versionId, path, cancellationToken)))
+            .WithName("ListBackupVersionFiles")
+            .WithDescription("Administrators only. A folder of a version (path as the shared folder's or home's name and the path below it; empty for the folders the version holds), each entry marked added or modified against the version before. Needs a browse session.");
+        jobs.MapGet("/{id:long}/history", async Task<Ok<BackupFileHistory>> (long id, string path, BackupJobService service, CancellationToken cancellationToken) =>
+                TypedResults.Ok(await service.HistoryAsync(id, path, cancellationToken)))
+            .WithName("GetBackupFileHistory")
+            .WithDescription("Administrators only. A file or folder in every version of the job, newest first, with size, time, owner and mode, and as it is on the box now. Needs a browse session.");
+        jobs.MapGet("/{id:long}/versions/{versionId:long}/content", DownloadAsync)
+            .WithName("DownloadBackupVersionEntry")
+            .WithDescription("Administrators only. A file of a version, or a folder as a zip of its files and folders (symlinks and devices left out). Logged. Needs a browse session.");
+        jobs.MapPost("/{id:long}/restore", async Task<Accepted<Jobs.Job>> (long id, BackupRestoreRequest request, BackupJobService service, HttpContext context, CancellationToken cancellationToken) =>
+            {
+                var job = await service.RestoreAsync(context.User, id, request, cancellationToken);
+                return TypedResults.Accepted($"/api/jobs/{job.Id}", job);
+            })
+            .WithName("RestoreBackupVersion")
+            .WithDescription("Administrators only. Restores files and folders of a version as a box job of the caller: where they were (with the folders above them) or into a folder, with owners, modes, ACLs and times. Folders in place are merged; a file in place is kept next to the restored one (keepBoth, the restored one named after the version's time), replaced (overwrite) or left (skip). Logged. Refused with backup.job.busy while a run or check goes on.");
         jobs.MapPost("/{id:long}/key", RevealKeyAsync)
             .WithName("RevealBackupJobKey")
             .WithDescription("Administrators only. The job's repository key, for an administrator who lost the copy shown at creation. Needs the password again and, with two-factor sign-in on, a current authenticator code; failures count like failed sign-ins. Logged without the key.");
@@ -145,6 +175,24 @@ public static class BackupEndpoints
             return true;
         });
         return TypedResults.Ok(await service.RevealKeyAsync(context.User, id, cancellationToken));
+    }
+
+    private static async Task<IResult> DownloadAsync(long id, long versionId, string path, BackupJobService service, HttpContext context, CancellationToken cancellationToken)
+    {
+        var (handle, stat, name) = await service.OpenVersionEntryAsync(context.User, id, versionId, path, cancellationToken);
+        var headers = context.Response.Headers;
+        // A file from a backup must never run with the desktop's origin.
+        headers[HeaderNames.ContentSecurityPolicy] = "sandbox; default-src 'none'";
+        headers[HeaderNames.XContentTypeOptions] = "nosniff";
+        headers[HeaderNames.CacheControl] = "private, no-store";
+        if (stat.Kind == FsKind.Folder)
+        {
+            context.Response.RegisterForDispose(handle);
+            return TypedResults.Stream(output => BackupJobService.WriteZipAsync(handle, name, output, cancellationToken), "application/zip", name + ".zip");
+        }
+        var stream = new FileStream(handle, FileAccess.Read, 1, isAsync: false);
+        context.Response.RegisterForDispose(stream);
+        return TypedResults.Stream(stream, "application/octet-stream", name, lastModified: stat.Modified);
     }
 
     // Query values are the lowercase names the API returns; the default binding would want the C# names.

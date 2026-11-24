@@ -293,7 +293,8 @@ internal static unsafe partial class LinuxFs
             DateTimeOffset.FromUnixTimeSeconds(buffer.ChangedSeconds).AddTicks(buffer.ChangedNanoseconds / 100),
             $"{buffer.DeviceMajor:x}.{buffer.DeviceMinor:x}.{buffer.Inode:x}",
             buffer.Uid,
-            buffer.Gid);
+            buffer.Gid,
+            buffer.Mode & 0xFFFu);
     }
 
     /// <summary>
@@ -598,8 +599,11 @@ public enum FsKind
     Unknown,
 }
 
-/// <summary>An entry's metadata. <c>Id</c> is device and inode, stable across renames on the same file system.</summary>
-public sealed record FsStat(FsKind Kind, long Size, DateTimeOffset Modified, DateTimeOffset Changed, string Id, uint Uid, uint Gid);
+/// <summary>
+/// An entry's metadata. <c>Id</c> is device and inode, stable across renames on the same file system; <c>Mode</c> the
+/// permission bits with setuid, setgid and sticky.
+/// </summary>
+public sealed record FsStat(FsKind Kind, long Size, DateTimeOffset Modified, DateTimeOffset Changed, string Id, uint Uid, uint Gid, uint Mode = 0);
 
 /// <summary>A failed Linux call with its errno.</summary>
 [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1032:Implement standard exception constructors", Justification = "Always carries an errno.")]

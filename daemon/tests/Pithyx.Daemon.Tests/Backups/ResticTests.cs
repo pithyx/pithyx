@@ -1,5 +1,6 @@
 using Pithyx.Daemon.Backups;
 using Pithyx.Daemon.Errors;
+using Pithyx.Daemon.Jobs;
 using Pithyx.Daemon.Tests.Support;
 
 namespace Pithyx.Daemon.Tests.Backups;
@@ -124,6 +125,40 @@ public sealed class ResticTests
         var standardError = "subprocess ssh: " + Fixture(fixture) + "Fatal: unable to open repository at sftp:pithyx-target:r: unable to start the sftp session, error: EOF\n";
 
         Assert.Equal(code, ResticOutput.Failure(1, standardError, "r")?.Code);
+    }
+
+    [Fact]
+    public void AMountServesEveryVersionUnderItsFullId()
+    {
+        Assert.Equal(["-r", "x", "mount", "--path-template", "ids/%I", "--", "/run/pithyx/backup-browse/3"], ResticCommands.Mount(["-r", "x"], "/run/pithyx/backup-browse/3"));
+    }
+
+    [Fact]
+    public void ARestoreIncludesEachStoredPathLiterally()
+    {
+        var restore = ResticCommands.Restore(["-r", "x"], "9f9e9f2c", "/proc/1/fd/7/r", ["/tank/shares/docs/a*b?[1].txt", "/tank/shares/docs/c\\d"]);
+
+        Assert.Equal(
+            ["-r", "x", "restore", "--target", "/proc/1/fd/7/r", "--include", "/tank/shares/docs/a\\*b\\?\\[1].txt", "--include", "/tank/shares/docs/c\\\\d", "--", "9f9e9f2c"],
+            restore);
+    }
+
+    [Fact]
+    public void ARestoresStatusLinesAreItsProgressAndItsErrorsAreCounted()
+    {
+        var progress = Fixture("restic-restore.stdout").Split('\n').Select(ResticOutput.RestoreProgress).ToList();
+        Assert.Equal(new JobProgress(3, 7, 2693387, 30000015, null), progress[0]);
+        Assert.Equal(25441617, progress[1]!.BytesDone);
+        Assert.Null(progress[2]);
+        Assert.Null(ResticOutput.RestoreProgress("Fatal: no snapshot"));
+
+        var report = new ResticReport();
+        foreach (var line in Fixture("restic-restore-errors.stderr").Split('\n'))
+        {
+            ResticOutput.Read(line, report);
+        }
+        Assert.Equal(2, report.Warnings);
+        Assert.Equal("/tank/shares/docs/a/x.txt", report.WarningItems[1].Item);
     }
 
     private static string Fixture(string name) =>

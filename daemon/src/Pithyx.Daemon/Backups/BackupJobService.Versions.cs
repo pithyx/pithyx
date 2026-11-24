@@ -20,7 +20,7 @@ public sealed partial class BackupJobService
         """
         SELECT id AS Id, snapshot AS Snapshot, time AS Time, files AS Files, bytes AS Bytes, added_bytes AS AddedBytes,
             files_added AS FilesAdded, files_changed AS FilesChanged, files_removed AS FilesRemoved, protected AS Protected,
-            keep AS Keep, changes AS Changes
+            keep AS Keep, changes AS Changes, paths AS Paths
         FROM backup_versions
         """;
 
@@ -50,6 +50,12 @@ public sealed partial class BackupJobService
         }
         try
         {
+            if (Restoring(id))
+            {
+                throw Busy(row.Name);
+            }
+            // The tag gives the version a new id, which the mount would not know.
+            await browser.CloseAsync(id);
             string? changed;
             try
             {
@@ -135,8 +141,8 @@ public sealed partial class BackupJobService
             await connection.ExecuteAsync(
                 """
                 INSERT INTO backup_versions (job_id, snapshot, origin, time, files, bytes, added_bytes, files_added, files_changed,
-                    files_removed, protected, keep, changes)
-                VALUES (@jobId, @Id, @Origin, @time, @Files, @Bytes, @AddedBytes, @FilesAdded, @FilesChanged, @removed, @protect, @keep, @changes)
+                    files_removed, protected, keep, changes, paths)
+                VALUES (@jobId, @Id, @Origin, @time, @Files, @Bytes, @AddedBytes, @FilesAdded, @FilesChanged, @removed, @protect, @keep, @changes, @paths)
                 ON CONFLICT (job_id, origin) DO UPDATE SET
                     snapshot = excluded.snapshot,
                     time = excluded.time,
@@ -148,7 +154,8 @@ public sealed partial class BackupJobService
                     files_removed = coalesce(excluded.files_removed, files_removed),
                     protected = excluded.protected,
                     keep = CASE WHEN @keepKnown THEN excluded.keep ELSE keep END,
-                    changes = coalesce(excluded.changes, changes)
+                    changes = coalesce(excluded.changes, changes),
+                    paths = excluded.paths
                 """,
                 new
                 {
@@ -168,6 +175,7 @@ public sealed partial class BackupJobService
                     changes = compared
                         ? JsonSerializer.Serialize(diff!.Changes.Select(change => new { path = ShareRelative(change.Path, sources), change = Text(change.Change) }), _json)
                         : null,
+                    paths = snapshot.Paths.Count > 0 ? JsonSerializer.Serialize(snapshot.Paths) : null,
                 },
                 transaction);
         }
@@ -246,6 +254,7 @@ public sealed partial class BackupJobService
         public long Protected { get; init; }
         public string Keep { get; init; } = "[]";
         public string? Changes { get; init; }
+        public string? Paths { get; init; }
     }
 
     [LoggerMessage(Level = LogLevel.Information, Message = "Version {Snapshot} of backup job {JobId} protected: {Protected}")]

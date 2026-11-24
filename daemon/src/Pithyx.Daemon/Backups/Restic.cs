@@ -174,6 +174,51 @@ public static class ResticCommands
     public static IReadOnlyList<string> Protect(IReadOnlyList<string> global, string snapshot, bool protect) =>
         [.. global, "tag", protect ? "--add" : "--remove", ProtectedTag, "--", snapshot];
 
+    /// <summary>
+    /// <c>mount</c> of every version at <c>ids/&lt;full id&gt;</c> below <paramref name="mountpoint"/>, read-only, for the
+    /// daemon's user only. It serves until it gets SIGINT, which unmounts.
+    /// </summary>
+    public static IReadOnlyList<string> Mount(IReadOnlyList<string> global, string mountpoint) =>
+        [.. global, "mount", "--path-template", MountIds + "/%I", "--", mountpoint];
+
+    /// <summary>The folder of the mount that holds each version under its full id.</summary>
+    public const string MountIds = "ids";
+
+    /// <summary>The line <c>mount</c> prints once the mount is there.</summary>
+    public const string MountReady = "Now serving the repository";
+
+    /// <summary>
+    /// <c>restore</c> of <paramref name="paths"/> (live paths as stored, with their parents) of a version below
+    /// <paramref name="target"/>, which then holds each path in full.
+    /// </summary>
+    public static IReadOnlyList<string> Restore(IReadOnlyList<string> global, string snapshot, string target, IReadOnlyList<string> paths)
+    {
+        ArgumentNullException.ThrowIfNull(paths);
+        var arguments = new List<string>(global) { "restore", "--target", target };
+        foreach (var path in paths)
+        {
+            arguments.AddRange(["--include", Literal(path)]);
+        }
+        arguments.AddRange(["--", snapshot]);
+        return arguments;
+    }
+
+    /// <summary>A path as a restic pattern that matches only itself: the pattern characters escaped.</summary>
+    public static string Literal(string path)
+    {
+        ArgumentNullException.ThrowIfNull(path);
+        var builder = new System.Text.StringBuilder(path.Length + 8);
+        foreach (var character in path)
+        {
+            if (character is '\\' or '*' or '?' or '[')
+            {
+                builder.Append('\\');
+            }
+            builder.Append(character);
+        }
+        return builder.ToString();
+    }
+
     /// <summary><c>stats</c> in raw-data mode: what the repository takes on the target after compression and deduplication.</summary>
     public static IReadOnlyList<string> Stats(IReadOnlyList<string> global) => [.. global, "stats", "--mode", "raw-data"];
 
@@ -277,6 +322,27 @@ public static class ResticOutput
         catch (JsonException)
         {
             return false;
+        }
+    }
+
+    /// <summary>A status line of <c>restore --json</c> as progress; null for any other line.</summary>
+    public static JobProgress? RestoreProgress(string line)
+    {
+        if (string.IsNullOrWhiteSpace(line) || !line.TrimStart().StartsWith('{'))
+        {
+            return null;
+        }
+        try
+        {
+            using var document = JsonDocument.Parse(line);
+            var root = document.RootElement;
+            return String(root, "message_type") == "status"
+                ? new JobProgress(Number(root, "files_restored"), Number(root, "total_files"), Number(root, "bytes_restored"), Number(root, "total_bytes"), null)
+                : null;
+        }
+        catch (JsonException)
+        {
+            return null;
         }
     }
 
