@@ -2,6 +2,7 @@ import { unwrap, type components } from '@pithyx/api-client';
 import type { MethodName, PithyxApp } from '@pithyx/sdk';
 import type { HostExtensions } from '@pithyx/sdk/host';
 import { api } from '../../api/client';
+import { download } from '../../shell/transfers';
 import { daemon } from './daemonError';
 
 export type BackupTarget = components['schemas']['BackupTarget'];
@@ -18,6 +19,20 @@ export type BackupSourceOption = components['schemas']['BackupSourceOption'];
 export type BackupDay = components['schemas']['BackupDay'];
 export type BackupDayList = components['schemas']['BackupDayList'];
 export type BackupVersion = components['schemas']['BackupVersion'];
+export type BackupFileList = components['schemas']['BackupFileList'];
+export type BackupFileEntry = components['schemas']['BackupFileEntry'];
+export type BackupFileHistory = components['schemas']['BackupFileHistory'];
+export type BackupFileVersion = components['schemas']['BackupFileVersion'];
+export type BackupRestoreRequest = components['schemas']['BackupRestoreRequest'];
+export type BackupRestoreConflict = components['schemas']['BackupRestoreConflict'];
+
+/** What a restore did, the result of its job on the board. */
+export interface BackupRestoreResult {
+  restored: number;
+  replaced: number;
+  renamed: number;
+  skipped: number;
+}
 type BoardJob = components['schemas']['Job'];
 
 export interface BackupHistoryQuery {
@@ -101,6 +116,31 @@ interface BackupMethods {
     params: { id: number; password: string; totpCode?: string };
     result: { key: string };
   };
+  /**
+   * Opens the job's repository for browsing, or keeps the open session for another ten minutes. Reading a version
+   * without a session answers `backup.browse.closed`.
+   */
+  'internal.admin.backups.browse': { params: { id: number }; result: null };
+  /** A folder of a version; `path` is empty for the folders the version holds. Needs a browse session. */
+  'internal.admin.backups.files': {
+    params: { id: number; versionId: number; path: string };
+    result: BackupFileList;
+  };
+  /** A file or folder in every version, newest first, and as it is on the box now. Needs a browse session. */
+  'internal.admin.backups.fileHistory': {
+    params: { id: number; path: string };
+    result: BackupFileHistory;
+  };
+  /** Restores files and folders of a version as a job on the board. */
+  'internal.admin.backups.restore': {
+    params: BackupRestoreRequest & { id: number };
+    result: BoardJob;
+  };
+  /** Downloads a file of a version, or a folder as a zip, through the desktop's transfers. */
+  'internal.admin.backups.download': {
+    params: { id: number; versionId: number; path: string; name: string };
+    result: null;
+  };
 }
 
 export const targetsKey = ['backups', 'targets'] as const;
@@ -116,6 +156,9 @@ export const historyKey = (query: BackupHistoryQuery) =>
 
 /** A job's versions. */
 export const versionsKey = (id: number) => ['backups', 'versions', id] as const;
+
+/** What a job's browse session shows; a run, check or protection change closes the session and refreshes it. */
+export const browseKey = (id: number) => ['backups', 'browse', id] as const;
 
 /** The runs per day; under the runs, so a finished run refreshes them. */
 export const daysKey = (from: string, to: string) => ['backups', 'runs', 'days', from, to] as const;
@@ -214,6 +257,31 @@ function historyQuery({ jobId, kind, state, since, until, before, limit }: Backu
     ...(limit === undefined ? {} : { limit }),
   };
 }
+
+const isVersionPath = (value: unknown): value is { id: number; versionId: number; path: string } =>
+  hasId(value) &&
+  Number.isSafeInteger((value as { versionId?: unknown }).versionId) &&
+  typeof (value as { path?: unknown }).path === 'string';
+
+const CONFLICTS: readonly unknown[] = ['keepBoth', 'overwrite', 'skip'];
+
+const isRestore = (value: unknown): value is BackupRestoreRequest & { id: number } => {
+  if (!hasId(value)) {
+    return false;
+  }
+  const { versionId, paths, destination, conflict } = value as Record<string, unknown>;
+  return (
+    Number.isSafeInteger(versionId) &&
+    Array.isArray(paths) &&
+    paths.every((path) => typeof path === 'string') &&
+    (destination === undefined ||
+      destination === null ||
+      (isRecord(destination) &&
+        Number.isSafeInteger(destination.shareId) &&
+        typeof destination.path === 'string')) &&
+    (conflict === undefined || CONFLICTS.includes(conflict))
+  );
+};
 
 /** The host side of the Backup app's window. */
 export function backupsHost(): HostExtensions {
@@ -471,6 +539,80 @@ export function backupsHost(): HostExtensions {
             }),
           );
         }),
+    },
+    'internal.admin.backups.browse': {
+      validate: hasId,
+      handle: (params) =>
+        daemon(async () => {
+          unwrap(
+            await api.POST('/api/backups/jobs/{id}/browse', {
+              params: { path: { id: (params as { id: number }).id } },
+            }),
+          );
+          return null;
+        }),
+    },
+    'internal.admin.backups.files': {
+      validate: isVersionPath,
+      handle: (params) =>
+        daemon(async () => {
+          const { id, versionId, path } =
+            params as BackupMethods['internal.admin.backups.files']['params'];
+          return unwrap(
+            await api.GET('/api/backups/jobs/{id}/versions/{versionId}/files', {
+              params: { path: { id, versionId }, query: { path } },
+            }),
+          );
+        }),
+    },
+    'internal.admin.backups.fileHistory': {
+      validate: (value) => hasId(value) && typeof (value as { path?: unknown }).path === 'string',
+      handle: (params) =>
+        daemon(async () => {
+          const { id, path } =
+            params as BackupMethods['internal.admin.backups.fileHistory']['params'];
+          return unwrap(
+            await api.GET('/api/backups/jobs/{id}/history', {
+              params: { path: { id }, query: { path } },
+            }),
+          );
+        }),
+    },
+    'internal.admin.backups.restore': {
+      validate: isRestore,
+      handle: (params) =>
+        daemon(async () => {
+          const { id, versionId, paths, destination, conflict } =
+            params as BackupMethods['internal.admin.backups.restore']['params'];
+          return unwrap(
+            await api.POST('/api/backups/jobs/{id}/restore', {
+              params: { path: { id } },
+              body: {
+                versionId,
+                paths: [...paths],
+                destination:
+                  destination == null
+                    ? null
+                    : { shareId: destination.shareId, path: destination.path },
+                ...(conflict === undefined ? {} : { conflict }),
+              },
+            }),
+          );
+        }),
+    },
+    'internal.admin.backups.download': {
+      validate: (value) =>
+        isVersionPath(value) && typeof (value as { name?: unknown }).name === 'string',
+      handle: (params) => {
+        const { id, versionId, path, name } =
+          params as BackupMethods['internal.admin.backups.download']['params'];
+        const query = new URLSearchParams({ path });
+        download(
+          `/api/backups/jobs/${String(id)}/versions/${String(versionId)}/content?${query.toString()}`,
+          name,
+        );
+        return Promise.resolve(null);
+      },
     },
   };
 }

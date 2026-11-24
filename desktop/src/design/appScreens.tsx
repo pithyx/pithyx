@@ -405,6 +405,33 @@ export const appScreens: ScreenDefinition[] = [
     ),
   },
   {
+    id: 'backup-restore',
+    group: 'apps',
+    title: 'Backup: restore',
+    description:
+      'The restore page opened from a version of Documents: the backup and version, the versions on a timeline, a folder of the version with what changed against the one before, and a file selected with its versions on the box and in the backup.',
+    render: (context) => (
+      <CoreAppScene
+        context={context}
+        app="backup"
+        Component={BackupApp}
+        answers={backupAnswers}
+        seed={seedRunningBackup}
+        script={[
+          { press: 'backup:nav.jobs' },
+          { press: 'Documents' },
+          { press: 'backup:jobs.open' },
+          { press: 'backup:detail.tab.versions' },
+          { press: 'backup:versions.browse' },
+          { open: 'Documents' },
+          { open: 'Taxes' },
+          { open: '2025' },
+          { press: 'tax-return-2025.pdf' },
+        ]}
+      />
+    ),
+  },
+  {
     id: 'backup-activity',
     group: 'apps',
     title: 'Backup: activity',

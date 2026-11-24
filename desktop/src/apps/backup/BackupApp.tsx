@@ -22,6 +22,7 @@ import {
   IconPencil,
   IconPlugConnected,
   IconPlus,
+  IconRestore,
   IconServer,
   IconTrash,
   IconUpload,
@@ -30,6 +31,7 @@ import type { SdkAppProps } from '../sdk/CoreSdkApp';
 import { backupsCall, targetsKey, type BackupJob, type BackupTarget } from '../sdk/backups';
 import { ActivityPage } from './ActivityPage';
 import { OverviewPage } from './OverviewPage';
+import { RestorePage, type RestoreStart } from './RestorePage';
 import { useActiveRuns } from './data';
 import { DirectionTag } from './Direction';
 import { DeleteJobDialog, JobDialog, KeyDialog, RevealKeyDialog } from './JobDialogs';
@@ -47,9 +49,9 @@ import {
 } from './TargetDialogs';
 import styles from './Backup.module.css';
 
-type Page = 'overview' | 'activity' | 'jobs' | 'targets';
+type Page = 'overview' | 'activity' | 'restore' | 'jobs' | 'targets';
 
-const PAGES: readonly Page[] = ['overview', 'activity', 'jobs', 'targets'];
+const PAGES: readonly Page[] = ['overview', 'activity', 'restore', 'jobs', 'targets'];
 
 type Opened =
   | { kind: 'add' }
@@ -72,7 +74,7 @@ function useTargets(app: PithyxApp) {
  * The Backup app (D414, D415, D416): the jobs that back up shared folders and homes with restic from ZFS snapshots, the
  * targets they go to, each a server reached over SSH with its own key and the host key the administrator confirmed,
  * and the activity of every run. The navigation groups the pages by direction, so it is always clear which way a
- * backup goes. Administrators only; restores follow (#395).
+ * backup goes, and restoring files and folders from any version (#395). Administrators only.
  */
 export function BackupApp({ app }: SdkAppProps) {
   const { t } = useTranslation('backup');
@@ -82,6 +84,8 @@ export function BackupApp({ app }: SdkAppProps) {
   const [opened, setOpened] = useState<Opened>(null);
   // The backup whose own page is open over the box backups.
   const [shownId, setShownId] = useState<number | null>(null);
+  // Where the restore page starts when a backup's version opened it; a new start shows a fresh page.
+  const [restoreStart, setRestoreStart] = useState<RestoreStart | null>(null);
   const close = () => {
     setOpened(null);
   };
@@ -124,6 +128,11 @@ export function BackupApp({ app }: SdkAppProps) {
             ? {}
             : { count: running, countLabel: t('nav.runningCount', { count: running }) }),
         },
+        {
+          id: 'restore',
+          label: t('nav.restore'),
+          icon: <IconRestore size={18} stroke={1.75} aria-hidden />,
+        },
       ],
     },
     {
@@ -161,6 +170,7 @@ export function BackupApp({ app }: SdkAppProps) {
             onSelect={(id) => {
               setPage(PAGES.find((entry) => entry === id) ?? 'overview');
               setShownId(null);
+              setRestoreStart(null);
               setView('page');
             }}
           />
@@ -174,7 +184,7 @@ export function BackupApp({ app }: SdkAppProps) {
                 {t(`jobs.status.${shownState}`)}
               </StatusBadge>
             </span>
-          ) : page === 'overview' || page === 'activity' ? (
+          ) : page === 'overview' || page === 'activity' || page === 'restore' ? (
             t(`${page}.title`)
           ) : (
             <span className={styles.title}>
@@ -214,6 +224,21 @@ export function BackupApp({ app }: SdkAppProps) {
           />
         ) : page === 'activity' ? (
           <ActivityPage app={app} targets={targetList} />
+        ) : page === 'restore' ? (
+          <RestorePage
+            key={
+              restoreStart === null
+                ? 'restore'
+                : `${String(restoreStart.jobId)}/${String(restoreStart.versionId)}`
+            }
+            app={app}
+            jobs={jobs.data?.jobs}
+            start={restoreStart}
+            onAddJob={() => {
+              setPage('jobs');
+              addJob();
+            }}
+          />
         ) : shown !== undefined ? (
           <JobDetailPage
             app={app}
@@ -221,6 +246,11 @@ export function BackupApp({ app }: SdkAppProps) {
             target={targetOf(shown)}
             onBack={() => {
               setShownId(null);
+            }}
+            onBrowse={(version) => {
+              setRestoreStart({ jobId: shown.id, versionId: version.id });
+              setShownId(null);
+              setPage('restore');
             }}
             onOpen={(kind) => {
               setOpened({

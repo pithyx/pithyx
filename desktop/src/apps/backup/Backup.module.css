@@ -867,3 +867,131 @@
   align-items: baseline;
   gap: var(--space-2);
 }
+
+.restorePath {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.restoreHint {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin-inline-start: auto;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+}
+
+/* The versions on a line by their time; each mark picks one. */
+.timeline {
+  display: grid;
+  gap: var(--space-1);
+  padding: var(--space-3) var(--space-4) var(--space-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  background: var(--color-surface-1);
+}
+
+.timelineTrack {
+  position: relative;
+  height: 28px;
+  margin-inline: 6px;
+  background: linear-gradient(var(--color-border-strong), var(--color-border-strong)) center / 100%
+    1px no-repeat;
+}
+
+.timelineMark {
+  position: absolute;
+  top: 2px;
+  width: 12px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  transform: translateX(-50%);
+  background: linear-gradient(var(--color-accent), var(--color-accent)) center / 2px 16px no-repeat;
+  cursor: pointer;
+}
+
+.timelineMark[data-protected] {
+  background-image: linear-gradient(var(--color-warning), var(--color-warning));
+}
+
+.timelineMark[aria-pressed='true'] {
+  background: linear-gradient(var(--color-text), var(--color-text)) center / 4px 24px no-repeat;
+}
+
+.timelineMark:focus-visible {
+  border-radius: var(--radius-xs);
+  outline: 2px solid var(--color-focus);
+}
+
+.timelineEnds {
+  display: flex;
+  justify-content: space-between;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+}
+
+.entryName {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.entryName > svg {
+  flex: none;
+  color: var(--color-text-muted);
+}
+
+.fileVersions {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.fileVersions > li {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.fileVersions .breadcrumbLink {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.fileVersions .breadcrumbLink[aria-current] {
+  color: var(--color-text);
+  font-weight: var(--font-weight-semibold);
+}
+
+/* The selection and the restore button, kept in view below the list. */
+.restoreBar {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: var(--space-2) 0;
+  border-top: 1px solid var(--color-border);
+  background: var(--color-surface-1);
+}
+
+.choice {
+  display: grid;
+  gap: 2px;
+}
+
+.choiceHint {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}

@@ -18,6 +18,7 @@ import { sampleApp, type ExtraAnswers, type SampleAppOptions } from './storageSa
  */
 export type ScriptStep = (
   | { press: string; inside?: string }
+  | { open: string }
   | { check: string }
   | { fill: string; value: string; inside?: string }
   | { select: string; value: string }
@@ -99,6 +100,18 @@ function mousePress(element: HTMLElement) {
 }
 
 function attempt(step: ScriptStep): boolean {
+  if ('open' in step) {
+    // A row opened with a double click, as a user opens a folder in a list.
+    const row = byText(document, '[role="row"]', text(step.open, step.params));
+    if (row === undefined) {
+      return false;
+    }
+    mousePress(row);
+    row.dispatchEvent(
+      new MouseEvent('dblclick', { bubbles: true, cancelable: true, button: 0, detail: 2 }),
+    );
+    return true;
+  }
   if ('press' in step) {
     const wanted = text(step.press, step.params);
     // A button, radio, tab, table row or menu item by its text, else a native radio button or checkbox by its label.

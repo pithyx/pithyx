@@ -1,5 +1,7 @@
 import type { components } from '@pithyx/api-client';
 import type {
+  BackupFileEntry,
+  BackupFileHistory,
   BackupHistoryQuery,
   BackupJob,
   BackupRun,
@@ -287,6 +289,59 @@ const sampleVersions: BackupVersion[] = versionDays.map(([days, keep, added], in
       : null,
 }));
 
+const folder = (name: string, hoursAgo: number, change: BackupFileEntry['change'] = null) =>
+  ({ name, kind: 'folder', size: null, modified: at(hoursAgo), change }) as const;
+const file = (
+  name: string,
+  size: number,
+  hoursAgo: number,
+  change: BackupFileEntry['change'] = null,
+): BackupFileEntry => ({ name, kind: 'file', size, modified: at(hoursAgo), change });
+
+// The folders of the newest version of Documents, as the restore page lists them; any other folder is empty.
+const sampleFolders: Record<string, BackupFileEntry[]> = {
+  '': [folder('Documents', 14, 'modified')],
+  Documents: [
+    folder('Drafts', 24 * 9),
+    folder('Household', 20, 'modified'),
+    folder('Scans', 24 * 40),
+    folder('Taxes', 14, 'modified'),
+    file('README.txt', 2_100, 24 * 200),
+  ],
+  'Documents/Taxes': [folder('2024', 24 * 210), folder('2025', 14, 'modified')],
+  'Documents/Taxes/2025': [
+    folder('Receipts', 14, 'modified'),
+    file('tax-return-2025.pdf', 2_140_000, 38, 'modified'),
+    file('expenses-2025.ods', 88_000, 24 * 11),
+    file('notice-2024.pdf', 640_000, 24 * 174),
+    file('notes.md', 4_100, 15, 'added'),
+    file('tax-export.zip', 9_800_000, 24 * 21),
+  ],
+};
+
+// A file in every version: on the box a little bigger, in the oldest two not there yet.
+function sampleHistory(path: string): BackupFileHistory {
+  const size = sampleFolders[path.slice(0, path.lastIndexOf('/'))]?.find(
+    (entry) => entry.name === path.slice(path.lastIndexOf('/') + 1),
+  )?.size;
+  return {
+    path,
+    current: { kind: 'file', size: size == null ? null : Math.round(size * 1.08), modified: at(3) },
+    versions: sampleVersions.map((version, index) => {
+      const there = index < sampleVersions.length - 2;
+      return {
+        versionId: version.id,
+        time: version.time,
+        kind: there ? 'file' : null,
+        size: there && size != null ? Math.round(size * (1 - index * 0.06)) : null,
+        modified: there ? version.time : null,
+        owner: there ? 'alex' : null,
+        mode: there ? '0640' : null,
+      };
+    }),
+  };
+}
+
 /** The answers of the Backup app's calls in the gallery. */
 export const backupAnswers: ExtraAnswers = {
   'internal.admin.backups.targets': () => ({ targets: sampleTargets }),
@@ -302,6 +357,13 @@ export const backupAnswers: ExtraAnswers = {
     const { from, to } = params as { from: string; to: string };
     return sampleDays(from, to);
   },
+  'internal.admin.backups.browse': () => null,
+  'internal.admin.backups.files': (params) => {
+    const { path } = params as { path: string };
+    return { path, compared: true, entries: sampleFolders[path] ?? [] };
+  },
+  'internal.admin.backups.fileHistory': (params) =>
+    sampleHistory((params as { path: string }).path),
   'internal.admin.backups.history': (params) => {
     const { jobId, kind, state, since, until, limit } = params as BackupHistoryQuery;
     return {

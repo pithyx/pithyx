@@ -54,7 +54,7 @@ The box stores the versions after every run and after every change of a version,
 
 **Protect from deletion** keeps a version whatever the retention says, for example the state before a large clean-up; **Release protection** hands it back to the retention. Protecting adds restic's tag `pithyx-protected` to the version, which every later retention keeps (`--keep-tag`). It is refused while a run or check goes on ([`backup.job.busy`](/docs/reference/errors/#backup.job.busy)), and a version the retention removed meanwhile answers [`backup.version.not_found`](/docs/reference/errors/#backup.version.not_found). Both are recorded in the Log Center's source **audit**.
 
-Browsing a version and restoring from it come with the restore portal.
+**Browse and restore** on a version opens it in [Restore](/docs/admin/backup-restore/).
 
 ## Adding a box backup
 
@@ -132,4 +132,4 @@ The box reports these to its administrators, on the desktop and on the channels 
 
 ## Restoring
 
-Restoring from the Backup app comes in a later version. Until then, restic itself opens the repository with its key from any machine that can reach the target over SFTP with an SSH key of its own, for example `restic -r sftp:<user>@<server>:<folder>/<repository> restore latest --target <folder>`.
+Files and folders come back from any version in [Restore](/docs/admin/backup-restore/), which also says how to open a repository with plain restic when the box is gone.

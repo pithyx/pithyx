@@ -54,7 +54,7 @@ Die Box speichert die Versionen nach jedem Lauf und nach jeder Änderung einer V
 
 **Vor Löschen schützen** behält eine Version, egal was die Aufbewahrung sagt, zum Beispiel den Stand vor einem großen Aufräumen; **Schutz aufheben** gibt sie der Aufbewahrung zurück. Der Schutz setzt restics Markierung `pithyx-protected` an die Version, die jede spätere Aufbewahrung behält (`--keep-tag`). Er wird abgelehnt, während ein Lauf oder eine Prüfung läuft ([`backup.job.busy`](/de/docs/reference/errors/#backup.job.busy)), und eine Version, die die Aufbewahrung inzwischen entfernt hat, antwortet mit [`backup.version.not_found`](/de/docs/reference/errors/#backup.version.not_found). Beides steht im Log Center in der Quelle **audit**.
 
-Eine Version durchsuchen und aus ihr wiederherstellen kommt mit dem Wiederherstellungs-Portal.
+**Durchsuchen und wiederherstellen** an einer Version öffnet sie unter [Wiederherstellen](/de/docs/admin/backup-restore/).
 
 ## Ein Box-Backup hinzufügen
 
@@ -132,4 +132,4 @@ Diese meldet die Box ihren Administratoren, auf dem Desktop und über die Kanäl
 
 ## Wiederherstellen
 
-Wiederherstellen aus der App Backup kommt in einer späteren Version. Bis dahin öffnet restic selbst das Repository mit seinem Schlüssel von jedem Rechner aus, der das Ziel über SFTP mit einem eigenen SSH-Schlüssel erreicht, zum Beispiel `restic -r sftp:<benutzer>@<server>:<ordner>/<repository> restore latest --target <ordner>`.
+Dateien und Ordner kommen aus jeder Version unter [Wiederherstellen](/de/docs/admin/backup-restore/) zurück; dort steht auch, wie restic allein ein Repository öffnet, wenn die Box weg ist.
