@@ -499,7 +499,7 @@
     "conflict": "Wenn eine Datei schon da ist",
     "conflicts": {
       "keepBoth": "Beide behalten",
-      "keepBothHint": "Die wiederhergestellte Datei kommt daneben, benannt nach der Zeit der Version.",
+      "keepBothHint": "Die wiederhergestellte Datei kommt daneben, benannt nach der Zeit der Version. Eine Datei mit derselben Größe und Zeit wie die vorhandene wird ausgelassen.",
       "overwrite": "Ersetzen",
       "overwriteHint": "Die wiederhergestellte Datei tritt an ihre Stelle. Ein Ordner wird nie ersetzt; beide bleiben.",
       "skip": "Lassen",

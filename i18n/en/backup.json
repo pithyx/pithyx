@@ -499,7 +499,7 @@
     "conflict": "When a file is already there",
     "conflicts": {
       "keepBoth": "Keep both",
-      "keepBothHint": "The restored file goes next to it, named after the version's time.",
+      "keepBothHint": "The restored file goes next to it, named after the version's time. A file with the same size and time as the one there is left out.",
       "overwrite": "Replace it",
       "overwriteHint": "The restored file takes its place. A folder is never replaced; both are kept.",
       "skip": "Leave it",
