@@ -57,6 +57,7 @@ export const shots: Shot[] = [
   { name: 'backup-overview', screen: 'backup-overview' },
   { name: 'backup-jobs', screen: 'backup-jobs' },
   { name: 'backup-activity', screen: 'backup-activity' },
+  { name: 'backup-job-versions', screen: 'backup-job-versions' },
   { name: 'network-confirm', screen: 'settings-network-confirm' },
   { name: 'notifications-matrix', screen: 'settings-notification-matrix' },
   { name: 'logs-center', screen: 'logs-center', theme: 'dark' },

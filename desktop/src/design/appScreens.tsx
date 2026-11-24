@@ -383,6 +383,28 @@ export const appScreens: ScreenDefinition[] = [
     ),
   },
   {
+    id: 'backup-job-versions',
+    group: 'apps',
+    title: 'Backup: versions of a backup',
+    description:
+      'The page of one backup on its Versions tab: the size and added data per version as a chart, the versions with the reasons the retention kept them, one protected by hand, and the newest selected with what changed against the one before.',
+    render: (context) => (
+      <CoreAppScene
+        context={context}
+        app="backup"
+        Component={BackupApp}
+        answers={backupAnswers}
+        seed={seedRunningBackup}
+        script={[
+          { press: 'backup:nav.jobs' },
+          { press: 'Documents' },
+          { press: 'backup:jobs.open' },
+          { press: 'backup:detail.tab.versions' },
+        ]}
+      />
+    ),
+  },
+  {
     id: 'backup-activity',
     group: 'apps',
     title: 'Backup: activity',

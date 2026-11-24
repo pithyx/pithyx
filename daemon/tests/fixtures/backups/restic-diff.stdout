@@ -1,0 +1,4 @@
+{"message_type":"change","path":"/tank/documents/a/x.txt","modifier":"-"}
+{"message_type":"change","path":"/tank/documents/a/z.txt","modifier":"+"}
+{"message_type":"change","path":"/tank/documents/y.txt","modifier":"M"}
+{"message_type":"statistics","source_snapshot":"51bffcaa","target_snapshot":"cf33a011","changed_files":1,"added":{"files":1,"dirs":0,"others":0,"data_blobs":2,"tree_blobs":5,"bytes":2246},"removed":{"files":1,"dirs":0,"others":0,"data_blobs":2,"tree_blobs":5,"bytes":2246}}

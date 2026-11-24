@@ -129,7 +129,8 @@
     "daysLabel": "Letzte 14 Tage: {succeeded} ohne Probleme, {warning} mit Warnungen, {failed} fehlgeschlagen, {none} ohne Backup",
     "details": "Details des Backups",
     "lastBackup": "Letztes Backup",
-    "check": "Integritätsprüfung"
+    "check": "Integritätsprüfung",
+    "open": "Öffnen"
   },
   "runs": {
     "title": "Letzte Läufe",
@@ -229,7 +230,12 @@
     "copyManually": "Markiere den Schlüssel und kopiere ihn von Hand.",
     "download": "Herunterladen",
     "stored": "Ich habe den Schlüssel außerhalb der Box aufbewahrt",
-    "fileIntro": "Pithyx-Backup-Schlüssel des Backups {name}, Repository {repository} auf {target}. Halte ihn geheim."
+    "fileIntro": "Pithyx-Backup-Schlüssel des Backups {name}, Repository {repository} auf {target}. Halte ihn geheim.",
+    "warningAgain": "Dieser Schlüssel öffnet das Repository. Bewahre ihn außerhalb der Box auf und gib ihn nicht weiter.",
+    "reveal": "Schlüssel zeigen",
+    "stepUp": "{twoFactor, select, true {Der Schlüssel öffnet jede Version dieses Backups. Bestätige mit deinem Passwort und dem Code aus deiner Authenticator-App.} other {Der Schlüssel öffnet jede Version dieses Backups. Bestätige mit deinem Passwort.}}",
+    "password": "Dein Passwort",
+    "code": "Code"
   },
   "deleteJob": {
     "title": "{name} löschen?",
@@ -376,6 +382,66 @@
       "size": "Belegt auf allen Zielen",
       "label": "{days} Tage: {added} neu hinzugefügt, die Repositorys belegen {size}",
       "unknown": "unbekannt"
+    }
+  },
+  "detail": {
+    "breadcrumb": "Pfad",
+    "toolbar": "Backup",
+    "key": "Schlüssel",
+    "tabs": "Teile des Backups",
+    "tab": {
+      "overview": "Übersicht",
+      "versions": "Versionen",
+      "schedule": "Zeitplan und Aufbewahrung",
+      "sources": "Ordner",
+      "settings": "Einstellungen",
+      "log": "Läufe"
+    },
+    "noExcludes": "Keine",
+    "keepCount": "{count} {kind}",
+    "keepAll": "Jede Version",
+    "checkValue": "{schedule}, liest {percent} % der Daten zurück",
+    "nextCheck": "Nächste Prüfung",
+    "overdue": "Überfällig nach",
+    "overdueDefault": "Dreimal dem Abstand, mindestens zwei Tagen",
+    "overdueHours": "{count, plural, one {# Stunde} other {# Stunden}}",
+    "noLimit": "Keine Grenze",
+    "limit": "{rate}/s",
+    "targetValue": "{name} ({address})",
+    "yes": "Ja",
+    "no": "Nein, nur von Hand",
+    "upload": "Grenze beim Hochladen",
+    "download": "Grenze beim Herunterladen"
+  },
+  "versions": {
+    "list": "Versionen",
+    "details": "Details der Version",
+    "loading": "Versionen werden geladen",
+    "empty": "Noch keine Version. Das erste Backup legt eine an.",
+    "time": "Version",
+    "files": "Dateien",
+    "keep": "Behalten als",
+    "protected": "Geschützt",
+    "unknown": "Nicht verglichen",
+    "title": "Version vom {time}",
+    "id": "ID {id}",
+    "new": "Neu",
+    "changed": "Geändert",
+    "removed": "Gelöscht",
+    "changes": "Änderungen gegenüber der Version davor",
+    "noChanges": "Keine Datei hat sich geändert.",
+    "change": {
+      "added": "neu",
+      "modified": "geändert",
+      "removed": "gelöscht"
+    },
+    "protect": "Vor Löschen schützen",
+    "release": "Schutz aufheben",
+    "chart": {
+      "title": "Größe je Version",
+      "added": "Hinzugefügt",
+      "size": "Größe",
+      "label": "{count, plural, one {# Version} other {# Versionen}}, die neueste umfasst {size}"
     }
   }
 }

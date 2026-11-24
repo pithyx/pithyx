@@ -1,3 +1,4 @@
+import { UiProvider } from '@pithyx/ui';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import i18next from 'i18next';
 import { useEffect, useState, type ComponentType, type CSSProperties, type ReactNode } from 'react';
@@ -268,42 +269,45 @@ export function CoreAppScene({
 }) {
   const apps = useApps();
   const info = apps[appId];
+  // The desktop gives its apps the texts of @pithyx/ui in the user's language; the scene does the same.
   return (
-    <Scripted steps={script}>
-      <DesktopShell
-        taskbarPosition={context.taskbar}
-        taskbar={
-          <Taskbar
-            position={context.taskbar}
-            apps={[{ ...info, state: 'focused' }]}
-            startOpen={false}
-            jobs={0}
-            unread={0}
-            notificationsOpen={false}
-            switcherOpen={false}
-            now={now}
-            locale={context.locale}
-          />
-        }
-      >
-        <Window
-          app={info}
-          title={title ?? info.name}
-          focused
-          maximized
-          compactActive
-          layer={1}
-          geometry={{ x: 0, y: 0, width: 100, height: 100 }}
+    <UiProvider locale={context.locale}>
+      <Scripted steps={script}>
+        <DesktopShell
+          taskbarPosition={context.taskbar}
+          taskbar={
+            <Taskbar
+              position={context.taskbar}
+              apps={[{ ...info, state: 'focused' }]}
+              startOpen={false}
+              jobs={0}
+              unread={0}
+              notificationsOpen={false}
+              switcherOpen={false}
+              now={now}
+              locale={context.locale}
+            />
+          }
         >
-          <SampleAppHost
-            Component={Component}
-            launch={launch}
-            answers={answers}
-            options={options}
-            {...(seed === undefined ? {} : { seed })}
-          />
-        </Window>
-      </DesktopShell>
-    </Scripted>
+          <Window
+            app={info}
+            title={title ?? info.name}
+            focused
+            maximized
+            compactActive
+            layer={1}
+            geometry={{ x: 0, y: 0, width: 100, height: 100 }}
+          >
+            <SampleAppHost
+              Component={Component}
+              launch={launch}
+              answers={answers}
+              options={options}
+              {...(seed === undefined ? {} : { seed })}
+            />
+          </Window>
+        </DesktopShell>
+      </Scripted>
+    </UiProvider>
   );
 }

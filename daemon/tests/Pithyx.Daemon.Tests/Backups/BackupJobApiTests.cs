@@ -1,4 +1,5 @@
 using System.Net;
+using System.Net.Http.Json;
 using System.Text.Json;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
@@ -32,6 +33,10 @@ public sealed class BackupJobApiTests : IAsyncLifetime
     private CommandResult _check = Ok;
     private CommandResult _backup = Ok;
     private string _snapshots = "";
+    private string _versions = "[]";
+    private string _forget = "";
+    private string _diff = "";
+    private string _tag = "";
 
     private string SharePath => Path.Combine(_root, "media");
     private string CacheRoot => Path.Combine(_root, "cache");
@@ -443,6 +448,143 @@ public sealed class BackupJobApiTests : IAsyncLifetime
         return id;
     }
 
+    [Fact]
+    public async Task ARunKeepsTheVersionsWithWhyTheRetentionKeptThemAndWhatChanged()
+    {
+        var id = await CreateJobAsync("Media", sources: new[] { new { shareId = _shareId, path = "Photos" } });
+        var photos = Path.Combine(SharePath, "Photos");
+        _versions = Versions((Older, Older, "2026-11-22T03:00:00+01:00", false), (Made, Made, "2026-11-23T03:00:00+01:00", false));
+        _forget = $$"""[{"reasons":[{"snapshot":{"id":"{{Made}}"},"matches":["last snapshot","daily snapshot"]},{"snapshot":{"id":"{{Older}}"},"matches":["daily snapshot"]}]}]""" + "\nloading indexes...\n";
+        _diff = $$$"""
+            {"message_type":"change","path":"{{{photos}}}/","modifier":"M"}
+            {"message_type":"change","path":"{{{photos}}}/new.jpg","modifier":"+"}
+            {"message_type":"change","path":"{{{photos}}}/old.jpg","modifier":"-"}
+            {"message_type":"statistics","changed_files":0,"added":{"files":1},"removed":{"files":1}}
+            """;
+
+        await RunAsync(id);
+
+        var versions = await VersionsAsync(id);
+        Assert.Equal(2, versions.Count);
+        var newest = versions[0];
+        Assert.Equal(Made[..8], newest.GetProperty("snapshot").GetString());
+        Assert.Equal("2026-11-23T02:00:00+00:00", newest.GetProperty("time").GetString());
+        Assert.Equal(["daily", "last"], newest.GetProperty("keep").EnumerateArray().Select(reason => reason.GetString()!).Order());
+        Assert.Equal(1, newest.GetProperty("filesRemoved").GetInt64());
+        Assert.Equal(
+            ["added Media/Photos/new.jpg", "removed Media/Photos/old.jpg"],
+            newest.GetProperty("changes").EnumerateArray().Select(change => $"{change.GetProperty("change").GetString()} {change.GetProperty("path").GetString()}"));
+        Assert.Equal(JsonValueKind.Null, versions[1].GetProperty("changes").ValueKind);
+        var diff = Assert.Single(_commands.Calls, call => call.Arguments.Contains("diff"));
+        Assert.Equal(["diff", "--", Older, Made], diff.Arguments.TakeLast(4));
+        Assert.DoesNotContain(_commands.Calls, call => call.Arguments.Contains("tag"));
+
+        // A version the retention deleted leaves the list; one it kept stays with its id.
+        _versions = Versions((Made, Made, "2026-11-23T03:00:00+01:00", false));
+        await RunAsync(id);
+        var kept = Assert.Single(await VersionsAsync(id));
+        Assert.Equal(newest.GetProperty("id").GetInt64(), kept.GetProperty("id").GetInt64());
+        Assert.Equal(2, kept.GetProperty("changes").GetArrayLength());
+    }
+
+    [Fact]
+    public async Task AProtectedVersionGetsResticsTagAndKeepsItsIdUnderItsNewSnapshotId()
+    {
+        var id = await CreateJobAsync("Media");
+        _versions = Versions((Older, Older, "2026-11-22T03:00:00Z", false), (Made, Made, "2026-11-23T03:00:00Z", false));
+        await RunAsync(id);
+        var older = (await VersionsAsync(id))[1].GetProperty("id").GetInt64();
+        const string Tagged = "d22c342de47a8e02374d6f877593c5430a1c80cbe121ec520784b2d95c7877b2";
+        _tag = $$"""{"message_type":"changed","old_snapshot_id":"{{Older}}","new_snapshot_id":"{{Tagged}}"}""" + "\n";
+        _commands.ClearCalls();
+
+        using (var response = await _admin.PutAsJsonAsync($"/api/backups/jobs/{id}/versions/{older}/protection", new { @protected = true }, Token))
+        {
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            var version = await response.JsonAsync();
+            Assert.True(version.GetProperty("protected").GetBoolean());
+            Assert.Equal("d22c342d", version.GetProperty("snapshot").GetString());
+            Assert.Contains("protected", version.GetProperty("keep").EnumerateArray().Select(reason => reason.GetString()));
+        }
+        var tag = Assert.Single(_commands.Calls, call => call.Arguments.Contains("tag"));
+        Assert.Equal(["tag", "--add", "pithyx-protected", "--", Older], tag.Arguments.TakeLast(5));
+        Assert.Contains(("backup.version.protected", "Media"), await AuditAsync());
+
+        // The next run finds it under its new id, made from the old one.
+        _versions = Versions((Tagged, Older, "2026-11-22T03:00:00Z", true), (Made, Made, "2026-11-23T03:00:00Z", false));
+        await RunAsync(id);
+        var again = (await VersionsAsync(id))[1];
+        Assert.Equal(older, again.GetProperty("id").GetInt64());
+        Assert.True(again.GetProperty("protected").GetBoolean());
+
+        _tag = "";
+        using (var released = await _admin.PutAsJsonAsync($"/api/backups/jobs/{id}/versions/{older}/protection", new { @protected = false }, Token))
+        {
+            Assert.False((await released.JsonAsync()).GetProperty("protected").GetBoolean());
+        }
+        Assert.Contains(("backup.version.released", "Media"), await AuditAsync());
+        using var missing = await _admin.PutAsJsonAsync($"/api/backups/jobs/{id}/versions/999/protection", new { @protected = true }, Token);
+        Assert.Equal(HttpStatusCode.NotFound, missing.StatusCode);
+        Assert.Equal(ErrorCodes.BackupVersionNotFound, await missing.ErrorCodeAsync());
+    }
+
+    [Fact]
+    public async Task TheRepositoryKeyIsShownAgainOnlyWithThePassword()
+    {
+        var created = await CreateAsync("Media");
+        var id = created.GetProperty("job").GetProperty("id").GetInt64();
+
+        using (var wrong = await _admin.PostAsJsonAsync($"/api/backups/jobs/{id}/key", new { password = "wrong" }, Token))
+        {
+            Assert.Equal("auth.credentials.invalid", await wrong.ErrorCodeAsync());
+        }
+        using var shown = await _admin.PostAsJsonAsync($"/api/backups/jobs/{id}/key", new { password = AdminPassword }, Token);
+
+        Assert.Equal(created.GetProperty("key").GetString(), (await shown.JsonAsync()).GetProperty("key").GetString());
+        Assert.Contains(("backup.job.key_revealed", "Media"), await AuditAsync());
+    }
+
+    [Fact]
+    public async Task ADeletedJobTakesItsCacheAlongAndCachesOfJobsLongGoneAreSwept()
+    {
+        var id = await CreateJobAsync("Media");
+        await RunAsync(id);
+        var cache = Path.Combine(CacheRoot, id.ToString(System.Globalization.CultureInfo.InvariantCulture));
+        Assert.True(Directory.Exists(cache));
+        Directory.CreateDirectory(Path.Combine(CacheRoot, "999", "data"));
+        Directory.CreateDirectory(Path.Combine(CacheRoot, "notes"));
+        var other = await CreateJobAsync("Other", sources: new[] { new { shareId = _shareId, path = "Photos" } });
+        await RunAsync(other);
+
+        using var deleted = await _admin.DeleteAsync($"/api/backups/jobs/{id}", Token);
+
+        Assert.Equal(HttpStatusCode.NoContent, deleted.StatusCode);
+        Assert.False(Directory.Exists(cache));
+        Assert.False(Directory.Exists(Path.Combine(CacheRoot, "999")));
+        Assert.True(Directory.Exists(Path.Combine(CacheRoot, "notes")));
+        Assert.True(Directory.Exists(Path.Combine(CacheRoot, other.ToString(System.Globalization.CultureInfo.InvariantCulture))));
+    }
+
+    private static readonly string[] ProtectedTags = ["pithyx-protected"];
+
+    private const string Older = "87a0dfd8476bc24184b206c7749be24060391a4e45be004cad25ce7344530962";
+
+    // The run's own version, as restic-backup-warning.stdout reports it.
+    private const string Made = "6e42ebcde1709a43f15cd17b0bf6e0c04264ef6ec609fe1ad99641caac92081a";
+
+    private static string Versions(params (string Id, string Origin, string Time, bool Protected)[] versions) =>
+        JsonSerializer.Serialize(versions.Select(version => new Dictionary<string, object?>
+        {
+            ["id"] = version.Id,
+            ["original"] = version.Id == version.Origin ? null : version.Origin,
+            ["time"] = version.Time,
+            ["tags"] = version.Protected ? ProtectedTags : null,
+            ["summary"] = new { files_new = 1, files_changed = 2, data_added_packed = 300, total_files_processed = 33, total_bytes_processed = 90_600_000 },
+        })) + "\n";
+
+    private async Task<List<JsonElement>> VersionsAsync(long id) =>
+        [.. JsonDocument.Parse(await _admin.GetStringAsync($"/api/backups/jobs/{id}/versions", Token)).RootElement.GetProperty("versions").EnumerateArray()];
+
     private async Task<JsonElement> RunAsync(long id, JobState state = JobState.Succeeded)
     {
         using var started = await _admin.PostAsync($"/api/backups/jobs/{id}/run", new { });
@@ -495,6 +637,8 @@ public sealed class BackupJobApiTests : IAsyncLifetime
                 return Ok;
             case "zfs" when arguments is ["get", ..]:
                 return new CommandResult(0, "yes\n" + (arguments[^1].EndsWith("/backup-cache", StringComparison.Ordinal) ? CacheRoot : SharePath) + "\n", "", TimeSpan.Zero);
+            case "zfs" when arguments is ["list", .., "filesystem"]:
+                return new CommandResult(0, $"pithyxtestm\tyes\t/pithyxtestm\npithyxtestm/pithyx/backup-cache\tyes\t{CacheRoot}\n", "", TimeSpan.Zero);
             case "zfs" when arguments is ["list", ..]:
                 return new CommandResult(0, _snapshots, "", TimeSpan.Zero);
             case "zfs":
@@ -504,7 +648,13 @@ public sealed class BackupJobApiTests : IAsyncLifetime
             case "env" when arguments.Contains("cat"):
                 return _verify;
             case "env" when arguments.Contains("forget"):
-                return Ok;
+                return new CommandResult(0, _forget, "", TimeSpan.Zero);
+            case "env" when arguments.Contains("snapshots"):
+                return new CommandResult(0, _versions, "", TimeSpan.Zero);
+            case "env" when arguments.Contains("diff"):
+                return new CommandResult(0, _diff, "", TimeSpan.Zero);
+            case "env" when arguments.Contains("tag"):
+                return new CommandResult(0, _tag, "", TimeSpan.Zero);
             case "env" when arguments.Contains("check"):
                 return _check;
             case "env" when arguments.Contains("stats"):

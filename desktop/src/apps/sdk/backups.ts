@@ -17,6 +17,7 @@ export type BackupRun = components['schemas']['BackupRun'];
 export type BackupSourceOption = components['schemas']['BackupSourceOption'];
 export type BackupDay = components['schemas']['BackupDay'];
 export type BackupDayList = components['schemas']['BackupDayList'];
+export type BackupVersion = components['schemas']['BackupVersion'];
 type BoardJob = components['schemas']['Job'];
 
 export interface BackupHistoryQuery {
@@ -85,6 +86,21 @@ interface BackupMethods {
   };
   /** Cancels a running run or check through its job on the board. */
   'internal.admin.backups.cancel': { params: { boardJobId: number }; result: null };
+  /** The versions in a job's repository, newest first, as the box saw them after its last run. */
+  'internal.admin.backups.versions': {
+    params: { id: number };
+    result: { versions: BackupVersion[] };
+  };
+  /** Protects a version from the retention or releases it again. */
+  'internal.admin.backups.protect': {
+    params: { id: number; versionId: number; protected: boolean };
+    result: BackupVersion;
+  };
+  /** The job's repository key, after the password and, with two-factor sign-in on, a current code. */
+  'internal.admin.backups.revealKey': {
+    params: { id: number; password: string; totpCode?: string };
+    result: { key: string };
+  };
 }
 
 export const targetsKey = ['backups', 'targets'] as const;
@@ -97,6 +113,9 @@ export const runsKey = (id: number) => ['backups', 'runs', id] as const;
 /** The runs of every job; its queries invalidate together with every job's runs. */
 export const historyKey = (query: BackupHistoryQuery) =>
   ['backups', 'runs', 'history', query] as const;
+
+/** A job's versions. */
+export const versionsKey = (id: number) => ['backups', 'versions', id] as const;
 
 /** The runs per day; under the runs, so a finished run refreshes them. */
 export const daysKey = (from: string, to: string) => ['backups', 'runs', 'days', from, to] as const;
@@ -403,6 +422,54 @@ export function backupsHost(): HostExtensions {
             }),
           );
           return null;
+        }),
+    },
+    'internal.admin.backups.versions': {
+      validate: hasId,
+      handle: (params) =>
+        daemon(async () =>
+          unwrap(
+            await api.GET('/api/backups/jobs/{id}/versions', {
+              params: { path: { id: (params as { id: number }).id } },
+            }),
+          ),
+        ),
+    },
+    'internal.admin.backups.protect': {
+      validate: (value) =>
+        hasId(value) &&
+        Number.isSafeInteger((value as { versionId?: unknown }).versionId) &&
+        typeof (value as { protected?: unknown }).protected === 'boolean',
+      handle: (params) =>
+        daemon(async () => {
+          const {
+            id,
+            versionId,
+            protected: keep,
+          } = params as BackupMethods['internal.admin.backups.protect']['params'];
+          return unwrap(
+            await api.PUT('/api/backups/jobs/{id}/versions/{versionId}/protection', {
+              params: { path: { id, versionId } },
+              body: { protected: keep },
+            }),
+          );
+        }),
+    },
+    'internal.admin.backups.revealKey': {
+      validate: (value) =>
+        hasId(value) &&
+        typeof (value as { password?: unknown }).password === 'string' &&
+        optionalString((value as { totpCode?: unknown }).totpCode),
+      handle: (params) =>
+        daemon(async () => {
+          const { id, password, totpCode } =
+            params as BackupMethods['internal.admin.backups.revealKey']['params'];
+          return unwrap(
+            await api.POST('/api/backups/jobs/{id}/key', {
+              params: { path: { id } },
+              body: { password, ...(totpCode === undefined ? {} : { totpCode }) },
+            }),
+          );
         }),
     },
   };

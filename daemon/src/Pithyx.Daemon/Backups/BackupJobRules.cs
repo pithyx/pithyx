@@ -138,6 +138,23 @@ public static class BackupJobRules
         return path;
     }
 
+    /// <summary>The mounted backup caches of <c>zfs list -H -o name,mounted,mountpoint -t filesystem</c>.</summary>
+    public static IReadOnlyList<string> CacheRoots(string standardOutput)
+    {
+        ArgumentNullException.ThrowIfNull(standardOutput);
+        var result = new List<string>();
+        foreach (var line in standardOutput.Split('\n', StringSplitOptions.RemoveEmptyEntries))
+        {
+            var fields = line.Split('\t');
+            if (fields.Length == 3 && fields[0].EndsWith("/pithyx/backup-cache", StringComparison.Ordinal) && fields[0].Count(c => c == '/') == 2
+                && fields[1] == "yes" && fields[2].StartsWith('/'))
+            {
+                result.Add(fields[2]);
+            }
+        }
+        return result;
+    }
+
     public static PithyxException Invalid(string field) =>
         new(ErrorCodes.BackupJobInvalid, new Dictionary<string, object?> { ["field"] = field });
 

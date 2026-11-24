@@ -247,6 +247,8 @@ public sealed partial class BackupJobService(
         await connection.ExecuteAsync(new CommandDefinition("DELETE FROM backup_jobs WHERE id = @id", new { id }, cancellationToken: cancellationToken));
         await audit.RecordAsync(caller, JobDeleted, row.Name, new Dictionary<string, string> { ["repository"] = row.Repository }, cancellationToken);
         LogDeleted(id);
+        // The cache goes with the job (#401): ids are reused, and a new job must not find another repository's cache.
+        await SweepCachesAsync(connection, CancellationToken.None);
         Changed?.Invoke();
     }
 
@@ -378,6 +380,7 @@ public sealed partial class BackupJobService(
         {
             LogRecovered(count);
         }
+        await SweepCachesAsync(connection, cancellationToken);
     }
 
     /// <summary>The enabled jobs' schedules, for the scheduler.</summary>
@@ -534,12 +537,18 @@ public sealed partial class BackupJobService(
             }
             var state = result.ExitCode == ResticCommands.Incomplete ? BackupRunState.Warning : BackupRunState.Succeeded;
             PithyxException? warning = null;
-            if (await restic.ForgetAsync(location, settings.Retention, context.Cancellation) is { ExitCode: not 0 } forget)
+            IReadOnlyDictionary<string, IReadOnlyList<BackupKeepReason>>? keep = new Dictionary<string, IReadOnlyList<BackupKeepReason>>();
+            if (await restic.ForgetAsync(location, settings.Retention, context.Cancellation) is { } forget)
             {
-                LogForgetFailed(row.Id, forget.ExitCode, forget.StandardError.Length > 4000 ? forget.StandardError[..4000] : forget.StandardError);
-                (state, warning) = (BackupRunState.Warning, ResticOutput.Failure(forget.ExitCode, forget.StandardError, location.RemotePath));
+                if (forget.ExitCode != 0)
+                {
+                    LogForgetFailed(row.Id, forget.ExitCode, forget.StandardError.Length > 4000 ? forget.StandardError[..4000] : forget.StandardError);
+                    (state, warning) = (BackupRunState.Warning, ResticOutput.Failure(forget.ExitCode, forget.StandardError, location.RemotePath));
+                }
+                keep = ResticVersions.KeepReasons(forget.StandardOutput);
             }
             report.RepositoryBytes = await restic.StatsAsync(location, context.Cancellation);
+            await SyncVersionsAsync(row, location, keep, report.Snapshot, sources, context.Cancellation);
             await targets.MeasureSpaceAsync(row.TargetId, context.Cancellation);
             return (state, warning);
         }
@@ -679,6 +688,38 @@ public sealed partial class BackupJobService(
         }
     }
 
+    /// <summary>Removes the restic caches of jobs that no longer exist from every pool's backup cache (#401).</summary>
+    private async Task SweepCachesAsync(SqliteConnection connection, CancellationToken cancellationToken)
+    {
+        var jobs = (await connection.QueryAsync<long>(new CommandDefinition("SELECT id FROM backup_jobs", cancellationToken: cancellationToken)))
+            .Select(id => id.ToString(CultureInfo.InvariantCulture))
+            .ToHashSet(StringComparer.Ordinal);
+        var listing = await commands.RunAsync(new CommandRequest("zfs", ["list", "-H", "-o", "name,mounted,mountpoint", "-t", "filesystem"]), cancellationToken);
+        if (listing.ExitCode != 0)
+        {
+            return;
+        }
+        foreach (var root in BackupJobRules.CacheRoots(listing.StandardOutput))
+        {
+            try
+            {
+                foreach (var folder in Directory.EnumerateDirectories(root))
+                {
+                    var name = Path.GetFileName(folder);
+                    if (name.Length > 0 && name.All(char.IsAsciiDigit) && !jobs.Contains(name))
+                    {
+                        Directory.Delete(folder, recursive: true);
+                        LogCacheRemoved(root, name);
+                    }
+                }
+            }
+            catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+            {
+                LogCacheUnavailable(root, exception.Message);
+            }
+        }
+    }
+
     private sealed record ResolvedSource(string Share, string Dataset, string Mountpoint, string Path, string Root);
 
     /// <summary>Rewrites the unreadable items from the live paths restic read to the share's name and the path below it.</summary>
@@ -686,14 +727,7 @@ public sealed partial class BackupJobService(
     {
         for (var index = 0; index < report.WarningItems.Count; index++)
         {
-            var item = report.WarningItems[index];
-            var source = sources
-                .Where(source => item.Item == source.Root || item.Item.StartsWith(source.Root + "/", StringComparison.Ordinal))
-                .MaxBy(source => source.Root.Length);
-            if (source is not null)
-            {
-                report.WarningItems[index] = item with { Item = (source.Share + item.Item[source.Root.Length..]).TrimEnd('/') };
-            }
+            report.WarningItems[index] = report.WarningItems[index] with { Item = ShareRelative(report.WarningItems[index].Item, sources) };
         }
     }
 
@@ -1029,6 +1063,9 @@ public sealed partial class BackupJobService(
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "Backup job {JobId} could not read {Count} files or folders: {Items}")]
     private partial void LogUnreadable(long jobId, int count, string items);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Removed the restic cache {Job} of a deleted backup job from {Root}")]
+    private partial void LogCacheRemoved(string root, string job);
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "No backup cache on pool {Pool}; restic runs without one: {Reason}")]
     private partial void LogCacheUnavailable(string pool, string reason);

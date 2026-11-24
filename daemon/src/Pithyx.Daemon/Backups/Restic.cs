@@ -23,6 +23,9 @@ public static class ResticCommands
     public const int WrongPassword = 12;
     public const int Interrupted = 130;
 
+    /// <summary>The tag of versions the retention always keeps.</summary>
+    public const string ProtectedTag = "pithyx-protected";
+
     /// <summary>The namespace script's exit code when a snapshot could not be mounted.</summary>
     public const int MountFailed = 70;
 
@@ -133,7 +136,10 @@ public static class ResticCommands
         return arguments;
     }
 
-    /// <summary><c>forget --prune</c> with the retention, over every version of the repository; null when it keeps all.</summary>
+    /// <summary>
+    /// <c>forget --prune</c> with the retention, over every version of the repository; null when it keeps all. Versions
+    /// with the tag <see cref="ProtectedTag"/> are always kept.
+    /// </summary>
     public static IReadOnlyList<string>? Forget(IReadOnlyList<string> global, BackupRetention retention)
     {
         ArgumentNullException.ThrowIfNull(retention);
@@ -141,7 +147,7 @@ public static class ResticCommands
         {
             return null;
         }
-        var arguments = new List<string>(global) { "forget", "--prune", "--group-by", "" };
+        var arguments = new List<string>(global) { "forget", "--prune", "--group-by", "", "--keep-tag", ProtectedTag };
         void Keep(string flag, int count)
         {
             if (count > 0)
@@ -157,6 +163,16 @@ public static class ResticCommands
         Keep("--keep-yearly", retention.Yearly);
         return arguments;
     }
+
+    /// <summary>Every version in the repository.</summary>
+    public static IReadOnlyList<string> Snapshots(IReadOnlyList<string> global) => [.. global, "snapshots"];
+
+    /// <summary>What changed from version <paramref name="from"/> to <paramref name="to"/>.</summary>
+    public static IReadOnlyList<string> Diff(IReadOnlyList<string> global, string from, string to) => [.. global, "diff", "--", from, to];
+
+    /// <summary>Adds or removes <see cref="ProtectedTag"/> on a version; restic gives the version a new id.</summary>
+    public static IReadOnlyList<string> Protect(IReadOnlyList<string> global, string snapshot, bool protect) =>
+        [.. global, "tag", protect ? "--add" : "--remove", ProtectedTag, "--", snapshot];
 
     /// <summary><c>stats</c> in raw-data mode: what the repository takes on the target after compression and deduplication.</summary>
     public static IReadOnlyList<string> Stats(IReadOnlyList<string> global) => [.. global, "stats", "--mode", "raw-data"];

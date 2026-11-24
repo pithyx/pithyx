@@ -1,0 +1,24 @@
+[{"tags":null,"host":"","paths":null,"keep":[{"time":"2026-11-23T19:30:46.84486988Z","parent":"cf33a0118380fd3007575a19e0aed4bc6fd570e090e3638871199d85aa496979","tree":"3c86be80c1b58fe6a2295152b5b1d85d10e8ce4d7e11c1a1dd7adc6dbc85b103","paths":["/tank/documents"],"hostname":"pithyx","username":"root","uid":0,"gid":0,"program_version":"restic 0.18.0","summary":{"backup_start":"2026-11-23T19:30:46.84486988Z","backup_end":"2026-11-23T19:30:47.239349999Z","files_new":1,"files_changed":0,"files_unmodified":2,"dirs_new":0,"dirs_changed":3,"dirs_unmodified":1,"data_blobs":1,"tree_blobs":4,"data_added":2227,"data_added_packed":1430,"total_files_processed":3,"total_bytes_processed":22},"id":"00cd32bc5731f85ffbb517a70f5b9a589287b27d72ecbba19f6bf53ee9ddfcb8","short_id":"00cd32bc"}],"remove":[{"time":"2026-11-23T19:30:30.493790599Z","parent":"51bffcaac65621a101fda328bc8cdcca0be146718feb0be0af97756d415c0320","tree":"7e1d0d635176564aa6d2c12d880fa4ab2286ecb04560d2414151ce895ec7e451","paths":["/tank/documents"],"hostname":"pithyx","username":"root","uid":0,"gid":0,"program_version":"restic 0.18.0","summary":{"backup_start":"2026-11-23T19:30:30.493790599Z","backup_end":"2026-11-23T19:30:30.971655009Z","files_new":1,"files_changed":1,"files_unmodified":0,"dirs_new":0,"dirs_changed":4,"dirs_unmodified":0,"data_blobs":2,"tree_blobs":5,"data_added":2246,"data_added_packed":1743,"total_files_processed":2,"total_bytes_processed":16},"id":"cf33a0118380fd3007575a19e0aed4bc6fd570e090e3638871199d85aa496979","short_id":"cf33a011"}],"reasons":[{"snapshot":{"time":"2026-11-23T19:30:46.84486988Z","parent":"cf33a0118380fd3007575a19e0aed4bc6fd570e090e3638871199d85aa496979","tree":"3c86be80c1b58fe6a2295152b5b1d85d10e8ce4d7e11c1a1dd7adc6dbc85b103","paths":["/tank/documents"],"hostname":"pithyx","username":"root","uid":0,"gid":0,"program_version":"restic 0.18.0","summary":{"backup_start":"2026-11-23T19:30:46.84486988Z","backup_end":"2026-11-23T19:30:47.239349999Z","files_new":1,"files_changed":0,"files_unmodified":2,"dirs_new":0,"dirs_changed":3,"dirs_unmodified":1,"data_blobs":1,"tree_blobs":4,"data_added":2227,"data_added_packed":1430,"total_files_processed":3,"total_bytes_processed":22},"id":"00cd32bc5731f85ffbb517a70f5b9a589287b27d72ecbba19f6bf53ee9ddfcb8","short_id":"00cd32bc"},"matches":["last snapshot"]}]}]
+loading indexes...
+loading all snapshots...
+finding data that is still in use for 1 snapshots
+[0:00] 100.00%  1 / 1 snapshots
+searching used packs...
+collecting packs for deletion and repacking
+[0:00] 100.00%  4 / 4 packs processed
+
+to repack:             5 blobs / 1.562 KiB
+this removes:          4 blobs / 1.074 KiB
+to delete:             0 blobs / 0 B
+total prune:           4 blobs / 1.074 KiB
+remaining:             8 blobs / 1.544 KiB
+unused size after prune: 0 B (0.00% of remaining size)
+
+repacking packs
+[0:00] 100.00%  1 / 1 packs repacked
+rebuilding index
+[0:00] 100.00%  3 / 3 indexes processed
+[0:00] 100.00%  3 / 3 old indexes deleted
+removing 1 old packs
+[0:00] 100.00%  1 / 1 files deleted
+done

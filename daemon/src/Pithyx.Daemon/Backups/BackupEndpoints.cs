@@ -114,6 +114,37 @@ public static class BackupEndpoints
             })
             .WithName("CheckBackupJob")
             .WithDescription("Administrators only. Starts the integrity check of the job's repository now as a box job, reading back the job's share of the data.");
+        jobs.MapGet("/{id:long}/versions", async Task<Ok<BackupVersionList>> (long id, BackupJobService service, CancellationToken cancellationToken) =>
+                TypedResults.Ok(await service.VersionsAsync(id, cancellationToken)))
+            .WithName("ListBackupVersions")
+            .WithDescription("Administrators only. The versions in the job's repository, newest first, as the box saw them after its last run or change: size, files, what each added, why the retention kept it, whether it is protected, and for the newest the files that changed against the one before (at most 100). Reads nothing from the target.");
+        jobs.MapPut("/{id:long}/versions/{versionId:long}/protection", async Task<Ok<BackupVersion>> (long id, long versionId, BackupVersionProtection request, BackupJobService service, HttpContext context, CancellationToken cancellationToken) =>
+                TypedResults.Ok(await service.ProtectAsync(context.User, id, versionId, request.Protected, cancellationToken)))
+            .WithName("ProtectBackupVersion")
+            .WithDescription("Administrators only. Protects a version so the retention never deletes it, or releases it again (restic's tag pithyx-protected). Refused with backup.job.busy while a run or check goes on.");
+        jobs.MapPost("/{id:long}/key", RevealKeyAsync)
+            .WithName("RevealBackupJobKey")
+            .WithDescription("Administrators only. The job's repository key, for an administrator who lost the copy shown at creation. Needs the password again and, with two-factor sign-in on, a current authenticator code; failures count like failed sign-ins. Logged without the key.");
+    }
+
+    private static async Task<Ok<BackupJobKey>> RevealKeyAsync(
+        long id,
+        StepUpRequest request,
+        BackupJobService service,
+        AuthService auth,
+        LoginRateLimiter limiter,
+        HttpContext context,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        var username = context.User.Identity?.Name ?? "";
+        limiter.EnsureAllowed(context, username);
+        await AuthEndpoints.CountFailuresAsync(limiter, context, username, async () =>
+        {
+            await auth.ConfirmStepUpAsync(CurrentUser.Id(context.User), request.Password, request.TotpCode, cancellationToken);
+            return true;
+        });
+        return TypedResults.Ok(await service.RevealKeyAsync(context.User, id, cancellationToken));
     }
 
     // Query values are the lowercase names the API returns; the default binding would want the C# names.

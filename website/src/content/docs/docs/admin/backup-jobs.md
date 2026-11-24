@@ -27,7 +27,34 @@ _Box backups lists every backup with where it goes, its last and next run, the s
 - **Size**: the size of the last version.
 - **Last 14 days**: a bar per day, green for a backup without problems, orange for warnings, red for a failure and grey for a day without a backup. A screen reader reads the counts instead.
 
-Selecting a row opens its details on the right: the progress of a running backup, the error of a failed run or check, the schedule, the next run, the last successful backup, the integrity check, the repository, the folders and **Recent runs**. The toolbar acts on the selected backup: **Back up now** (or **Cancel** while it runs), **Check now**, **Edit** and **Delete**.
+Selecting a row opens its details on the right: the progress of a running backup, the error of a failed run or check, the schedule, the next run, the last successful backup, the integrity check, the repository, the folders and **Recent runs**. The toolbar acts on the selected backup: **Open**, **Back up now** (or **Cancel** while it runs), **Check now**, **Edit** and **Delete**. **Open**, a double click or Enter on a row opens the backup's own page.
+
+## The page of a backup
+
+A backup's page shows its name, the tag **From this box** and its state in the title, the path back to **Box backups** and its route. The toolbar has **Back up now** (or **Cancel**), **Check now**, **Edit**, **Delete** and **Key**, and the page has these tabs:
+
+- **Overview**: the progress of a running backup, the error of a failed run or check, schedule, next run, last backup, integrity check, repository, folders and the recent runs.
+- **Versions**: every version in the repository (see below).
+- **Schedule and retention**: when it backs up, the next run, the versions it keeps, the integrity check and when it counts as overdue.
+- **Folders**: the folders it backs up and its excludes.
+- **Settings**: target, repository, whether it runs on schedule and the bandwidth limits.
+- **Runs**: its runs and checks.
+
+**Edit** on the tabs opens the same dialog as in the list.
+
+![The page of the backup Documents on its Versions tab: a chart of the size and the added data per version, the versions with the reasons they are kept, and the newest selected with its changes](../../../../assets/screenshots/backup-job-versions.webp)
+
+_The Versions tab: what each version added and its size, why the retention keeps it, and what changed in the newest one._
+
+### Versions
+
+**Versions** lists every version in the backup's repository, newest first, with its time, files, size, the data it added to the repository and **Kept as**: why the retention keeps it (**Latest**, **Hourly**, **Daily**, **Weekly**, **Monthly**, **Yearly**) and **Protected**. The chart above shows the data each version added as bars and its size as a line. Selecting a version shows its numbers on the right; for the newest one also how many files are new, changed and deleted against the version before, with up to 100 of them.
+
+The box stores the versions after every run and after every change of a version, so the list shows the repository as the box last saw it and reading it never contacts the target. A version deleted outside the box disappears after the next run.
+
+**Protect from deletion** keeps a version whatever the retention says, for example the state before a large clean-up; **Release protection** hands it back to the retention. Protecting adds restic's tag `pithyx-protected` to the version, which every later retention keeps (`--keep-tag`). It is refused while a run or check goes on ([`backup.job.busy`](/docs/reference/errors/#backup.job.busy)), and a version the retention removed meanwhile answers [`backup.version.not_found`](/docs/reference/errors/#backup.version.not_found). Both are recorded in the Log Center's source **audit**.
+
+Browsing a version and restoring from it come with the restore portal.
 
 ## Adding a box backup
 
@@ -51,6 +78,8 @@ The target and the repository of a box backup stay as they are; for another targ
 Each repository is encrypted with a random key. The box shows it once, right after **Create**: copy it or download it as a text file and keep it somewhere other than this box. Without the key nobody can read the backups, also not after a reinstall. The dialog closes only after you tick **I stored the key outside the box**.
 :::
 
+**Key** on the backup's page shows the key again, for example when the copy got lost. It asks for your password and, with two-factor sign-in on, a code from your authenticator app; wrong answers count like failed sign-ins. Every time the key is shown is recorded in the Log Center's source **audit**, without the key.
+
 The box keeps the key itself to run the backup, and it goes into the part **Backup app** of the [configuration backup](/docs/admin/backup/), never into a [support bundle](/docs/admin/logs-and-monitoring/).
 
 To use a repository that already exists, for example after a reinstall, tick **Use an existing repository** and paste its key. The box then checks that a repository is in that folder ([`backup.repository.not_found`](/docs/reference/errors/#backup.repository.not_found)) and that the key opens it ([`backup.repository.wrong_key`](/docs/reference/errors/#backup.repository.wrong_key)). A new box backup refuses a folder that already holds a repository ([`backup.repository.exists`](/docs/reference/errors/#backup.repository.exists)).
@@ -73,7 +102,7 @@ The run's state:
 
 ## Versions to keep
 
-After every successful backup the box applies the retention: it keeps the latest versions, then one version per hour, day, week, month and year for as many of each as you set, and removes the others from the repository to free their space (`restic forget --prune`). All values at 0 keep every version.
+After every successful backup the box applies the retention: it keeps the latest versions, then one version per hour, day, week, month and year for as many of each as you set, and removes the others from the repository to free their space (`restic forget --prune`). All values at 0 keep every version. A protected version is always kept (see [Versions](#versions)).
 
 ## Integrity check
 
@@ -99,7 +128,7 @@ The box reports these to its administrators, on the desktop and on the channels 
 
 ## Deleting a box backup
 
-**Delete** removes the backup, its runs and its key from the box. The repository stays on the target; without the key nobody can read it. A running backup cannot be deleted ([`backup.job.busy`](/docs/reference/errors/#backup.job.busy)); cancel the run first.
+**Delete** removes the backup, its runs, its versions, its key and restic's cache of its repository from the box. The repository stays on the target; without the key nobody can read it. A running backup cannot be deleted ([`backup.job.busy`](/docs/reference/errors/#backup.job.busy)); cancel the run first.
 
 ## Restoring
 

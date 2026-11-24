@@ -17,6 +17,7 @@ import { ErrorNotice } from '../../errors/ErrorNotice';
 import { useFormatLocale } from '../../i18n';
 import {
   IconArchive,
+  IconListDetails,
   IconPencil,
   IconPlayerPlay,
   IconPlus,
@@ -54,7 +55,7 @@ type JobState =
   | 'cancelled'
   | 'interrupted';
 
-const TONES = {
+export const JOB_TONES = {
   running: 'info',
   checking: 'info',
   overdue: 'warning',
@@ -90,7 +91,7 @@ export function jobState(job: BackupJob): JobState {
 }
 
 /** The run or check that runs now, if any. */
-function runningOf(job: BackupJob): BackupRun | undefined {
+export function runningOf(job: BackupJob): BackupRun | undefined {
   return [job.lastRun, job.lastCheck].find((run) => run?.state === 'running') ?? undefined;
 }
 
@@ -158,8 +159,8 @@ export function runSeconds(run: BackupRun): number | undefined {
     : Math.max(0, (Date.parse(run.finishedAt) - Date.parse(run.startedAt)) / 1000);
 }
 
-/** A job's schedule in words: "Daily 2:00 AM", "Every Monday, 2:00 AM", or the cron expression. */
-export function useScheduleText() {
+/** A cron schedule in words: "Daily 2:00 AM", "Every Monday, 2:00 AM", or the cron expression. */
+export function useCronText() {
   const { t } = useTranslation('backup');
   const locale = useFormatLocale();
   const clockTime = new Intl.DateTimeFormat(locale, { timeStyle: 'short' });
@@ -168,11 +169,8 @@ export function useScheduleText() {
     const [hours = 0, minutes = 0] = time.split(':').map(Number);
     return clockTime.format(new Date(2023, 0, 1, hours, minutes));
   };
-  return (job: BackupJob): string => {
-    if (!job.settings.enabled) {
-      return t('schedule.off');
-    }
-    const schedule = scheduleOf(job.settings.schedule);
+  return (cron: string): string => {
+    const schedule = scheduleOf(cron);
     switch (schedule.kind) {
       case 'hourly':
         return t('schedule.hourly', { minute: String(schedule.minute).padStart(2, '0') });
@@ -192,6 +190,14 @@ export function useScheduleText() {
         return schedule.cron;
     }
   };
+}
+
+/** A job's schedule in words, or that it runs only by hand. */
+export function useScheduleText() {
+  const { t } = useTranslation('backup');
+  const cronText = useCronText();
+  return (job: BackupJob): string =>
+    job.settings.enabled ? cronText(job.settings.schedule) : t('schedule.off');
 }
 
 export function RunError({ run }: { run: BackupRun }) {
@@ -252,7 +258,7 @@ function DaysBar({ runs }: { runs: readonly BackupRun[] }) {
 }
 
 /** The job's last runs and checks, newest first. */
-function RunsTable({ app, job }: { app: PithyxApp; job: BackupJob }) {
+export function RunsTable({ app, job }: { app: PithyxApp; job: BackupJob }) {
   const { t } = useTranslation('backup');
   const locale = useFormatLocale();
   const when = useWhen();
@@ -343,14 +349,18 @@ export function RunProgress({ run, board }: { run: BackupRun; board: BoardJob | 
   );
 }
 
-/** The selected job: state, route, progress, folders, repository, checks and its last runs. */
-function JobDetails({
+/**
+ * A job's state, route, progress, folders, repository, checks and its last runs: beside the list, and without the head
+ * on the job's own page, which shows name, route and state above.
+ */
+export function JobDetails({
   app,
   job,
   target,
   board,
   route,
   sourcePath,
+  withHead = true,
 }: {
   app: PithyxApp;
   job: BackupJob;
@@ -358,6 +368,7 @@ function JobDetails({
   board: ReadonlyMap<number, BoardJob>;
   route: string;
   sourcePath: (source: { shareId: number; path: string }) => string;
+  withHead?: boolean;
 }) {
   const { t } = useTranslation('backup');
   const when = useWhen();
@@ -367,14 +378,16 @@ function JobDetails({
   const lastCheck = job.lastCheck;
   return (
     <div className={styles.details}>
-      <div className={styles.detailsHead}>
-        <span className={styles.detailsName}>{job.settings.name}</span>
-        <Route from={route} to={target?.name ?? ''} />
-        <span className={styles.badgeRow}>
-          <DirectionTag direction={directionOf(job.kind)} />
-          <StatusBadge tone={TONES[state]}>{t(`jobs.status.${state}`)}</StatusBadge>
-        </span>
-      </div>
+      {withHead && (
+        <div className={styles.detailsHead}>
+          <span className={styles.detailsName}>{job.settings.name}</span>
+          <Route from={route} to={target?.name ?? ''} />
+          <span className={styles.badgeRow}>
+            <DirectionTag direction={directionOf(job.kind)} />
+            <StatusBadge tone={JOB_TONES[state]}>{t(`jobs.status.${state}`)}</StatusBadge>
+          </span>
+        </div>
+      )}
       {running !== undefined && (
         <RunProgress
           run={running}
@@ -421,6 +434,83 @@ function JobDetails({
   );
 }
 
+/** Starting a run or check and cancelling one, shared by the list and a backup's own page. */
+export function useRunCommands(app: PithyxApp) {
+  const queryClient = useQueryClient();
+  const start = useMutation({
+    mutationFn: ({ job, kind }: { job: BackupJob; kind: 'run' | 'check' }) =>
+      backupsCall(app, 'internal.admin.backups.start', { id: job.id, kind }),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: jobsKey }),
+  });
+  const cancel = useMutation({
+    mutationFn: (boardJobId: number) =>
+      backupsCall(app, 'internal.admin.backups.cancel', { boardJobId }),
+  });
+  return { start, cancel };
+}
+
+/** Back up now, or Cancel while a run or check goes on, and Check now, for the job given. */
+export function RunButtons({
+  job,
+  commands: { start, cancel },
+}: {
+  job: BackupJob | undefined;
+  commands: ReturnType<typeof useRunCommands>;
+}) {
+  const { t } = useTranslation('backup');
+  const running = job === undefined ? undefined : runningOf(job);
+  return (
+    <>
+      {running?.boardJobId != null ? (
+        <Button
+          isDisabled={cancel.isPending}
+          onPress={() => {
+            if (running.boardJobId !== null) {
+              cancel.mutate(running.boardJobId);
+            }
+          }}
+        >
+          <IconX size={18} stroke={1.75} aria-hidden />
+          {t('jobs.cancel')}
+        </Button>
+      ) : (
+        <Button
+          isDisabled={job === undefined || start.isPending}
+          onPress={() => {
+            if (job !== undefined) {
+              start.mutate({ job, kind: 'run' });
+            }
+          }}
+        >
+          <IconPlayerPlay size={18} stroke={1.75} aria-hidden />
+          {t('jobs.runNow')}
+        </Button>
+      )}
+      <Button
+        isDisabled={job === undefined || running !== undefined || start.isPending}
+        onPress={() => {
+          if (job !== undefined) {
+            start.mutate({ job, kind: 'check' });
+          }
+        }}
+      >
+        <IconShieldCheck size={18} stroke={1.75} aria-hidden />
+        {t('jobs.checkNow')}
+      </Button>
+    </>
+  );
+}
+
+/** The errors of {@link useRunCommands}. */
+export function RunCommandErrors({ commands }: { commands: ReturnType<typeof useRunCommands> }) {
+  return (
+    <>
+      {commands.start.isError && <ErrorNotice error={describeProblem(commands.start.error)} />}
+      {commands.cancel.isError && <ErrorNotice error={describeProblem(commands.cancel.error)} />}
+    </>
+  );
+}
+
 /**
  * Box backups (D416): every backup from this box to a target as a table with its route, schedule, last and next run,
  * size and the last 14 days; the toolbar acts on the selected one and its details are on the right.
@@ -432,6 +522,7 @@ export function JobsPage({
   onAdd,
   onAddTarget,
   onOpen,
+  onShow,
 }: {
   app: PithyxApp;
   jobs: ReturnType<typeof useBackupJobs>;
@@ -439,10 +530,11 @@ export function JobsPage({
   onAdd: () => void;
   onAddTarget: () => void;
   onOpen: (kind: 'edit' | 'delete', job: BackupJob) => void;
+  /** Opens the backup's own page with its versions. */
+  onShow: (job: BackupJob) => void;
 }) {
   const { t } = useTranslation('backup');
   const locale = useFormatLocale();
-  const queryClient = useQueryClient();
   const board = useActiveRuns();
   const { route, sourcePath } = useSourceNames(app);
   const scheduleText = useScheduleText();
@@ -460,15 +552,7 @@ export function JobsPage({
   const list = jobs.data?.jobs ?? [];
   const selected = list.find((job) => job.id === selectedId);
   const targetOf = (job: BackupJob) => targets?.find((target) => target.id === job.targetId);
-  const start = useMutation({
-    mutationFn: ({ job, kind }: { job: BackupJob; kind: 'run' | 'check' }) =>
-      backupsCall(app, 'internal.admin.backups.start', { id: job.id, kind }),
-    onSettled: () => queryClient.invalidateQueries({ queryKey: jobsKey }),
-  });
-  const cancel = useMutation({
-    mutationFn: (boardJobId: number) =>
-      backupsCall(app, 'internal.admin.backups.cancel', { boardJobId }),
-  });
+  const commands = useRunCommands(app);
   const running = selected === undefined ? undefined : runningOf(selected);
   // The size of the last version, from the newest backup that wrote one.
   const sizeOf = (job: BackupJob) =>
@@ -505,7 +589,7 @@ export function JobsPage({
         const state = jobState(job);
         return (
           <span className={styles.twoLines}>
-            <StatusBadge tone={TONES[state]}>{t(`jobs.status.${state}`)}</StatusBadge>
+            <StatusBadge tone={JOB_TONES[state]}>{t(`jobs.status.${state}`)}</StatusBadge>
             {job.lastRun !== null && (
               <span className={styles.muted}>{when(job.lastRun.startedAt)}</span>
             )}
@@ -583,42 +667,18 @@ export function JobsPage({
           {t('jobs.add')}
         </Button>
         <ToolbarSeparator />
-        {running?.boardJobId != null ? (
-          <Button
-            isDisabled={cancel.isPending}
-            onPress={() => {
-              if (running.boardJobId !== null) {
-                cancel.mutate(running.boardJobId);
-              }
-            }}
-          >
-            <IconX size={18} stroke={1.75} aria-hidden />
-            {t('jobs.cancel')}
-          </Button>
-        ) : (
-          <Button
-            isDisabled={selected === undefined || start.isPending}
-            onPress={() => {
-              if (selected !== undefined) {
-                start.mutate({ job: selected, kind: 'run' });
-              }
-            }}
-          >
-            <IconPlayerPlay size={18} stroke={1.75} aria-hidden />
-            {t('jobs.runNow')}
-          </Button>
-        )}
         <Button
-          isDisabled={selected === undefined || running !== undefined || start.isPending}
+          isDisabled={selected === undefined}
           onPress={() => {
             if (selected !== undefined) {
-              start.mutate({ job: selected, kind: 'check' });
+              onShow(selected);
             }
           }}
         >
-          <IconShieldCheck size={18} stroke={1.75} aria-hidden />
-          {t('jobs.checkNow')}
+          <IconListDetails size={18} stroke={1.75} aria-hidden />
+          {t('jobs.open')}
         </Button>
+        <RunButtons job={selected} commands={commands} />
         <ToolbarSeparator />
         <Button
           isDisabled={selected === undefined}
@@ -644,8 +704,7 @@ export function JobsPage({
         </Button>
       </Toolbar>
       {jobs.isError && <ErrorNotice error={describeProblem(jobs.error)} />}
-      {start.isError && <ErrorNotice error={describeProblem(start.error)} />}
-      {cancel.isError && <ErrorNotice error={describeProblem(cancel.error)} />}
+      <RunCommandErrors commands={commands} />
       {history.isError && <ErrorNotice error={describeProblem(history.error)} />}
       <DataTable
         aria-label={t('jobs.list')}
@@ -662,7 +721,7 @@ export function JobsPage({
         onRowAction={(key) => {
           const job = list.find((entry) => entry.id === Number(key));
           if (job !== undefined) {
-            onOpen('edit', job);
+            onShow(job);
           }
         }}
         defaultSort={{ column: 'name', direction: 'ascending' }}

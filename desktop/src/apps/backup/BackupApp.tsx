@@ -32,9 +32,10 @@ import { ActivityPage } from './ActivityPage';
 import { OverviewPage } from './OverviewPage';
 import { useActiveRuns } from './data';
 import { DirectionTag } from './Direction';
-import { DeleteJobDialog, JobDialog, KeyDialog } from './JobDialogs';
+import { DeleteJobDialog, JobDialog, KeyDialog, RevealKeyDialog } from './JobDialogs';
+import { JobDetailPage } from './JobDetailPage';
 import { EmptyCard } from './EmptyCard';
-import { JobsPage, useBackupJobs } from './JobsPage';
+import { JOB_TONES, JobsPage, jobState, useBackupJobs } from './JobsPage';
 import { describeProblem, formatDate } from '../storage/shared';
 import {
   AddTargetDialog,
@@ -56,6 +57,7 @@ type Opened =
   | { kind: 'addJob' }
   | { kind: 'editJob' | 'deleteJob'; job: BackupJob }
   | { kind: 'key'; job: BackupJob; key: string }
+  | { kind: 'revealKey'; job: BackupJob }
   | null;
 
 /** Every backup target; the Backup app's calls replace a changed target in it. */
@@ -78,6 +80,8 @@ export function BackupApp({ app }: SdkAppProps) {
   const [page, setPage] = useState<Page>('overview');
   const [view, setView] = useState<AppFrameView>('page');
   const [opened, setOpened] = useState<Opened>(null);
+  // The backup whose own page is open over the box backups.
+  const [shownId, setShownId] = useState<number | null>(null);
   const close = () => {
     setOpened(null);
   };
@@ -97,6 +101,10 @@ export function BackupApp({ app }: SdkAppProps) {
       ? { label: t('targets.add'), onPress: addTarget }
       : undefined;
   const jobCount = jobs.data?.jobs.length;
+  // A deleted backup closes its page.
+  const shown = page === 'jobs' ? jobs.data?.jobs.find((job) => job.id === shownId) : undefined;
+  const targetOf = (job: BackupJob) => targetList?.find((target) => target.id === job.targetId);
+  const shownState = shown === undefined ? undefined : jobState(shown);
   // "Onto this box" (servers backed up to the box) joins with the pulls of #396.
   const groups: NavGroup[] = [
     {
@@ -143,7 +151,7 @@ export function BackupApp({ app }: SdkAppProps) {
       <AppFrame
         view={view}
         onViewChange={setView}
-        pageKey={page}
+        pageKey={shown === undefined ? page : `job-${String(shown.id)}`}
         navigation={
           <NavList
             aria-label={t('nav.label')}
@@ -152,12 +160,21 @@ export function BackupApp({ app }: SdkAppProps) {
             selectedId={page}
             onSelect={(id) => {
               setPage(PAGES.find((entry) => entry === id) ?? 'overview');
+              setShownId(null);
               setView('page');
             }}
           />
         }
         title={
-          page === 'overview' || page === 'activity' ? (
+          shown !== undefined && shownState !== undefined ? (
+            <span className={styles.title}>
+              {shown.settings.name}
+              <DirectionTag direction="out" />
+              <StatusBadge tone={JOB_TONES[shownState]}>
+                {t(`jobs.status.${shownState}`)}
+              </StatusBadge>
+            </span>
+          ) : page === 'overview' || page === 'activity' ? (
             t(`${page}.title`)
           ) : (
             <span className={styles.title}>
@@ -197,6 +214,21 @@ export function BackupApp({ app }: SdkAppProps) {
           />
         ) : page === 'activity' ? (
           <ActivityPage app={app} targets={targetList} />
+        ) : shown !== undefined ? (
+          <JobDetailPage
+            app={app}
+            job={shown}
+            target={targetOf(shown)}
+            onBack={() => {
+              setShownId(null);
+            }}
+            onOpen={(kind) => {
+              setOpened({
+                kind: kind === 'edit' ? 'editJob' : kind === 'delete' ? 'deleteJob' : 'revealKey',
+                job: shown,
+              });
+            }}
+          />
         ) : page === 'jobs' ? (
           <JobsPage
             app={app}
@@ -209,6 +241,9 @@ export function BackupApp({ app }: SdkAppProps) {
             }}
             onOpen={(kind, job) => {
               setOpened({ kind: kind === 'edit' ? 'editJob' : 'deleteJob', job });
+            }}
+            onShow={(job) => {
+              setShownId(job.id);
             }}
           />
         ) : (
@@ -250,7 +285,15 @@ export function BackupApp({ app }: SdkAppProps) {
         <KeyDialog
           job={opened.job}
           repositoryKey={opened.key}
-          targetName={targetList?.find((target) => target.id === opened.job.targetId)?.name ?? ''}
+          targetName={targetOf(opened.job)?.name ?? ''}
+          onClose={close}
+        />
+      )}
+      {opened?.kind === 'revealKey' && (
+        <RevealKeyDialog
+          app={app}
+          job={opened.job}
+          targetName={targetOf(opened.job)?.name ?? ''}
           onClose={close}
         />
       )}

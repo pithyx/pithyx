@@ -104,6 +104,7 @@ export const errorCodes = [
   'backup.target.not_found',
   'backup.target.not_writable',
   'backup.target.unreachable',
+  'backup.version.not_found',
   'desktop.device.not_found',
   'desktop.file_default.invalid',
   'desktop.file_default.limit_reached',

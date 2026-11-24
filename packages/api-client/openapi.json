@@ -8883,6 +8883,161 @@
         }
       }
     },
+    "/api/backups/jobs/{id}/versions": {
+      "get": {
+        "tags": [
+          "Backups"
+        ],
+        "description": "Administrators only. The versions in the job's repository, newest first, as the box saw them after its last run or change: size, files, what each added, why the retention kept it, whether it is protected, and for the newest the files that changed against the one before (at most 100). Reads nothing from the target.",
+        "operationId": "ListBackupVersions",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BackupVersionList"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/backups/jobs/{id}/versions/{versionId}/protection": {
+      "put": {
+        "tags": [
+          "Backups"
+        ],
+        "description": "Administrators only. Protects a version so the retention never deletes it, or releases it again (restic's tag pithyx-protected). Refused with backup.job.busy while a run or check goes on.",
+        "operationId": "ProtectBackupVersion",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "versionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BackupVersionProtection"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BackupVersion"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/backups/jobs/{id}/key": {
+      "post": {
+        "tags": [
+          "Backups"
+        ],
+        "description": "Administrators only. The job's repository key, for an administrator who lost the copy shown at creation. Needs the password again and, with two-factor sign-in on, a current authenticator code; failures count like failed sign-ins. Logged without the key.",
+        "operationId": "RevealBackupJobKey",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StepUpRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BackupJobKey"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/system/support-bundle": {
       "get": {
         "tags": [
@@ -13547,6 +13702,14 @@
         ],
         "description": "A part of the configuration that can be restored on its own."
       },
+      "BackupChangeKind": {
+        "enum": [
+          "added",
+          "modified",
+          "removed"
+        ],
+        "description": "How a file changed against the previous version."
+      },
       "BackupDay": {
         "required": [
           "date",
@@ -13880,6 +14043,18 @@
         },
         "description": "A new job and the key of its new repository, which the box shows only now."
       },
+      "BackupJobKey": {
+        "required": [
+          "key"
+        ],
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          }
+        },
+        "description": "A job's repository key, shown again after a step-up."
+      },
       "BackupJobKind": {
         "enum": [
           "versioned"
@@ -13979,6 +14154,18 @@
           }
         },
         "description": "What an administrator sets on a job."
+      },
+      "BackupKeepReason": {
+        "enum": [
+          "last",
+          "hourly",
+          "daily",
+          "weekly",
+          "monthly",
+          "yearly",
+          "protected"
+        ],
+        "description": "Why the retention kept a version."
       },
       "BackupRetention": {
         "required": [
@@ -14554,6 +14741,154 @@
           }
         },
         "description": "A file or folder a backup run could not read, so it is missing from that version."
+      },
+      "BackupVersion": {
+        "required": [
+          "id",
+          "snapshot",
+          "time",
+          "files",
+          "bytes",
+          "addedBytes",
+          "filesAdded",
+          "filesChanged",
+          "filesRemoved",
+          "protected",
+          "keep",
+          "changes"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Stable id; it stays when the version is protected or released.",
+            "format": "int64"
+          },
+          "snapshot": {
+            "type": "string",
+            "description": "restic's id of the version now, shortened to 8 characters as restic shows it."
+          },
+          "time": {
+            "type": "string",
+            "description": "When it was made, UTC.",
+            "format": "date-time"
+          },
+          "files": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "Files in it.",
+            "format": "int64"
+          },
+          "bytes": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "Bytes in it.",
+            "format": "int64"
+          },
+          "addedBytes": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "Bytes it added to the repository.",
+            "format": "int64"
+          },
+          "filesAdded": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "Files new against the version before.",
+            "format": "int64"
+          },
+          "filesChanged": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "Files changed against the version before.",
+            "format": "int64"
+          },
+          "filesRemoved": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "Files gone against the version before; null when the box did not compare.",
+            "format": "int64"
+          },
+          "protected": {
+            "type": "boolean",
+            "description": "The retention always keeps it."
+          },
+          "keep": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BackupKeepReason"
+            },
+            "description": "Why the last retention kept it; empty when the job keeps every version or no retention ran since."
+          },
+          "changes": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/BackupVersionChange"
+            },
+            "description": "The first 100 files that changed against the version before; null when the box did not compare."
+          }
+        },
+        "description": "A version of a job: a restic snapshot in its repository."
+      },
+      "BackupVersionChange": {
+        "required": [
+          "path",
+          "change"
+        ],
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "The shared folder's or home's name and the path below it."
+          },
+          "change": {
+            "description": "Added, modified or removed.",
+            "$ref": "#/components/schemas/BackupChangeKind"
+          }
+        },
+        "description": "A file that changed against the previous version."
+      },
+      "BackupVersionList": {
+        "required": [
+          "versions"
+        ],
+        "type": "object",
+        "properties": {
+          "versions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BackupVersion"
+            }
+          }
+        },
+        "description": "A job's versions, newest first."
+      },
+      "BackupVersionProtection": {
+        "required": [
+          "protected"
+        ],
+        "type": "object",
+        "properties": {
+          "protected": {
+            "type": "boolean"
+          }
+        },
+        "description": "Protects a version from the retention or releases it."
       },
       "BondMode": {
         "enum": [
@@ -15963,6 +16298,7 @@
           "backup.target.not_found",
           "backup.target.not_writable",
           "backup.target.unreachable",
+          "backup.version.not_found",
           "desktop.device.not_found",
           "desktop.file_default.invalid",
           "desktop.file_default.limit_reached",

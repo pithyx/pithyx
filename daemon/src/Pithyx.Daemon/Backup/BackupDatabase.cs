@@ -63,7 +63,7 @@ public static class BackupDatabase
         [BackupCategory.Certificates] = ["tls_issued"],
         [BackupCategory.Apps] = ["apps", "app_permissions", "app_elevated", "storage_mappings", "app_storage", "catalogs"],
         [BackupCategory.ReverseProxy] = ["proxy_hosts", "proxy_redirects", "proxy_streams"],
-        [BackupCategory.Backups] = ["backup_targets", "backup_jobs", "backup_runs"],
+        [BackupCategory.Backups] = ["backup_targets", "backup_jobs", "backup_runs", "backup_versions"],
     }.ToFrozenDictionary();
 
     /// <summary>Rows of the <c>settings</c> table by category.</summary>

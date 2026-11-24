@@ -27,7 +27,34 @@ _Box-Backups listet jedes Backup mit seinem Ziel, dem letzten und nächsten Lauf
 - **Größe**: die Größe der letzten Version.
 - **Letzte 14 Tage**: ein Balken pro Tag, grün für ein Backup ohne Probleme, orange für Warnungen, rot für einen Fehlschlag und grau für einen Tag ohne Backup. Ein Screenreader liest stattdessen die Anzahlen vor.
 
-Eine ausgewählte Zeile öffnet rechts ihre Details: den Fortschritt eines laufenden Backups, den Fehler eines fehlgeschlagenen Laufs oder einer Prüfung, den Zeitplan, den nächsten Lauf, das letzte erfolgreiche Backup, die Integritätsprüfung, das Repository, die Ordner und **Letzte Läufe**. Die Werkzeugleiste wirkt auf das ausgewählte Backup: **Jetzt sichern** (oder **Abbrechen**, während es läuft), **Jetzt prüfen**, **Bearbeiten** und **Löschen**.
+Eine ausgewählte Zeile öffnet rechts ihre Details: den Fortschritt eines laufenden Backups, den Fehler eines fehlgeschlagenen Laufs oder einer Prüfung, den Zeitplan, den nächsten Lauf, das letzte erfolgreiche Backup, die Integritätsprüfung, das Repository, die Ordner und **Letzte Läufe**. Die Werkzeugleiste wirkt auf das ausgewählte Backup: **Öffnen**, **Jetzt sichern** (oder **Abbrechen**, während es läuft), **Jetzt prüfen**, **Bearbeiten** und **Löschen**. **Öffnen**, ein Doppelklick oder Enter auf einer Zeile öffnet die eigene Seite des Backups.
+
+## Die Seite eines Backups
+
+Die Seite eines Backups zeigt im Titel seinen Namen, die Markierung **Von der Box** und seinen Zustand, darunter den Weg zurück zu **Box-Backups** und seinen Weg von den Ordnern zum Ziel. Die Werkzeugleiste hat **Jetzt sichern** (oder **Abbrechen**), **Jetzt prüfen**, **Bearbeiten**, **Löschen** und **Schlüssel**, und die Seite hat diese Reiter:
+
+- **Übersicht**: den Fortschritt eines laufenden Backups, den Fehler eines fehlgeschlagenen Laufs oder einer Prüfung, Zeitplan, nächsten Lauf, letztes Backup, Integritätsprüfung, Repository, Ordner und die letzten Läufe.
+- **Versionen**: jede Version im Repository (siehe unten).
+- **Zeitplan und Aufbewahrung**: wann es sichert, den nächsten Lauf, die Versionen, die es behält, die Integritätsprüfung und wann es als überfällig gilt.
+- **Ordner**: die Ordner, die es sichert, und seine Ausschlüsse.
+- **Einstellungen**: Ziel, Repository, ob es nach Zeitplan läuft, und die Grenzen der Bandbreite.
+- **Läufe**: seine Läufe und Prüfungen.
+
+**Bearbeiten** auf den Reitern öffnet denselben Dialog wie in der Liste.
+
+![Die Seite des Backups Documents auf dem Reiter Versionen: ein Diagramm der Größe und der hinzugefügten Daten je Version, die Versionen mit dem Grund, warum sie bleiben, und die neueste ausgewählt mit ihren Änderungen](../../../../../assets/screenshots/backup-job-versions.de.webp)
+
+_Der Reiter Versionen: was jede Version hinzugefügt hat und wie groß sie ist, warum die Aufbewahrung sie behält, und was sich in der neuesten geändert hat._
+
+### Versionen
+
+**Versionen** listet jede Version im Repository des Backups, die neueste zuerst, mit Zeit, Dateien, Größe, den Daten, die sie dem Repository hinzugefügt hat, und **Behalten als**: warum die Aufbewahrung sie behält (**Neueste**, **Stündlich**, **Täglich**, **Wöchentlich**, **Monatlich**, **Jährlich**) und **Geschützt**. Das Diagramm darüber zeigt die hinzugefügten Daten jeder Version als Balken und ihre Größe als Linie. Eine ausgewählte Version zeigt rechts ihre Zahlen; die neueste auch, wie viele Dateien gegenüber der Version davor neu, geändert und gelöscht sind, mit bis zu 100 von ihnen.
+
+Die Box speichert die Versionen nach jedem Lauf und nach jeder Änderung einer Version, die Liste zeigt das Repository also so, wie die Box es zuletzt gesehen hat, und das Lesen fragt nie beim Ziel nach. Eine außerhalb der Box gelöschte Version verschwindet nach dem nächsten Lauf.
+
+**Vor Löschen schützen** behält eine Version, egal was die Aufbewahrung sagt, zum Beispiel den Stand vor einem großen Aufräumen; **Schutz aufheben** gibt sie der Aufbewahrung zurück. Der Schutz setzt restics Markierung `pithyx-protected` an die Version, die jede spätere Aufbewahrung behält (`--keep-tag`). Er wird abgelehnt, während ein Lauf oder eine Prüfung läuft ([`backup.job.busy`](/de/docs/reference/errors/#backup.job.busy)), und eine Version, die die Aufbewahrung inzwischen entfernt hat, antwortet mit [`backup.version.not_found`](/de/docs/reference/errors/#backup.version.not_found). Beides steht im Log Center in der Quelle **audit**.
+
+Eine Version durchsuchen und aus ihr wiederherstellen kommt mit dem Wiederherstellungs-Portal.
 
 ## Ein Box-Backup hinzufügen
 
@@ -51,6 +78,8 @@ Ziel und Repository eines Box-Backups bleiben, wie sie sind; für ein anderes Zi
 Jedes Repository ist mit einem zufälligen Schlüssel verschlüsselt. Die Box zeigt ihn einmal, direkt nach **Erstellen**: Kopiere ihn oder lade ihn als Textdatei herunter und bewahre ihn an einem anderen Ort als dieser Box auf. Ohne den Schlüssel kann niemand die Backups lesen, auch nicht nach einer Neuinstallation. Der Dialog schließt sich erst, wenn du **Ich habe den Schlüssel außerhalb der Box aufbewahrt** ankreuzt.
 :::
 
+**Schlüssel** auf der Seite des Backups zeigt den Schlüssel noch einmal, zum Beispiel wenn die Kopie verloren ging. Er fragt nach deinem Passwort und, mit eingeschalteter Zwei-Faktor-Anmeldung, nach einem Code aus deiner Authenticator-App; falsche Antworten zählen wie fehlgeschlagene Anmeldungen. Jedes Anzeigen steht im Log Center in der Quelle **audit**, ohne den Schlüssel.
+
 Die Box behält den Schlüssel selbst, um das Backup auszuführen, und er kommt in den Teil **App Backup** des [Konfigurations-Backups](/de/docs/admin/backup/), nie in ein [Support-Paket](/de/docs/admin/logs-and-monitoring/).
 
 Um ein Repository zu verwenden, das es schon gibt, zum Beispiel nach einer Neuinstallation, kreuze **Vorhandenes Repository verwenden** an und füge seinen Schlüssel ein. Die Box prüft dann, dass in diesem Ordner ein Repository liegt ([`backup.repository.not_found`](/de/docs/reference/errors/#backup.repository.not_found)) und dass der Schlüssel es öffnet ([`backup.repository.wrong_key`](/de/docs/reference/errors/#backup.repository.wrong_key)). Ein neues Box-Backup lehnt einen Ordner ab, in dem schon ein Repository liegt ([`backup.repository.exists`](/de/docs/reference/errors/#backup.repository.exists)).
@@ -73,7 +102,7 @@ Der Zustand eines Laufs:
 
 ## Aufzubewahrende Versionen
 
-Nach jedem erfolgreichen Backup wendet die Box die Aufbewahrung an: Sie behält die neuesten Versionen, dann je eine Version pro Stunde, Tag, Woche, Monat und Jahr, so viele, wie du jeweils einträgst, und entfernt die anderen aus dem Repository, um ihren Platz freizugeben (`restic forget --prune`). Alle Werte auf 0 behalten jede Version.
+Nach jedem erfolgreichen Backup wendet die Box die Aufbewahrung an: Sie behält die neuesten Versionen, dann je eine Version pro Stunde, Tag, Woche, Monat und Jahr, so viele, wie du jeweils einträgst, und entfernt die anderen aus dem Repository, um ihren Platz freizugeben (`restic forget --prune`). Alle Werte auf 0 behalten jede Version. Eine geschützte Version bleibt immer (siehe [Versionen](#versionen)).
 
 ## Prüfung
 
@@ -99,7 +128,7 @@ Diese meldet die Box ihren Administratoren, auf dem Desktop und über die Kanäl
 
 ## Ein Box-Backup löschen
 
-**Löschen** entfernt das Backup, seine Läufe und seinen Schlüssel von der Box. Das Repository bleibt auf dem Ziel; ohne den Schlüssel kann niemand es lesen. Ein laufendes Backup lässt sich nicht löschen ([`backup.job.busy`](/de/docs/reference/errors/#backup.job.busy)); brich den Lauf zuerst ab.
+**Löschen** entfernt das Backup, seine Läufe, seine Versionen, seinen Schlüssel und restics Cache seines Repositorys von der Box. Das Repository bleibt auf dem Ziel; ohne den Schlüssel kann niemand es lesen. Ein laufendes Backup lässt sich nicht löschen ([`backup.job.busy`](/de/docs/reference/errors/#backup.job.busy)); brich den Lauf zuerst ab.
 
 ## Wiederherstellen
 

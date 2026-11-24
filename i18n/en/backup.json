@@ -129,7 +129,8 @@
     "daysLabel": "Last 14 days: {succeeded} without problems, {warning} with warnings, {failed} failed, {none} without a backup",
     "details": "Details of the backup",
     "lastBackup": "Last backup",
-    "check": "Integrity check"
+    "check": "Integrity check",
+    "open": "Open"
   },
   "runs": {
     "title": "Recent runs",
@@ -229,7 +230,12 @@
     "copyManually": "Select the key and copy it by hand.",
     "download": "Download",
     "stored": "I stored the key outside the box",
-    "fileIntro": "Pithyx backup key of the backup {name}, repository {repository} on {target}. Keep it secret."
+    "fileIntro": "Pithyx backup key of the backup {name}, repository {repository} on {target}. Keep it secret.",
+    "warningAgain": "This key opens the repository. Keep it outside the box and never share it.",
+    "reveal": "Show key",
+    "stepUp": "{twoFactor, select, true {The key opens every version of this backup. Confirm with your password and the code from your authenticator app.} other {The key opens every version of this backup. Confirm with your password.}}",
+    "password": "Your password",
+    "code": "Code"
   },
   "deleteJob": {
     "title": "Delete {name}?",
@@ -376,6 +382,66 @@
       "size": "Used on all targets",
       "label": "{days} days: {added} added, the repositories take {size}",
       "unknown": "unknown"
+    }
+  },
+  "detail": {
+    "breadcrumb": "Path",
+    "toolbar": "Backup",
+    "key": "Key",
+    "tabs": "Parts of the backup",
+    "tab": {
+      "overview": "Overview",
+      "versions": "Versions",
+      "schedule": "Schedule and retention",
+      "sources": "Folders",
+      "settings": "Settings",
+      "log": "Runs"
+    },
+    "noExcludes": "None",
+    "keepCount": "{count} {kind}",
+    "keepAll": "Every version",
+    "checkValue": "{schedule}, reading back {percent} % of the data",
+    "nextCheck": "Next check",
+    "overdue": "Overdue after",
+    "overdueDefault": "Three times the interval, at least two days",
+    "overdueHours": "{count, plural, one {# hour} other {# hours}}",
+    "noLimit": "No limit",
+    "limit": "{rate}/s",
+    "targetValue": "{name} ({address})",
+    "yes": "Yes",
+    "no": "No, only by hand",
+    "upload": "Upload limit",
+    "download": "Download limit"
+  },
+  "versions": {
+    "list": "Versions",
+    "details": "Details of the version",
+    "loading": "Loading versions",
+    "empty": "No version yet. The first backup makes one.",
+    "time": "Version",
+    "files": "Files",
+    "keep": "Kept as",
+    "protected": "Protected",
+    "unknown": "Not compared",
+    "title": "Version of {time}",
+    "id": "ID {id}",
+    "new": "New",
+    "changed": "Changed",
+    "removed": "Deleted",
+    "changes": "Changes against the version before",
+    "noChanges": "No file changed.",
+    "change": {
+      "added": "new",
+      "modified": "changed",
+      "removed": "deleted"
+    },
+    "protect": "Protect from deletion",
+    "release": "Release protection",
+    "chart": {
+      "title": "Size per version",
+      "added": "Added",
+      "size": "Size",
+      "label": "{count, plural, one {# version} other {# versions}}, the newest holds {size}"
     }
   }
 }
