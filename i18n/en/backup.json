@@ -573,7 +573,7 @@
     "server": "Server",
     "serverPlaceholder": "Choose a server",
     "paths": "Folders on the server",
-    "pathsHint": "One absolute path per line, for example /etc or /srv/www, below the folder the server's key may read. Each lands in the folder on this box with its full path.",
+    "pathsHint": "One path per line, starting with /, from the folder the server's key may read: with / there, for example /etc or /srv/www. Each lands in the folder on this box with that path.",
     "share": "Shared folder",
     "sharePlaceholder": "Choose a shared folder",
     "folder": "Folder name",

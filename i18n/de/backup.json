@@ -573,7 +573,7 @@
     "server": "Server",
     "serverPlaceholder": "Server wählen",
     "paths": "Ordner auf dem Server",
-    "pathsHint": "Ein absoluter Pfad pro Zeile, zum Beispiel /etc oder /srv/www, unterhalb des Ordners, den der Schlüssel des Servers lesen darf. Jeder landet mit seinem vollen Pfad im Ordner auf dieser Box.",
+    "pathsHint": "Ein Pfad pro Zeile, mit / am Anfang, ab dem Ordner, den der Schlüssel des Servers lesen darf: mit / dort zum Beispiel /etc oder /srv/www. Jeder landet mit diesem Pfad im Ordner auf dieser Box.",
     "share": "Freigegebener Ordner",
     "sharePlaceholder": "Freigegebenen Ordner wählen",
     "folder": "Name des Ordners",

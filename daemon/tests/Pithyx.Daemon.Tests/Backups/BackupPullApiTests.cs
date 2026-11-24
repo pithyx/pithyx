@@ -58,7 +58,7 @@ public sealed class BackupPullApiTests : IAsyncLifetime
         _admin = _daemon.CreateClient();
         _admin.DefaultRequestHeaders.Add("X-Pithyx-Request", "1");
         await _admin.SetupAdminAsync();
-        using (var server = await _admin.PostAsync("/api/backups/targets", new { name = "Web", host = "web01.lan", user = "backup", path = "/srv", hostKey = HostKey, purpose = "server" }))
+        using (var server = await _admin.PostAsync("/api/backups/targets", new { name = "Web", host = "web01.lan", user = "backup", path = "/", hostKey = HostKey, purpose = "server" }))
         {
             Assert.Equal(HttpStatusCode.Created, server.StatusCode);
             _serverId = (await server.JsonAsync()).GetProperty("id").GetInt64();
@@ -81,7 +81,7 @@ public sealed class BackupPullApiTests : IAsyncLifetime
     {
         var server = await TargetAsync(_serverId);
         Assert.Equal("server", server.GetProperty("purpose").GetString());
-        Assert.Equal("restrict,command=\"rrsync -ro /srv\" ssh-ed25519 PUBLIC pithyx-backup@test", server.GetProperty("authorizedKeys").GetString());
+        Assert.Equal("restrict,command=\"rrsync -ro /\" ssh-ed25519 PUBLIC pithyx-backup@test", server.GetProperty("authorizedKeys").GetString());
 
         using var tested = await _admin.PostAsync($"/api/backups/targets/{_serverId}/test", new { });
 
