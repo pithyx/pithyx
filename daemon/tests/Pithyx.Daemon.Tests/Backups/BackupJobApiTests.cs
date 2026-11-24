@@ -696,8 +696,12 @@ public sealed class BackupJobApiTests : IAsyncLifetime
             var file = root + stored;
             Directory.CreateDirectory(Path.GetDirectoryName(file)!);
             File.WriteAllText(file, content);
+            // restic's mount shows the stored time; files written a moment apart would look modified.
+            File.SetLastWriteTimeUtc(file, StoredTime);
         }
     }
+
+    private static readonly DateTime StoredTime = new(2026, 11, 20, 12, 0, 0, DateTimeKind.Utc);
 
     private static readonly string[] RestoredTogether = ["Media/Photos/a.txt", "Media/Photos/new"];
     private static readonly string[] RestoredAlone = ["Media/Photos/a.txt"];
