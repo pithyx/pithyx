@@ -2482,6 +2482,10 @@
         "jobs": "Media, Photos"
       },
       "expected": "These backups still use this target: Media, Photos. Delete them first."
+    },
+    "backup.version.not_found": {
+      "params": {},
+      "expected": "This version no longer exists. The backup's retention may have deleted it."
     }
   },
   "cases": [
