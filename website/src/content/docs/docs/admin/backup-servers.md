@@ -65,7 +65,7 @@ A run copies the folders with rsync over the server's key into the backup's fold
 
 The **Versions** tab of a server backup's page lists its snapshots as box backups list theirs, with what each added, the reasons the retention kept it and, for the newest, the files rsync added, changed and removed. **Protect from deletion** puts a ZFS hold on the snapshot, so neither the retention nor anything else removes it until you release it. The retention keeps versions with the same rules as for box backups, in the box's time zone.
 
-The live folder always holds the newest state. To get a file back from an earlier version, open the folder in [Files](/docs/user/files/) and use its previous versions, which are the backup's snapshots. Restoring a server backup in the app's **Restore** page and back to the server come in a later version.
+The live folder always holds the newest state. To get a file back from an earlier version, open the folder in [Files](/docs/user/files/) and use its previous versions, which are the backup's snapshots. Over SMB, previous versions show only the snapshots of the shared folder itself, not those of a server backup. Restoring a server backup in the app's **Restore** page and back to the server come in a later version.
 
 ## Deleting a server backup
 

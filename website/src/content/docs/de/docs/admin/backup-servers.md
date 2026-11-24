@@ -65,7 +65,7 @@ Ein Lauf kopiert die Ordner mit rsync über den Schlüssel des Servers in den Or
 
 Der Reiter **Versionen** auf der Seite eines Server-Backups listet seine Snapshots wie Box-Backups ihre Versionen, mit dem, was jede hinzugefügt hat, den Gründen, aus denen die Aufbewahrung sie behält, und bei der neuesten den Dateien, die rsync hinzugefügt, geändert und entfernt hat. **Vor dem Löschen schützen** setzt einen ZFS-Hold auf den Snapshot, sodass weder die Aufbewahrung noch sonst etwas ihn entfernt, bis du ihn freigibst. Die Aufbewahrung behält Versionen nach denselben Regeln wie bei Box-Backups, in der Zeitzone der Box.
 
-Der Ordner selbst hat immer den neuesten Stand. Um eine Datei aus einer früheren Version zurückzuholen, öffne den Ordner in [Dateien](/de/docs/user/files/) und nimm seine früheren Versionen, das sind die Snapshots des Backups. Ein Server-Backup auf der Seite **Wiederherstellen** der App und zurück auf den Server wiederherzustellen kommt in einer späteren Version.
+Der Ordner selbst hat immer den neuesten Stand. Um eine Datei aus einer früheren Version zurückzuholen, öffne den Ordner in [Dateien](/de/docs/user/files/) und nimm seine früheren Versionen, das sind die Snapshots des Backups. Über SMB zeigen frühere Versionen nur die Snapshots des freigegebenen Ordners selbst, nicht die eines Server-Backups. Ein Server-Backup auf der Seite **Wiederherstellen** der App und zurück auf den Server wiederherzustellen kommt in einer späteren Version.
 
 ## Ein Server-Backup löschen
 
