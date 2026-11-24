@@ -49,6 +49,8 @@ export function BytesChart({
   const barMax = roundUp(Math.max(0, ...points.map((point) => point.bar)));
   const lines = points.map((point) => point.line);
   const lineMax = roundUp(Math.max(0, ...lines.map((value) => value ?? 0)));
+  // The chart stretches to its width, so a few places would get bars as wide as half of it; they keep the width of 14.
+  const barWidth = 6 * Math.min(1, count / 14);
   // A place without a measurement breaks the line.
   const line = lines
     .map((value, index) =>
@@ -61,7 +63,16 @@ export function BytesChart({
   const ticks = (count < 15 ? [0, 0.5, 1] : [0, 0.25, 0.5, 0.75, 1]).map((share) =>
     Math.round(share * (count - 1)),
   );
-  const tickDate = new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'short' });
+  const dayFormat = new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'short' });
+  const first = points[0];
+  const last = points.at(-1);
+  // Places of one day, such as the versions of a new backup, read apart by their time.
+  const tickDate =
+    first !== undefined &&
+    last !== undefined &&
+    dayFormat.format(first.at) === dayFormat.format(last.at)
+      ? new Intl.DateTimeFormat(locale, { hour: 'numeric', minute: '2-digit' })
+      : dayFormat;
   const zero = new Intl.NumberFormat(locale).format(0);
   return (
     <section className={styles.panel} aria-labelledby={titleId}>
@@ -105,10 +116,11 @@ export function BytesChart({
               <rect
                 key={point.key}
                 className={styles.chartBar}
-                x={index * 10 + 2}
+                x={index * 10 + 5 - barWidth / 2}
                 y={height - barHeight}
-                width={6}
+                width={barWidth}
                 height={barHeight}
+                vectorEffect="non-scaling-stroke"
               />
             );
           })}
