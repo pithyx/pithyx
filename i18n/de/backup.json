@@ -454,7 +454,6 @@
     "version": "Version",
     "older": "Ältere Version",
     "newer": "Neuere Version",
-    "timeline": "Versionen im Zeitverlauf",
     "noJobsTitle": "Noch nichts wiederherzustellen",
     "noJobs": "Zum Wiederherstellen brauchst du ein Box-Backup mit mindestens einer Version.",
     "noVersions": "Dieses Backup hat noch keine Version. Sein erster Lauf legt eine an.",

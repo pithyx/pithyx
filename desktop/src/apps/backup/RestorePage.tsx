@@ -11,7 +11,7 @@ import {
   type DataTableColumn,
 } from '@pithyx/ui';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { useState, type ReactNode } from 'react';
+import { useState, type MouseEvent, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { formatBytes } from '../../desktop/format';
 import { ErrorNotice } from '../../errors/ErrorNotice';
@@ -367,32 +367,43 @@ function Timeline({
   version: BackupVersion | undefined;
   onPick: (id: number) => void;
 }) {
-  const { t } = useTranslation('backup');
   const locale = useFormatLocale();
   const times = list.map((entry) => Date.parse(entry.time));
   const first = Math.min(...times);
   const span = Math.max(...times) - first || 1;
   const day = new Intl.DateTimeFormat(locale, { dateStyle: 'medium' });
+  const positions = times.map((time) => (time - first) / span);
+  // One wide target for pointers that picks the nearest version: daily marks sit a few pixels apart, too close to
+  // be targets of their own. Keyboards and screen readers pick versions with the select and older and newer.
+  const pickAt = (event: MouseEvent<HTMLButtonElement>) => {
+    const box = event.currentTarget.getBoundingClientRect();
+    const at = (event.clientX - box.left) / (box.width || 1);
+    let nearest = 0;
+    positions.forEach((position, index) => {
+      if (Math.abs(position - at) < Math.abs((positions[nearest] ?? 0) - at)) {
+        nearest = index;
+      }
+    });
+    const entry = list[nearest];
+    if (entry !== undefined) {
+      onPick(entry.id);
+    }
+  };
   return (
-    <div className={styles.timeline}>
-      <div className={styles.timelineTrack} role="group" aria-label={t('restore.timeline')}>
+    <div className={styles.timeline} aria-hidden>
+      <button type="button" tabIndex={-1} className={styles.timelineTrack} onClick={pickAt}>
         {list.map((entry, position) => (
-          <button
+          <span
             key={entry.id}
-            type="button"
             className={styles.timelineMark}
-            style={{ left: `${String((((times[position] ?? first) - first) / span) * 100)}%` }}
-            aria-label={formatDate(entry.time, locale)}
-            aria-pressed={entry.id === version?.id}
+            style={{ left: `${String((positions[position] ?? 0) * 100)}%` }}
+            data-current={entry.id === version?.id || undefined}
             data-protected={entry.protected || undefined}
             title={formatDate(entry.time, locale)}
-            onClick={() => {
-              onPick(entry.id);
-            }}
           />
         ))}
-      </div>
-      <div className={styles.timelineEnds} aria-hidden>
+      </button>
+      <div className={styles.timelineEnds}>
         <span>{day.format(first)}</span>
         <span>{day.format(first + span)}</span>
       </div>

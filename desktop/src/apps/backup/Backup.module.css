@@ -794,6 +794,10 @@
 }
 
 .breadcrumbLink {
+  /* At least the 24 px target WCAG 2.2 asks for; the links of a path sit next to each other. */
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
   padding: 0;
   border: 0;
   background: none;
@@ -896,8 +900,13 @@
 
 .timelineTrack {
   position: relative;
+  display: block;
+  width: calc(100% - 12px);
   height: 28px;
   margin-inline: 6px;
+  padding: 0;
+  border: 0;
+  cursor: pointer;
   background: linear-gradient(var(--color-border-strong), var(--color-border-strong)) center / 100%
     1px no-repeat;
 }
@@ -911,20 +920,14 @@
   border: 0;
   transform: translateX(-50%);
   background: linear-gradient(var(--color-accent), var(--color-accent)) center / 2px 16px no-repeat;
-  cursor: pointer;
 }
 
 .timelineMark[data-protected] {
   background-image: linear-gradient(var(--color-warning), var(--color-warning));
 }
 
-.timelineMark[aria-pressed='true'] {
+.timelineMark[data-current] {
   background: linear-gradient(var(--color-text), var(--color-text)) center / 4px 24px no-repeat;
-}
-
-.timelineMark:focus-visible {
-  border-radius: var(--radius-xs);
-  outline: 2px solid var(--color-focus);
 }
 
 .timelineEnds {
@@ -957,13 +960,12 @@
 .fileVersions > li {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   justify-content: space-between;
-  gap: var(--space-2);
+  column-gap: var(--space-2);
 }
 
 .fileVersions .breadcrumbLink {
-  display: inline-flex;
-  align-items: center;
   gap: var(--space-1);
 }
 

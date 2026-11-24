@@ -454,7 +454,6 @@
     "version": "Version",
     "older": "Older version",
     "newer": "Newer version",
-    "timeline": "Versions over time",
     "noJobsTitle": "Nothing to restore yet",
     "noJobs": "Restoring needs a box backup with at least one version.",
     "noVersions": "This backup has no version yet. Its first run makes one.",
