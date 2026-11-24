@@ -43,6 +43,21 @@ public sealed class BackupRestoreMergeTests : IDisposable
     }
 
     [Fact]
+    public void KeepingBothLeavesAFileOfTheSameSizeAndTimeAlone()
+    {
+        Write("staged/docs/same.txt", "same");
+        Write("live/docs/same.txt", "same");
+        File.SetLastWriteTimeUtc(Full("live/docs/same.txt"), StagedTime);
+        Write("staged/docs/touched.txt", "same");
+        Write("live/docs/touched.txt", "same");
+
+        var tally = Merge("docs", BackupRestoreConflict.KeepBoth);
+
+        Assert.Equal(["same.txt", "touched (version 2026-11-23 18.42 UTC).txt", "touched.txt"], Directory.GetFiles(Full("live/docs")).Select(Path.GetFileName).Order(StringComparer.Ordinal));
+        Assert.Equal((0L, 0L, 1L, 1L), Counts(tally));
+    }
+
+    [Fact]
     public void KeepingBothTwiceFindsAFreeName()
     {
         Write("staged/docs/a.txt", "old a");
@@ -124,10 +139,17 @@ public sealed class BackupRestoreMergeTests : IDisposable
 
     private string Full(string path) => Path.Combine(_root.FullName, path);
 
+    /// <summary>restic restores the stored time; files in place keep the time they were written.</summary>
+    private static readonly DateTime StagedTime = new(2026, 11, 20, 12, 0, 0, DateTimeKind.Utc);
+
     private void Write(string path, string content)
     {
         Directory.CreateDirectory(Path.GetDirectoryName(Full(path))!);
         File.WriteAllText(Full(path), content);
+        if (path.StartsWith("staged/", StringComparison.Ordinal))
+        {
+            File.SetLastWriteTimeUtc(Full(path), StagedTime);
+        }
     }
 
     private string Read(string path) => File.ReadAllText(Full(path));

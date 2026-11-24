@@ -35,12 +35,20 @@ public sealed partial class BackupBrowser(
     public async Task StartAsync(CancellationToken cancellationToken)
     {
         // Mounts of a daemon that crashed are left without their restic; they answer every call with an error.
-        if (Directory.Exists(options.Root))
+        // A daemon without the rights of the one that made the root (the build's OpenAPI run) leaves it alone.
+        List<string> left;
+        try
         {
-            foreach (var folder in Directory.EnumerateDirectories(options.Root))
-            {
-                await UnmountAsync(folder);
-            }
+            left = Directory.Exists(options.Root) ? [.. Directory.EnumerateDirectories(options.Root)] : [];
+        }
+        catch (Exception exception) when (exception is UnauthorizedAccessException or IOException)
+        {
+            LogRootUnreadable(options.Root, exception.Message);
+            left = [];
+        }
+        foreach (var folder in left)
+        {
+            await UnmountAsync(folder);
         }
         _sweep = time.CreateTimer(_ => _ = SweepAsync(), null, TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(1));
     }
@@ -283,4 +291,7 @@ public sealed partial class BackupBrowser(
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "Mount {Mountpoint} could not be removed: {StandardError}")]
     private partial void LogUnmountFailed(string mountpoint, string standardError);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Browse root {Root} could not be read: {Reason}")]
+    private partial void LogRootUnreadable(string root, string reason);
 }

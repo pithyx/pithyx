@@ -6,7 +6,7 @@ namespace Pithyx.Daemon.Backups;
 /// <summary>What a restore does with a file that is already in place.</summary>
 public enum BackupRestoreConflict
 {
-    /// <summary>The restored file goes next to it, named after the version's time.</summary>
+    /// <summary>The restored file goes next to it, named after the version's time, unless the two have the same size and time.</summary>
     KeepBoth,
 
     /// <summary>The restored file replaces it; a folder is never replaced, the two are kept instead.</summary>
@@ -76,6 +76,12 @@ internal static class BackupRestoreMerge
             }
             return;
         }
+        if (conflict == BackupRestoreConflict.KeepBoth && Same(incoming, existing))
+        {
+            // Unchanged since the version, compared as restic compares: a copy next to it would only clutter the folder.
+            tally.Skipped++;
+            return;
+        }
         switch (conflict)
         {
             case BackupRestoreConflict.Skip:
@@ -92,6 +98,10 @@ internal static class BackupRestoreMerge
                 return;
         }
     }
+
+    /// <summary>Whether two files have the same size and modification time.</summary>
+    private static bool Same(FsStat incoming, FsStat existing) =>
+        incoming.Kind == FsKind.File && existing.Kind == FsKind.File && incoming.Size == existing.Size && incoming.Modified == existing.Modified;
 
     /// <summary>
     /// Opens the folders of <paramref name="path"/> (an absolute path as restic stored it) one by one below
