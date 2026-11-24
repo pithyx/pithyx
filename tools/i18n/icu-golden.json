@@ -2498,6 +2498,37 @@
     "backup.version.not_found": {
       "params": {},
       "expected": "This version no longer exists. The backup's retention may have deleted it."
+    },
+    "backup.destination.invalid": {
+      "params": {
+        "path": "web01",
+        "share": "Servers",
+        "reason": "exists"
+      },
+      "expected": "The folder web01 cannot be made in Servers (something has this name already; choose another)."
+    },
+    "backup.destination.unavailable": {
+      "params": {
+        "path": "Servers/web01",
+        "reason": "unavailable"
+      },
+      "expected": "The destination Servers/web01 is not available (its pool is locked or missing)."
+    },
+    "backup.job.unsupported": {
+      "params": {
+        "action": "key"
+      },
+      "expected": "Server backups have no repository key."
+    },
+    "backup.server.refused": {
+      "params": {
+        "path": "/srv/www"
+      },
+      "expected": "The box signed in, but the server did not hand out /srv/www: it does not exist, lies outside the folder the key may read, or may not be read. The Log Center has the server's message."
+    },
+    "backup.server.rsync_missing": {
+      "params": {},
+      "expected": "The server has no rsync, or no rrsync for the line in its authorized_keys. Install the package rsync on the server."
     }
   },
   "cases": [
