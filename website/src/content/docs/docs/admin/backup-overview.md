@@ -16,13 +16,13 @@ _The overview of a box with three backups: one runs now, one failed and is liste
 
 ## Toolbar
 
-- **Add backup** adds a [box backup](/docs/admin/backup-jobs/#adding-a-box-backup). Without a target the app first asks for one.
+- **Add backup** asks what to back up: folders of this box to a target, a [box backup](/docs/admin/backup-jobs/#adding-a-box-backup), or a Linux server onto this box, a [server backup](/docs/admin/backup-servers/#adding-a-server-backup). Without a target or a server the app first asks for one.
 - **Back up all now** starts every switched-on backup that does not run or check at the moment.
 - The period on the right (**Last 7 days**, **Last 30 days**, **Last 90 days**) sets what the run tile and the chart count.
 
 ## Tiles
 
-- **Protected data**: the size of the newest version of every backup together, and how many backups there are.
+- **Protected data**: the size of the newest version of every backup together, how many backups there are, and how much of it goes from this box and how much comes onto it from servers. Server backups take nothing on a target, so **Used on targets** leaves them out.
 - **Runs of the last 30 days** (or the chosen period): how many runs and checks succeeded, with warnings counted as successful, of how many. The bar shows the share that succeeded, had warnings and failed. Cancelled runs are not counted.
 - **Next run**: when the next scheduled backup starts, and which one.
 - **Used on targets**: what the repositories of all backups take on their targets, and on how many targets. The bar below shows the target with the least room left: how much of it is used, as its server reported. The box asks the server for its free space at every [connection test](/docs/admin/backup-targets/) and after every run.

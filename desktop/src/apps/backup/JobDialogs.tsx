@@ -20,15 +20,15 @@ import { cronOf, scheduleOf, switchKind, type Schedule } from './schedule';
 import styles from './Backup.module.css';
 
 export const RETENTION_KEYS = ['last', 'hourly', 'daily', 'weekly', 'monthly', 'yearly'] as const;
-type RetentionKey = (typeof RETENTION_KEYS)[number];
+export type RetentionKey = (typeof RETENTION_KEYS)[number];
 
 const SCHEDULE_KINDS = ['hourly', 'daily', 'weekly', 'monthly', 'custom'] as const;
 const WEEKDAYS = [1, 2, 3, 4, 5, 6, 0] as const;
 
 /** A new job's: every night, checked every Sunday morning reading 5 percent, a week, a month and a year of versions. */
-const NEW_SCHEDULE: Schedule = { kind: 'daily', time: '02:00' };
+export const NEW_SCHEDULE: Schedule = { kind: 'daily', time: '02:00' };
 const NEW_CHECK: Schedule = { kind: 'weekly', day: 0, time: '05:00' };
-const NEW_RETENTION: Record<RetentionKey, string> = {
+export const NEW_RETENTION: Record<RetentionKey, string> = {
   last: '0',
   hourly: '0',
   daily: '7',
@@ -113,7 +113,7 @@ function draftOf(job: BackupJob | undefined, targets: readonly BackupTarget[]): 
 }
 
 /** A whole number from 0 up, or undefined. */
-function count(text: string): number | undefined {
+export function count(text: string): number | undefined {
   const trimmed = text.trim();
   return /^\d{1,9}$/.test(trimmed) ? Number(trimmed) : undefined;
 }
@@ -173,7 +173,7 @@ function settingsOf(draft: Draft): BackupJobSettings | undefined {
   };
 }
 
-function closeOn(onClose: () => void) {
+export function closeOn(onClose: () => void) {
   return (open: boolean) => {
     if (!open) {
       onClose();
@@ -182,7 +182,7 @@ function closeOn(onClose: () => void) {
 }
 
 /** A schedule: a preset with its time and day, or a cron expression. */
-function ScheduleField({
+export function ScheduleField({
   label,
   hint,
   value,
@@ -355,7 +355,16 @@ function SourcesField({
   );
 }
 
-function Excludes({ value, onChange }: { value: string; onChange: (value: string) => void }) {
+/** Patterns to leave out, one per line; the hint names the patterns of the tool that reads them. */
+export function Excludes({
+  value,
+  hint,
+  onChange,
+}: {
+  value: string;
+  hint?: string;
+  onChange: (value: string) => void;
+}) {
   const { t } = useTranslation('backup');
   const id = useId();
   return (
@@ -376,9 +385,39 @@ function Excludes({ value, onChange }: { value: string; onChange: (value: string
         }}
       />
       <span id={`${id}-hint`} className={styles.hint}>
-        {t('jobForm.excludesHint')}
+        {hint ?? t('jobForm.excludesHint')}
       </span>
     </div>
+  );
+}
+
+/** How many versions of each period a backup keeps, as typed. */
+export function RetentionField({
+  value,
+  onChange,
+}: {
+  value: Record<RetentionKey, string>;
+  onChange: (value: Record<RetentionKey, string>) => void;
+}) {
+  const { t } = useTranslation('backup');
+  return (
+    <fieldset className={styles.fieldset}>
+      <legend className={styles.fieldLabel}>{t('jobForm.retention')}</legend>
+      <p className={styles.hint}>{t('jobForm.retentionHint')}</p>
+      <div className={styles.numbers}>
+        {RETENTION_KEYS.map((key) => (
+          <TextField
+            key={key}
+            label={t(`jobForm.keep.${key}`)}
+            inputMode="numeric"
+            value={value[key]}
+            onChange={(entry) => {
+              onChange({ ...value, [key]: entry });
+            }}
+          />
+        ))}
+      </div>
+    </fieldset>
   );
 }
 
@@ -552,23 +591,12 @@ export function JobDialog({
         >
           {t('jobForm.enabled')}
         </Switch>
-        <fieldset className={styles.fieldset}>
-          <legend className={styles.fieldLabel}>{t('jobForm.retention')}</legend>
-          <p className={styles.hint}>{t('jobForm.retentionHint')}</p>
-          <div className={styles.numbers}>
-            {RETENTION_KEYS.map((key) => (
-              <TextField
-                key={key}
-                label={t(`jobForm.keep.${key}`)}
-                inputMode="numeric"
-                value={draft.retention[key]}
-                onChange={(value) => {
-                  update({ retention: { ...draft.retention, [key]: value } });
-                }}
-              />
-            ))}
-          </div>
-        </fieldset>
+        <RetentionField
+          value={draft.retention}
+          onChange={(retention) => {
+            update({ retention });
+          }}
+        />
         <fieldset className={styles.fieldset}>
           <legend className={styles.fieldLabel}>{t('jobForm.check')}</legend>
           <Checkbox
@@ -833,20 +861,32 @@ export function RevealKeyDialog({
   );
 }
 
-/** Deletes a job after a confirmation; the repository stays on the target. */
+/**
+ * Deletes a job after a confirmation; the repository stays on the target. A server backup's folder stays too, unless
+ * the administrator chooses to delete it with its versions.
+ */
 export function DeleteJobDialog({
   app,
   job,
+  destination,
   onClose,
 }: {
   app: PithyxApp;
   job: BackupJob;
+  /** Where a server backup's folder is, as the app names it. */
+  destination: string;
   onClose: () => void;
 }) {
   const { t } = useTranslation('backup');
   const queryClient = useQueryClient();
+  const [data, setData] = useState(false);
   const remove = useMutation({
-    mutationFn: () => backupsCall(app, 'internal.admin.backups.deleteJob', { id: job.id }),
+    mutationFn: () =>
+      backupsCall(
+        app,
+        'internal.admin.backups.deleteJob',
+        data ? { id: job.id, data } : { id: job.id },
+      ),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: jobsKey });
       onClose();
@@ -874,7 +914,21 @@ export function DeleteJobDialog({
       }
     >
       <div className={styles.form}>
-        <p className={styles.muted}>{t('deleteJob.text')}</p>
+        {job.kind === 'pull' ? (
+          <>
+            <p className={styles.muted}>{t('deleteJobPull.text', { destination })}</p>
+            <Checkbox isSelected={data} onChange={setData}>
+              {t('deleteJobPull.data')}
+            </Checkbox>
+            {data && (
+              <p className={styles.warning}>
+                {t('deleteJobPull.dataHint', { dataset: job.dataset ?? '' })}
+              </p>
+            )}
+          </>
+        ) : (
+          <p className={styles.muted}>{t('deleteJob.text')}</p>
+        )}
         {remove.isError && <ErrorNotice error={describeProblem(remove.error)} />}
       </div>
     </Dialog>

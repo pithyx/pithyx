@@ -13,6 +13,8 @@ export type BackupJob = components['schemas']['BackupJob'];
 export type BackupJobSettings = components['schemas']['BackupJobSettings'];
 export type BackupJobCreated = components['schemas']['BackupJobCreated'];
 export type BackupJobCreateRequest = components['schemas']['BackupJobCreateRequest'];
+export type BackupPullSettings = components['schemas']['BackupPullSettings'];
+export type BackupPullCreateRequest = components['schemas']['BackupPullCreateRequest'];
 export type BackupRetention = components['schemas']['BackupRetention'];
 export type BackupRun = components['schemas']['BackupRun'];
 export type BackupSourceOption = components['schemas']['BackupSourceOption'];
@@ -81,8 +83,21 @@ interface BackupMethods {
     params: { id: number; settings: BackupJobSettings };
     result: BackupJob;
   };
-  /** Deletes the job and its key; the repository stays on the target. */
-  'internal.admin.backups.deleteJob': { params: { id: number }; result: null };
+  /** Makes a server backup's dataset in the shared folder and saves the backup. */
+  'internal.admin.backups.createPull': {
+    params: BackupPullCreateRequest;
+    result: BackupJobCreated;
+  };
+  /** Changes what a server backup pulls and when; its server and destination stay. */
+  'internal.admin.backups.updatePull': {
+    params: { id: number; settings: BackupJobSettings; pull: BackupPullSettings };
+    result: BackupJob;
+  };
+  /**
+   * Deletes the job and its key; the repository stays on the target. A server backup's dataset stays too, unless
+   * `data` destroys it with its versions.
+   */
+  'internal.admin.backups.deleteJob': { params: { id: number; data?: boolean }; result: null };
   'internal.admin.backups.runs': { params: { id: number }; result: { runs: BackupRun[] } };
   /** The runs and checks of every job, newest first; `before` is the id of the last run of the previous page. */
   'internal.admin.backups.history': {
@@ -180,7 +195,8 @@ const isTarget = (value: unknown): value is BackupTargetRequest =>
   typeof value.user === 'string' &&
   isPort(value.port) &&
   optionalString(value.path) &&
-  optionalString(value.hostKey);
+  optionalString(value.hostKey) &&
+  (value.purpose === undefined || value.purpose === 'target' || value.purpose === 'server');
 
 // The request without the id, and without fields left out, so the daemon sees what the administrator entered.
 function body(params: BackupTargetRequest): BackupTargetRequest {
@@ -191,6 +207,7 @@ function body(params: BackupTargetRequest): BackupTargetRequest {
     ...(params.port === undefined ? {} : { port: params.port }),
     ...(params.path === undefined ? {} : { path: params.path }),
     ...(params.hostKey === undefined ? {} : { hostKey: params.hostKey }),
+    ...(params.purpose === undefined ? {} : { purpose: params.purpose }),
   };
 }
 
@@ -242,6 +259,25 @@ function settingsBody(settings: BackupJobSettings): BackupJobSettings {
     downloadLimitKib: settings.downloadLimitKib,
     overdueHours: settings.overdueHours ?? null,
     excludes: settings.excludes ?? [],
+  };
+}
+
+const isPull = (value: unknown): value is BackupPullSettings =>
+  isRecord(value) &&
+  Number.isSafeInteger(value.shareId) &&
+  typeof value.folder === 'string' &&
+  Array.isArray(value.paths) &&
+  value.paths.every((path) => typeof path === 'string') &&
+  typeof value.delete === 'boolean' &&
+  (value.owners === 'server' || value.owners === 'box');
+
+function pullBody(pull: BackupPullSettings): BackupPullSettings {
+  return {
+    shareId: pull.shareId,
+    folder: pull.folder,
+    paths: [...pull.paths],
+    delete: pull.delete,
+    owners: pull.owners,
   };
 }
 
@@ -406,13 +442,55 @@ export function backupsHost(): HostExtensions {
           );
         }),
     },
-    'internal.admin.backups.deleteJob': {
-      validate: hasId,
+    'internal.admin.backups.createPull': {
+      validate: (value) =>
+        isRecord(value) &&
+        Number.isSafeInteger(value.serverId) &&
+        isSettings(value.settings) &&
+        isPull(value.pull),
       handle: (params) =>
         daemon(async () => {
+          const request = params as BackupPullCreateRequest;
+          return unwrap(
+            await api.POST('/api/backups/pulls', {
+              body: {
+                serverId: request.serverId,
+                settings: settingsBody(request.settings),
+                pull: pullBody(request.pull),
+              },
+            }),
+          );
+        }),
+    },
+    'internal.admin.backups.updatePull': {
+      validate: (value) =>
+        hasId(value) &&
+        isSettings((value as { settings?: unknown }).settings) &&
+        isPull((value as { pull?: unknown }).pull),
+      handle: (params) =>
+        daemon(async () => {
+          const { id, settings, pull } =
+            params as BackupMethods['internal.admin.backups.updatePull']['params'];
+          return unwrap(
+            await api.PUT('/api/backups/pulls/{id}', {
+              params: { path: { id } },
+              body: { settings: settingsBody(settings), pull: pullBody(pull) },
+            }),
+          );
+        }),
+    },
+    'internal.admin.backups.deleteJob': {
+      validate: (value) =>
+        hasId(value) &&
+        ((value as { data?: unknown }).data === undefined ||
+          typeof (value as { data?: unknown }).data === 'boolean'),
+      handle: (params) =>
+        daemon(async () => {
+          const { id, data } =
+            params as BackupMethods['internal.admin.backups.deleteJob']['params'];
           unwrap(
             await api.DELETE('/api/backups/jobs/{id}', {
-              params: { path: { id: (params as { id: number }).id } },
+              params: { path: { id }, query: data === true ? { data } : {} },
             }),
           );
           return null;

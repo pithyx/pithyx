@@ -532,4 +532,72 @@ export const appScreens: ScreenDefinition[] = [
       />
     ),
   },
+  {
+    id: 'backup-pulls',
+    group: 'apps',
+    title: 'Backup: server backups',
+    description:
+      'A Linux server backed up onto this box: its route from the server into a shared folder, the folders it pulls, its dataset and options, and its recent runs.',
+    render: (context) => (
+      <CoreAppScene
+        context={context}
+        app="backup"
+        Component={BackupApp}
+        answers={backupAnswers}
+        script={[{ press: 'backup:nav.pulls' }, { press: 'web01' }]}
+      />
+    ),
+  },
+  {
+    id: 'backup-servers',
+    group: 'apps',
+    title: 'Backup: servers',
+    description:
+      'A server whose folders the box pulls, connected, with the folder its key may read below and its last test.',
+    render: (context) => (
+      <CoreAppScene
+        context={context}
+        app="backup"
+        Component={BackupApp}
+        answers={backupAnswers}
+        script={[{ press: 'backup:nav.servers' }]}
+      />
+    ),
+  },
+  {
+    id: 'backup-pull-new',
+    group: 'apps',
+    title: 'Backup: new server backup',
+    description:
+      'The dialog of a new server backup: the server, the shared folder and folder it lands in, the folders on the server, deletions, owners, schedule and versions to keep.',
+    render: (context) => (
+      <CoreAppScene
+        context={context}
+        app="backup"
+        Component={BackupApp}
+        answers={backupAnswers}
+        script={[
+          { press: 'backup:nav.pulls' },
+          { press: 'backup:pulls.add' },
+          { show: 'backup:pullForm.addTitle' },
+        ]}
+      />
+    ),
+  },
+  {
+    id: 'backup-chooser',
+    group: 'apps',
+    title: 'Backup: what to back up',
+    description:
+      'Add backup on the overview asks which way: folders of this box to a target, or a Linux server onto this box.',
+    render: (context) => (
+      <CoreAppScene
+        context={context}
+        app="backup"
+        Component={BackupApp}
+        answers={backupAnswers}
+        script={[{ press: 'backup:overview.add' }, { show: 'backup:chooser.title' }]}
+      />
+    ),
+  },
 ];

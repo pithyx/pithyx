@@ -22,6 +22,7 @@ import {
   IconPlayerPlay,
   IconPlus,
   IconServer,
+  IconServer2,
   IconShieldCheck,
   IconTrash,
   IconX,
@@ -32,12 +33,13 @@ import {
   runsKey,
   sourcesKey,
   type BackupJob,
+  type BackupPullSettings,
   type BackupRun,
   type BackupTarget,
 } from '../sdk/backups';
 import { describeProblem } from '../storage/shared';
 import { dayIndex, daysAgo, useActiveRuns, useBackupJobs, useHistory, type BoardJob } from './data';
-import { DirectionTag, Route, directionOf } from './Direction';
+import { DirectionTag, Route, directionOf, type RouteParts } from './Direction';
 import { EmptyCard } from './EmptyCard';
 import { scheduleOf } from './schedule';
 import styles from './Backup.module.css';
@@ -112,7 +114,22 @@ export function useSourceNames(app: PithyxApp) {
   return {
     shareName,
     sourcePath,
-    route: (job: BackupJob) => job.settings.sources.map(sourcePath).join(', '),
+    /** Where a backup reads and where that goes; a server backup reads the server's folders into one on the box. */
+    route: (job: BackupJob, target: BackupTarget | undefined): RouteParts =>
+      job.pull === null
+        ? {
+            direction: 'out',
+            from: job.settings.sources.map(sourcePath).join(', '),
+            to: target?.name ?? '',
+          }
+        : {
+            direction: 'in',
+            from: t('route.server', {
+              server: target?.name ?? '',
+              paths: job.pull.paths.join(', '),
+            }),
+            to: sourcePath({ shareId: job.pull.shareId, path: job.pull.folder }),
+          },
   };
 }
 
@@ -366,7 +383,7 @@ export function JobDetails({
   job: BackupJob;
   target: BackupTarget | undefined;
   board: ReadonlyMap<number, BoardJob>;
-  route: string;
+  route: RouteParts;
   sourcePath: (source: { shareId: number; path: string }) => string;
   withHead?: boolean;
 }) {
@@ -381,7 +398,7 @@ export function JobDetails({
       {withHead && (
         <div className={styles.detailsHead}>
           <span className={styles.detailsName}>{job.settings.name}</span>
-          <Route from={route} to={target?.name ?? ''} />
+          <Route {...route} />
           <span className={styles.badgeRow}>
             <DirectionTag direction={directionOf(job.kind)} />
             <StatusBadge tone={JOB_TONES[state]}>{t(`jobs.status.${state}`)}</StatusBadge>
@@ -403,34 +420,89 @@ export function JobDetails({
         <dd>{job.nextRunAt === null ? t('jobs.byHand') : when(job.nextRunAt)}</dd>
         <dt>{t('jobs.lastBackup')}</dt>
         <dd>{job.lastSuccessAt === null ? t('jobs.noBackup') : when(job.lastSuccessAt)}</dd>
-        <dt>{t('jobs.check')}</dt>
-        <dd>
-          {lastCheck?.finishedAt != null
-            ? t('jobs.lastCheck', {
-                time: when(lastCheck.finishedAt),
-                state: t(`runs.states.${lastCheck.state}`),
-              })
-            : job.nextCheckAt === null
-              ? t('jobs.noCheck')
-              : t('jobs.nextCheck', { time: when(job.nextCheckAt) })}
-        </dd>
-        <dt>{t('jobs.repository')}</dt>
-        <dd className={styles.mono}>
-          {t('jobs.repositoryValue', { repository: job.repository, target: target?.name ?? '' })}
-        </dd>
-        <dt>{t('jobs.sources')}</dt>
-        <dd>
-          <ul className={styles.plainList}>
-            {job.settings.sources.map((source) => (
-              <li key={`${String(source.shareId)}/${source.path}`} className={styles.mono}>
-                {sourcePath(source)}
-              </li>
-            ))}
-          </ul>
-        </dd>
+        {job.pull === null ? (
+          <>
+            <dt>{t('jobs.check')}</dt>
+            <dd>
+              {lastCheck?.finishedAt != null
+                ? t('jobs.lastCheck', {
+                    time: when(lastCheck.finishedAt),
+                    state: t(`runs.states.${lastCheck.state}`),
+                  })
+                : job.nextCheckAt === null
+                  ? t('jobs.noCheck')
+                  : t('jobs.nextCheck', { time: when(job.nextCheckAt) })}
+            </dd>
+            <dt>{t('jobs.repository')}</dt>
+            <dd className={styles.mono}>
+              {t('jobs.repositoryValue', {
+                repository: job.repository,
+                target: target?.name ?? '',
+              })}
+            </dd>
+            <dt>{t('jobs.sources')}</dt>
+            <dd>
+              <ul className={styles.plainList}>
+                {job.settings.sources.map((source) => (
+                  <li key={`${String(source.shareId)}/${source.path}`} className={styles.mono}>
+                    {sourcePath(source)}
+                  </li>
+                ))}
+              </ul>
+            </dd>
+          </>
+        ) : (
+          <PullFacts job={job} pull={job.pull} target={target} sourcePath={sourcePath} />
+        )}
       </dl>
       <RunsTable app={app} job={job} />
     </div>
+  );
+}
+
+/** What a server backup reads on its server and where it puts it on the box. */
+export function PullFacts({
+  job,
+  pull,
+  target,
+  sourcePath,
+}: {
+  job: BackupJob;
+  pull: BackupPullSettings;
+  target: BackupTarget | undefined;
+  sourcePath: (source: { shareId: number; path: string }) => string;
+}) {
+  const { t } = useTranslation('backup');
+  return (
+    <>
+      <dt>{t('pulls.server')}</dt>
+      <dd>
+        {target === undefined
+          ? ''
+          : t('targets.address', { user: target.user, host: target.host, port: target.port })}
+      </dd>
+      <dt>{t('pulls.paths')}</dt>
+      <dd>
+        <ul className={styles.plainList}>
+          {pull.paths.map((path) => (
+            <li key={path} className={styles.mono}>
+              {path}
+            </li>
+          ))}
+        </ul>
+      </dd>
+      <dt>{t('pulls.destination')}</dt>
+      <dd className={styles.mono}>{sourcePath({ shareId: pull.shareId, path: pull.folder })}</dd>
+      <dt>{t('pulls.dataset')}</dt>
+      <dd className={styles.mono}>{job.dataset ?? ''}</dd>
+      <dt>{t('pulls.options')}</dt>
+      <dd>
+        {[
+          t(pull.delete ? 'pulls.deleteOn' : 'pulls.deleteOff'),
+          t(`pulls.owners.${pull.owners}`),
+        ].join(' · ')}
+      </dd>
+    </>
   );
 }
 
@@ -449,7 +521,7 @@ export function useRunCommands(app: PithyxApp) {
   return { start, cancel };
 }
 
-/** Back up now, or Cancel while a run or check goes on, and Check now, for the job given. */
+/** Back up now, or Cancel while a run or check goes on, and Check now, for the job given; a server backup has no check. */
 export function RunButtons({
   job,
   commands: { start, cancel },
@@ -483,20 +555,22 @@ export function RunButtons({
           }}
         >
           <IconPlayerPlay size={18} stroke={1.75} aria-hidden />
-          {t('jobs.runNow')}
+          {t(job?.kind === 'pull' ? 'pulls.runNow' : 'jobs.runNow')}
         </Button>
       )}
-      <Button
-        isDisabled={job === undefined || running !== undefined || start.isPending}
-        onPress={() => {
-          if (job !== undefined) {
-            start.mutate({ job, kind: 'check' });
-          }
-        }}
-      >
-        <IconShieldCheck size={18} stroke={1.75} aria-hidden />
-        {t('jobs.checkNow')}
-      </Button>
+      {job?.kind !== 'pull' && (
+        <Button
+          isDisabled={job === undefined || running !== undefined || start.isPending}
+          onPress={() => {
+            if (job !== undefined) {
+              start.mutate({ job, kind: 'check' });
+            }
+          }}
+        >
+          <IconShieldCheck size={18} stroke={1.75} aria-hidden />
+          {t('jobs.checkNow')}
+        </Button>
+      )}
     </>
   );
 }
@@ -513,10 +587,12 @@ export function RunCommandErrors({ commands }: { commands: ReturnType<typeof use
 
 /**
  * Box backups (D416): every backup from this box to a target as a table with its route, schedule, last and next run,
- * size and the last 14 days; the toolbar acts on the selected one and its details are on the right.
+ * size and the last 14 days; the toolbar acts on the selected one and its details are on the right. With `kind` pull,
+ * the server backups onto this box (#396, D420), from the servers in `targets`.
  */
 export function JobsPage({
   app,
+  kind,
   jobs,
   targets,
   onAdd,
@@ -525,7 +601,9 @@ export function JobsPage({
   onShow,
 }: {
   app: PithyxApp;
+  kind: BackupJob['kind'];
   jobs: ReturnType<typeof useBackupJobs>;
+  /** The targets, or the servers of server backups. */
   targets: readonly BackupTarget[] | undefined;
   onAdd: () => void;
   onAddTarget: () => void;
@@ -549,7 +627,9 @@ export function JobsPage({
   for (const run of history.data?.runs ?? []) {
     runsOf.set(run.jobId, [...(runsOf.get(run.jobId) ?? []), run]);
   }
-  const list = jobs.data?.jobs ?? [];
+  // The texts of box backups are under `jobs`, those of server backups under `pulls`.
+  const texts = kind === 'pull' ? 'pulls' : 'jobs';
+  const list = (jobs.data?.jobs ?? []).filter((job) => job.kind === kind);
   const selected = list.find((job) => job.id === selectedId);
   const targetOf = (job: BackupJob) => targets?.find((target) => target.id === job.targetId);
   const commands = useRunCommands(app);
@@ -578,7 +658,7 @@ export function JobsPage({
     {
       id: 'route',
       label: t('jobs.route'),
-      cell: (job) => <Route from={route(job)} to={targetOf(job)?.name ?? ''} />,
+      cell: (job) => <Route {...route(job, targetOf(job))} />,
       width: '26%',
     },
     {
@@ -633,24 +713,30 @@ export function JobsPage({
     },
   ];
 
-  if (jobs.data?.jobs.length === 0 && targets !== undefined) {
+  if (jobs.data !== undefined && list.length === 0 && targets !== undefined) {
     return (
       <div className={styles.page}>
-        <p className={styles.intro}>{t('jobs.intro')}</p>
+        <p className={styles.intro}>{t(`${texts}.intro`)}</p>
         {targets.length === 0 ? (
           <EmptyCard
-            icon={<IconServer size={24} stroke={1.75} />}
-            title={t('jobs.noTargetsTitle')}
-            text={t('jobs.noTargets')}
-            action={t('targets.add')}
+            icon={
+              kind === 'pull' ? (
+                <IconServer2 size={24} stroke={1.75} />
+              ) : (
+                <IconServer size={24} stroke={1.75} />
+              )
+            }
+            title={t(`${texts}.noTargetsTitle`)}
+            text={t(`${texts}.noTargets`)}
+            action={t(kind === 'pull' ? 'servers.add' : 'targets.add')}
             onAction={onAddTarget}
           />
         ) : (
           <EmptyCard
             icon={<IconArchive size={24} stroke={1.75} />}
-            title={t('jobs.emptyTitle')}
-            text={t('jobs.empty')}
-            action={t('jobs.add')}
+            title={t(`${texts}.emptyTitle`)}
+            text={t(`${texts}.empty`)}
+            action={t(`${texts}.add`)}
             onAction={onAdd}
           />
         )}
@@ -660,11 +746,11 @@ export function JobsPage({
 
   return (
     <div className={styles.page}>
-      <p className={styles.intro}>{t('jobs.intro')}</p>
-      <Toolbar aria-label={t('jobs.toolbar')}>
+      <p className={styles.intro}>{t(`${texts}.intro`)}</p>
+      <Toolbar aria-label={t(`${texts}.toolbar`)}>
         <Button variant="primary" onPress={onAdd}>
           <IconPlus size={18} stroke={1.75} aria-hidden />
-          {t('jobs.add')}
+          {t(`${texts}.add`)}
         </Button>
         <ToolbarSeparator />
         <Button
@@ -707,7 +793,7 @@ export function JobsPage({
       <RunCommandErrors commands={commands} />
       {history.isError && <ErrorNotice error={describeProblem(history.error)} />}
       <DataTable
-        aria-label={t('jobs.list')}
+        aria-label={t(`${texts}.list`)}
         columns={columns}
         items={list}
         getKey={(job) => job.id}
@@ -725,7 +811,7 @@ export function JobsPage({
           }
         }}
         defaultSort={{ column: 'name', direction: 'ascending' }}
-        emptyState={jobs.isPending ? t('jobs.loading') : t('jobs.empty')}
+        emptyState={jobs.isPending ? t('jobs.loading') : t(`${texts}.empty`)}
         details={
           selected === undefined ? undefined : (
             <JobDetails
@@ -733,7 +819,7 @@ export function JobsPage({
               job={selected}
               target={targetOf(selected)}
               board={board}
-              route={route(selected)}
+              route={route(selected, targetOf(selected))}
               sourcePath={sourcePath}
             />
           )

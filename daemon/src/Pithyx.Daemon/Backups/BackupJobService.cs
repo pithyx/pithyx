@@ -339,7 +339,8 @@ public sealed partial class BackupJobService(
 
     /// <summary>
     /// The runs of every job per day in the box's time zone (#403), for the overview's calendar and chart. Running and
-    /// cancelled runs are not counted; the repositories' sizes carry over from the last run that measured them.
+    /// cancelled runs are not counted; the repositories' sizes carry over from the last run that measured them, and a
+    /// server backup (#396) has none, since its copy is on this box and not on a target.
     /// </summary>
     public async Task<BackupDayList> DaysAsync(string? from, string? to, CancellationToken cancellationToken)
     {
@@ -351,11 +352,12 @@ public sealed partial class BackupJobService(
         await using var connection = await connections.OpenAsync(cancellationToken);
         var rows = await connection.QueryAsync<DayRow>(new CommandDefinition(
             """
-            SELECT job_id AS JobId, kind AS Kind, state AS State, started_at AS StartedAt, added_bytes AS AddedBytes, repository_bytes AS RepositoryBytes
-            FROM backup_runs
-            WHERE started_at < @end AND state <> 'running' AND (started_at >= @start OR repository_bytes IS NOT NULL)
+            SELECT r.job_id AS JobId, r.kind AS Kind, r.state AS State, r.started_at AS StartedAt, r.added_bytes AS AddedBytes,
+                CASE WHEN j.kind = @pull THEN NULL ELSE r.repository_bytes END AS RepositoryBytes
+            FROM backup_runs r LEFT JOIN backup_jobs j ON j.id = r.job_id
+            WHERE r.started_at < @end AND r.state <> 'running' AND (r.started_at >= @start OR r.repository_bytes IS NOT NULL)
             """,
-            new { start = SessionService.Format(start), end = SessionService.Format(end) },
+            new { start = SessionService.Format(start), end = SessionService.Format(end), pull = PullKind },
             cancellationToken: cancellationToken));
         var runs = rows.Select(row => new BackupDayRun(
             row.JobId,

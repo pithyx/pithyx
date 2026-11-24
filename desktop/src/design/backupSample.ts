@@ -13,8 +13,8 @@ import { useRealtime } from '../realtime/connection';
 import { now } from './sampleData';
 import type { ExtraAnswers } from './storageSample';
 
-// Sample data of the Backup app (D414, D415, D416): two targets, three backups (one backing up right now, one fine, one
-// failed), the runs of the selected one and two weeks of history. Names of servers and folders are user data; keys and fingerprints are invented.
+// Sample data of the Backup app (D414, D415, D416, D420): two targets and a server, three box backups (one backing up
+// right now, one fine, one failed) and a server backup, the runs of the selected one and two weeks of history. Names of servers and folders are user data; keys and fingerprints are invented.
 
 // The Backup app counts its periods and day bars from the gallery's sample time, like the taskbar's clock.
 clock.now = () => now.getTime();
@@ -26,6 +26,9 @@ const hostKey = {
   fingerprint: 'SHA256:q3Vd0m9cWwqK7f2lZ1y8u5mYwYt0b6g8bXUeJr1pS4c',
   key: 'AAAAC3NzaC1lZDI1NTE5AAAAIK8xNq2c7pXy4Qm0WkV3sGf9a1bR5tZ2yHcJ6eL0dPqU',
 };
+
+const webKey =
+  'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIB4vN7mQ2xK9pL5wR8tY1zC3aF6hJ0dS4gE7uI2oW9qT pithyx-backup@nas-living-room';
 
 export const sampleTargets: BackupTarget[] = [
   {
@@ -41,6 +44,8 @@ export const sampleTargets: BackupTarget[] = [
       'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIFh3kQ8vT2nYc5pW0bZ7xR4mL1sD9gK6aE3uJ2oN8iVf pithyx-backup@nas-living-room',
     lastTest: { succeeded: true, testedAt: at(30), errorCode: null, errorParams: null },
     space: { totalBytes: 1_000_000_000_000, freeBytes: 390_000_000_000, measuredAt: at(12) },
+    purpose: 'target',
+    authorizedKeys: null,
     createdAt: at(24 * 40),
   },
   {
@@ -56,7 +61,25 @@ export const sampleTargets: BackupTarget[] = [
       'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGq9wE2rT5yU8iO1pA4sD7fG0hJ3kL6zX9cV2bN5mQ8w pithyx-backup@nas-living-room',
     lastTest: { succeeded: true, testedAt: at(50), errorCode: null, errorParams: null },
     space: { totalBytes: 4_000_000_000_000, freeBytes: 3_640_000_000_000, measuredAt: at(24 * 18) },
+    purpose: 'target',
+    authorizedKeys: null,
     createdAt: at(24 * 12),
+  },
+  {
+    id: 3,
+    kind: 'sftp',
+    name: 'web01',
+    host: 'web01.example.net',
+    port: 22,
+    user: 'root',
+    path: '/',
+    hostKey: { ...hostKey, fingerprint: 'SHA256:Lm4nB8vC2xZ6aS0dF3gH7jK1qW5eR9tY2uI4oP8sA6d' },
+    publicKey: webKey,
+    lastTest: { succeeded: true, testedAt: at(26), errorCode: null, errorParams: null },
+    space: null,
+    purpose: 'server',
+    authorizedKeys: `restrict,command="rrsync -ro /" ${webKey}`,
+    createdAt: at(24 * 9),
   },
 ];
 
@@ -64,6 +87,7 @@ const sources = [
   { shareId: 2, name: 'Photos', home: false, available: true, supported: true },
   { shareId: 3, name: 'Documents', home: false, available: true, supported: true },
   { shareId: 4, name: 'Media', home: false, available: true, supported: true },
+  { shareId: 5, name: 'Servers', home: false, available: true, supported: true },
   { shareId: 11, name: 'homes/alex', home: true, available: true, supported: true },
   { shareId: 12, name: 'homes/sam', home: true, available: true, supported: true },
 ];
@@ -142,6 +166,8 @@ export const sampleJobs: BackupJob[] = [
     kind: 'versioned',
     targetId: 1,
     repository: 'photos',
+    dataset: null,
+    pull: null,
     settings: settings('Photos and homes', [
       { shareId: 2, path: '' },
       { shareId: 11, path: '' },
@@ -178,6 +204,8 @@ export const sampleJobs: BackupJob[] = [
     kind: 'versioned',
     targetId: 1,
     repository: 'documents',
+    dataset: null,
+    pull: null,
     settings: settings('Documents', [{ shareId: 3, path: '' }]),
     lastRun: documentsRuns[0] ?? null,
     lastCheck: documentsRuns[3] ?? null,
@@ -194,6 +222,8 @@ export const sampleJobs: BackupJob[] = [
     kind: 'versioned',
     targetId: 2,
     repository: 'media',
+    dataset: null,
+    pull: null,
     settings: {
       ...settings('Media to the second box', [{ shareId: 4, path: 'Music' }]),
       schedule: '0 3 * * 6',
@@ -217,6 +247,41 @@ export const sampleJobs: BackupJob[] = [
     protectedBytes: 402_000_000_000,
     repositoryBytes: 360_000_000_000,
     createdAt: at(24 * 20),
+  },
+  {
+    id: 4,
+    kind: 'pull',
+    targetId: 3,
+    repository: '',
+    dataset: 'tank/pithyx/shares/servers/web01',
+    pull: {
+      shareId: 5,
+      folder: 'web01',
+      paths: ['/etc', '/srv/www', '/var/backups'],
+      delete: true,
+      owners: 'server',
+    },
+    settings: {
+      ...settings('web01', []),
+      schedule: '0 1 * * *',
+      checkSchedule: null,
+      checkReadPercent: 0,
+    },
+    lastRun: run(116, 13, 3, {
+      jobId: 4,
+      files: 18_420,
+      bytes: 6_800_000_000,
+      addedBytes: 42_000_000,
+      snapshot: 'pithyx-pull-20261123T000000Z',
+    }),
+    lastCheck: null,
+    lastSuccessAt: at(12.95),
+    nextRunAt: at(-11),
+    nextCheckAt: null,
+    overdue: false,
+    protectedBytes: 6_800_000_000,
+    repositoryBytes: 7_300_000_000,
+    createdAt: at(24 * 9),
   },
 ];
 
@@ -246,6 +311,7 @@ const mediaRuns: BackupRun[] = [
 ];
 const history: BackupRun[] = [
   ...(sampleJobs[0]?.lastRun ? [sampleJobs[0].lastRun] : []),
+  ...(sampleJobs[3]?.lastRun ? [sampleJobs[3].lastRun] : []),
   ...documentsRuns,
   ...mediaRuns,
   ...olderRuns,
@@ -348,7 +414,10 @@ export const backupAnswers: ExtraAnswers = {
   'internal.admin.backups.sources': () => ({ sources }),
   'internal.admin.backups.jobs': () => ({ jobs: sampleJobs }),
   'internal.admin.backups.runs': (params) => ({
-    runs: (params as { id: number }).id === 2 ? documentsRuns : [],
+    runs:
+      (params as { id: number }).id === 2
+        ? documentsRuns
+        : history.filter((entry) => entry.jobId === (params as { id: number }).id),
   }),
   'internal.admin.backups.versions': (params) => ({
     versions: (params as { id: number }).id === 2 ? sampleVersions : [],

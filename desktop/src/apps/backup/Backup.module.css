@@ -997,3 +997,82 @@
   color: var(--color-text-muted);
   font-size: var(--font-size-sm);
 }
+
+.chooser {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.chooserCard {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-card);
+  background: var(--color-surface-1);
+  cursor: pointer;
+}
+
+.chooserCard:hover {
+  background: var(--color-surface-hover);
+}
+
+.chooserCard:has(input:checked) {
+  border-color: var(--color-accent);
+  outline: 1px solid var(--color-accent);
+  background: var(--color-accent-subtle);
+}
+
+.chooserCard:has(input:focus-visible) {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.chooserWay {
+  display: flex;
+  align-self: center;
+  align-items: center;
+  gap: var(--space-3);
+  margin-block-end: var(--space-2);
+  color: var(--color-text-muted);
+}
+
+.chooserBox,
+.chooserPlace {
+  display: grid;
+  width: 4rem;
+  height: 4rem;
+  place-items: center;
+  border-radius: var(--radius-sm);
+}
+
+.chooserBox {
+  background: var(--color-accent);
+}
+
+.chooserPlace {
+  background: var(--color-surface-2);
+  color: var(--color-text);
+}
+
+.chooserTitle {
+  font-weight: var(--font-weight-medium);
+}
+
+.chooserText {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+
+.chooserPoints {
+  margin: 0;
+  padding-inline-start: var(--space-4);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}

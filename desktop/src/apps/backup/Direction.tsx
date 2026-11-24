@@ -1,7 +1,13 @@
 import { cx } from '@pithyx/ui';
 import { useTranslation } from 'react-i18next';
 import { LogoMark } from '../../ui/Logo';
-import { IconArrowRight, IconCloudUpload, IconDownload, IconUpload } from '../../ui/icons';
+import {
+  IconArrowRight,
+  IconCloudUpload,
+  IconDownload,
+  IconServer2,
+  IconUpload,
+} from '../../ui/icons';
 import styles from './Backup.module.css';
 
 /** Where a backup goes (D416): `out` from this box to a target, `in` from a server onto this box. */
@@ -24,16 +30,42 @@ export function DirectionTag({ direction }: { direction: Direction }) {
   );
 }
 
-/** "source -> destination" with the box's mark for the box and a cloud for a target. */
-export function Route({ from, to }: { from: string; to: string }) {
+/** A backup's route: what it reads, where that goes and which way. */
+export interface RouteParts {
+  from: string;
+  to: string;
+  direction: Direction;
+}
+
+/**
+ * "source -> destination": from the box (its mark) to a target (a cloud), or from a server (a server) onto the box (its
+ * mark).
+ */
+export function Route({
+  from,
+  to,
+  direction = 'out',
+}: {
+  from: string;
+  to: string;
+  direction?: Direction;
+}) {
   const { t } = useTranslation('backup');
   return (
     <span className={styles.route}>
-      <LogoMark size={14} />
+      {direction === 'out' ? (
+        <LogoMark size={14} />
+      ) : (
+        <IconServer2 size={14} stroke={1.75} aria-hidden />
+      )}
       <span className={styles.routeName}>{from}</span>
       <IconArrowRight size={14} stroke={1.75} aria-hidden className={styles.routeArrow} />
       <span className={styles.visuallyHidden}>{t('route.to')}</span>
-      <IconCloudUpload size={14} stroke={1.75} aria-hidden />
+      {direction === 'out' ? (
+        <IconCloudUpload size={14} stroke={1.75} aria-hidden />
+      ) : (
+        <LogoMark size={14} />
+      )}
       <span className={styles.routeName}>{to}</span>
     </span>
   );

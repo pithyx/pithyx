@@ -145,6 +145,11 @@ public sealed class BackupPullApiTests : IAsyncLifetime
         Assert.Equal((1, 1, 1), (version.GetProperty("filesAdded").GetInt64(), version.GetProperty("filesChanged").GetInt64(), version.GetProperty("filesRemoved").GetInt64()));
         Assert.Equal(3, version.GetProperty("changes").GetArrayLength());
         Assert.Equal(id, (await JobAsync(id)).GetProperty("lastRun").GetProperty("jobId").GetInt64());
+        // The copy is on this box, so the days count the run and its data but nothing on a target.
+        var today = JsonDocument.Parse(await _admin.GetStringAsync("/api/backups/days", Token)).RootElement.GetProperty("days").EnumerateArray().Last();
+        Assert.Equal(1, today.GetProperty("warnings").GetInt32());
+        Assert.Equal(4096, today.GetProperty("addedBytes").GetInt64());
+        Assert.Equal(JsonValueKind.Null, today.GetProperty("repositoryBytes").ValueKind);
     }
 
     [Fact]
@@ -260,7 +265,8 @@ public sealed class BackupPullApiTests : IAsyncLifetime
         name,
         sources = Array.Empty<object>(),
         schedule = "0 2 * * *",
-        enabled = true,
+        // Off, so the scheduler never starts a run of its own while a test advances the clock past 02:00.
+        enabled = false,
         retention = new { last, hourly = 0, daily = last == 0 ? 7 : 0, weekly = 0, monthly = 0, yearly = 0 },
     };
 

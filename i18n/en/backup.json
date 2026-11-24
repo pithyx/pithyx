@@ -78,7 +78,10 @@
     "runningCount": "{count, plural, one {# running} other {# running}}",
     "out": "From this box",
     "jobs": "Box backups",
-    "targets": "Targets"
+    "targets": "Targets",
+    "in": "Onto this box",
+    "pulls": "Server backups",
+    "servers": "Servers"
   },
   "jobs": {
     "title": "Box backups",
@@ -248,10 +251,12 @@
     "in": "Onto this box"
   },
   "route": {
-    "to": "to"
+    "to": "to",
+    "server": "{server}: {paths}"
   },
   "kinds": {
-    "versioned": "Versioned"
+    "versioned": "Versioned",
+    "pull": "Versioned"
   },
   "schedule": {
     "off": "Only by hand",
@@ -339,6 +344,7 @@
     "protected": "Protected data",
     "protectedIn": "{count, plural, one {in # backup} other {in # backups}}",
     "protectedOut": "{size} from this box",
+    "protectedOnto": "{size} onto this box",
     "runs": {
       "week": "Runs of the last 7 days",
       "month": "Runs of the last 30 days",
@@ -510,5 +516,96 @@
     "runningPercent": "Restoring… {percent} %",
     "done": "Restored.",
     "doneCounts": "Restored: {restored} put back, {replaced} replaced, {renamed} kept next to the current one, {skipped} left out."
+  },
+  "pulls": {
+    "title": "Server backups",
+    "toolbar": "Server backups",
+    "add": "Add server backup",
+    "list": "Server backups",
+    "intro": "Folders of Linux servers that this box pulls over SSH with rsync into a folder of a shared folder, keeping versions as ZFS snapshots. Nothing of Pithyx runs on the server.",
+    "emptyTitle": "No server backup yet",
+    "empty": "Add the first backup of a Linux server onto this box.",
+    "noTargetsTitle": "No server yet",
+    "noTargets": "A server backup needs a server to read from. Add a server first.",
+    "runNow": "Pull now",
+    "server": "Server",
+    "paths": "Folders on the server",
+    "destination": "Folder on this box",
+    "dataset": "Dataset",
+    "options": "Options",
+    "deleteOn": "Removes what the server removed",
+    "deleteOff": "Keeps what the server removed",
+    "owners": {
+      "server": "Owners and permissions as on the server",
+      "box": "Owned by the box"
+    }
+  },
+  "servers": {
+    "title": "Servers",
+    "toolbar": "Servers",
+    "add": "Add server",
+    "list": "Servers",
+    "loading": "Loading servers",
+    "intro": "A server is a Linux machine whose folders the box pulls onto itself over SSH. Each server gets its own key, which may only read with rsync below one folder, and the box connects only to the server whose host key you confirmed.",
+    "emptyTitle": "No server yet",
+    "empty": "Add the Linux server whose folders the box should back up.",
+    "readsBelow": "Reads below {path}",
+    "authorizedKeys": "Line for authorized_keys",
+    "authorizedKeysHint": "Add this line to the file .ssh/authorized_keys of the user on the server. With it the key can only read with rrsync below {path}: no shell, no writing, no forwarding. The server needs rsync and its helper rrsync, which current distributions install with rsync.",
+    "copy": "Copy line",
+    "testPassed": "The box signed in and rsync listed the folder."
+  },
+  "serverForm": {
+    "path": "Folder the key may read",
+    "pathHint": "Absolute and without spaces, / for the whole server. The backups choose folders below it.",
+    "userHint": "To keep every file with its owners, sign in as root; the key stays read-only either way."
+  },
+  "addServer": {
+    "title": "Add server",
+    "saved": "{name} is saved. Add its line to authorized_keys on the server, then test the connection."
+  },
+  "deleteServer": {
+    "text": "The box forgets the server and its key. Remove its line from the server's authorized_keys as well; the server backups already on this box stay."
+  },
+  "pullForm": {
+    "addTitle": "Add server backup",
+    "create": "Create",
+    "server": "Server",
+    "serverPlaceholder": "Choose a server",
+    "paths": "Folders on the server",
+    "pathsHint": "One absolute path per line, for example /etc or /srv/www, below the folder the server's key may read. Each lands in the folder on this box with its full path.",
+    "share": "Shared folder",
+    "sharePlaceholder": "Choose a shared folder",
+    "folder": "Folder name",
+    "folderHint": "The box makes this folder in the shared folder as a dataset of its own. Letters, digits, dots, dashes and underscores, no spaces.",
+    "readable": "Everyone who may open the shared folder can read the copied files. Choose one only administrators can open for a server with secrets.",
+    "fixed": "Pulls from {server} into {destination}. The server and the folder on this box stay; for others, add a new backup.",
+    "delete": "Remove what was removed on the server",
+    "deleteHint": "Off keeps files on this box that are gone on the server. The versions keep them either way.",
+    "owners": "Owners and permissions",
+    "ownersServer": "As on the server: user and group ids, permissions, ACLs and extended attributes",
+    "ownersBox": "Owned by the box, with the permissions of the shared folder",
+    "schedule": "Pulls",
+    "excludesHint": "One rsync pattern per line, for example *.tmp or /var/cache/."
+  },
+  "deleteJobPull": {
+    "text": "The box forgets the backup and its runs. The folder {destination} with its versions stays unless you delete it too.",
+    "data": "Also delete the folder and all its versions",
+    "dataHint": "Deletes the dataset {dataset} with every snapshot. This cannot be undone."
+  },
+  "chooser": {
+    "title": "What do you want to back up?",
+    "out": {
+      "title": "Back up folders of this box",
+      "text": "Shared folders and homes go to a target outside this box.",
+      "point1": "to an SFTP server or a second box",
+      "point2": "encrypted, with versions"
+    },
+    "in": {
+      "title": "Back up a Linux server onto this box",
+      "text": "The box pulls folders of a server over SSH and keeps them with versions on a pool.",
+      "point1": "the server needs only SSH and rsync",
+      "point2": "earlier versions right in Files"
+    }
   }
 }

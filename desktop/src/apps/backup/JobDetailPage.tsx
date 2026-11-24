@@ -38,6 +38,7 @@ import { Route } from './Direction';
 import { RETENTION_KEYS } from './JobDialogs';
 import {
   JobDetails,
+  PullFacts,
   RunButtons,
   RunCommandErrors,
   RunsTable,
@@ -53,7 +54,7 @@ import styles from './Backup.module.css';
 /**
  * A backup's own page (#404, D416): the path back to the list, its route, and tabs for its state, its versions, its
  * schedule and retention, its folders, its settings and every run. The toolbar runs, checks, edits and deletes it and
- * shows its key again.
+ * shows its key again. A server backup (#396) has no key and no check, and its versions are snapshots on this box.
  */
 export function JobDetailPage({
   app,
@@ -76,6 +77,7 @@ export function JobDetailPage({
   const { route, sourcePath } = useSourceNames(app);
   const commands = useRunCommands(app);
   const running = runningOf(job);
+  const pull = job.pull;
   const edit = (
     <Button
       size="sm"
@@ -92,12 +94,12 @@ export function JobDetailPage({
     <div className={styles.page}>
       <nav className={styles.breadcrumb} aria-label={t('detail.breadcrumb')}>
         <button type="button" className={styles.breadcrumbLink} onClick={onBack}>
-          {t('jobs.title')}
+          {t(pull === null ? 'jobs.title' : 'pulls.title')}
         </button>
         <IconChevronRight size={14} stroke={1.75} aria-hidden />
         <span aria-current="page">{job.settings.name}</span>
       </nav>
-      <Route from={route(job)} to={target?.name ?? ''} />
+      <Route {...route(job, target)} />
       <Toolbar aria-label={t('detail.toolbar')}>
         <RunButtons job={job} commands={commands} />
         <ToolbarSeparator />
@@ -118,15 +120,19 @@ export function JobDetailPage({
           <IconTrash size={18} stroke={1.75} aria-hidden />
           {t('jobs.delete')}
         </Button>
-        <ToolbarSeparator />
-        <Button
-          onPress={() => {
-            onOpen('revealKey');
-          }}
-        >
-          <IconKey size={18} stroke={1.75} aria-hidden />
-          {t('detail.key')}
-        </Button>
+        {pull === null && (
+          <>
+            <ToolbarSeparator />
+            <Button
+              onPress={() => {
+                onOpen('revealKey');
+              }}
+            >
+              <IconKey size={18} stroke={1.75} aria-hidden />
+              {t('detail.key')}
+            </Button>
+          </>
+        )}
       </Toolbar>
       <RunCommandErrors commands={commands} />
       <Tabs defaultSelectedKey="overview">
@@ -144,13 +150,13 @@ export function JobDetailPage({
             job={job}
             target={target}
             board={board}
-            route={route(job)}
+            route={route(job, target)}
             sourcePath={sourcePath}
             withHead={false}
           />
         </TabPanel>
         <TabPanel id="versions">
-          <VersionsPanel app={app} job={job} onBrowse={onBrowse} />
+          <VersionsPanel app={app} job={job} {...(pull === null ? { onBrowse } : {})} />
         </TabPanel>
         <TabPanel id="schedule">
           <ScheduleFacts job={job} />
@@ -158,16 +164,22 @@ export function JobDetailPage({
         </TabPanel>
         <TabPanel id="sources">
           <dl className={styles.facts}>
-            <dt>{t('jobs.sources')}</dt>
-            <dd>
-              <ul className={styles.plainList}>
-                {job.settings.sources.map((source) => (
-                  <li key={`${String(source.shareId)}/${source.path}`} className={styles.mono}>
-                    {sourcePath(source)}
-                  </li>
-                ))}
-              </ul>
-            </dd>
+            {pull === null ? (
+              <>
+                <dt>{t('jobs.sources')}</dt>
+                <dd>
+                  <ul className={styles.plainList}>
+                    {job.settings.sources.map((source) => (
+                      <li key={`${String(source.shareId)}/${source.path}`} className={styles.mono}>
+                        {sourcePath(source)}
+                      </li>
+                    ))}
+                  </ul>
+                </dd>
+              </>
+            ) : (
+              <PullFacts job={job} pull={pull} target={target} sourcePath={sourcePath} />
+            )}
             <dt>{t('jobForm.excludes')}</dt>
             <dd>
               {(job.settings.excludes ?? []).length === 0 ? (
@@ -215,15 +227,19 @@ function ScheduleFacts({ job }: { job: BackupJob }) {
       <dd>{job.nextRunAt === null ? t('jobs.byHand') : when(job.nextRunAt)}</dd>
       <dt>{t('jobForm.retention')}</dt>
       <dd>{kept.length === 0 ? t('detail.keepAll') : kept.join(', ')}</dd>
-      <dt>{t('jobs.check')}</dt>
-      <dd>
-        {checkSchedule == null
-          ? t('jobs.noCheck')
-          : t('detail.checkValue', {
-              schedule: cronText(checkSchedule),
-              percent: checkReadPercent,
-            })}
-      </dd>
+      {job.kind !== 'pull' && (
+        <>
+          <dt>{t('jobs.check')}</dt>
+          <dd>
+            {checkSchedule == null
+              ? t('jobs.noCheck')
+              : t('detail.checkValue', {
+                  schedule: cronText(checkSchedule),
+                  percent: checkReadPercent,
+                })}
+          </dd>
+        </>
+      )}
       {job.nextCheckAt !== null && (
         <>
           <dt>{t('detail.nextCheck')}</dt>
@@ -240,7 +256,7 @@ function ScheduleFacts({ job }: { job: BackupJob }) {
   );
 }
 
-/** Where the backup goes and how fast it may use the network. */
+/** Where the backup goes (a server backup: where it comes from) and how fast it may use the network. */
 function SettingsFacts({ job, target }: { job: BackupJob; target: BackupTarget | undefined }) {
   const { t } = useTranslation('backup');
   const locale = useFormatLocale();
@@ -248,7 +264,7 @@ function SettingsFacts({ job, target }: { job: BackupJob; target: BackupTarget |
     kib === 0 ? t('detail.noLimit') : t('detail.limit', { rate: formatBytes(kib * 1024, locale) });
   return (
     <dl className={styles.facts}>
-      <dt>{t('jobForm.target')}</dt>
+      <dt>{t(job.kind === 'pull' ? 'pulls.server' : 'jobForm.target')}</dt>
       <dd>
         {target === undefined
           ? ''
@@ -261,12 +277,25 @@ function SettingsFacts({ job, target }: { job: BackupJob; target: BackupTarget |
               }),
             })}
       </dd>
-      <dt>{t('jobs.repository')}</dt>
-      <dd className={styles.mono}>{job.repository}</dd>
+      {job.kind === 'pull' ? (
+        <>
+          <dt>{t('pulls.dataset')}</dt>
+          <dd className={styles.mono}>{job.dataset ?? ''}</dd>
+        </>
+      ) : (
+        <>
+          <dt>{t('jobs.repository')}</dt>
+          <dd className={styles.mono}>{job.repository}</dd>
+        </>
+      )}
       <dt>{t('jobForm.enabled')}</dt>
       <dd>{t(job.settings.enabled ? 'detail.yes' : 'detail.no')}</dd>
-      <dt>{t('detail.upload')}</dt>
-      <dd>{limit(job.settings.uploadLimitKib)}</dd>
+      {job.kind !== 'pull' && (
+        <>
+          <dt>{t('detail.upload')}</dt>
+          <dd>{limit(job.settings.uploadLimitKib)}</dd>
+        </>
+      )}
       <dt>{t('detail.download')}</dt>
       <dd>{limit(job.settings.downloadLimitKib)}</dd>
     </dl>
@@ -305,7 +334,8 @@ function VersionsPanel({
 }: {
   app: PithyxApp;
   job: BackupJob;
-  onBrowse: (version: BackupVersion) => void;
+  /** Opens the restore page on a version; left out where the restore page cannot browse the backup. */
+  onBrowse?: (version: BackupVersion) => void;
 }) {
   const { t } = useTranslation('backup');
   const locale = useFormatLocale();
@@ -394,14 +424,19 @@ function VersionsPanel({
         onRowAction={(key) => {
           const version = list.find((entry) => entry.id === Number(key));
           if (version !== undefined) {
-            onBrowse(version);
+            onBrowse?.(version);
           }
         }}
         defaultSort={{ column: 'time', direction: 'descending' }}
         emptyState={versions.isPending ? t('versions.loading') : t('versions.empty')}
         details={
           selected === undefined ? undefined : (
-            <VersionDetails app={app} job={job} version={selected} onBrowse={onBrowse} />
+            <VersionDetails
+              app={app}
+              job={job}
+              version={selected}
+              {...(onBrowse === undefined ? {} : { onBrowse })}
+            />
           )
         }
         detailsLabel={t('versions.details')}
@@ -422,7 +457,7 @@ function VersionDetails({
   app: PithyxApp;
   job: BackupJob;
   version: BackupVersion;
-  onBrowse: (version: BackupVersion) => void;
+  onBrowse?: (version: BackupVersion) => void;
 }) {
   const { t } = useTranslation('backup');
   const locale = useFormatLocale();
@@ -483,15 +518,17 @@ function VersionDetails({
       )}
       {protect.isError && <ErrorNotice error={describeProblem(protect.error)} />}
       <div className={styles.row}>
-        <Button
-          size="sm"
-          onPress={() => {
-            onBrowse(version);
-          }}
-        >
-          <IconRestore size={16} stroke={1.75} aria-hidden />
-          {t('versions.browse')}
-        </Button>
+        {onBrowse !== undefined && (
+          <Button
+            size="sm"
+            onPress={() => {
+              onBrowse(version);
+            }}
+          >
+            <IconRestore size={16} stroke={1.75} aria-hidden />
+            {t('versions.browse')}
+          </Button>
+        )}
         <Button
           size="sm"
           isDisabled={protect.isPending}
