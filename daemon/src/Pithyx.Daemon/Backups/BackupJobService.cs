@@ -29,11 +29,13 @@ public sealed partial class BackupJobService(
     SqliteConnectionFactory connections,
     BackupTargetService targets,
     BackupRestic restic,
+    BackupBrowser browser,
     ShareService shares,
     ICommandRunner commands,
     JobService jobs,
     NotificationService notifications,
     AuditLog audit,
+    AccountOptions accounts,
     IHostApplicationLifetime lifetime,
     TimeProvider time,
     ILogger<BackupJobService> logger)
@@ -240,10 +242,11 @@ public sealed partial class BackupJobService(
     {
         await using var connection = await connections.OpenAsync(cancellationToken);
         var row = await RowAsync(connection, id, cancellationToken);
-        if (_active.ContainsKey(id))
+        if (_active.ContainsKey(id) || Restoring(id))
         {
             throw Busy(row.Name);
         }
+        await browser.CloseAsync(id);
         await connection.ExecuteAsync(new CommandDefinition("DELETE FROM backup_jobs WHERE id = @id", new { id }, cancellationToken: cancellationToken));
         await audit.RecordAsync(caller, JobDeleted, row.Name, new Dictionary<string, string> { ["repository"] = row.Repository }, cancellationToken);
         LogDeleted(id);
@@ -353,6 +356,12 @@ public sealed partial class BackupJobService(
         }
         try
         {
+            // restic's lock of a restore or a mount would hold off the prune; a browse session closes, a restore wins.
+            if (Restoring(id))
+            {
+                throw Busy(row.Name);
+            }
+            await browser.CloseAsync(id);
             return await jobs.StartAsync(
                 JobService.Box,
                 kind == BackupRunKind.Backup ? RunKind : CheckKind,

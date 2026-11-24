@@ -74,6 +74,7 @@ public sealed record BackupJobKey(string Key);
 /// <param name="AddedBytes">Bytes it added to the repository.</param>
 /// <param name="FilesAdded">Files new against the version before.</param>
 /// <param name="FilesChanged">Files changed against the version before.</param>
+/// <param name="Paths">The folders it holds, as restic stored them.</param>
 public sealed record ResticSnapshot(
     string Id,
     string Origin,
@@ -83,7 +84,8 @@ public sealed record ResticSnapshot(
     long? Bytes,
     long? AddedBytes,
     long? FilesAdded,
-    long? FilesChanged);
+    long? FilesChanged,
+    IReadOnlyList<string> Paths);
 
 /// <summary>What <c>restic diff</c> found between two versions.</summary>
 /// <param name="Changes">The first files that changed, with restic's paths.</param>
@@ -230,7 +232,10 @@ public static class ResticVersions
             summary is { } bytes ? Number(bytes, "total_bytes_processed") : null,
             summary is { } added ? Number(added, "data_added_packed") : null,
             summary is { } fresh ? Number(fresh, "files_new") : null,
-            summary is { } changed ? Number(changed, "files_changed") : null);
+            summary is { } changed ? Number(changed, "files_changed") : null,
+            snapshot.TryGetProperty("paths", out var paths) && paths.ValueKind == JsonValueKind.Array
+                ? [.. paths.EnumerateArray().Select(path => path.GetString()).OfType<string>()]
+                : []);
     }
 
     // restic names each rule that kept a version: "last snapshot", "daily snapshot", "oldest weekly snapshot",

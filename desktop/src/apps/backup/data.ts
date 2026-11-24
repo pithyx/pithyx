@@ -13,14 +13,18 @@ import {
 
 export type BoardJob = components['schemas']['Job'];
 
-/** The backup runs and checks on the job board, by their board id; administrators get the box's jobs on the topic. */
+/**
+ * The backup runs and checks on the job board, by their board id; administrators get the box's jobs on the topic.
+ * Restores are no runs: the restore page and the notifications follow them.
+ */
 export function useActiveRuns(): ReadonlyMap<number, BoardJob> {
   const jobs = useRealtime((state) => state.data.jobs?.jobs);
   return new Map(
     (jobs ?? [])
       .filter(
         (job) =>
-          job.kind.startsWith('backup.') && (job.state === 'running' || job.state === 'queued'),
+          (job.kind === 'backup.run' || job.kind === 'backup.check') &&
+          (job.state === 'running' || job.state === 'queued'),
       )
       .map((job) => [job.id, job]),
   );

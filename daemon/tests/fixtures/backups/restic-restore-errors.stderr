@@ -1,0 +1,2 @@
+{"message_type":"error","error":{"message":"mkdir /tank/shares/docs/.pithyx-restore-12/r/tank/shares/docs/a: permission denied"},"during":"restore","item":"/tank/shares/docs/a"}
+{"message_type":"error","error":{"message":"mkdir /tank/shares/docs/.pithyx-restore-12/r/tank/shares/docs/a: permission denied"},"during":"restore","item":"/tank/shares/docs/a/x.txt"}

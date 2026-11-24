@@ -16,7 +16,14 @@ import { useTranslation } from 'react-i18next';
 import { formatBytes } from '../../desktop/format';
 import { ErrorNotice } from '../../errors/ErrorNotice';
 import { useFormatLocale } from '../../i18n';
-import { IconChevronRight, IconKey, IconLock, IconPencil, IconTrash } from '../../ui/icons';
+import {
+  IconChevronRight,
+  IconKey,
+  IconLock,
+  IconPencil,
+  IconRestore,
+  IconTrash,
+} from '../../ui/icons';
 import {
   backupsCall,
   versionsKey,
@@ -53,12 +60,15 @@ export function JobDetailPage({
   job,
   target,
   onBack,
+  onBrowse,
   onOpen,
 }: {
   app: PithyxApp;
   job: BackupJob;
   target: BackupTarget | undefined;
   onBack: () => void;
+  /** Opens the restore page on a version. */
+  onBrowse: (version: BackupVersion) => void;
   onOpen: (kind: 'edit' | 'delete' | 'revealKey') => void;
 }) {
   const { t } = useTranslation('backup');
@@ -140,7 +150,7 @@ export function JobDetailPage({
           />
         </TabPanel>
         <TabPanel id="versions">
-          <VersionsPanel app={app} job={job} />
+          <VersionsPanel app={app} job={job} onBrowse={onBrowse} />
         </TabPanel>
         <TabPanel id="schedule">
           <ScheduleFacts job={job} />
@@ -288,7 +298,15 @@ function KeepTags({ version }: { version: BackupVersion }) {
  * The versions in the backup's repository as the box stored them after its last run: a chart of what each added and
  * its size, the versions with the reasons the retention kept them, and the selected one's changes and protection.
  */
-function VersionsPanel({ app, job }: { app: PithyxApp; job: BackupJob }) {
+function VersionsPanel({
+  app,
+  job,
+  onBrowse,
+}: {
+  app: PithyxApp;
+  job: BackupJob;
+  onBrowse: (version: BackupVersion) => void;
+}) {
   const { t } = useTranslation('backup');
   const locale = useFormatLocale();
   const [selectedId, setSelectedId] = useState<number | null>(null);
@@ -373,11 +391,17 @@ function VersionsPanel({ app, job }: { app: PithyxApp; job: BackupJob }) {
           const [first] = keys === 'all' ? [] : [...keys];
           setSelectedId(first === undefined ? null : Number(first));
         }}
+        onRowAction={(key) => {
+          const version = list.find((entry) => entry.id === Number(key));
+          if (version !== undefined) {
+            onBrowse(version);
+          }
+        }}
         defaultSort={{ column: 'time', direction: 'descending' }}
         emptyState={versions.isPending ? t('versions.loading') : t('versions.empty')}
         details={
           selected === undefined ? undefined : (
-            <VersionDetails app={app} job={job} version={selected} />
+            <VersionDetails app={app} job={job} version={selected} onBrowse={onBrowse} />
           )
         }
         detailsLabel={t('versions.details')}
@@ -393,10 +417,12 @@ function VersionDetails({
   app,
   job,
   version,
+  onBrowse,
 }: {
   app: PithyxApp;
   job: BackupJob;
   version: BackupVersion;
+  onBrowse: (version: BackupVersion) => void;
 }) {
   const { t } = useTranslation('backup');
   const locale = useFormatLocale();
@@ -457,6 +483,15 @@ function VersionDetails({
       )}
       {protect.isError && <ErrorNotice error={describeProblem(protect.error)} />}
       <div className={styles.row}>
+        <Button
+          size="sm"
+          onPress={() => {
+            onBrowse(version);
+          }}
+        >
+          <IconRestore size={16} stroke={1.75} aria-hidden />
+          {t('versions.browse')}
+        </Button>
         <Button
           size="sm"
           isDisabled={protect.isPending}

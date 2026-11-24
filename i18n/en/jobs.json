@@ -72,6 +72,7 @@
     "homes_move": "Moving home folders to another pool",
     "homes_release": "Moving a home folder into a shared folder",
     "backup_run": "Backing up",
-    "backup_check": "Checking a backup"
+    "backup_check": "Checking a backup",
+    "backup_restore": "Restoring from a backup"
   }
 }

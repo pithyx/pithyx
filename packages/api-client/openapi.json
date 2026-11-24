@@ -8986,6 +8986,253 @@
         }
       }
     },
+    "/api/backups/jobs/{id}/browse": {
+      "post": {
+        "tags": [
+          "Backups"
+        ],
+        "description": "Administrators only. Opens the job's repository for browsing, or keeps an open session for another ten minutes: reads its versions again and mounts it read-only on the box. A session ends ten minutes after its last request and before a run, a check or a change of a version; reading then answers backup.browse.closed. Refused with backup.job.busy while a run or check goes on.",
+        "operationId": "BrowseBackupJob",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/backups/jobs/{id}/versions/{versionId}/files": {
+      "get": {
+        "tags": [
+          "Backups"
+        ],
+        "description": "Administrators only. A folder of a version (path as the shared folder's or home's name and the path below it; empty for the folders the version holds), each entry marked added or modified against the version before. Needs a browse session.",
+        "operationId": "ListBackupVersionFiles",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "versionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "path",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BackupFileList"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/backups/jobs/{id}/history": {
+      "get": {
+        "tags": [
+          "Backups"
+        ],
+        "description": "Administrators only. A file or folder in every version of the job, newest first, with size, time, owner and mode, and as it is on the box now. Needs a browse session.",
+        "operationId": "GetBackupFileHistory",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "path",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BackupFileHistory"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/backups/jobs/{id}/versions/{versionId}/content": {
+      "get": {
+        "tags": [
+          "Backups"
+        ],
+        "description": "Administrators only. A file of a version, or a folder as a zip of its files and folders (symlinks and devices left out). Logged. Needs a browse session.",
+        "operationId": "DownloadBackupVersionEntry",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "versionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "path",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/backups/jobs/{id}/restore": {
+      "post": {
+        "tags": [
+          "Backups"
+        ],
+        "description": "Administrators only. Restores files and folders of a version as a box job of the caller: where they were (with the folders above them) or into a folder, with owners, modes, ACLs and times. Folders in place are merged; a file in place is kept next to the restored one (keepBoth, the restored one named after the version's time), replaced (overwrite) or left (skip). Logged. Refused with backup.job.busy while a run or check goes on.",
+        "operationId": "RestoreBackupVersion",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BackupRestoreRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Job"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/backups/jobs/{id}/key": {
       "post": {
         "tags": [
@@ -13802,6 +14049,214 @@
         },
         "description": "The days of a period, oldest first, with every day in it."
       },
+      "BackupFileCurrent": {
+        "required": [
+          "kind",
+          "size",
+          "modified"
+        ],
+        "type": "object",
+        "properties": {
+          "kind": {
+            "description": "File, folder, symlink or other.",
+            "$ref": "#/components/schemas/BackupFileKind"
+          },
+          "size": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "Bytes of a file.",
+            "format": "int64"
+          },
+          "modified": {
+            "type": "string",
+            "description": "When it was last changed, UTC.",
+            "format": "date-time"
+          }
+        },
+        "description": "The file or folder on the box now."
+      },
+      "BackupFileEntry": {
+        "required": [
+          "name",
+          "kind",
+          "size",
+          "modified",
+          "change"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Its name; at the top of a version the folder the backup holds, as the shared folder's or home's name and the path below it."
+          },
+          "kind": {
+            "description": "File, folder, symlink or other.",
+            "$ref": "#/components/schemas/BackupFileKind"
+          },
+          "size": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "Bytes of a file; null for anything else.",
+            "format": "int64"
+          },
+          "modified": {
+            "type": "string",
+            "description": "When it was last changed, UTC.",
+            "format": "date-time"
+          },
+          "change": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Against the version before: added or modified; null when unchanged, or for the oldest version.",
+                "$ref": "#/components/schemas/BackupChangeKind"
+              }
+            ]
+          }
+        },
+        "description": "An entry of a folder in a version."
+      },
+      "BackupFileHistory": {
+        "required": [
+          "path",
+          "current",
+          "versions"
+        ],
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "As in string BackupFileList.Path."
+          },
+          "current": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "It on the box now; null when it is not there.",
+                "$ref": "#/components/schemas/BackupFileCurrent"
+              }
+            ],
+            "description": "The file or folder on the box now."
+          },
+          "versions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BackupFileVersion"
+            },
+            "description": "Newest first, one per version."
+          }
+        },
+        "description": "A file or folder in every version of a backup."
+      },
+      "BackupFileKind": {
+        "enum": [
+          "file",
+          "folder",
+          "symlink",
+          "other"
+        ],
+        "description": "What an entry of a version is."
+      },
+      "BackupFileList": {
+        "required": [
+          "path",
+          "compared",
+          "entries"
+        ],
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "The folder, as the shared folder's or home's name and the path below it; empty at the top."
+          },
+          "compared": {
+            "type": "boolean",
+            "description": "Whether BackupChangeKind? BackupFileEntry.Change compares with a version before."
+          },
+          "entries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BackupFileEntry"
+            },
+            "description": "Its entries by name."
+          }
+        },
+        "description": "A folder of a version."
+      },
+      "BackupFileVersion": {
+        "required": [
+          "versionId",
+          "time",
+          "kind",
+          "size",
+          "modified",
+          "owner",
+          "mode"
+        ],
+        "type": "object",
+        "properties": {
+          "versionId": {
+            "type": "integer",
+            "description": "The version.",
+            "format": "int64"
+          },
+          "time": {
+            "type": "string",
+            "description": "When the version was made, UTC.",
+            "format": "date-time"
+          },
+          "kind": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Null when the version does not have it.",
+                "$ref": "#/components/schemas/BackupFileKind"
+              }
+            ]
+          },
+          "size": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "Bytes of a file.",
+            "format": "int64"
+          },
+          "modified": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "When it was last changed, UTC.",
+            "format": "date-time"
+          },
+          "owner": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Its owner's user name, or the uid without an account."
+          },
+          "mode": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Its permission bits, octal as `ls` counts them (for example `0640`)."
+          }
+        },
+        "description": "A file or folder in one version, or its absence there."
+      },
       "BackupHostKey": {
         "required": [
           "type",
@@ -14166,6 +14621,72 @@
           "protected"
         ],
         "description": "Why the retention kept a version."
+      },
+      "BackupRestoreConflict": {
+        "enum": [
+          "keepBoth",
+          "overwrite",
+          "skip"
+        ],
+        "description": "What a restore does with a file that is already in place.",
+        "default": "keepBoth"
+      },
+      "BackupRestoreDestination": {
+        "required": [
+          "shareId",
+          "path"
+        ],
+        "type": "object",
+        "properties": {
+          "shareId": {
+            "type": "integer",
+            "description": "The shared folder or home.",
+            "format": "int64"
+          },
+          "path": {
+            "type": "string",
+            "description": "The folder in it, empty for its top."
+          }
+        },
+        "description": "Where a restore puts the entries."
+      },
+      "BackupRestoreRequest": {
+        "required": [
+          "versionId",
+          "paths"
+        ],
+        "type": "object",
+        "properties": {
+          "versionId": {
+            "type": "integer",
+            "description": "The version.",
+            "format": "int64"
+          },
+          "paths": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "1 to 1000 files or folders, as in string BackupFileList.Path."
+          },
+          "destination": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Null puts each where it was, with the folders above it; otherwise each goes into this folder under its name.",
+                "$ref": "#/components/schemas/BackupRestoreDestination"
+              }
+            ],
+            "description": "Where a restore puts the entries."
+          },
+          "conflict": {
+            "description": "What happens with a file that is already there (keep both by default); folders are merged.",
+            "$ref": "#/components/schemas/BackupRestoreConflict"
+          }
+        },
+        "description": "Restores entries of a version."
       },
       "BackupRetention": {
         "required": [
@@ -16277,6 +16798,7 @@
           "auth.totp.not_enrolled",
           "auth.username.invalid",
           "auth.username.reserved",
+          "backup.browse.closed",
           "backup.check.failed",
           "backup.host_key.scan_failed",
           "backup.job.busy",
@@ -16287,6 +16809,7 @@
           "backup.repository.locked",
           "backup.repository.not_found",
           "backup.repository.wrong_key",
+          "backup.restore.failed",
           "backup.run.failed",
           "backup.source.unavailable",
           "backup.source.unsupported",

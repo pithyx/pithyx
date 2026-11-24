@@ -2410,6 +2410,10 @@
       },
       "expected": "The key could not be written to the USB stick PXKEYS (No space left on device). Do not rely on this stick: check it on a computer, or use another one, and keep the key you stored."
     },
+    "backup.browse.closed": {
+      "params": {},
+      "expected": "Browsing this backup has ended. Open the version again."
+    },
     "backup.check.failed": {
       "params": {},
       "expected": "The check found errors in the repository. Run another check; if it fails again, start a new repository for this backup."
@@ -2455,6 +2459,14 @@
     "backup.repository.wrong_key": {
       "params": {},
       "expected": "The key does not open this repository."
+    },
+    "backup.restore.failed": {
+      "params": {
+        "reason": "errors",
+        "count": 3,
+        "path": ""
+      },
+      "expected": "The restore did not finish (restic could not restore 3 entries; the rest is in place and the Log Center names them)."
     },
     "backup.run.failed": {
       "params": {

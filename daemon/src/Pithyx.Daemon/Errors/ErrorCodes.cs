@@ -468,6 +468,13 @@ public static class ErrorCodes
     [ErrorStatus(HttpStatusCode.BadRequest)]
     public const string AuthUsernameReserved = "auth.username.reserved";
 
+    /// <summary>
+    /// The backup's browse session ended (after ten minutes without a request, or for a run, a check or a change of a
+    /// version). Open it again with the browse request.
+    /// </summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string BackupBrowseClosed = "backup.browse.closed";
+
     /// <summary>The integrity check found damage in the repository; restic's output is in the Log Center.</summary>
     [ErrorStatus(HttpStatusCode.Conflict)]
     public const string BackupCheckFailed = "backup.check.failed";
@@ -516,6 +523,15 @@ public static class ErrorCodes
     /// </summary>
     [ErrorStatus(HttpStatusCode.BadGateway)]
     public const string BackupRunFailed = "backup.run.failed";
+
+    /// <summary>
+    /// A restore could not finish: <c>params.reason</c> is <c>place</c> (no shared folder or home holds the original
+    /// place <c>params.path</c> now), <c>file_system</c> (<c>params.path</c> is on another file system than its shared
+    /// folder) or <c>errors</c> (restic could not restore <c>params.count</c> entries; the rest is in place and the
+    /// Log Center names them).
+    /// </summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string BackupRestoreFailed = "backup.restore.failed";
 
     /// <summary>
     /// A source cannot be backed up now: <c>params.reason</c> is <c>unavailable</c> (its pool is locked or missing),

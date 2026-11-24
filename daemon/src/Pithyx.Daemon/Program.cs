@@ -134,7 +134,7 @@ builder.Services.AddPithyxInstaller(installer);
 builder.Services.AddPithyxBackup(mode == DaemonMode.Real
     ? new BackupOptions(Apply: true, TlsDirectory: Path.Combine(Path.GetDirectoryName(paths.DatabasePath) ?? ".", "tls"), SshDirectory: "/etc/ssh", ShadowPath: "/etc/shadow", WorkDirectory: "/run/pithyx/backup")
     : new BackupOptions(Apply: false, TlsDirectory: Path.Combine(Path.GetDirectoryName(paths.DatabasePath) ?? ".", "tls"), SshDirectory: null, ShadowPath: null, WorkDirectory: Path.Combine(Path.GetDirectoryName(paths.DatabasePath) ?? ".", "backup-work")));
-builder.Services.AddPithyxBackups();
+builder.Services.AddPithyxBackups(new BackupBrowserOptions(mode == DaemonMode.Real ? "/run/pithyx/backup-browse" : Path.Combine(Path.GetDirectoryName(paths.DatabasePath) ?? ".", "backup-browse")));
 builder.Services.AddPithyxSupport(new SupportBundleOptions(Path.Combine(paths.CacheDirectory, "support"), MemoryDumps: mode == DaemonMode.Real));
 builder.Services.AddSingleton<DiskInventory>();
 builder.Services.AddSingleton(services => services.GetRequiredService<DiskInventory>().Definition());

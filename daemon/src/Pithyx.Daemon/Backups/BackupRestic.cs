@@ -1,5 +1,6 @@
 using Pithyx.Daemon.Commands;
 using Pithyx.Daemon.Errors;
+using Pithyx.Daemon.Jobs;
 
 namespace Pithyx.Daemon.Backups;
 
@@ -23,6 +24,8 @@ public sealed class BackupRestic(ICommandRunner commands)
     public static readonly TimeSpan PruneTimeout = TimeSpan.FromHours(24);
     public static readonly TimeSpan CheckTimeout = TimeSpan.FromDays(2);
     public static readonly TimeSpan StatsTimeout = TimeSpan.FromHours(1);
+    public static readonly TimeSpan MountTimeout = TimeSpan.FromDays(1);
+    public static readonly TimeSpan RestoreTimeout = TimeSpan.FromDays(7);
 
     /// <summary>Makes a new repository. Throws <see cref="ErrorCodes.BackupRepositoryExists"/> or a connection error.</summary>
     public async Task InitAsync(ResticRepository repository, CancellationToken cancellationToken)
@@ -131,6 +134,50 @@ public sealed class BackupRestic(ICommandRunner commands)
         }
         return ResticVersions.TagChanged(result.StandardOutput);
     }
+
+    /// <summary>
+    /// Mounts every version below <paramref name="mountpoint"/> and serves it until <paramref name="cancellationToken"/>
+    /// stops restic, which unmounts; <paramref name="onReady"/> runs once the mount is there. The keys stay in their
+    /// folder while the mount serves.
+    /// </summary>
+    public async Task<CommandResult> MountAsync(ResticRepository repository, string mountpoint, Action onReady, CancellationToken cancellationToken) =>
+        await RunAsync(
+            repository,
+            global => ResticCommands.Mount(global, mountpoint),
+            null,
+            MountTimeout,
+            line =>
+            {
+                if (line.Contains(ResticCommands.MountReady, StringComparison.Ordinal))
+                {
+                    onReady();
+                }
+            },
+            cancellationToken);
+
+    /// <summary>Restores <paramref name="paths"/> of a version below <paramref name="target"/>; restic's errors go to <paramref name="report"/>.</summary>
+    public async Task<CommandResult> RestoreAsync(
+        ResticRepository repository,
+        string snapshot,
+        string target,
+        IReadOnlyList<string> paths,
+        ResticReport report,
+        Action<JobProgress> onProgress,
+        CancellationToken cancellationToken) =>
+        await RunAsync(
+            repository,
+            global => ResticCommands.Restore(global, snapshot, target, paths),
+            null,
+            RestoreTimeout,
+            line =>
+            {
+                if (ResticOutput.RestoreProgress(line) is { } progress)
+                {
+                    onProgress(progress);
+                }
+            },
+            cancellationToken,
+            report);
 
     public async Task<CommandResult> CheckAsync(ResticRepository repository, int readPercent, ResticReport report, CancellationToken cancellationToken) =>
         await RunAsync(repository, global => ResticCommands.Check(global, readPercent), null, CheckTimeout, line => ResticOutput.Read(line, report), cancellationToken, report);

@@ -19,6 +19,7 @@ public sealed class ResticVersionsTests
         Assert.Equal(TimeSpan.Zero, protectedOne.Time.Offset);
         Assert.Equal(new DateTimeOffset(2026, 11, 23, 18, 42, 1, TimeSpan.Zero), protectedOne.Time.AddTicks(-(protectedOne.Time.Ticks % TimeSpan.TicksPerSecond)));
         Assert.Equal((2L, 4L, 1711L, 2L, 0L), (protectedOne.Files, protectedOne.Bytes, protectedOne.AddedBytes, protectedOne.FilesAdded, protectedOne.FilesChanged));
+        Assert.Equal(["/tank/documents"], protectedOne.Paths);
         Assert.Equal(plain.Id, plain.Origin);
         Assert.False(plain.Protected);
         Assert.Equal((1L, 1L), (plain.FilesAdded, plain.FilesChanged));
