@@ -65,7 +65,9 @@ public sealed partial class BackupJobService(
             keep_last AS KeepLast, keep_hourly AS KeepHourly, keep_daily AS KeepDaily, keep_weekly AS KeepWeekly,
             keep_monthly AS KeepMonthly, keep_yearly AS KeepYearly, check_schedule AS CheckSchedule,
             check_read_percent AS CheckReadPercent, upload_limit_kib AS UploadLimitKib, download_limit_kib AS DownloadLimitKib,
-            overdue_hours AS OverdueHours, overdue_notified_at AS OverdueNotifiedAt, created_at AS CreatedAt
+            overdue_hours AS OverdueHours, overdue_notified_at AS OverdueNotifiedAt, created_at AS CreatedAt,
+            kind AS Kind, destination_share_id AS DestinationShareId, destination_folder AS DestinationFolder,
+            destination_dataset AS DestinationDataset, remote_paths AS RemotePaths, pull_delete AS PullDelete, pull_owners AS PullOwners
         FROM backup_jobs
         """;
 
@@ -210,10 +212,13 @@ public sealed partial class BackupJobService(
     /// <summary>Changes what a job backs up and when; its target, repository and key stay.</summary>
     public async Task<BackupJob> UpdateAsync(long id, BackupJobSettings request, CancellationToken cancellationToken)
     {
+        await using var connection = await connections.OpenAsync(cancellationToken);
+        if ((await RowAsync(connection, id, cancellationToken)).Kind == PullKind)
+        {
+            throw Unsupported("edit");
+        }
         var settings = BackupJobRules.Check(request);
         await CheckSourcesExistAsync(settings.Sources, cancellationToken);
-        await using var connection = await connections.OpenAsync(cancellationToken);
-        await RowAsync(connection, id, cancellationToken);
         await EnsureNameFreeAsync(connection, settings.Name, id, cancellationToken);
         try
         {
@@ -237,18 +242,38 @@ public sealed partial class BackupJobService(
         return await ViewAsync(connection, await RowAsync(connection, id, cancellationToken), cancellationToken);
     }
 
-    /// <summary>Deletes a job, its runs and its key. The repository stays on the target.</summary>
-    public async Task DeleteAsync(ClaimsPrincipal caller, long id, CancellationToken cancellationToken)
+    /// <summary>
+    /// Deletes a job, its runs and its key. The repository stays on the target; a server backup's dataset stays in its
+    /// shared folder unless <paramref name="data"/> asks to destroy it with its versions.
+    /// </summary>
+    public async Task DeleteAsync(ClaimsPrincipal caller, long id, CancellationToken cancellationToken, bool data = false)
     {
         await using var connection = await connections.OpenAsync(cancellationToken);
         var row = await RowAsync(connection, id, cancellationToken);
-        if (_active.ContainsKey(id) || Restoring(id))
+        if (!_active.TryAdd(id, 0))
         {
             throw Busy(row.Name);
         }
-        await browser.CloseAsync(id);
-        await connection.ExecuteAsync(new CommandDefinition("DELETE FROM backup_jobs WHERE id = @id", new { id }, cancellationToken: cancellationToken));
-        await audit.RecordAsync(caller, JobDeleted, row.Name, new Dictionary<string, string> { ["repository"] = row.Repository }, cancellationToken);
+        try
+        {
+            if (Restoring(id))
+            {
+                throw Busy(row.Name);
+            }
+            await browser.CloseAsync(id);
+            if (data && row.Kind == PullKind)
+            {
+                await DestroyPullDataAsync(row, cancellationToken);
+            }
+            await connection.ExecuteAsync(new CommandDefinition("DELETE FROM backup_jobs WHERE id = @id", new { id }, cancellationToken: cancellationToken));
+        }
+        finally
+        {
+            _active.TryRemove(id, out _);
+        }
+        await audit.RecordAsync(caller, JobDeleted, row.Name, row.Kind == PullKind
+            ? new Dictionary<string, string> { ["dataset"] = row.DestinationDataset ?? "", ["data"] = data ? "destroyed" : "kept" }
+            : new Dictionary<string, string> { ["repository"] = row.Repository }, cancellationToken);
         LogDeleted(id);
         // The cache goes with the job (#401): ids are reused, and a new job must not find another repository's cache.
         await SweepCachesAsync(connection, CancellationToken.None);
@@ -350,6 +375,10 @@ public sealed partial class BackupJobService(
         {
             row = await RowAsync(connection, id, cancellationToken);
         }
+        if (kind == BackupRunKind.Check && row.Kind == PullKind)
+        {
+            throw Unsupported("check");
+        }
         if (!_active.TryAdd(id, 0))
         {
             throw Busy(row.Name);
@@ -392,7 +421,7 @@ public sealed partial class BackupJobService(
         await SweepCachesAsync(connection, cancellationToken);
     }
 
-    /// <summary>The enabled jobs' schedules, for the scheduler.</summary>
+    /// <summary>The enabled jobs' schedules, for the scheduler; server backups have no check schedule.</summary>
     public async Task<IReadOnlyList<(long Id, string Schedule, string? CheckSchedule)>> SchedulesAsync(CancellationToken cancellationToken)
     {
         await using var connection = await connections.OpenAsync(cancellationToken);
@@ -475,9 +504,9 @@ public sealed partial class BackupJobService(
         PithyxException? error = null;
         try
         {
-            (state, error) = kind == BackupRunKind.Backup
-                ? await BackupAsync(row, report, context)
-                : await CheckAsync(row, report, context.Cancellation);
+            (state, error) = kind != BackupRunKind.Backup ? await CheckAsync(row, report, context.Cancellation)
+                : row.Kind == PullKind ? await PullAsync(row, report, context)
+                : await BackupAsync(row, report, context);
         }
         catch (OperationCanceledException) when (context.Cancellation.IsCancellationRequested)
         {
@@ -918,7 +947,7 @@ public sealed partial class BackupJobService(
             cancellationToken: cancellationToken));
         return new BackupJob(
             row.Id,
-            BackupJobKind.Versioned,
+            row.Kind == PullKind ? BackupJobKind.Pull : BackupJobKind.Versioned,
             row.TargetId,
             row.Repository,
             settings,
@@ -930,7 +959,9 @@ public sealed partial class BackupJobService(
             lastSuccess,
             overdue,
             protectedBytes,
-            repositoryBytes);
+            repositoryBytes,
+            PullSettings(row),
+            row.DestinationDataset);
     }
 
     private static BackupJobSettings Settings(JobRow row) => new(
@@ -1016,6 +1047,13 @@ public sealed partial class BackupJobService(
         public long? OverdueHours { get; init; }
         public string? OverdueNotifiedAt { get; init; }
         public string CreatedAt { get; init; } = "";
+        public string Kind { get; init; } = "versioned";
+        public long? DestinationShareId { get; init; }
+        public string? DestinationFolder { get; init; }
+        public string? DestinationDataset { get; init; }
+        public string? RemotePaths { get; init; }
+        public long? PullDelete { get; init; }
+        public string? PullOwners { get; init; }
     }
 
     private sealed class DayRow

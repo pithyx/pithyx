@@ -38,6 +38,9 @@ public static class SnapshotKinds
     /// <summary>Taken for a backup run to read from (D415) and destroyed when the run ends.</summary>
     public const string Backup = "backup";
 
+    /// <summary>A version of a server backup (D420), taken after each pull; the backup's retention prunes it, never a schedule.</summary>
+    public const string Pull = "pull";
+
     public static readonly IReadOnlyList<string> Scheduled = [Hourly, Daily, Weekly, Monthly];
 
     /// <summary>What a new schedule keeps: a day of hourly, a week of daily, a month of weekly and half a year of monthly snapshots.</summary>
@@ -64,6 +67,6 @@ public static partial class SnapshotNames
     public static string? KindOf(string name) =>
         name is not null && PithyxName().Match(name) is { Success: true } match ? match.Groups["kind"].Value : null;
 
-    [GeneratedRegex("^pithyx-(?<kind>hourly|daily|weekly|monthly|manual|update|move|backup)-[0-9]{8}T[0-9]{6}Z$")]
+    [GeneratedRegex("^pithyx-(?<kind>hourly|daily|weekly|monthly|manual|update|move|backup|pull)-[0-9]{8}T[0-9]{6}Z$")]
     private static partial Regex PithyxName();
 }

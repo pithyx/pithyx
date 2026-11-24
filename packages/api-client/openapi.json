@@ -8719,7 +8719,7 @@
         "tags": [
           "Backups"
         ],
-        "description": "Administrators only. Deletes the job, its runs and its key. The repository stays on the target; without the key nobody can read it.",
+        "description": "Administrators only. Deletes the job, its runs and its key. The repository stays on the target; without the key nobody can read it. A server backup's folder stays in its shared folder with its versions, unless data=true destroys it with them.",
         "operationId": "DeleteBackupJob",
         "parameters": [
           {
@@ -8729,6 +8729,13 @@
             "schema": {
               "type": "integer",
               "format": "int64"
+            }
+          },
+          {
+            "name": "data",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
             }
           }
         ],
@@ -9268,6 +9275,99 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/BackupJobKey"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/backups/pulls": {
+      "post": {
+        "tags": [
+          "Backups"
+        ],
+        "description": "Administrators only. Makes a server backup (#396): its folder in the shared folder as a dataset of its own, given the shared folder's owner, mode and ACL, which rsync over SSH fills from the server on its schedule. The server is a backup target of the purpose server. The answer's key is always null.",
+        "operationId": "CreateBackupPull",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BackupPullCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BackupJobCreated"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/backups/pulls/{id}": {
+      "put": {
+        "tags": [
+          "Backups"
+        ],
+        "description": "Administrators only. Changes what a server backup pulls and when; its server and its folder stay (shareId and folder are ignored).",
+        "operationId": "UpdateBackupPull",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BackupPullUpdateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BackupJob"
                 }
               }
             }
@@ -14344,7 +14444,9 @@
           "lastSuccessAt",
           "overdue",
           "protectedBytes",
-          "repositoryBytes"
+          "repositoryBytes",
+          "pull",
+          "dataset"
         ],
         "type": "object",
         "properties": {
@@ -14359,12 +14461,12 @@
           },
           "targetId": {
             "type": "integer",
-            "description": "Where it backs up to.",
+            "description": "Where it backs up to; for a server backup, the server.",
             "format": "int64"
           },
           "repository": {
             "type": "string",
-            "description": "The repository's folder below the target's path."
+            "description": "The repository's folder below the target's path; empty for a server backup."
           },
           "settings": {
             "description": "What it backs up and when.",
@@ -14440,8 +14542,27 @@
               "null",
               "integer"
             ],
-            "description": "What its repository takes on the target, as the newest run that measured it found.",
+            "description": "What its repository takes on the target, as the newest run that measured it found; for a server backup, what its\ndataset takes on the pool with every version.",
             "format": "int64"
+          },
+          "pull": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "What a server backup pulls and where to; null for a versioned backup.",
+                "$ref": "#/components/schemas/BackupPullSettings"
+              }
+            ],
+            "description": "What a server backup pulls and where it keeps it."
+          },
+          "dataset": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The dataset that holds a server backup; null for a versioned backup."
           }
         },
         "description": "A backup job."
@@ -14512,9 +14633,10 @@
       },
       "BackupJobKind": {
         "enum": [
-          "versioned"
+          "versioned",
+          "pull"
         ],
-        "description": "How a job backs up. Only versioned backups for now (#394); mirrors and pulls come later."
+        "description": "How a job backs up. Versioned backups go from this box (#394); pulls come onto it (#396); mirrors come later."
       },
       "BackupJobList": {
         "required": [
@@ -14621,6 +14743,90 @@
           "protected"
         ],
         "description": "Why the retention kept a version."
+      },
+      "BackupPullCreateRequest": {
+        "required": [
+          "serverId",
+          "settings",
+          "pull"
+        ],
+        "type": "object",
+        "properties": {
+          "serverId": {
+            "type": "integer",
+            "description": "The server it pulls from.",
+            "format": "int64"
+          },
+          "settings": {
+            "description": "Its name, schedule and retention; no sources, no check schedule, no upload limit. The excludes are rsync patterns.",
+            "$ref": "#/components/schemas/BackupJobSettings"
+          },
+          "pull": {
+            "description": "What it pulls and where to.",
+            "$ref": "#/components/schemas/BackupPullSettings"
+          }
+        },
+        "description": "A new server backup."
+      },
+      "BackupPullOwners": {
+        "enum": [
+          "server",
+          "box"
+        ],
+        "description": "Whose owners and rights the files of a server backup carry on the box."
+      },
+      "BackupPullSettings": {
+        "required": [
+          "shareId",
+          "folder",
+          "paths",
+          "delete",
+          "owners"
+        ],
+        "type": "object",
+        "properties": {
+          "shareId": {
+            "type": "integer",
+            "description": "The shared folder that holds the destination; set when the backup is made.",
+            "format": "int64"
+          },
+          "folder": {
+            "type": "string",
+            "description": "The destination's name in the shared folder, made by the box as a dataset of its own; set when the backup is made."
+          },
+          "paths": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "1 to 32 folders or files on the server, absolute below the folder its key may read (`/` for all of it)."
+          },
+          "delete": {
+            "type": "boolean",
+            "description": "Files gone on the server go from the destination too; the versions keep them."
+          },
+          "owners": {
+            "description": "Whose owners and rights the files carry on the box.",
+            "$ref": "#/components/schemas/BackupPullOwners"
+          }
+        },
+        "description": "What a server backup pulls and where it keeps it."
+      },
+      "BackupPullUpdateRequest": {
+        "required": [
+          "settings",
+          "pull"
+        ],
+        "type": "object",
+        "properties": {
+          "settings": {
+            "$ref": "#/components/schemas/BackupJobSettings"
+          },
+          "pull": {
+            "$ref": "#/components/schemas/BackupPullSettings"
+          }
+        },
+        "description": "The changes to a server backup; its server and destination stay."
       },
       "BackupRestoreConflict": {
         "enum": [
@@ -15040,7 +15246,9 @@
           "publicKey",
           "createdAt",
           "lastTest",
-          "space"
+          "space",
+          "purpose",
+          "authorizedKeys"
         ],
         "type": "object",
         "properties": {
@@ -15110,6 +15318,17 @@
               }
             ],
             "description": "The space of the file system the target's folder is on, as the server reported it over SFTP."
+          },
+          "purpose": {
+            "description": "A target backups go to, or a server the box pulls from.",
+            "$ref": "#/components/schemas/BackupTargetPurpose"
+          },
+          "authorizedKeys": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "For a server: the line for its `authorized_keys`, which lets the key only read below Path\n(`restrict` and rsync's `rrsync -ro`); null for a target."
           }
         },
         "description": "A place backups go to."
@@ -15134,6 +15353,13 @@
           }
         },
         "description": "Every backup target, by name."
+      },
+      "BackupTargetPurpose": {
+        "enum": [
+          "target",
+          "server"
+        ],
+        "description": "What a target is for (#396, D420): backups go to a target; the box pulls the folders of a server."
       },
       "BackupTargetRequest": {
         "required": [
@@ -15168,7 +15394,7 @@
               "null",
               "string"
             ],
-            "description": "The folder on the server; empty or left out for the login folder."
+            "description": "The folder on the server; empty or left out for the login folder. For a server, the absolute folder its key may read\nbelow, `/` when left out."
           },
           "hostKey": {
             "type": [
@@ -15176,6 +15402,10 @@
               "string"
             ],
             "description": "The host key the administrator confirmed, as `&lt;type&gt; &lt;base64&gt;` or a known_hosts line. Required for a\nnew target and when the host or port changes; left out, a change keeps the key."
+          },
+          "purpose": {
+            "description": "A target or a server; set when it is added, a change keeps it.",
+            "$ref": "#/components/schemas/BackupTargetPurpose"
           }
         },
         "description": "A new target, or the changes to one."
@@ -15287,7 +15517,7 @@
           },
           "snapshot": {
             "type": "string",
-            "description": "restic's id of the version now, shortened to 8 characters as restic shows it."
+            "description": "restic's id of the version now, shortened to 8 characters as restic shows it; for a server backup, its ZFS snapshot's name."
           },
           "time": {
             "type": "string",
@@ -16800,17 +17030,22 @@
           "auth.username.reserved",
           "backup.browse.closed",
           "backup.check.failed",
+          "backup.destination.invalid",
+          "backup.destination.unavailable",
           "backup.host_key.scan_failed",
           "backup.job.busy",
           "backup.job.invalid",
           "backup.job.name_taken",
           "backup.job.not_found",
+          "backup.job.unsupported",
           "backup.repository.exists",
           "backup.repository.locked",
           "backup.repository.not_found",
           "backup.repository.wrong_key",
           "backup.restore.failed",
           "backup.run.failed",
+          "backup.server.refused",
+          "backup.server.rsync_missing",
           "backup.source.unavailable",
           "backup.source.unsupported",
           "backup.target.auth_failed",

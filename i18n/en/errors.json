@@ -171,9 +171,10 @@
     },
     "job": {
       "busy": "The backup {name} is running right now. Wait until it is done or cancel it.",
-      "invalid": "This setting of the backup is not valid: {field, select, name {name} sources {folders} schedule {schedule} checkSchedule {check schedule} retention {versions to keep} excludes {exclusions} checkReadPercent {share of data to read} uploadLimitKib {upload limit} downloadLimitKib {download limit} overdueHours {overdue after} repository {repository folder} existingKey {repository key} other {{field}}}.",
+      "invalid": "This setting of the backup is not valid: {field, select, name {name} sources {folders} schedule {schedule} checkSchedule {check schedule} retention {versions to keep} excludes {exclusions} checkReadPercent {share of data to read} uploadLimitKib {upload limit} downloadLimitKib {download limit} overdueHours {overdue after} repository {repository folder} existingKey {repository key} paths {server folders} destination {destination} folder {folder name} other {{field}}}.",
       "name_taken": "Another backup is already named {name}.",
-      "not_found": "This backup no longer exists."
+      "not_found": "This backup no longer exists.",
+      "unsupported": "{action, select, check {Server backups have no integrity check here; the pool's scrub checks their data.} key {Server backups have no repository key.} edit {This backup is of the other kind; change it in its own dialog.} other {Server backups are not restored here. Restore their versions in Files with Previous versions.}}"
     },
     "repository": {
       "exists": "There is already a repository in {path}. To use it, connect it with its key instead of making a new one.",
@@ -193,6 +194,14 @@
     },
     "version": {
       "not_found": "This version no longer exists. The backup's retention may have deleted it."
+    },
+    "destination": {
+      "invalid": "The folder {path} cannot be made in {share} ({reason, select, exists {something has this name already; choose another} unsupported {the shared folder is not on a pool} other {the dataset could not be created}}).",
+      "unavailable": "The destination {path} is not available ({reason, select, share {its shared folder is gone} unavailable {its pool is locked or missing} snapshot {the version could not be taken} other {its dataset is gone or not mounted}})."
+    },
+    "server": {
+      "rsync_missing": "The server has no rsync, or no rrsync for the line in its authorized_keys. Install the package rsync on the server.",
+      "refused": "The box signed in, but the server did not hand out {path}: it does not exist, lies outside the folder the key may read, or may not be read. The Log Center has the server's message."
     }
   },
   "desktop": {

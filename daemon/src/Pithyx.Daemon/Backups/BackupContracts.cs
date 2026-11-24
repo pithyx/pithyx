@@ -9,6 +9,16 @@ public enum BackupTargetKind
     Sftp,
 }
 
+/// <summary>What a target is for (#396, D420): backups go to a target; the box pulls the folders of a server.</summary>
+public enum BackupTargetPurpose
+{
+    /// <summary>Versioned backups (and mirrors) of this box go there.</summary>
+    Target,
+
+    /// <summary>A Linux server whose folders the box pulls with rsync over SSH, through a read-only key.</summary>
+    Server,
+}
+
 /// <summary>A host key of a server.</summary>
 /// <param name="Type">The key type, for example <c>ssh-ed25519</c>.</param>
 /// <param name="Key">The key as <c>&lt;type&gt; &lt;base64&gt;</c>, the form a target stores and a request sends back.</param>
@@ -41,6 +51,11 @@ public sealed record BackupTargetSpace(long TotalBytes, long FreeBytes, DateTime
 /// <param name="CreatedAt">When it was added, UTC.</param>
 /// <param name="LastTest">The last connection test, or none yet.</param>
 /// <param name="Space">The space on the server; null until a test or run measured it, or when the server does not report it.</param>
+/// <param name="Purpose">A target backups go to, or a server the box pulls from.</param>
+/// <param name="AuthorizedKeys">
+/// For a server: the line for its <c>authorized_keys</c>, which lets the key only read below <paramref name="Path"/>
+/// (<c>restrict</c> and rsync's <c>rrsync -ro</c>); null for a target.
+/// </param>
 public sealed record BackupTarget(
     long Id,
     string Name,
@@ -53,7 +68,9 @@ public sealed record BackupTarget(
     string PublicKey,
     DateTimeOffset CreatedAt,
     BackupTargetTest? LastTest,
-    BackupTargetSpace? Space);
+    BackupTargetSpace? Space,
+    BackupTargetPurpose Purpose,
+    string? AuthorizedKeys);
 
 /// <summary>Every backup target, by name.</summary>
 public sealed record BackupTargetList(IReadOnlyList<BackupTarget> Targets);
@@ -63,12 +80,23 @@ public sealed record BackupTargetList(IReadOnlyList<BackupTarget> Targets);
 /// <param name="Host">A host name, IPv4 or IPv6 address.</param>
 /// <param name="User">The user on the server.</param>
 /// <param name="Port">The SSH port; 22 when left out.</param>
-/// <param name="Path">The folder on the server; empty or left out for the login folder.</param>
+/// <param name="Path">
+/// The folder on the server; empty or left out for the login folder. For a server, the absolute folder its key may read
+/// below, <c>/</c> when left out.
+/// </param>
 /// <param name="HostKey">
 /// The host key the administrator confirmed, as <c>&lt;type&gt; &lt;base64&gt;</c> or a known_hosts line. Required for a
 /// new target and when the host or port changes; left out, a change keeps the key.
 /// </param>
-public sealed record BackupTargetRequest(string Name, string Host, string User, int? Port = null, string? Path = null, string? HostKey = null);
+/// <param name="Purpose">A target or a server; set when it is added, a change keeps it.</param>
+public sealed record BackupTargetRequest(
+    string Name,
+    string Host,
+    string User,
+    int? Port = null,
+    string? Path = null,
+    string? HostKey = null,
+    BackupTargetPurpose Purpose = BackupTargetPurpose.Target);
 
 /// <summary>A server whose host keys the box reads before a target is saved.</summary>
 /// <param name="Host">A host name, IPv4 or IPv6 address.</param>

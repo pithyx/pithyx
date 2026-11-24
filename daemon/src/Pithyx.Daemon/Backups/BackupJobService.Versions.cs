@@ -50,6 +50,10 @@ public sealed partial class BackupJobService
         }
         try
         {
+            if (row.Kind == PullKind)
+            {
+                return await ProtectPullAsync(caller, row, version, protect, cancellationToken);
+            }
             if (Restoring(id))
             {
                 throw Busy(row.Name);
@@ -99,6 +103,10 @@ public sealed partial class BackupJobService
     {
         await using var connection = await connections.OpenAsync(cancellationToken);
         var row = await RowAsync(connection, id, cancellationToken);
+        if (row.Kind == PullKind)
+        {
+            throw Unsupported("key");
+        }
         await audit.RecordAsync(caller, KeyRevealed, row.Name, new Dictionary<string, string> { ["repository"] = row.Repository }, cancellationToken);
         LogKeyRevealed(id);
         return new BackupJobKey(row.RepositoryKey);
