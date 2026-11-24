@@ -741,7 +741,7 @@
 .chartBar {
   fill: var(--color-accent-subtle);
   stroke: var(--color-accent);
-  stroke-width: 0.5;
+  stroke-width: 1;
 }
 
 .chartLine {
