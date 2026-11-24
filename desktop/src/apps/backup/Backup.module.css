@@ -779,3 +779,91 @@
   transform: translateX(-50%);
   white-space: nowrap;
 }
+
+.breadcrumb {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+
+.breadcrumb > [aria-current] {
+  color: var(--color-text);
+}
+
+.breadcrumbLink {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--color-accent);
+  font: inherit;
+  cursor: pointer;
+}
+
+.breadcrumbLink:hover {
+  text-decoration: underline;
+}
+
+.breadcrumbLink:focus-visible {
+  border-radius: var(--radius-xs);
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.stackPage {
+  display: grid;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+.tags {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+
+/* A small label in a table or list: why a version is kept, or how a file changed. */
+.tag {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 2px;
+  padding: 0 var(--space-1);
+  border-radius: var(--radius-xs);
+  background: var(--color-surface-3);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+  line-height: 1.6;
+  white-space: nowrap;
+}
+
+.tag[data-tone='accent'] {
+  background: var(--color-accent-subtle);
+  color: var(--color-accent);
+}
+
+.tag[data-tone='success'] {
+  background: var(--color-success-surface);
+  color: var(--color-success);
+}
+
+.tag[data-tone='danger'] {
+  background: var(--color-danger-surface);
+  color: var(--color-danger);
+}
+
+.changes {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.changes > li {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+}

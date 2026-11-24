@@ -1,5 +1,5 @@
 import type { PithyxApp } from '@pithyx/sdk';
-import { Button, Checkbox, Dialog, Select, Switch, TextField } from '@pithyx/ui';
+import { Button, Checkbox, Dialog, PasswordField, Select, Switch, TextField } from '@pithyx/ui';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useId, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -19,7 +19,7 @@ import { describeProblem } from '../storage/shared';
 import { cronOf, scheduleOf, switchKind, type Schedule } from './schedule';
 import styles from './Backup.module.css';
 
-const RETENTION_KEYS = ['last', 'hourly', 'daily', 'weekly', 'monthly', 'yearly'] as const;
+export const RETENTION_KEYS = ['last', 'hourly', 'daily', 'weekly', 'monthly', 'yearly'] as const;
 type RetentionKey = (typeof RETENTION_KEYS)[number];
 
 const SCHEDULE_KINDS = ['hourly', 'daily', 'weekly', 'monthly', 'custom'] as const;
@@ -658,21 +658,26 @@ function download(text: string, fileName: string) {
   }, 60_000);
 }
 
-/** The key of a new job's repository, shown once: copy or download it, and confirm it is stored before closing. */
+/**
+ * The key of a job's repository: copy or download it. A new job's key is shown once, so the administrator confirms it
+ * is stored before closing; a key shown again after the password closes freely.
+ */
 export function KeyDialog({
   job,
   repositoryKey,
   targetName,
   onClose,
+  mustConfirm = true,
 }: {
   job: BackupJob;
   repositoryKey: string;
   targetName: string;
   onClose: () => void;
+  mustConfirm?: boolean;
 }) {
   const { t } = useTranslation('backup');
   const [copied, setCopied] = useState<'copied' | 'copyManually' | null>(null);
-  const [stored, setStored] = useState(false);
+  const [stored, setStored] = useState(!mustConfirm);
   const value = useRef<HTMLElement>(null);
   const name = job.settings.name;
   return (
@@ -692,7 +697,7 @@ export function KeyDialog({
       }
     >
       <div className={styles.form}>
-        <p className={styles.warning}>{t('key.warning')}</p>
+        <p className={styles.warning}>{t(mustConfirm ? 'key.warning' : 'key.warningAgain')}</p>
         <code ref={value} className={styles.key}>
           {repositoryKey}
         </code>
@@ -726,10 +731,104 @@ export function KeyDialog({
             </span>
           )}
         </div>
-        <Checkbox isSelected={stored} onChange={setStored}>
-          {t('key.stored')}
-        </Checkbox>
+        {mustConfirm && (
+          <Checkbox isSelected={stored} onChange={setStored}>
+            {t('key.stored')}
+          </Checkbox>
+        )}
       </div>
+    </Dialog>
+  );
+}
+
+/** Shows a job's key again after the password and, with two-factor sign-in on, a current code (#404). */
+export function RevealKeyDialog({
+  app,
+  job,
+  targetName,
+  onClose,
+}: {
+  app: PithyxApp;
+  job: BackupJob;
+  targetName: string;
+  onClose: () => void;
+}) {
+  const { t } = useTranslation('backup');
+  const twoFactor = app.context.user.twoFactor;
+  const [password, setPassword] = useState('');
+  const [code, setCode] = useState('');
+  const reveal = useMutation({
+    mutationFn: () =>
+      backupsCall(app, 'internal.admin.backups.revealKey', {
+        id: job.id,
+        password,
+        ...(twoFactor ? { totpCode: code.trim() } : {}),
+      }),
+    onSettled: () => {
+      setPassword('');
+      setCode('');
+    },
+  });
+  if (reveal.data !== undefined) {
+    return (
+      <KeyDialog
+        job={job}
+        repositoryKey={reveal.data.key}
+        targetName={targetName}
+        onClose={onClose}
+        mustConfirm={false}
+      />
+    );
+  }
+  const ready = password !== '' && (!twoFactor || code.trim() !== '');
+  return (
+    <Dialog
+      isOpen
+      onOpenChange={closeOn(onClose)}
+      title={t('key.title', { name: job.settings.name })}
+      actions={
+        <>
+          <Button onPress={onClose}>{t('form.cancel')}</Button>
+          <Button
+            variant="primary"
+            type="submit"
+            form="backup-reveal-key"
+            isDisabled={!ready || reveal.isPending}
+          >
+            {t('key.reveal')}
+          </Button>
+        </>
+      }
+    >
+      <form
+        id="backup-reveal-key"
+        className={styles.form}
+        onSubmit={(event) => {
+          event.preventDefault();
+          if (ready) {
+            reveal.mutate();
+          }
+        }}
+      >
+        <p className={styles.muted}>{t('key.stepUp', { twoFactor: String(twoFactor) })}</p>
+        <PasswordField
+          label={t('key.password')}
+          value={password}
+          onChange={setPassword}
+          autoComplete="current-password"
+          autoFocus
+        />
+        {twoFactor && (
+          <TextField
+            label={t('key.code')}
+            value={code}
+            onChange={setCode}
+            inputMode="numeric"
+            autoComplete="one-time-code"
+          />
+        )}
+        {reveal.isError && <ErrorNotice error={describeProblem(reveal.error)} />}
+      </form>
     </Dialog>
   );
 }

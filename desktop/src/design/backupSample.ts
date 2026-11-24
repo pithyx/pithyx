@@ -1,5 +1,11 @@
 import type { components } from '@pithyx/api-client';
-import type { BackupHistoryQuery, BackupJob, BackupRun, BackupTarget } from '../apps/sdk/backups';
+import type {
+  BackupHistoryQuery,
+  BackupJob,
+  BackupRun,
+  BackupTarget,
+  BackupVersion,
+} from '../apps/sdk/backups';
 import { clock } from '../apps/backup/data';
 import { useRealtime } from '../realtime/connection';
 import { now } from './sampleData';
@@ -243,6 +249,44 @@ const history: BackupRun[] = [
   ...olderRuns,
 ].sort((a, b) => Date.parse(b.startedAt) - Date.parse(a.startedAt));
 
+// The versions of Documents, newest first: a week of nightly ones, then weekly and monthly ones the retention kept,
+// the oldest protected by hand. Only the newest was compared with the one before.
+const versionDays: [days: number, keep: BackupVersion['keep'], added: number][] = [
+  [0, ['daily'], 1_240_000_000],
+  [1, ['daily'], 860_000_000],
+  [2, ['daily'], 310_000_000],
+  [3, ['daily', 'weekly'], 120_000_000],
+  [4, ['daily'], 96_000_000],
+  [5, ['daily'], 2_400_000_000],
+  [6, ['daily'], 640_000_000],
+  [10, ['weekly'], 1_900_000_000],
+  [17, ['weekly'], 410_000_000],
+  [24, ['weekly', 'monthly'], 3_100_000_000],
+  [55, ['monthly'], 820_000_000],
+];
+const sampleVersions: BackupVersion[] = versionDays.map(([days, keep, added], index) => ({
+  id: 40 - index,
+  snapshot: (0xa91f03c2 - index * 0x1013).toString(16),
+  time: at(24 * days + 12.5),
+  files: 9_842 - days * 7,
+  bytes: 23_400_000_000 - days * 60_000_000,
+  addedBytes: added,
+  filesAdded: index === 0 ? 14 : null,
+  filesChanged: index === 0 ? 3 : null,
+  filesRemoved: index === 0 ? 1 : null,
+  protected: days === 55,
+  keep: days === 55 ? [...keep, 'protected'] : keep,
+  changes:
+    index === 0
+      ? [
+          { change: 'added', path: 'Documents/Taxes/2025/Receipts/invoice-0412.pdf' },
+          { change: 'added', path: 'Documents/Taxes/2025/Receipts/invoice-0413.pdf' },
+          { change: 'modified', path: 'Documents/Household/budget-2026.ods' },
+          { change: 'removed', path: 'Documents/Drafts/old.docx' },
+        ]
+      : null,
+}));
+
 /** The answers of the Backup app's calls in the gallery. */
 export const backupAnswers: ExtraAnswers = {
   'internal.admin.backups.targets': () => ({ targets: sampleTargets }),
@@ -250,6 +294,9 @@ export const backupAnswers: ExtraAnswers = {
   'internal.admin.backups.jobs': () => ({ jobs: sampleJobs }),
   'internal.admin.backups.runs': (params) => ({
     runs: (params as { id: number }).id === 2 ? documentsRuns : [],
+  }),
+  'internal.admin.backups.versions': (params) => ({
+    versions: (params as { id: number }).id === 2 ? sampleVersions : [],
   }),
   'internal.admin.backups.days': (params) => {
     const { from, to } = params as { from: string; to: string };

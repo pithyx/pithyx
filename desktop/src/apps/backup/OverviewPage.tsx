@@ -22,7 +22,6 @@ import {
   IconArrowLeft,
   IconArrowRight,
   IconCalendar,
-  IconChartBar,
   IconCircleCheck,
   IconCircleX,
   IconPlayerPlay,
@@ -33,6 +32,7 @@ import {
 import { backupsCall, type BackupDay, type BackupJob, type BackupTarget } from '../sdk/backups';
 import { describeProblem } from '../storage/shared';
 import { RunningPanel } from './ActivityPage';
+import { BytesChart } from './BytesChart';
 import { addDays, clock, isoDay, useDays, useHistory } from './data';
 import { EmptyCard } from './EmptyCard';
 import { RUN_TONES, useBackupJobs, useWhen } from './JobsPage';
@@ -64,15 +64,6 @@ function firstWeekday(locale: string): number {
     weekInfo?: { firstDay: number };
   };
   return (info.getWeekInfo?.().firstDay ?? info.weekInfo?.firstDay ?? 1) % 7;
-}
-
-/** The smallest of 1, 2, 2.5 and 5 times a power of ten at or above `value`, so the axis reads in round numbers. */
-function roundUp(value: number): number {
-  if (value <= 0) {
-    return 1;
-  }
-  const power = 10 ** Math.floor(Math.log10(value));
-  return ([1, 2, 2.5, 5, 10].find((step) => step * power >= value) ?? 10) * power;
 }
 
 function sum(values: readonly (number | null)[]): number {
@@ -648,100 +639,31 @@ function Attention({
   );
 }
 
-/** The bytes the backups added per day as bars and what the repositories take as a line, each on its own scale. */
+/** The bytes the backups added per day as bars and what the repositories take as a line. */
 function DataChart({ days }: { days: readonly BackupDay[] }) {
   const { t } = useTranslation('backup');
   const locale = useFormatLocale();
-  const titleId = useId();
-  const count = Math.max(1, days.length);
-  const width = count * 10;
-  const height = 100;
-  const addedMax = roundUp(Math.max(0, ...days.map((day) => day.addedBytes)));
-  const sizes = days.map((day) => day.repositoryBytes);
-  const sizeMax = roundUp(Math.max(0, ...sizes.map((size) => size ?? 0)));
-  const added = sum(days.map((day) => day.addedBytes));
-  const latest = sizes.filter((size) => size !== null).at(-1) ?? null;
-  // A day without a measurement breaks the line.
-  const line = sizes
-    .map((size, index) =>
-      size === null
-        ? ''
-        : `${index === 0 || sizes[index - 1] === null ? 'M' : 'L'}${String(index * 10 + 5)},${String(height - (size / sizeMax) * height)}`,
-    )
-    .join('');
-  const ticks = [0, 0.25, 0.5, 0.75, 1].map((share) => Math.round(share * (count - 1)));
-  const tickDate = new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'short' });
+  const latest =
+    days
+      .map((day) => day.repositoryBytes)
+      .filter((size) => size !== null)
+      .at(-1) ?? null;
   return (
-    <section className={styles.panel} aria-labelledby={titleId}>
-      <div className={styles.panelHead}>
-        <IconChartBar size={18} stroke={1.75} aria-hidden />
-        <h2 id={titleId} className={styles.panelTitle}>
-          {t('overview.chart.title')}
-        </h2>
-        <span className={cx(styles.legend, styles.panelEnd)} aria-hidden>
-          <span data-state="added">{t('overview.chart.added')}</span>
-          <span data-state="size">{t('overview.chart.size')}</span>
-        </span>
-      </div>
-      <div className={styles.chart}>
-        <span className={styles.axis} aria-hidden>
-          <span>{formatBytes(addedMax, locale)}</span>
-          <span>{formatBytes(addedMax / 2, locale)}</span>
-          <span>{new Intl.NumberFormat(locale).format(0)}</span>
-        </span>
-        <svg
-          className={styles.chartSvg}
-          viewBox={`0 0 ${String(width)} ${String(height)}`}
-          preserveAspectRatio="none"
-          role="img"
-          aria-label={t('overview.chart.label', {
-            days: days.length,
-            added: formatBytes(added, locale),
-            size: latest === null ? t('overview.chart.unknown') : formatBytes(latest, locale),
-          })}
-        >
-          {[0, 0.5, 1].map((share) => (
-            <line
-              key={share}
-              className={styles.chartGrid}
-              x1={0}
-              x2={width}
-              y1={height * share}
-              y2={height * share}
-              vectorEffect="non-scaling-stroke"
-            />
-          ))}
-          {days.map((day, index) => {
-            const barHeight = (day.addedBytes / addedMax) * height;
-            return (
-              <rect
-                key={day.date}
-                className={styles.chartBar}
-                x={index * 10 + 2}
-                y={height - barHeight}
-                width={6}
-                height={barHeight}
-              />
-            );
-          })}
-          <path className={styles.chartLine} d={line} vectorEffect="non-scaling-stroke" />
-        </svg>
-        <span className={cx(styles.axis, styles.axisEnd)} aria-hidden>
-          <span>{formatBytes(sizeMax, locale)}</span>
-          <span>{formatBytes(sizeMax / 2, locale)}</span>
-          <span>{new Intl.NumberFormat(locale).format(0)}</span>
-        </span>
-        <span className={styles.ticks} aria-hidden>
-          {[...new Set(ticks)].map((index) => {
-            const day = days[index];
-            return day === undefined ? null : (
-              <span key={day.date} style={{ left: `${String(((index + 0.5) / count) * 100)}%` }}>
-                {tickDate.format(new Date(`${day.date}T12:00:00`))}
-              </span>
-            );
-          })}
-        </span>
-      </div>
-    </section>
+    <BytesChart
+      title={t('overview.chart.title')}
+      barLegend={t('overview.chart.added')}
+      lineLegend={t('overview.chart.size')}
+      label={t('overview.chart.label', {
+        days: days.length,
+        added: formatBytes(sum(days.map((day) => day.addedBytes)), locale),
+        size: latest === null ? t('overview.chart.unknown') : formatBytes(latest, locale),
+      })}
+      points={days.map((day) => ({
+        key: day.date,
+        at: new Date(`${day.date}T12:00:00`),
+        bar: day.addedBytes,
+        line: day.repositoryBytes,
+      }))}
+    />
   );
 }
