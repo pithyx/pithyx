@@ -159,9 +159,10 @@
       "invalid": "This setting of the target is not valid: {field, select, name {name} host {server} port {port} user {user} path {folder} hostKey {host key} other {{field}}}.",
       "name_taken": "Another target is already named {name}.",
       "not_found": "This backup target no longer exists.",
-      "not_writable": "The box signed in but cannot use the folder {path} on the server ({reason, select, path {it does not exist and could not be made} other {no file can be written there}}).",
+      "not_writable": "The box signed in but cannot use the folder {path} on the server ({reason, select, path {it does not exist and could not be made} full {it has no space left} other {no file can be written there}}).",
       "unreachable": "The box could not reach the server ({reason, select, dns {the name is unknown} refused {the port is closed} timeout {no answer} network {no route to it} other {the connection failed}}).",
-      "in_use": "These backups still use this target: {jobs}. Delete them first."
+      "in_use": "These backups still use this target: {jobs}. Delete them first.",
+      "rsync_missing": "A mirror needs rsync over SSH on the target, but the target has no rsync or lets the box in for SFTP only. On another box, use a user who may sign in over SSH."
     },
     "browse": {
       "closed": "Browsing this backup has ended. Open the version again."
@@ -171,10 +172,10 @@
     },
     "job": {
       "busy": "The backup {name} is running right now. Wait until it is done or cancel it.",
-      "invalid": "This setting of the backup is not valid: {field, select, name {name} sources {folders} schedule {schedule} checkSchedule {check schedule} retention {versions to keep} excludes {exclusions} checkReadPercent {share of data to read} uploadLimitKib {upload limit} downloadLimitKib {download limit} overdueHours {overdue after} repository {repository folder} existingKey {repository key} paths {server folders} destination {destination} folder {folder name} other {{field}}}.",
+      "invalid": "This setting of the backup is not valid: {field, select, name {name} sources {folders} schedule {schedule} checkSchedule {check schedule} retention {versions to keep} excludes {exclusions} checkReadPercent {share of data to read} uploadLimitKib {upload limit} downloadLimitKib {download limit} overdueHours {overdue after} repository {repository folder} existingKey {repository key} paths {server folders} destination {destination} folder {folder name} mirror {deletions} other {{field}}}.",
       "name_taken": "Another backup is already named {name}.",
       "not_found": "This backup no longer exists.",
-      "unsupported": "{action, select, check {Server backups have no integrity check here; the pool's scrub checks their data.} key {Server backups have no repository key.} edit {This backup is of the other kind; change it in its own dialog.} other {Server backups are not restored here. Restore their versions in Files with Previous versions.}}"
+      "unsupported": "{action, select, check {Server backups have no integrity check here; the pool's scrub checks their data.} key {Server backups have no repository key.} edit {This backup is of the other kind; change it in its own dialog.} mirror {A mirror keeps only the current copy: it has no versions, no key and no check.} other {Server backups are not restored here. Restore their versions in Files with Previous versions.}}"
     },
     "repository": {
       "exists": "There is already a repository in {path}. To use it, connect it with its key instead of making a new one.",
@@ -186,7 +187,7 @@
       "failed": "The restore did not finish ({reason, select, place {no shared folder or home holds {path} now; restore it into another folder} file_system {{path} is on another file system than its shared folder} other {restic could not restore {count, plural, one {# entry} other {# entries}}; the rest is in place and the Log Center names them}})."
     },
     "run": {
-      "failed": "The backup failed ({reason, select, timeout {it took too long} output {restic's answer could not be read} mount {it could not be opened for browsing} other {restic ended with code {exitCode}}}). The Log Center has the details."
+      "failed": "The backup failed ({reason, select, timeout {it took too long} output {restic's answer could not be read} mount {it could not be opened for browsing} rsync {rsync ended with code {exitCode}} other {restic ended with code {exitCode}}}). The Log Center has the details."
     },
     "source": {
       "unavailable": "The folder {share} cannot be backed up now ({reason, select, missing {it does not exist} snapshot {its snapshot could not be taken} other {its pool is not available}}).",

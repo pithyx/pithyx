@@ -110,6 +110,7 @@ export const errorCodes = [
   'backup.target.name_taken',
   'backup.target.not_found',
   'backup.target.not_writable',
+  'backup.target.rsync_missing',
   'backup.target.unreachable',
   'backup.version.not_found',
   'desktop.device.not_found',

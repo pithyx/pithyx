@@ -89,7 +89,7 @@
     "add": "Add box backup",
     "list": "Box backups",
     "loading": "Loading backups",
-    "intro": "Folders of this box, backed up to a target outside it: an SFTP server or a second box. Each run first takes a ZFS snapshot, so the backup shows one moment, and keeps as many versions as you set.",
+    "intro": "Folders of this box, backed up to a target outside it: an SFTP server or a second box. Each run first takes a ZFS snapshot, so the backup shows one moment. A versioned backup keeps as many versions as you set; a mirror keeps one plain copy.",
     "emptyTitle": "No box backup yet",
     "empty": "Add the first backup of shared folders and homes to a target.",
     "noTargetsTitle": "No target yet",
@@ -224,7 +224,11 @@
     "overdue": "Report as overdue after hours",
     "overdueHint": "Empty: three times the interval, at least two days.",
     "excludes": "Excludes",
-    "excludesHint": "One restic pattern per line, for example *.tmp or **/cache."
+    "excludesHint": "One restic pattern per line, for example *.tmp or **/cache.",
+    "kind": "Kind",
+    "kindVersioned": "Versioned backup",
+    "kindMirror": "Mirror",
+    "kindVersionedHint": "Encrypted in a restic repository, with as many versions as you set. Files come back through Restore."
   },
   "key": {
     "title": "Key of {name}",
@@ -256,7 +260,8 @@
   },
   "kinds": {
     "versioned": "Versioned",
-    "pull": "Versioned"
+    "pull": "Versioned",
+    "mirror": "Mirror"
   },
   "schedule": {
     "off": "Only by hand",
@@ -599,7 +604,7 @@
       "title": "Back up folders of this box",
       "text": "Shared folders and homes go to a target outside this box.",
       "point1": "to an SFTP server or a second box",
-      "point2": "encrypted, with versions"
+      "point2": "encrypted with versions, or as a plain mirror"
     },
     "in": {
       "title": "Back up a Linux server onto this box",
@@ -607,5 +612,22 @@
       "point1": "the server needs only SSH and rsync",
       "point2": "earlier versions right in Files"
     }
+  },
+  "mirrorForm": {
+    "kindHint": "One plain copy of the folders on the target, written with rsync over SSH. Each run brings it up to date; the files can be opened there directly.",
+    "warning": "A mirror keeps no versions and is not encrypted: a file changed, damaged or encrypted by malware on the box is changed on the target too at the next run. Needs rsync on the target; on a second box, use a user who may sign in over SSH.",
+    "folder": "Folder on the target",
+    "folderHint": "Below the target's folder. The box creates it if it is missing; a copy already there is brought up to date.",
+    "fixed": "Mirrors into {repository} on {target}. Target and folder of a mirror stay; for another one, add a new mirror.",
+    "delete": "Delete on the target what was deleted here",
+    "deleteHint": "Off keeps files on the target that are gone on the box. On, a file deleted here by mistake is gone from the copy after the next run too.",
+    "schedule": "Mirrors",
+    "excludesHint": "One rsync pattern per line, for example *.tmp or cache/.",
+    "deletions": "Deletions",
+    "deleteOn": "Deleted on the target too",
+    "deleteOff": "Kept on the target"
+  },
+  "deleteJobMirror": {
+    "text": "The box forgets the mirror and its runs. The copy stays on the target."
   }
 }

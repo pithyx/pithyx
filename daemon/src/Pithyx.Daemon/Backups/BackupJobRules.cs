@@ -42,6 +42,25 @@ public static class BackupJobRules
         return Check(settings, pull: true);
     }
 
+    /// <summary>The settings of a mirror: as a versioned backup's, without retention (it keeps no versions), check schedule and download limit.</summary>
+    public static BackupJobSettings CheckMirror(BackupJobSettings settings)
+    {
+        ArgumentNullException.ThrowIfNull(settings);
+        if (settings.Retention is { KeepsAll: false })
+        {
+            throw Invalid("retention");
+        }
+        if (!string.IsNullOrWhiteSpace(settings.CheckSchedule) || settings.CheckReadPercent != 0)
+        {
+            throw Invalid("checkSchedule");
+        }
+        if (settings.DownloadLimitKib != 0)
+        {
+            throw Invalid("downloadLimitKib");
+        }
+        return Check(settings, pull: false);
+    }
+
     /// <summary>
     /// What a server backup pulls: 1 to 32 absolute paths below the folder the server's key may read, without
     /// <c>.</c>, <c>..</c>, empty parts or wildcards (rsync would expand them); the folder's name is checked when the

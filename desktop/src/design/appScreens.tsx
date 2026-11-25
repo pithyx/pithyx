@@ -585,6 +585,27 @@ export const appScreens: ScreenDefinition[] = [
     ),
   },
   {
+    id: 'backup-mirror-new',
+    group: 'apps',
+    title: 'Backup: new mirror',
+    description:
+      'The dialog of a new box backup with Mirror chosen: the warning that a mirror keeps no versions, the target and its folder, the folders to copy, deletions and the schedule, without key, retention and check.',
+    render: (context) => (
+      <CoreAppScene
+        context={context}
+        app="backup"
+        Component={BackupApp}
+        answers={backupAnswers}
+        script={[
+          { press: 'backup:nav.jobs' },
+          { press: 'backup:jobs.add' },
+          { press: 'backup:jobForm.kindMirror' },
+          { show: 'backup:jobForm.addTitle' },
+        ]}
+      />
+    ),
+  },
+  {
     id: 'backup-chooser',
     group: 'apps',
     title: 'Backup: what to back up',

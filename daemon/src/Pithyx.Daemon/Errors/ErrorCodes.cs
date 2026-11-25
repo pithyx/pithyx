@@ -589,6 +589,13 @@ public static class ErrorCodes
     [ErrorStatus(HttpStatusCode.BadGateway)]
     public const string BackupHostKeyScanFailed = "backup.host_key.scan_failed";
 
+    /// <summary>
+    /// A mirror needs rsync over SSH on the target, but the target has no rsync or lets the box in for SFTP only (a
+    /// second box needs a user with SSH login).
+    /// </summary>
+    [ErrorStatus(HttpStatusCode.BadGateway)]
+    public const string BackupTargetRsyncMissing = "backup.target.rsync_missing";
+
     /// <summary>The box signed in, but the server refused its key: it is not in the user's authorized_keys, or the user is wrong.</summary>
     [ErrorStatus(HttpStatusCode.BadGateway)]
     public const string BackupTargetAuthFailed = "backup.target.auth_failed";
@@ -618,7 +625,8 @@ public static class ErrorCodes
 
     /// <summary>
     /// The box signed in, but cannot use the target's folder <c>params.path</c>: <c>params.reason</c> is <c>path</c> (it
-    /// does not exist and could not be made, or may not be entered) or <c>write</c> (no file can be written there).
+    /// does not exist and could not be made, or may not be entered), <c>write</c> (no file can be written there) or
+    /// <c>full</c> (the target has no space left).
     /// </summary>
     [ErrorStatus(HttpStatusCode.Conflict)]
     public const string BackupTargetNotWritable = "backup.target.not_writable";

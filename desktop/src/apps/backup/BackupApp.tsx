@@ -146,7 +146,8 @@ export function BackupApp({ app }: SdkAppProps) {
         : undefined;
   const countOf = (kind: BackupJob['kind']) =>
     jobs.data?.jobs.filter((job) => job.kind === kind).length;
-  const jobCount = countOf('versioned');
+  // Box backups lists the versioned backups and the mirrors (#397).
+  const jobCount = jobs.data?.jobs.filter((job) => job.kind !== 'pull').length;
   const pullCount = countOf('pull');
   // A deleted backup closes its page.
   const shown =
@@ -291,8 +292,8 @@ export function BackupApp({ app }: SdkAppProps) {
                 : `${String(restoreStart.jobId)}/${String(restoreStart.versionId)}`
             }
             app={app}
-            // Server backups are restored from their snapshots in Files for now.
-            jobs={jobs.data?.jobs.filter((job) => job.kind !== 'pull')}
+            // Server backups are restored from their snapshots in Files for now; a mirror is plain files on its target.
+            jobs={jobs.data?.jobs.filter((job) => job.kind === 'versioned')}
             start={restoreStart}
             onAddJob={() => {
               setPage('jobs');

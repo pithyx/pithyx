@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 
 namespace Pithyx.Daemon.Backups;
 
-/// <summary>How a job backs up. Versioned backups go from this box (#394); pulls come onto it (#396); mirrors come later.</summary>
+/// <summary>How a job backs up. Versioned backups and mirrors go from this box (#394, #397); pulls come onto it (#396).</summary>
 public enum BackupJobKind
 {
     /// <summary>restic over SFTP into a repository of the job's own on the target, with versions and retention.</summary>
@@ -11,6 +11,9 @@ public enum BackupJobKind
 
     /// <summary>rsync over SSH from a Linux server into a dataset of the job's own, with a ZFS snapshot per run as its version.</summary>
     Pull,
+
+    /// <summary>rsync over SSH from the run's ZFS snapshots into a folder of the job's own on the target: one current copy as plain files, without versions.</summary>
+    Mirror,
 }
 
 /// <summary>Whose owners and rights the files of a server backup carry on the box.</summary>
@@ -39,6 +42,20 @@ public sealed record BackupPullCreateRequest(long ServerId, BackupJobSettings Se
 
 /// <summary>The changes to a server backup; its server and destination stay.</summary>
 public sealed record BackupPullUpdateRequest(BackupJobSettings Settings, BackupPullSettings Pull);
+
+/// <summary>How a mirror treats what is gone on the box.</summary>
+/// <param name="Delete">Files and folders deleted on the box are deleted from the copy at the next run; otherwise the copy keeps them.</param>
+public sealed record BackupMirrorSettings(bool Delete);
+
+/// <summary>A new mirror.</summary>
+/// <param name="TargetId">Where it copies to; the target needs rsync over SSH, not only SFTP.</param>
+/// <param name="Folder">Its folder below the target's path, made by the box if missing.</param>
+/// <param name="Settings">What it copies and when; no retention (all 0), no check schedule, no download limit. The excludes are rsync patterns.</param>
+/// <param name="Mirror">What happens to what is deleted on the box.</param>
+public sealed record BackupMirrorCreateRequest(long TargetId, string Folder, BackupJobSettings Settings, BackupMirrorSettings Mirror);
+
+/// <summary>The changes to a mirror; its target and folder stay.</summary>
+public sealed record BackupMirrorUpdateRequest(BackupJobSettings Settings, BackupMirrorSettings Mirror);
 
 /// <summary>A folder a job backs up.</summary>
 /// <param name="ShareId">The shared folder or home, as in Files.</param>
@@ -171,7 +188,7 @@ public sealed record BackupRunList(IReadOnlyList<BackupRun> Runs);
 /// <param name="Id">Stable id.</param>
 /// <param name="Kind">How it backs up.</param>
 /// <param name="TargetId">Where it backs up to; for a server backup, the server.</param>
-/// <param name="Repository">The repository's folder below the target's path; empty for a server backup.</param>
+/// <param name="Repository">The repository's folder below the target's path, or a mirror's folder there; empty for a server backup.</param>
 /// <param name="Settings">What it backs up and when.</param>
 /// <param name="CreatedAt">UTC.</param>
 /// <param name="NextRunAt">When the schedule runs it next; null when it is disabled.</param>
@@ -183,10 +200,11 @@ public sealed record BackupRunList(IReadOnlyList<BackupRun> Runs);
 /// <param name="ProtectedBytes">The size of its newest version: the bytes its last successful run backed up.</param>
 /// <param name="RepositoryBytes">
 /// What its repository takes on the target, as the newest run that measured it found; for a server backup, what its
-/// dataset takes on the pool with every version.
+/// dataset takes on the pool with every version; for a mirror, the size of the files it copied.
 /// </param>
-/// <param name="Pull">What a server backup pulls and where to; null for a versioned backup.</param>
-/// <param name="Dataset">The dataset that holds a server backup; null for a versioned backup.</param>
+/// <param name="Pull">What a server backup pulls and where to; null for the other kinds.</param>
+/// <param name="Dataset">The dataset that holds a server backup; null for the other kinds.</param>
+/// <param name="Mirror">How a mirror treats what is deleted on the box; null for the other kinds.</param>
 public sealed record BackupJob(
     long Id,
     BackupJobKind Kind,
@@ -203,7 +221,8 @@ public sealed record BackupJob(
     long? ProtectedBytes,
     long? RepositoryBytes,
     BackupPullSettings? Pull,
-    string? Dataset);
+    string? Dataset,
+    BackupMirrorSettings? Mirror);
 
 /// <summary>Every backup job, by name.</summary>
 public sealed record BackupJobList(IReadOnlyList<BackupJob> Jobs);

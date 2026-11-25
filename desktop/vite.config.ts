@@ -243,9 +243,10 @@ function bundleGraph(): Plugin {
 }
 
 // The modules only apps use, never the shell: tables and virtualized lists (D400), and the app frame, toolbars, tabs,
-// form sections with selects and radios of D394 (D401). Status.tsx stays shared: the Pithyx menu shows StatusBadge.
+// form sections with selects and radios of D394 (D401), and the details pane of Files and the Log Center. Status.tsx
+// stays shared: the Pithyx menu shows StatusBadge.
 const appOnlyModules =
-  /[\\/](packages[\\/]ui[\\/]src[\\/](DataTable|Frame|Toolbar|Form)[.]|react-aria-components[\\/]dist[\\/]private[\\/](Table|TableLayout|Virtualizer|Tabs|Select|RadioGroup|Toolbar)\.mjs|react-stately[\\/]dist[\\/]private[\\/](layout|table|virtualizer|select|radio|tabs)[\\/]|react-aria[\\/]dist[\\/]private[\\/](table|virtualizer|select|radio|tabs|toolbar)[\\/]|@tanstack[\\/](virtual-core|react-virtual)[\\/])/;
+  /[\\/](packages[\\/]ui[\\/]src[\\/](DataTable|DetailsPane|Frame|Toolbar|Form)[.]|react-aria-components[\\/]dist[\\/]private[\\/](Table|TableLayout|Virtualizer|Tabs|Select|RadioGroup|Toolbar)\.mjs|react-stately[\\/]dist[\\/]private[\\/](layout|table|virtualizer|select|radio|tabs)[\\/]|react-aria[\\/]dist[\\/]private[\\/](table|virtualizer|select|radio|tabs|toolbar)[\\/]|@tanstack[\\/](virtual-core|react-virtual)[\\/])/;
 
 const signIn: readonly string[] = signInNamespaces;
 const desktopShell: readonly string[] = desktopNamespaces;

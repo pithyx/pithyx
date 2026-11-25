@@ -44,9 +44,9 @@ public sealed partial class BackupJobService
         {
             row = await RowAsync(connection, id, cancellationToken);
         }
-        if (row.Kind == PullKind)
+        if (row.Kind != VersionedKind)
         {
-            throw Unsupported("browse");
+            throw Unsupported(row.Kind == MirrorKind ? "mirror" : "browse");
         }
         if (browser.IsOpen(id))
         {
@@ -531,9 +531,9 @@ public sealed partial class BackupJobService
         await using (var connection = await connections.OpenAsync(cancellationToken))
         {
             row = await RowAsync(connection, id, cancellationToken);
-            if (row.Kind == PullKind)
+            if (row.Kind != VersionedKind)
             {
-                throw Unsupported("restore");
+                throw Unsupported(row.Kind == MirrorKind ? "mirror" : "restore");
             }
             rows = [.. await connection.QueryAsync<VersionRow>(new CommandDefinition(
                 SelectVersion + " WHERE job_id = @id ORDER BY time DESC, id DESC", new { id }, cancellationToken: cancellationToken))];
