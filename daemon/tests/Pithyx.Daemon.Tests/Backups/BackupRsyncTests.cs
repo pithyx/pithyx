@@ -16,7 +16,7 @@ public sealed class BackupRsyncTests
             [
                 "-i", "PATH=/usr/bin:/bin", "LC_ALL=C.UTF-8", "HOME=/nonexistent",
                 "rsync", "-e", "ssh -F /dev/null",
-                "-rltHR", "--numeric-ids", "--inplace", "--no-whole-file", "--no-motd", "--itemize-changes", "--stats", "--info=progress2",
+                "-rltHR", "--no-inc-recursive", "--numeric-ids", "--inplace", "--no-whole-file", "--no-motd", "--itemize-changes", "--stats", "--info=progress2",
                 "-pgoAX", "--delete", "--bwlimit=500", "--exclude=*.tmp",
                 "--", "pithyx-target:/srv/www", "pithyx-target:/etc", "/proc/1/fd/9/",
             ],
@@ -133,6 +133,7 @@ public sealed class BackupRsyncTests
 
         Assert.Equal(["--exclude=*.tmp", "--", "/run/pithyx/backup-stage/view/./Media/Photos", "/run/pithyx/backup-stage/view/./homes/anna", "pithyx-target:backups/m/"], arguments.TakeLast(5));
         Assert.DoesNotContain("--delete", arguments);
+        Assert.Contains("--no-inc-recursive", arguments);
         Assert.Equal("Media/Photos/a.jpg", BackupRsync.MirrorItem("run/pithyx/backup-stage/view/./Media/Photos/a.jpg"));
         Assert.Equal("homes/anna/x", BackupRsync.MirrorItem("/run/pithyx/backup-stage/view/homes/anna/x"));
     }

@@ -83,7 +83,8 @@ public static partial class BackupRsync
         var arguments = new List<string>(BackupSsh.CleanEnvironment())
         {
             "rsync", "-e", shell,
-            "-rltHR", "--numeric-ids", "--inplace", "--no-whole-file", "--no-motd",
+            // With -H and incremental recursion rsync deadlocks when the first link of a file fails to write (#424).
+            "-rltHR", "--no-inc-recursive", "--numeric-ids", "--inplace", "--no-whole-file", "--no-motd",
             "--itemize-changes", "--stats", "--info=progress2",
         };
         if (owners == BackupPullOwners.Server)
@@ -182,7 +183,8 @@ public static partial class BackupRsync
         var arguments = new List<string>(BackupSsh.CleanEnvironment())
         {
             "rsync", "-e", shell,
-            "-rltHR", "--chmod=Du+rwx,Fu+rw", "--no-motd",
+            // With -H and incremental recursion rsync deadlocks when the first link of a file fails to write (#424).
+            "-rltHR", "--no-inc-recursive", "--chmod=Du+rwx,Fu+rw", "--no-motd",
             "--itemize-changes", "--stats", "--info=progress2",
         };
         if (delete)
