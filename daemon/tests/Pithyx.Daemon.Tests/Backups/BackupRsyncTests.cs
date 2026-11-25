@@ -104,6 +104,39 @@ public sealed class BackupRsyncTests
             snapshots);
     }
 
+    [Theory]
+    [InlineData(0, "", null, null)]
+    [InlineData(24, "file has vanished: \"/run/pithyx/backup-stage/view/./Media/a\"\n", null, null)]
+    [InlineData(23, "rsync: [sender] send_files failed to open \"/run/pithyx/backup-stage/view/./Media/a\": Permission denied (13)\n", null, null)]
+    [InlineData(23, "rsync: [generator] recv_generator: mkdir \"/m/Media\" failed: Permission denied (13)\n", ErrorCodes.BackupTargetNotWritable, "write")]
+    [InlineData(12, "rsync: write failed on \"/m/a\": Disk quota exceeded (122)\n", ErrorCodes.BackupTargetNotWritable, "full")]
+    [InlineData(2, "protocol version mismatch -- is your shell clean?\n", ErrorCodes.BackupTargetRsyncMissing, null)]
+    [InlineData(127, "sh: 1: rsync: not found\n", ErrorCodes.BackupTargetRsyncMissing, null)]
+    [InlineData(255, "u1@host: Permission denied (publickey).\n", ErrorCodes.BackupTargetAuthFailed, null)]
+    [InlineData(255, "kex_exchange_identification: read: Connection reset by peer\n", ErrorCodes.BackupTargetUnreachable, null)]
+    [InlineData(20, "rsync error: received SIGINT, SIGTERM, or SIGHUP (code 20)\n", ErrorCodes.BackupRunFailed, null)]
+    public void AMirrorsFailuresNameTheTargetsProblem(int exitCode, string standardError, string? code, string? reason)
+    {
+        var failure = BackupRsync.MirrorFailure(exitCode, standardError, "backups/m");
+
+        Assert.Equal(code, failure?.Code);
+        if (reason is not null)
+        {
+            Assert.Equal(reason, failure!.Parameters["reason"]);
+        }
+    }
+
+    [Fact]
+    public void AMirrorSendsEachSourceBelowItsNameAndNamesUnreadableFilesSo()
+    {
+        var arguments = BackupRsync.MirrorArguments("ssh", ["Media/Photos", "homes/anna"], "backups/m", delete: false, ["*.tmp"], 0);
+
+        Assert.Equal(["--exclude=*.tmp", "--", "/run/pithyx/backup-stage/view/./Media/Photos", "/run/pithyx/backup-stage/view/./homes/anna", "pithyx-target:backups/m/"], arguments.TakeLast(5));
+        Assert.DoesNotContain("--delete", arguments);
+        Assert.Equal("Media/Photos/a.jpg", BackupRsync.MirrorItem("run/pithyx/backup-stage/view/./Media/Photos/a.jpg"));
+        Assert.Equal("homes/anna/x", BackupRsync.MirrorItem("/run/pithyx/backup-stage/view/homes/anna/x"));
+    }
+
     private static string Fixture(string name) =>
         File.ReadAllText(Path.Combine(RepositoryFiles.Root, "daemon", "tests", "fixtures", "backups", name));
 }

@@ -50,7 +50,7 @@ public sealed partial class BackupJobService
                     INSERT INTO backup_jobs (name, kind, target_id, repository, repository_key, sources, excludes, schedule, enabled,
                         keep_last, keep_hourly, keep_daily, keep_weekly, keep_monthly, keep_yearly, check_schedule, check_read_percent,
                         upload_limit_kib, download_limit_kib, overdue_hours, created_at, updated_at,
-                        destination_share_id, destination_folder, destination_dataset, remote_paths, pull_delete, pull_owners)
+                        destination_share_id, destination_folder, destination_dataset, remote_paths, delete_removed, pull_owners)
                     VALUES (@Name, 'pull', @serverId, '', '', '[]', @excludes, @Schedule, @Enabled,
                         @keepLast, @keepHourly, @keepDaily, @keepWeekly, @keepMonthly, @keepYearly, NULL, 0,
                         0, @DownloadLimitKib, @OverdueHours, @now, @now,
@@ -115,7 +115,7 @@ public sealed partial class BackupJobService
                 UPDATE backup_jobs SET name = @Name, excludes = @excludes, schedule = @Schedule, enabled = @Enabled,
                     keep_last = @keepLast, keep_hourly = @keepHourly, keep_daily = @keepDaily, keep_weekly = @keepWeekly,
                     keep_monthly = @keepMonthly, keep_yearly = @keepYearly, download_limit_kib = @DownloadLimitKib,
-                    overdue_hours = @OverdueHours, remote_paths = @paths, pull_delete = @delete, pull_owners = @owners, updated_at = @now
+                    overdue_hours = @OverdueHours, remote_paths = @paths, delete_removed = @delete, pull_owners = @owners, updated_at = @now
                 WHERE id = @id
                 """,
                 Parameters(settings, new
@@ -423,7 +423,7 @@ public sealed partial class BackupJobService
             row.DestinationShareId ?? 0,
             row.DestinationFolder ?? "",
             JsonSerializer.Deserialize<List<string>>(row.RemotePaths ?? "[]") ?? [],
-            row.PullDelete == 1,
+            row.DeleteRemoved == 1,
             row.PullOwners == "box" ? BackupPullOwners.Box : BackupPullOwners.Server);
 
     private static PithyxException Unsupported(string action) =>

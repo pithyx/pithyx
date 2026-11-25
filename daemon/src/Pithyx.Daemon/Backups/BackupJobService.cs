@@ -28,6 +28,7 @@ namespace Pithyx.Daemon.Backups;
 public sealed partial class BackupJobService(
     SqliteConnectionFactory connections,
     BackupTargetService targets,
+    BackupSsh ssh,
     BackupRestic restic,
     BackupBrowser browser,
     ShareService shares,
@@ -67,7 +68,7 @@ public sealed partial class BackupJobService(
             check_read_percent AS CheckReadPercent, upload_limit_kib AS UploadLimitKib, download_limit_kib AS DownloadLimitKib,
             overdue_hours AS OverdueHours, overdue_notified_at AS OverdueNotifiedAt, created_at AS CreatedAt,
             kind AS Kind, destination_share_id AS DestinationShareId, destination_folder AS DestinationFolder,
-            destination_dataset AS DestinationDataset, remote_paths AS RemotePaths, pull_delete AS PullDelete, pull_owners AS PullOwners
+            destination_dataset AS DestinationDataset, remote_paths AS RemotePaths, delete_removed AS DeleteRemoved, pull_owners AS PullOwners
         FROM backup_jobs
         """;
 
@@ -213,7 +214,7 @@ public sealed partial class BackupJobService(
     public async Task<BackupJob> UpdateAsync(long id, BackupJobSettings request, CancellationToken cancellationToken)
     {
         await using var connection = await connections.OpenAsync(cancellationToken);
-        if ((await RowAsync(connection, id, cancellationToken)).Kind == PullKind)
+        if ((await RowAsync(connection, id, cancellationToken)).Kind != VersionedKind)
         {
             throw Unsupported("edit");
         }
@@ -377,9 +378,9 @@ public sealed partial class BackupJobService(
         {
             row = await RowAsync(connection, id, cancellationToken);
         }
-        if (kind == BackupRunKind.Check && row.Kind == PullKind)
+        if (kind == BackupRunKind.Check && row.Kind != VersionedKind)
         {
-            throw Unsupported("check");
+            throw Unsupported(row.Kind == MirrorKind ? "mirror" : "check");
         }
         if (!_active.TryAdd(id, 0))
         {
@@ -508,6 +509,7 @@ public sealed partial class BackupJobService(
         {
             (state, error) = kind != BackupRunKind.Backup ? await CheckAsync(row, report, context.Cancellation)
                 : row.Kind == PullKind ? await PullAsync(row, report, context)
+                : row.Kind == MirrorKind ? await MirrorAsync(row, report, context)
                 : await BackupAsync(row, report, context);
         }
         catch (OperationCanceledException) when (context.Cancellation.IsCancellationRequested)
@@ -949,7 +951,7 @@ public sealed partial class BackupJobService(
             cancellationToken: cancellationToken));
         return new BackupJob(
             row.Id,
-            row.Kind == PullKind ? BackupJobKind.Pull : BackupJobKind.Versioned,
+            KindOf(row),
             row.TargetId,
             row.Repository,
             settings,
@@ -963,7 +965,8 @@ public sealed partial class BackupJobService(
             protectedBytes,
             repositoryBytes,
             PullSettings(row),
-            row.DestinationDataset);
+            row.DestinationDataset,
+            MirrorSettings(row));
     }
 
     private static BackupJobSettings Settings(JobRow row) => new(
@@ -1054,7 +1057,7 @@ public sealed partial class BackupJobService(
         public string? DestinationFolder { get; init; }
         public string? DestinationDataset { get; init; }
         public string? RemotePaths { get; init; }
-        public long? PullDelete { get; init; }
+        public long? DeleteRemoved { get; init; }
         public string? PullOwners { get; init; }
     }
 

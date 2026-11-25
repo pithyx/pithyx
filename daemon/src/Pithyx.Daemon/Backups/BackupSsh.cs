@@ -237,7 +237,8 @@ public sealed partial class BackupSsh(ICommandRunner commands)
             }
             return new PithyxException(ErrorCodes.BackupTargetHostKeyChanged, parameters);
         }
-        if (standardError.Contains("Permission denied (", StringComparison.Ordinal) || standardError.Contains("Too many authentication failures", StringComparison.Ordinal))
+        // ssh names the methods it tried ("Permission denied (publickey)"); rsync and sftp name an errno ("(13)").
+        if (SshDenied().IsMatch(standardError) || standardError.Contains("Too many authentication failures", StringComparison.Ordinal))
         {
             return new PithyxException(ErrorCodes.BackupTargetAuthFailed);
         }
@@ -295,6 +296,9 @@ public sealed partial class BackupSsh(ICommandRunner commands)
 
     [GeneratedRegex(@"key sent by the remote host is\s+(?<fingerprint>SHA256:[A-Za-z0-9+/]+)")]
     private static partial Regex OfferedFingerprint();
+
+    [GeneratedRegex(@"Permission denied \([a-z-]+[,)]")]
+    private static partial Regex SshDenied();
 }
 
 /// <summary>A folder in the temporary folder only the daemon's user can enter, for keys; deleted when disposed.</summary>

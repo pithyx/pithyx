@@ -103,9 +103,9 @@ public sealed partial class BackupJobService
     {
         await using var connection = await connections.OpenAsync(cancellationToken);
         var row = await RowAsync(connection, id, cancellationToken);
-        if (row.Kind == PullKind)
+        if (row.Kind != VersionedKind)
         {
-            throw Unsupported("key");
+            throw Unsupported(row.Kind == MirrorKind ? "mirror" : "key");
         }
         await audit.RecordAsync(caller, KeyRevealed, row.Name, new Dictionary<string, string> { ["repository"] = row.Repository }, cancellationToken);
         LogKeyRevealed(id);

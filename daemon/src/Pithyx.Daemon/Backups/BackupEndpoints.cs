@@ -113,6 +113,18 @@ public static class BackupEndpoints
                 TypedResults.Ok(await service.UpdatePullAsync(id, request, cancellationToken)))
             .WithName("UpdateBackupPull")
             .WithDescription("Administrators only. Changes what a server backup pulls and when; its server and its folder stay (shareId and folder are ignored).");
+        var mirrors = backups.MapGroup("/mirrors");
+        mirrors.MapPost("", async Task<Created<BackupJobCreated>> (BackupMirrorCreateRequest request, BackupJobService service, HttpContext context, CancellationToken cancellationToken) =>
+            {
+                var created = await service.CreateMirrorAsync(context.User, request, cancellationToken);
+                return TypedResults.Created($"/api/backups/jobs/{created.Job.Id}", created);
+            })
+            .WithName("CreateBackupMirror")
+            .WithDescription("Administrators only. Makes a mirror (#397): its folder on the target over SFTP, then checks that rsync runs there over SSH (backup.target.rsync_missing for a target that offers only SFTP). Each run copies the folders from their snapshots with rsync, below the shared folder's or home's name, without versions. The answer's key is always null.");
+        mirrors.MapPut("/{id:long}", async Task<Ok<BackupJob>> (long id, BackupMirrorUpdateRequest request, BackupJobService service, CancellationToken cancellationToken) =>
+                TypedResults.Ok(await service.UpdateMirrorAsync(id, request, cancellationToken)))
+            .WithName("UpdateBackupMirror")
+            .WithDescription("Administrators only. Changes what a mirror copies and when, and whether deletions on the box reach the copy; its target and folder stay.");
         jobs.MapGet("/{id:long}/runs", async Task<Ok<BackupRunList>> (long id, BackupJobService service, CancellationToken cancellationToken, int? limit) =>
                 TypedResults.Ok(await service.RunsAsync(id, limit ?? 50, cancellationToken)))
             .WithName("ListBackupRuns")

@@ -2529,6 +2529,10 @@
     "backup.server.rsync_missing": {
       "params": {},
       "expected": "The server has no rsync, or no rrsync for the line in its authorized_keys. Install the package rsync on the server."
+    },
+    "backup.target.rsync_missing": {
+      "params": {},
+      "expected": "A mirror needs rsync over SSH on the target, but the target has no rsync or lets the box in for SFTP only. On another box, use a user who may sign in over SSH."
     }
   },
   "cases": [

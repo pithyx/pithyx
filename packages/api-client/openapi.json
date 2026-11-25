@@ -9385,6 +9385,99 @@
         }
       }
     },
+    "/api/backups/mirrors": {
+      "post": {
+        "tags": [
+          "Backups"
+        ],
+        "description": "Administrators only. Makes a mirror (#397): its folder on the target over SFTP, then checks that rsync runs there over SSH (backup.target.rsync_missing for a target that offers only SFTP). Each run copies the folders from their snapshots with rsync, below the shared folder's or home's name, without versions. The answer's key is always null.",
+        "operationId": "CreateBackupMirror",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BackupMirrorCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BackupJobCreated"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/backups/mirrors/{id}": {
+      "put": {
+        "tags": [
+          "Backups"
+        ],
+        "description": "Administrators only. Changes what a mirror copies and when, and whether deletions on the box reach the copy; its target and folder stay.",
+        "operationId": "UpdateBackupMirror",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BackupMirrorUpdateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BackupJob"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/system/support-bundle": {
       "get": {
         "tags": [
@@ -14446,7 +14539,8 @@
           "protectedBytes",
           "repositoryBytes",
           "pull",
-          "dataset"
+          "dataset",
+          "mirror"
         ],
         "type": "object",
         "properties": {
@@ -14466,7 +14560,7 @@
           },
           "repository": {
             "type": "string",
-            "description": "The repository's folder below the target's path; empty for a server backup."
+            "description": "The repository's folder below the target's path, or a mirror's folder there; empty for a server backup."
           },
           "settings": {
             "description": "What it backs up and when.",
@@ -14542,7 +14636,7 @@
               "null",
               "integer"
             ],
-            "description": "What its repository takes on the target, as the newest run that measured it found; for a server backup, what its\ndataset takes on the pool with every version.",
+            "description": "What its repository takes on the target, as the newest run that measured it found; for a server backup, what its\ndataset takes on the pool with every version; for a mirror, the size of the files it copied.",
             "format": "int64"
           },
           "pull": {
@@ -14551,7 +14645,7 @@
                 "type": "null"
               },
               {
-                "description": "What a server backup pulls and where to; null for a versioned backup.",
+                "description": "What a server backup pulls and where to; null for the other kinds.",
                 "$ref": "#/components/schemas/BackupPullSettings"
               }
             ],
@@ -14562,7 +14656,19 @@
               "null",
               "string"
             ],
-            "description": "The dataset that holds a server backup; null for a versioned backup."
+            "description": "The dataset that holds a server backup; null for the other kinds."
+          },
+          "mirror": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "How a mirror treats what is deleted on the box; null for the other kinds.",
+                "$ref": "#/components/schemas/BackupMirrorSettings"
+              }
+            ],
+            "description": "How a mirror treats what is gone on the box."
           }
         },
         "description": "A backup job."
@@ -14634,9 +14740,10 @@
       "BackupJobKind": {
         "enum": [
           "versioned",
-          "pull"
+          "pull",
+          "mirror"
         ],
-        "description": "How a job backs up. Versioned backups go from this box (#394); pulls come onto it (#396); mirrors come later."
+        "description": "How a job backs up. Versioned backups and mirrors go from this box (#394, #397); pulls come onto it (#396)."
       },
       "BackupJobList": {
         "required": [
@@ -14743,6 +14850,64 @@
           "protected"
         ],
         "description": "Why the retention kept a version."
+      },
+      "BackupMirrorCreateRequest": {
+        "required": [
+          "targetId",
+          "folder",
+          "settings",
+          "mirror"
+        ],
+        "type": "object",
+        "properties": {
+          "targetId": {
+            "type": "integer",
+            "description": "Where it copies to; the target needs rsync over SSH, not only SFTP.",
+            "format": "int64"
+          },
+          "folder": {
+            "type": "string",
+            "description": "Its folder below the target's path, made by the box if missing."
+          },
+          "settings": {
+            "description": "What it copies and when; no retention (all 0), no check schedule, no download limit. The excludes are rsync patterns.",
+            "$ref": "#/components/schemas/BackupJobSettings"
+          },
+          "mirror": {
+            "description": "What happens to what is deleted on the box.",
+            "$ref": "#/components/schemas/BackupMirrorSettings"
+          }
+        },
+        "description": "A new mirror."
+      },
+      "BackupMirrorSettings": {
+        "required": [
+          "delete"
+        ],
+        "type": "object",
+        "properties": {
+          "delete": {
+            "type": "boolean",
+            "description": "Files and folders deleted on the box are deleted from the copy at the next run; otherwise the copy keeps them."
+          }
+        },
+        "description": "How a mirror treats what is gone on the box."
+      },
+      "BackupMirrorUpdateRequest": {
+        "required": [
+          "settings",
+          "mirror"
+        ],
+        "type": "object",
+        "properties": {
+          "settings": {
+            "$ref": "#/components/schemas/BackupJobSettings"
+          },
+          "mirror": {
+            "$ref": "#/components/schemas/BackupMirrorSettings"
+          }
+        },
+        "description": "The changes to a mirror; its target and folder stay."
       },
       "BackupPullCreateRequest": {
         "required": [
@@ -17055,6 +17220,7 @@
           "backup.target.name_taken",
           "backup.target.not_found",
           "backup.target.not_writable",
+          "backup.target.rsync_missing",
           "backup.target.unreachable",
           "backup.version.not_found",
           "desktop.device.not_found",
