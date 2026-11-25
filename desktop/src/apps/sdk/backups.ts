@@ -15,6 +15,8 @@ export type BackupJobCreated = components['schemas']['BackupJobCreated'];
 export type BackupJobCreateRequest = components['schemas']['BackupJobCreateRequest'];
 export type BackupPullSettings = components['schemas']['BackupPullSettings'];
 export type BackupPullCreateRequest = components['schemas']['BackupPullCreateRequest'];
+export type BackupMirrorSettings = components['schemas']['BackupMirrorSettings'];
+export type BackupMirrorCreateRequest = components['schemas']['BackupMirrorCreateRequest'];
 export type BackupRetention = components['schemas']['BackupRetention'];
 export type BackupRun = components['schemas']['BackupRun'];
 export type BackupSourceOption = components['schemas']['BackupSourceOption'];
@@ -91,6 +93,16 @@ interface BackupMethods {
   /** Changes what a server backup pulls and when; its server and destination stay. */
   'internal.admin.backups.updatePull': {
     params: { id: number; settings: BackupJobSettings; pull: BackupPullSettings };
+    result: BackupJob;
+  };
+  /** Makes a mirror's folder on the target, checks rsync there and saves the mirror. */
+  'internal.admin.backups.createMirror': {
+    params: BackupMirrorCreateRequest;
+    result: BackupJobCreated;
+  };
+  /** Changes what a mirror copies and when; its target and folder stay. */
+  'internal.admin.backups.updateMirror': {
+    params: { id: number; settings: BackupJobSettings; mirror: BackupMirrorSettings };
     result: BackupJob;
   };
   /**
@@ -280,6 +292,9 @@ function pullBody(pull: BackupPullSettings): BackupPullSettings {
     owners: pull.owners,
   };
 }
+
+const isMirror = (value: unknown): value is BackupMirrorSettings =>
+  isRecord(value) && typeof value.delete === 'boolean';
 
 /** Only the filters that are set, so the daemon gets no empty parameters. */
 function historyQuery({ jobId, kind, state, since, until, before, limit }: BackupHistoryQuery) {
@@ -475,6 +490,45 @@ export function backupsHost(): HostExtensions {
             await api.PUT('/api/backups/pulls/{id}', {
               params: { path: { id } },
               body: { settings: settingsBody(settings), pull: pullBody(pull) },
+            }),
+          );
+        }),
+    },
+    'internal.admin.backups.createMirror': {
+      validate: (value) =>
+        isRecord(value) &&
+        Number.isSafeInteger(value.targetId) &&
+        typeof value.folder === 'string' &&
+        isSettings(value.settings) &&
+        isMirror(value.mirror),
+      handle: (params) =>
+        daemon(async () => {
+          const request = params as BackupMirrorCreateRequest;
+          return unwrap(
+            await api.POST('/api/backups/mirrors', {
+              body: {
+                targetId: request.targetId,
+                folder: request.folder,
+                settings: settingsBody(request.settings),
+                mirror: { delete: request.mirror.delete },
+              },
+            }),
+          );
+        }),
+    },
+    'internal.admin.backups.updateMirror': {
+      validate: (value) =>
+        hasId(value) &&
+        isSettings((value as { settings?: unknown }).settings) &&
+        isMirror((value as { mirror?: unknown }).mirror),
+      handle: (params) =>
+        daemon(async () => {
+          const { id, settings, mirror } =
+            params as BackupMethods['internal.admin.backups.updateMirror']['params'];
+          return unwrap(
+            await api.PUT('/api/backups/mirrors/{id}', {
+              params: { path: { id } },
+              body: { settings: settingsBody(settings), mirror: { delete: mirror.delete } },
             }),
           );
         }),

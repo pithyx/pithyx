@@ -168,6 +168,7 @@ export const sampleJobs: BackupJob[] = [
     repository: 'photos',
     dataset: null,
     pull: null,
+    mirror: null,
     settings: settings('Photos and homes', [
       { shareId: 2, path: '' },
       { shareId: 11, path: '' },
@@ -206,6 +207,7 @@ export const sampleJobs: BackupJob[] = [
     repository: 'documents',
     dataset: null,
     pull: null,
+    mirror: null,
     settings: settings('Documents', [{ shareId: 3, path: '' }]),
     lastRun: documentsRuns[0] ?? null,
     lastCheck: documentsRuns[3] ?? null,
@@ -219,15 +221,18 @@ export const sampleJobs: BackupJob[] = [
   },
   {
     id: 3,
-    kind: 'versioned',
+    kind: 'mirror',
     targetId: 2,
     repository: 'media',
     dataset: null,
     pull: null,
+    mirror: { delete: false },
     settings: {
       ...settings('Media to the second box', [{ shareId: 4, path: 'Music' }]),
       schedule: '0 3 * * 6',
+      retention: { last: 0, hourly: 0, daily: 0, weekly: 0, monthly: 0, yearly: 0 },
       checkSchedule: null,
+      checkReadPercent: 0,
     },
     lastRun: run(115, 101, 2, {
       jobId: 3,
@@ -261,6 +266,7 @@ export const sampleJobs: BackupJob[] = [
       delete: true,
       owners: 'server',
     },
+    mirror: null,
     settings: {
       ...settings('web01', []),
       schedule: '0 1 * * *',

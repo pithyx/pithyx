@@ -422,18 +422,27 @@ export function JobDetails({
         <dd>{job.lastSuccessAt === null ? t('jobs.noBackup') : when(job.lastSuccessAt)}</dd>
         {job.pull === null ? (
           <>
-            <dt>{t('jobs.check')}</dt>
-            <dd>
-              {lastCheck?.finishedAt != null
-                ? t('jobs.lastCheck', {
-                    time: when(lastCheck.finishedAt),
-                    state: t(`runs.states.${lastCheck.state}`),
-                  })
-                : job.nextCheckAt === null
-                  ? t('jobs.noCheck')
-                  : t('jobs.nextCheck', { time: when(job.nextCheckAt) })}
-            </dd>
-            <dt>{t('jobs.repository')}</dt>
+            {job.mirror === null ? (
+              <>
+                <dt>{t('jobs.check')}</dt>
+                <dd>
+                  {lastCheck?.finishedAt != null
+                    ? t('jobs.lastCheck', {
+                        time: when(lastCheck.finishedAt),
+                        state: t(`runs.states.${lastCheck.state}`),
+                      })
+                    : job.nextCheckAt === null
+                      ? t('jobs.noCheck')
+                      : t('jobs.nextCheck', { time: when(job.nextCheckAt) })}
+                </dd>
+              </>
+            ) : (
+              <>
+                <dt>{t('mirrorForm.deletions')}</dt>
+                <dd>{t(job.mirror.delete ? 'mirrorForm.deleteOn' : 'mirrorForm.deleteOff')}</dd>
+              </>
+            )}
+            <dt>{t(job.mirror === null ? 'jobs.repository' : 'mirrorForm.folder')}</dt>
             <dd className={styles.mono}>
               {t('jobs.repositoryValue', {
                 repository: job.repository,
@@ -560,7 +569,10 @@ export function RunButtons({
       )}
       {job?.kind !== 'pull' && (
         <Button
-          isDisabled={job === undefined || running !== undefined || start.isPending}
+          // A mirror keeps no repository to check.
+          isDisabled={
+            job === undefined || job.kind === 'mirror' || running !== undefined || start.isPending
+          }
           onPress={() => {
             if (job !== undefined) {
               start.mutate({ job, kind: 'check' });
@@ -629,7 +641,10 @@ export function JobsPage({
   }
   // The texts of box backups are under `jobs`, those of server backups under `pulls`.
   const texts = kind === 'pull' ? 'pulls' : 'jobs';
-  const list = (jobs.data?.jobs ?? []).filter((job) => job.kind === kind);
+  // Box backups shows the mirrors beside the versioned backups.
+  const list = (jobs.data?.jobs ?? []).filter((job) =>
+    kind === 'pull' ? job.kind === 'pull' : job.kind !== 'pull',
+  );
   const selected = list.find((job) => job.id === selectedId);
   const targetOf = (job: BackupJob) => targets?.find((target) => target.id === job.targetId);
   const commands = useRunCommands(app);

@@ -54,7 +54,8 @@ import styles from './Backup.module.css';
 /**
  * A backup's own page (#404, D416): the path back to the list, its route, and tabs for its state, its versions, its
  * schedule and retention, its folders, its settings and every run. The toolbar runs, checks, edits and deletes it and
- * shows its key again. A server backup (#396) has no key and no check, and its versions are snapshots on this box.
+ * shows its key again. A server backup (#396) has no key and no check, and its versions are snapshots on this box. A
+ * mirror (#397) has neither key, check nor versions.
  */
 export function JobDetailPage({
   app,
@@ -120,7 +121,7 @@ export function JobDetailPage({
           <IconTrash size={18} stroke={1.75} aria-hidden />
           {t('jobs.delete')}
         </Button>
-        {pull === null && (
+        {job.kind === 'versioned' && (
           <>
             <ToolbarSeparator />
             <Button
@@ -138,7 +139,7 @@ export function JobDetailPage({
       <Tabs defaultSelectedKey="overview">
         <TabList aria-label={t('detail.tabs')}>
           <Tab id="overview">{t('detail.tab.overview')}</Tab>
-          <Tab id="versions">{t('detail.tab.versions')}</Tab>
+          {job.kind !== 'mirror' && <Tab id="versions">{t('detail.tab.versions')}</Tab>}
           <Tab id="schedule">{t('detail.tab.schedule')}</Tab>
           <Tab id="sources">{t('detail.tab.sources')}</Tab>
           <Tab id="settings">{t('detail.tab.settings')}</Tab>
@@ -155,9 +156,11 @@ export function JobDetailPage({
             withHead={false}
           />
         </TabPanel>
-        <TabPanel id="versions">
-          <VersionsPanel app={app} job={job} {...(pull === null ? { onBrowse } : {})} />
-        </TabPanel>
+        {job.kind !== 'mirror' && (
+          <TabPanel id="versions">
+            <VersionsPanel app={app} job={job} {...(pull === null ? { onBrowse } : {})} />
+          </TabPanel>
+        )}
         <TabPanel id="schedule">
           <ScheduleFacts job={job} />
           {edit}
@@ -225,9 +228,18 @@ function ScheduleFacts({ job }: { job: BackupJob }) {
       <dd>{scheduleText(job)}</dd>
       <dt>{t('jobs.nextRun')}</dt>
       <dd>{job.nextRunAt === null ? t('jobs.byHand') : when(job.nextRunAt)}</dd>
-      <dt>{t('jobForm.retention')}</dt>
-      <dd>{kept.length === 0 ? t('detail.keepAll') : kept.join(', ')}</dd>
-      {job.kind !== 'pull' && (
+      {job.mirror === null ? (
+        <>
+          <dt>{t('jobForm.retention')}</dt>
+          <dd>{kept.length === 0 ? t('detail.keepAll') : kept.join(', ')}</dd>
+        </>
+      ) : (
+        <>
+          <dt>{t('mirrorForm.deletions')}</dt>
+          <dd>{t(job.mirror.delete ? 'mirrorForm.deleteOn' : 'mirrorForm.deleteOff')}</dd>
+        </>
+      )}
+      {job.kind === 'versioned' && (
         <>
           <dt>{t('jobs.check')}</dt>
           <dd>
@@ -284,7 +296,7 @@ function SettingsFacts({ job, target }: { job: BackupJob; target: BackupTarget |
         </>
       ) : (
         <>
-          <dt>{t('jobs.repository')}</dt>
+          <dt>{t(job.kind === 'mirror' ? 'mirrorForm.folder' : 'jobs.repository')}</dt>
           <dd className={styles.mono}>{job.repository}</dd>
         </>
       )}
@@ -296,8 +308,12 @@ function SettingsFacts({ job, target }: { job: BackupJob; target: BackupTarget |
           <dd>{limit(job.settings.uploadLimitKib)}</dd>
         </>
       )}
-      <dt>{t('detail.download')}</dt>
-      <dd>{limit(job.settings.downloadLimitKib)}</dd>
+      {job.kind !== 'mirror' && (
+        <>
+          <dt>{t('detail.download')}</dt>
+          <dd>{limit(job.settings.downloadLimitKib)}</dd>
+        </>
+      )}
     </dl>
   );
 }

@@ -89,7 +89,7 @@
     "add": "Box-Backup hinzufügen",
     "list": "Box-Backups",
     "loading": "Backups werden geladen",
-    "intro": "Ordner dieser Box, gesichert auf ein Ziel außerhalb: einen SFTP-Server oder eine zweite Box. Jeder Lauf macht zuerst einen ZFS-Snapshot, damit das Backup einen Zeitpunkt zeigt, und behält so viele Versionen, wie du einstellst.",
+    "intro": "Ordner dieser Box, gesichert auf ein Ziel außerhalb: einen SFTP-Server oder eine zweite Box. Jeder Lauf macht zuerst einen ZFS-Snapshot, damit das Backup einen Zeitpunkt zeigt. Ein versioniertes Backup behält so viele Versionen, wie du einstellst; ein Spiegel behält eine einfache Kopie.",
     "emptyTitle": "Noch kein Box-Backup",
     "empty": "Füge das erste Backup von freigegebenen Ordnern und Home-Ordnern auf ein Ziel hinzu.",
     "noTargetsTitle": "Noch kein Ziel",
@@ -224,7 +224,11 @@
     "overdue": "Als überfällig melden nach Stunden",
     "overdueHint": "Leer: das Dreifache des Abstands, mindestens zwei Tage.",
     "excludes": "Ausnahmen",
-    "excludesHint": "Ein restic-Muster pro Zeile, zum Beispiel *.tmp oder **/cache."
+    "excludesHint": "Ein restic-Muster pro Zeile, zum Beispiel *.tmp oder **/cache.",
+    "kind": "Art",
+    "kindVersioned": "Versioniertes Backup",
+    "kindMirror": "Spiegel",
+    "kindVersionedHint": "Verschlüsselt in einem restic-Repository, mit so vielen Versionen, wie du einstellst. Dateien holst du über Wiederherstellen zurück."
   },
   "key": {
     "title": "Schlüssel von {name}",
@@ -256,7 +260,8 @@
   },
   "kinds": {
     "versioned": "Versioniert",
-    "pull": "Versioniert"
+    "pull": "Versioniert",
+    "mirror": "Spiegel"
   },
   "schedule": {
     "off": "Nur von Hand",
@@ -599,7 +604,7 @@
       "title": "Ordner dieser Box sichern",
       "text": "Freigegebene Ordner und Home-Ordner gehen auf ein Ziel außerhalb der Box.",
       "point1": "auf einen SFTP-Server oder eine zweite Box",
-      "point2": "verschlüsselt, mit Versionen"
+      "point2": "verschlüsselt mit Versionen oder als einfacher Spiegel"
     },
     "in": {
       "title": "Einen Linux-Server auf die Box sichern",
@@ -607,5 +612,22 @@
       "point1": "auf dem Server müssen nur SSH und rsync laufen",
       "point2": "frühere Versionen direkt in Dateien"
     }
+  },
+  "mirrorForm": {
+    "kindHint": "Eine einfache Kopie der Ordner auf dem Ziel, geschrieben mit rsync über SSH. Jeder Lauf bringt sie auf den neuesten Stand; die Dateien lassen sich dort direkt öffnen.",
+    "warning": "Ein Spiegel behält keine Versionen und ist nicht verschlüsselt: Eine Datei, die auf der Box geändert, beschädigt oder von Schadsoftware verschlüsselt wird, ändert sich beim nächsten Lauf auch auf dem Ziel. Braucht rsync auf dem Ziel; nimm auf einer zweiten Box einen Benutzer, der sich per SSH anmelden darf.",
+    "folder": "Ordner auf dem Ziel",
+    "folderHint": "Unterhalb des Ordners des Ziels. Die Box legt ihn an, wenn er fehlt; eine Kopie, die schon dort liegt, bringt sie auf den neuesten Stand.",
+    "fixed": "Spiegelt nach {repository} auf {target}. Ziel und Ordner eines Spiegels bleiben; für einen anderen legst du einen neuen Spiegel an.",
+    "delete": "Auf dem Ziel löschen, was hier gelöscht wurde",
+    "deleteHint": "Aus behält Dateien auf dem Ziel, die auf der Box weg sind. Mit An ist eine hier versehentlich gelöschte Datei nach dem nächsten Lauf auch in der Kopie weg.",
+    "schedule": "Spiegelt",
+    "excludesHint": "Ein rsync-Muster pro Zeile, zum Beispiel *.tmp oder cache/.",
+    "deletions": "Löschungen",
+    "deleteOn": "Auch auf dem Ziel gelöscht",
+    "deleteOff": "Bleiben auf dem Ziel"
+  },
+  "deleteJobMirror": {
+    "text": "Die Box vergisst den Spiegel und seine Läufe. Die Kopie bleibt auf dem Ziel."
   }
 }

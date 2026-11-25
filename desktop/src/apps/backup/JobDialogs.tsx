@@ -1,5 +1,15 @@
 import type { PithyxApp } from '@pithyx/sdk';
-import { Button, Checkbox, Dialog, PasswordField, Select, Switch, TextField } from '@pithyx/ui';
+import {
+  Button,
+  Checkbox,
+  Dialog,
+  PasswordField,
+  Radio,
+  RadioGroup,
+  Select,
+  Switch,
+  TextField,
+} from '@pithyx/ui';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useId, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -42,8 +52,12 @@ interface SourceDraft {
   path: string;
 }
 
+/** A box backup keeps versions in a restic repository; a mirror (#397) keeps one plain copy. */
+type OutKind = 'versioned' | 'mirror';
+
 /** What the administrator edits; numbers as typed. */
 interface Draft {
+  kind: OutKind;
   name: string;
   targetId: number | null;
   repository: string;
@@ -60,11 +74,14 @@ interface Draft {
   downloadLimitKib: string;
   overdueHours: string;
   excludes: string;
+  /** A mirror's: delete on the target what is gone on the box. */
+  deleteRemoved: boolean;
 }
 
 function draftOf(job: BackupJob | undefined, targets: readonly BackupTarget[]): Draft {
   if (job === undefined) {
     return {
+      kind: 'versioned',
       name: '',
       targetId: targets.length === 1 ? (targets[0]?.id ?? null) : null,
       repository: '',
@@ -81,10 +98,12 @@ function draftOf(job: BackupJob | undefined, targets: readonly BackupTarget[]): 
       downloadLimitKib: '0',
       overdueHours: '',
       excludes: '',
+      deleteRemoved: false,
     };
   }
   const { settings } = job;
   return {
+    kind: job.kind === 'mirror' ? 'mirror' : 'versioned',
     name: settings.name,
     targetId: job.targetId,
     repository: job.repository,
@@ -109,6 +128,7 @@ function draftOf(job: BackupJob | undefined, targets: readonly BackupTarget[]): 
         ? ''
         : String(settings.overdueHours),
     excludes: (settings.excludes ?? []).join('\n'),
+    deleteRemoved: job.mirror?.delete ?? false,
   };
 }
 
@@ -128,16 +148,20 @@ export function repositoryFor(name: string): string {
     .slice(0, 48);
 }
 
-/** The settings the daemon takes, or undefined while a field cannot be one; the daemon checks the rest. */
+/**
+ * The settings the daemon takes, or undefined while a field cannot be one; the daemon checks the rest. A mirror keeps
+ * no versions, has no check and reads nothing back, so its retention, check and download limit are always none.
+ */
 function settingsOf(draft: Draft): BackupJobSettings | undefined {
+  const mirror = draft.kind === 'mirror';
   const schedule = cronOf(draft.schedule);
-  const checkSchedule = draft.check === null ? null : cronOf(draft.check);
+  const checkSchedule = draft.check === null || mirror ? null : cronOf(draft.check);
   const retention = Object.fromEntries(
-    RETENTION_KEYS.map((key) => [key, count(draft.retention[key])]),
+    RETENTION_KEYS.map((key) => [key, mirror ? 0 : count(draft.retention[key])]),
   ) as Record<RetentionKey, number | undefined>;
-  const checkReadPercent = count(draft.checkReadPercent);
+  const checkReadPercent = mirror ? 0 : count(draft.checkReadPercent);
   const uploadLimitKib = count(draft.uploadLimitKib);
-  const downloadLimitKib = count(draft.downloadLimitKib);
+  const downloadLimitKib = mirror ? 0 : count(draft.downloadLimitKib);
   const overdueHours = draft.overdueHours.trim() === '' ? null : count(draft.overdueHours);
   const sources = draft.sources.flatMap(({ shareId, path }) =>
     shareId === null ? [] : [{ shareId, path: path.trim() }],
@@ -422,8 +446,9 @@ export function RetentionField({
 }
 
 /**
- * A new job, or the settings of one. A new job makes its repository with a key the box shows once, or connects to an
- * existing repository with its key; the target and the repository of a saved job stay.
+ * A new job, or the settings of one. A new versioned job makes its repository with a key the box shows once, or
+ * connects to an existing repository with its key; a new mirror (#397, D421) makes its folder and checks rsync on the
+ * target. The kind, the target and the repository or folder of a saved job stay.
  */
 export function JobDialog({
   app,
@@ -445,14 +470,29 @@ export function JobDialog({
     setDraft((current) => ({ ...current, ...change }));
   };
   const settings = settingsOf(draft);
+  const mirror = draft.kind === 'mirror';
   const save = useMutation({
     mutationFn: async (values: BackupJobSettings) => {
       if (job !== undefined) {
-        await backupsCall(app, 'internal.admin.backups.updateJob', {
-          id: job.id,
-          settings: values,
-        });
+        await (mirror
+          ? backupsCall(app, 'internal.admin.backups.updateMirror', {
+              id: job.id,
+              settings: values,
+              mirror: { delete: draft.deleteRemoved },
+            })
+          : backupsCall(app, 'internal.admin.backups.updateJob', {
+              id: job.id,
+              settings: values,
+            }));
         return null;
+      }
+      if (mirror) {
+        return backupsCall(app, 'internal.admin.backups.createMirror', {
+          targetId: draft.targetId ?? 0,
+          folder: draft.repository.trim(),
+          settings: values,
+          mirror: { delete: draft.deleteRemoved },
+        });
       }
       return backupsCall(app, 'internal.admin.backups.createJob', {
         targetId: draft.targetId ?? 0,
@@ -475,7 +515,7 @@ export function JobDialog({
     (job !== undefined ||
       (draft.targetId !== null &&
         draft.repository.trim() !== '' &&
-        (!draft.existing || draft.existingKey.trim() !== '')));
+        (mirror || !draft.existing || draft.existingKey.trim() !== '')));
 
   return (
     <Dialog
@@ -517,6 +557,24 @@ export function JobDialog({
           }}
           isRequired
         />
+        {job === undefined && (
+          <>
+            <RadioGroup
+              label={t('jobForm.kind')}
+              value={draft.kind}
+              onChange={(kind) => {
+                update({ kind: kind === 'mirror' ? 'mirror' : 'versioned' });
+              }}
+            >
+              <Radio value="versioned">{t('jobForm.kindVersioned')}</Radio>
+              <Radio value="mirror">{t('jobForm.kindMirror')}</Radio>
+            </RadioGroup>
+            <p className={styles.hint}>
+              {t(mirror ? 'mirrorForm.kindHint' : 'jobForm.kindVersionedHint')}
+            </p>
+          </>
+        )}
+        {mirror && <p className={styles.warning}>{t('mirrorForm.warning')}</p>}
         {job === undefined ? (
           <>
             <Select
@@ -529,8 +587,8 @@ export function JobDialog({
               }}
             />
             <TextField
-              label={t('jobForm.repository')}
-              description={t('jobForm.repositoryHint')}
+              label={t(mirror ? 'mirrorForm.folder' : 'jobForm.repository')}
+              description={t(mirror ? 'mirrorForm.folderHint' : 'jobForm.repositoryHint')}
               spellCheck="false"
               value={draft.repository}
               onChange={(repository) => {
@@ -538,15 +596,17 @@ export function JobDialog({
               }}
               isRequired
             />
-            <Checkbox
-              isSelected={draft.existing}
-              onChange={(existing) => {
-                update({ existing });
-              }}
-            >
-              {t('jobForm.existing')}
-            </Checkbox>
-            {draft.existing && (
+            {!mirror && (
+              <Checkbox
+                isSelected={draft.existing}
+                onChange={(existing) => {
+                  update({ existing });
+                }}
+              >
+                {t('jobForm.existing')}
+              </Checkbox>
+            )}
+            {!mirror && draft.existing && (
               <TextField
                 label={t('jobForm.existingKey')}
                 description={t('jobForm.existingKeyHint')}
@@ -562,7 +622,7 @@ export function JobDialog({
           </>
         ) : (
           <p className={styles.hint}>
-            {t('jobForm.repositoryFixed', {
+            {t(mirror ? 'mirrorForm.fixed' : 'jobForm.repositoryFixed', {
               repository: job.repository,
               target: targets.find((target) => target.id === job.targetId)?.name ?? '',
             })}
@@ -575,8 +635,21 @@ export function JobDialog({
             update({ sources });
           }}
         />
+        {mirror && (
+          <>
+            <Switch
+              isSelected={draft.deleteRemoved}
+              onChange={(deleteRemoved) => {
+                update({ deleteRemoved });
+              }}
+            >
+              {t('mirrorForm.delete')}
+            </Switch>
+            <p className={styles.hint}>{t('mirrorForm.deleteHint')}</p>
+          </>
+        )}
         <ScheduleField
-          label={t('jobForm.schedule')}
+          label={t(mirror ? 'mirrorForm.schedule' : 'jobForm.schedule')}
           hint={t('jobForm.scheduleHint')}
           value={draft.schedule}
           onChange={(schedule) => {
@@ -591,44 +664,48 @@ export function JobDialog({
         >
           {t('jobForm.enabled')}
         </Switch>
-        <RetentionField
-          value={draft.retention}
-          onChange={(retention) => {
-            update({ retention });
-          }}
-        />
-        <fieldset className={styles.fieldset}>
-          <legend className={styles.fieldLabel}>{t('jobForm.check')}</legend>
-          <Checkbox
-            isSelected={draft.check !== null}
-            onChange={(on) => {
-              update({ check: on ? NEW_CHECK : null });
+        {!mirror && (
+          <RetentionField
+            value={draft.retention}
+            onChange={(retention) => {
+              update({ retention });
             }}
-          >
-            {t('jobForm.checkOn')}
-          </Checkbox>
-          {draft.check !== null && (
-            <>
-              <ScheduleField
-                label={t('jobForm.checkSchedule')}
-                hint={t('jobForm.checkHint')}
-                value={draft.check}
-                onChange={(check) => {
-                  update({ check });
-                }}
-              />
-              <TextField
-                label={t('jobForm.checkReadPercent')}
-                description={t('jobForm.checkReadPercentHint')}
-                inputMode="numeric"
-                value={draft.checkReadPercent}
-                onChange={(checkReadPercent) => {
-                  update({ checkReadPercent });
-                }}
-              />
-            </>
-          )}
-        </fieldset>
+          />
+        )}
+        {!mirror && (
+          <fieldset className={styles.fieldset}>
+            <legend className={styles.fieldLabel}>{t('jobForm.check')}</legend>
+            <Checkbox
+              isSelected={draft.check !== null}
+              onChange={(on) => {
+                update({ check: on ? NEW_CHECK : null });
+              }}
+            >
+              {t('jobForm.checkOn')}
+            </Checkbox>
+            {draft.check !== null && (
+              <>
+                <ScheduleField
+                  label={t('jobForm.checkSchedule')}
+                  hint={t('jobForm.checkHint')}
+                  value={draft.check}
+                  onChange={(check) => {
+                    update({ check });
+                  }}
+                />
+                <TextField
+                  label={t('jobForm.checkReadPercent')}
+                  description={t('jobForm.checkReadPercentHint')}
+                  inputMode="numeric"
+                  value={draft.checkReadPercent}
+                  onChange={(checkReadPercent) => {
+                    update({ checkReadPercent });
+                  }}
+                />
+              </>
+            )}
+          </fieldset>
+        )}
         <fieldset className={styles.fieldset}>
           <legend className={styles.fieldLabel}>{t('jobForm.advanced')}</legend>
           <div className={styles.numbers}>
@@ -640,14 +717,16 @@ export function JobDialog({
                 update({ uploadLimitKib });
               }}
             />
-            <TextField
-              label={t('jobForm.download')}
-              inputMode="numeric"
-              value={draft.downloadLimitKib}
-              onChange={(downloadLimitKib) => {
-                update({ downloadLimitKib });
-              }}
-            />
+            {!mirror && (
+              <TextField
+                label={t('jobForm.download')}
+                inputMode="numeric"
+                value={draft.downloadLimitKib}
+                onChange={(downloadLimitKib) => {
+                  update({ downloadLimitKib });
+                }}
+              />
+            )}
           </div>
           <p className={styles.hint}>{t('jobForm.limitHint')}</p>
           <TextField
@@ -661,6 +740,7 @@ export function JobDialog({
           />
           <Excludes
             value={draft.excludes}
+            {...(mirror ? { hint: t('mirrorForm.excludesHint') } : {})}
             onChange={(excludes) => {
               update({ excludes });
             }}
@@ -927,7 +1007,9 @@ export function DeleteJobDialog({
             )}
           </>
         ) : (
-          <p className={styles.muted}>{t('deleteJob.text')}</p>
+          <p className={styles.muted}>
+            {t(job.kind === 'mirror' ? 'deleteJobMirror.text' : 'deleteJob.text')}
+          </p>
         )}
         {remove.isError && <ErrorNotice error={describeProblem(remove.error)} />}
       </div>

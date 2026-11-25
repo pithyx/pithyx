@@ -10,7 +10,7 @@ sidebar:
 
 Ein **Box-Backup** in der App **Backup** sichert Ordner aus freigegebenen Ordnern und Home-Ordnern dieser Box nach Zeitplan auf ein [Backup-Ziel](/de/docs/admin/backup-targets/). Jeder Lauf nimmt zuerst einen ZFS-Snapshot, damit ein Backup einen einzigen Moment zeigt, auch wenn weitergearbeitet wird, und speichert mit [restic](https://restic.net/) über SFTP eine neue Version in das eigene Repository des Backups auf dem Ziel. Ältere Versionen dünnt die Aufbewahrung aus, und eine Prüfung liest das Repository nach einem eigenen Zeitplan zurück. Box-Backups sind für Administratoren; die Box meldet ihnen fehlgeschlagene, unvollständige und überfällige Backups.
 
-Die App öffnet mit ihrer [Übersicht](/de/docs/admin/backup-overview/). Ihre Navigation ordnet Backups nach ihrer Richtung: **Von der Box weg** enthält die Box-Backups und ihre Ziele, und jedes Box-Backup trägt die Markierung **Von der Box**. Backups von Linux-Servern auf diese Box stehen unter **Auf die Box**: [Server-Backups](/de/docs/admin/backup-servers/). Was gerade läuft und jeder bisherige Lauf stehen unter [Aktivität](/de/docs/admin/backup-activity/).
+Die App öffnet mit ihrer [Übersicht](/de/docs/admin/backup-overview/). Ihre Navigation ordnet Backups nach ihrer Richtung: **Von der Box weg** enthält die Box-Backups und ihre Ziele, und jedes Box-Backup trägt die Markierung **Von der Box**. Ein [Spiegel](/de/docs/admin/backup-mirrors/) hält statt Versionen eine einfache Kopie auf dem Ziel. Backups von Linux-Servern auf diese Box stehen unter **Auf die Box**: [Server-Backups](/de/docs/admin/backup-servers/). Was gerade läuft und jeder bisherige Lauf stehen unter [Aktivität](/de/docs/admin/backup-activity/).
 
 ![Die App Backup, Box-Backups: eine Tabelle mit drei Backups mit ihrem Weg, letztem und nächstem Lauf, Größe und den letzten 14 Tagen, eines ausgewählt mit seinen Details und letzten Läufen](../../../../../assets/screenshots/backup-jobs.de.webp)
 
@@ -20,7 +20,7 @@ _Box-Backups listet jedes Backup mit seinem Ziel, dem letzten und nächsten Lauf
 
 **Box-Backups** ist eine Tabelle mit einer Zeile pro Backup:
 
-- **Name**, darunter die Art (**Versioniert**).
+- **Name**, darunter die Art: **Versioniert** oder **Spiegel** für einen [Spiegel](/de/docs/admin/backup-mirrors/).
 - **Von → Nach**: die Ordner, oder die ersten Ordner, und das Ziel.
 - **Letzter Lauf**: sein Zustand (**Gesichert**, **Mit Warnungen gesichert**, **Fehlgeschlagen**, **Überfällig**, **Sichert** und weitere) und wann er begann.
 - **Nächster Lauf**, darunter der Zeitplan, oder **Läuft nur von Hand**.
