@@ -947,7 +947,7 @@ export type paths = {
         /** @description Administrators only. Changes what a job backs up and when; its target, repository and key stay. */
         put: operations["UpdateBackupJob"];
         post?: never;
-        /** @description Administrators only. Deletes the job, its runs and its key. The repository stays on the target; without the key nobody can read it. */
+        /** @description Administrators only. Deletes the job, its runs and its key. The repository stays on the target; without the key nobody can read it. A server backup's folder stays in its shared folder with its versions, unless data=true destroys it with them. */
         delete: operations["DeleteBackupJob"];
         options?: never;
         head?: never;
@@ -1134,6 +1134,40 @@ export type paths = {
         get?: never;
         /** @description Administrators only. Protects a version so the retention never deletes it, or releases it again (restic's tag pithyx-protected). Refused with backup.job.busy while a run or check goes on. */
         put: operations["ProtectBackupVersion"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/backups/pulls": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Administrators only. Makes a server backup (#396): its folder in the shared folder as a dataset of its own, given the shared folder's owner, mode and ACL, which rsync over SSH fills from the server on its schedule. The server is a backup target of the purpose server. The answer's key is always null. */
+        post: operations["CreateBackupPull"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/backups/pulls/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** @description Administrators only. Changes what a server backup pulls and when; its server and its folder stay (shareId and folder are ignored). */
+        put: operations["UpdateBackupPull"];
         post?: never;
         delete?: never;
         options?: never;
@@ -4972,6 +5006,8 @@ export type components = {
              * @description UTC.
              */
             createdAt: string;
+            /** @description The dataset that holds a server backup; null for a versioned backup. */
+            dataset: null | string;
             /**
              * Format: int64
              * @description Stable id.
@@ -5005,18 +5041,21 @@ export type components = {
              * @description The size of its newest version: the bytes its last successful run backed up.
              */
             protectedBytes: null | number;
-            /** @description The repository's folder below the target's path. */
+            /** @description What a server backup pulls and where it keeps it. */
+            pull: null | components["schemas"]["BackupPullSettings"];
+            /** @description The repository's folder below the target's path; empty for a server backup. */
             repository: string;
             /**
              * Format: int64
-             * @description What its repository takes on the target, as the newest run that measured it found.
+             * @description What its repository takes on the target, as the newest run that measured it found; for a server backup, what its
+             *     dataset takes on the pool with every version.
              */
             repositoryBytes: null | number;
             /** @description What it backs up and when. */
             settings: components["schemas"]["BackupJobSettings"];
             /**
              * Format: int64
-             * @description Where it backs up to.
+             * @description Where it backs up to; for a server backup, the server.
              */
             targetId: number;
         };
@@ -5046,10 +5085,10 @@ export type components = {
             key: string;
         };
         /**
-         * @description How a job backs up. Only versioned backups for now (#394); mirrors and pulls come later.
+         * @description How a job backs up. Versioned backups go from this box (#394); pulls come onto it (#396); mirrors come later.
          * @enum {unknown}
          */
-        BackupJobKind: "versioned";
+        BackupJobKind: "versioned" | "pull";
         /** @description Every backup job, by name. */
         BackupJobList: {
             jobs: components["schemas"]["BackupJob"][];
@@ -5099,6 +5138,44 @@ export type components = {
          * @enum {unknown}
          */
         BackupKeepReason: "last" | "hourly" | "daily" | "weekly" | "monthly" | "yearly" | "protected";
+        /** @description A new server backup. */
+        BackupPullCreateRequest: {
+            /** @description What it pulls and where to. */
+            pull: components["schemas"]["BackupPullSettings"];
+            /**
+             * Format: int64
+             * @description The server it pulls from.
+             */
+            serverId: number;
+            /** @description Its name, schedule and retention; no sources, no check schedule, no upload limit. The excludes are rsync patterns. */
+            settings: components["schemas"]["BackupJobSettings"];
+        };
+        /**
+         * @description Whose owners and rights the files of a server backup carry on the box.
+         * @enum {unknown}
+         */
+        BackupPullOwners: "server" | "box";
+        /** @description What a server backup pulls and where it keeps it. */
+        BackupPullSettings: {
+            /** @description Files gone on the server go from the destination too; the versions keep them. */
+            delete: boolean;
+            /** @description The destination's name in the shared folder, made by the box as a dataset of its own; set when the backup is made. */
+            folder: string;
+            /** @description Whose owners and rights the files carry on the box. */
+            owners: components["schemas"]["BackupPullOwners"];
+            /** @description 1 to 32 folders or files on the server, absolute below the folder its key may read (`/` for all of it). */
+            paths: string[];
+            /**
+             * Format: int64
+             * @description The shared folder that holds the destination; set when the backup is made.
+             */
+            shareId: number;
+        };
+        /** @description The changes to a server backup; its server and destination stay. */
+        BackupPullUpdateRequest: {
+            pull: components["schemas"]["BackupPullSettings"];
+            settings: components["schemas"]["BackupJobSettings"];
+        };
         /**
          * @description What a restore does with a file that is already in place.
          * @default keepBoth
@@ -5293,6 +5370,11 @@ export type components = {
         /** @description A place backups go to. */
         BackupTarget: {
             /**
+             * @description For a server: the line for its `authorized_keys`, which lets the key only read below Path
+             *     (`restrict` and rsync's `rrsync -ro`); null for a target.
+             */
+            authorizedKeys: null | string;
+            /**
              * Format: date-time
              * @description When it was added, UTC.
              */
@@ -5321,6 +5403,8 @@ export type components = {
             port: number;
             /** @description The public half of the target's own SSH key, the line for the server's `authorized_keys`. */
             publicKey: string;
+            /** @description A target backups go to, or a server the box pulls from. */
+            purpose: components["schemas"]["BackupTargetPurpose"];
             /** @description The space of the file system the target's folder is on, as the server reported it over SFTP. */
             space: null | components["schemas"]["BackupTargetSpace"];
             /** @description The user the box signs in as. */
@@ -5335,6 +5419,11 @@ export type components = {
         BackupTargetList: {
             targets: components["schemas"]["BackupTarget"][];
         };
+        /**
+         * @description What a target is for (#396, D420): backups go to a target; the box pulls the folders of a server.
+         * @enum {unknown}
+         */
+        BackupTargetPurpose: "target" | "server";
         /** @description A new target, or the changes to one. */
         BackupTargetRequest: {
             /** @description A host name, IPv4 or IPv6 address. */
@@ -5346,13 +5435,18 @@ export type components = {
             hostKey?: null | string;
             /** @description 1 to 64 characters, unique on the box. */
             name: string;
-            /** @description The folder on the server; empty or left out for the login folder. */
+            /**
+             * @description The folder on the server; empty or left out for the login folder. For a server, the absolute folder its key may read
+             *     below, `/` when left out.
+             */
             path?: null | string;
             /**
              * Format: int32
              * @description The SSH port; 22 when left out.
              */
             port?: null | number;
+            /** @description A target or a server; set when it is added, a change keeps it. */
+            purpose?: components["schemas"]["BackupTargetPurpose"];
             /** @description The user on the server. */
             user: string;
         };
@@ -5437,7 +5531,7 @@ export type components = {
             keep: components["schemas"]["BackupKeepReason"][];
             /** @description The retention always keeps it. */
             protected: boolean;
-            /** @description restic's id of the version now, shortened to 8 characters as restic shows it. */
+            /** @description restic's id of the version now, shortened to 8 characters as restic shows it; for a server backup, its ZFS snapshot's name. */
             snapshot: string;
             /**
              * Format: date-time
@@ -5969,7 +6063,7 @@ export type components = {
             }[];
         };
         /** @enum {string} */
-        ErrorCode: "app.app.busy" | "app.app.no_previous" | "app.app.not_found" | "app.arch.unsupported" | "app.backend.endpoint_unknown" | "app.backend.missing" | "app.backend.start_failed" | "app.backend.storage_unavailable" | "app.backend.unavailable" | "app.backend.unsupported" | "app.compose.key_unsupported" | "app.compose.reference_unknown" | "app.compose.right_missing" | "app.compose.right_unused" | "app.compose.storage_mismatch" | "app.compose.value_invalid" | "app.compose.yaml_invalid" | "app.device.missing" | "app.device.unavailable" | "app.docker.unavailable" | "app.elevated.backend_missing" | "app.elevated.confirmation_required" | "app.elevated.root_conflict" | "app.elevated.root_required" | "app.elevated.unsupported" | "app.icon.invalid" | "app.image.mismatch" | "app.image.unavailable" | "app.manifest.cron_invalid" | "app.manifest.duplicate" | "app.manifest.id_invalid" | "app.manifest.id_reserved" | "app.manifest.invalid_json" | "app.manifest.permission_missing" | "app.manifest.pithyx_invalid" | "app.manifest.reference_unknown" | "app.manifest.schema_violation" | "app.manifest.sdk_invalid" | "app.manifest.version_unsupported" | "app.manifest.window_size_invalid" | "app.mapping.invalid" | "app.package.box_too_old" | "app.package.downgrade_unsupported" | "app.package.invalid" | "app.package.layout_invalid" | "app.package.lock_invalid" | "app.package.not_found" | "app.package.too_large" | "app.permission.denied" | "app.permission.not_requested" | "app.pool.fixed" | "app.pool.required" | "app.pool.unavailable" | "app.storage.key_invalid" | "app.storage.not_found" | "app.storage.too_large" | "app.token.invalid" | "auth.account.disabled" | "auth.challenge.expired" | "auth.credentials.invalid" | "auth.csrf.header_missing" | "auth.desktop.not_allowed" | "auth.display_name.invalid" | "auth.passkey.invalid" | "auth.passkey.limit" | "auth.passkey.name_invalid" | "auth.passkey.not_found" | "auth.passkey.unavailable" | "auth.password.too_common" | "auth.password.too_long" | "auth.password.too_short" | "auth.permission.denied" | "auth.rate.limited" | "auth.recovery.invalid" | "auth.session.expired" | "auth.setup.already_done" | "auth.step_up.required" | "auth.totp.already_enabled" | "auth.totp.invalid" | "auth.totp.not_enrolled" | "auth.username.invalid" | "auth.username.reserved" | "backup.browse.closed" | "backup.check.failed" | "backup.host_key.scan_failed" | "backup.job.busy" | "backup.job.invalid" | "backup.job.name_taken" | "backup.job.not_found" | "backup.repository.exists" | "backup.repository.locked" | "backup.repository.not_found" | "backup.repository.wrong_key" | "backup.restore.failed" | "backup.run.failed" | "backup.source.unavailable" | "backup.source.unsupported" | "backup.target.auth_failed" | "backup.target.host_key_changed" | "backup.target.in_use" | "backup.target.invalid" | "backup.target.name_taken" | "backup.target.not_found" | "backup.target.not_writable" | "backup.target.unreachable" | "backup.version.not_found" | "desktop.device.not_found" | "desktop.file_default.invalid" | "desktop.file_default.limit_reached" | "desktop.item.conflict" | "desktop.item.invalid" | "desktop.item.limit_reached" | "desktop.item.not_found" | "desktop.layout.conflict" | "desktop.layout.invalid" | "desktop.layout.too_large" | "desktop.note.too_long" | "desktop.startup_apps.invalid" | "fileservices.service.unavailable" | "fileservices.workgroup.invalid" | "fs.apps.confirmation_required" | "fs.apps.root_fixed" | "fs.apps.trash_unsupported" | "fs.cursor.invalid" | "fs.entry.access_denied" | "fs.entry.exists" | "fs.entry.is_folder" | "fs.entry.not_folder" | "fs.entry.not_found" | "fs.folder.not_empty" | "fs.io.failed" | "fs.name.invalid" | "fs.operation.into_itself" | "fs.operation.invalid" | "fs.path.invalid" | "fs.quota.exceeded" | "fs.quota.invalid" | "fs.range.not_satisfiable" | "fs.share.data_choice_required" | "fs.share.dataset_name_invalid" | "fs.share.description_invalid" | "fs.share.exists" | "fs.share.folder_dev_only" | "fs.share.invalid" | "fs.share.name_mismatch" | "fs.share.name_reserved" | "fs.share.no_dataset" | "fs.share.not_found" | "fs.share.path_taken" | "fs.share.pool_not_prepared" | "fs.share.read_only" | "fs.share.system" | "fs.share.unavailable" | "fs.thumbnail.not_found" | "fs.thumbnail.too_many" | "fs.trash.retention_invalid" | "fs.upload.incomplete" | "fs.version.disabled" | "fs.version.not_found" | "fs.volume.full" | "fs.volume.read_only" | "homes.choice.invalid" | "homes.home.in_use" | "homes.home.name_mismatch" | "homes.home.not_found" | "homes.move.running" | "homes.pool.no_space" | "homes.pool.taken" | "homes.pool.unavailable" | "homes.pool.unchanged" | "homes.quota.invalid" | "installer.check.failed" | "installer.claim.required" | "installer.claim.taken" | "installer.disk.count" | "installer.disk.unsuitable" | "installer.erase.not_confirmed" | "installer.hostname.invalid" | "installer.install.failed" | "installer.install.running" | "installer.keyboard.invalid" | "installer.reboot.not_ready" | "jobs.job.not_found" | "logs.app.invalid" | "logs.archive.pool_unavailable" | "logs.batch.too_large" | "logs.query.invalid" | "logs.settings.invalid" | "network.address.invalid" | "network.apply.failed" | "network.bond.member_invalid" | "network.bond.members_missing" | "network.bond.primary_invalid" | "network.change.empty" | "network.change.not_found" | "network.change.pending" | "network.config.unreachable" | "network.default_interface.invalid" | "network.dns.invalid" | "network.dns.too_many" | "network.firewall.failed" | "network.gateway.invalid" | "network.global.not_changeable" | "network.host_name.invalid" | "network.interface.duplicate" | "network.interface.kind_invalid" | "network.interface.name_invalid" | "network.interface.not_changeable" | "network.interface.unknown" | "network.mtu.invalid" | "network.search_domain.invalid" | "network.search_domain.too_many" | "network.vlan.duplicate" | "network.vlan.id_invalid" | "network.vlan.parent_invalid" | "notifications.category.not_found" | "notifications.channel.failed" | "notifications.channel.invalid" | "notifications.channel.limit_reached" | "notifications.channel.not_found" | "notifications.event.unknown" | "notifications.language.unsupported" | "notifications.message.invalid" | "notifications.notification.not_found" | "notifications.smtp.invalid" | "notifications.smtp.missing" | "permissions.grant.invalid" | "proxy.access.denied" | "proxy.acme.caa" | "proxy.acme.connection" | "proxy.acme.directory_invalid" | "proxy.acme.dns" | "proxy.acme.email_invalid" | "proxy.acme.failed" | "proxy.acme.name_not_public" | "proxy.acme.name_rejected" | "proxy.acme.not_acme" | "proxy.acme.port_unavailable" | "proxy.acme.rate_limited" | "proxy.acme.running" | "proxy.acme.terms_required" | "proxy.acme.unauthorized" | "proxy.acme.unreachable" | "proxy.acme.wildcard" | "proxy.address.denied" | "proxy.address.invalid" | "proxy.auth.required" | "proxy.basic_auth.invalid" | "proxy.basic_auth.password_missing" | "proxy.certificate.missing" | "proxy.certificate.name_mismatch" | "proxy.domain.invalid" | "proxy.domain.taken" | "proxy.domains.missing" | "proxy.domains.too_many" | "proxy.header.invalid" | "proxy.headers.too_many" | "proxy.host.not_found" | "proxy.host.unknown" | "proxy.limit.out_of_range" | "proxy.loop.detected" | "proxy.redirect.not_found" | "proxy.redirect.status_invalid" | "proxy.redirect.target_invalid" | "proxy.sign_in.address_invalid" | "proxy.sign_in.group_not_found" | "proxy.sign_in.user_not_found" | "proxy.stream.name_invalid" | "proxy.stream.not_found" | "proxy.stream.port_in_use" | "proxy.stream.port_privileged" | "proxy.stream.port_reserved" | "proxy.stream.port_taken" | "proxy.stream.protocol_missing" | "proxy.target.invalid" | "proxy.target.loop" | "proxy.target.on_box" | "proxy.target.timeout" | "proxy.target.unavailable" | "proxy.ticket.target_invalid" | "proxy.websockets.disabled" | "realtime.message.invalid" | "realtime.topic.invalid" | "realtime.topic.unknown" | "realtime.upgrade.required" | "request.body.invalid" | "request.media_type.unsupported" | "request.method.not_allowed" | "request.route.not_found" | "storage.alert.not_found" | "storage.command.failed" | "storage.command.timed_out" | "storage.dataset.compression_invalid" | "storage.dataset.exists" | "storage.dataset.in_use_by_share" | "storage.dataset.limit_invalid" | "storage.dataset.managed" | "storage.dataset.name_invalid" | "storage.dataset.name_mismatch" | "storage.dataset.not_found" | "storage.dataset.property_unsupported" | "storage.dataset.protected" | "storage.dataset.quota_below_used" | "storage.dataset.record_size_invalid" | "storage.dataset.reservation_too_large" | "storage.dataset.unchanged" | "storage.disk.not_found" | "storage.disk.refused" | "storage.encryption.key_invalid" | "storage.encryption.key_required" | "storage.encryption.key_wrong" | "storage.encryption.not_in_vault" | "storage.encryption.unavailable" | "storage.encryption.vault_failed" | "storage.import.device_unknown" | "storage.import.force_required" | "storage.import.not_found" | "storage.import.not_importable" | "storage.import.preview_required" | "storage.plan.action_invalid" | "storage.plan.expired" | "storage.plan.not_found" | "storage.plan.stale" | "storage.pool.disk_count" | "storage.pool.disks_missing" | "storage.pool.encryption_required" | "storage.pool.expanding" | "storage.pool.layout_invalid" | "storage.pool.locked" | "storage.pool.name_invalid" | "storage.pool.name_mismatch" | "storage.pool.name_taken" | "storage.pool.not_encrypted" | "storage.pool.not_found" | "storage.pool.not_locked" | "storage.pool.not_prepared" | "storage.pool.read_only" | "storage.pool.suspended" | "storage.schedule.invalid" | "storage.scrub.not_running" | "storage.scrub.running" | "storage.snapshot.confirmation_mismatch" | "storage.snapshot.dataset_not_found" | "storage.snapshot.exists" | "storage.snapshot.held" | "storage.snapshot.newer_exist" | "storage.snapshot.not_found" | "storage.snapshot.not_pithyx" | "storage.snapshot.schedule_invalid" | "storage.usb.not_found" | "storage.usb.read_only" | "storage.usb.unreadable" | "storage.usb.write_failed" | "storage.vdev.not_found" | "storage.vdev.not_raidz" | "storage.volume.size_invalid" | "storage.volume.too_large" | "storage.zfs.unavailable" | "store.app.not_found" | "store.catalog.architecture_missing" | "store.catalog.built_in" | "store.catalog.busy" | "store.catalog.data_version_decreased" | "store.catalog.exists" | "store.catalog.id_reserved" | "store.catalog.invalid_json" | "store.catalog.mismatch" | "store.catalog.not_found" | "store.catalog.rule_violation" | "store.catalog.schema_violation" | "store.catalog.sequence_old" | "store.catalog.signature_invalid" | "store.catalog.unreachable" | "store.catalog.url_invalid" | "store.catalog.version_unsupported" | "store.package.hash_mismatch" | "system.backup.category_missing" | "system.backup.invalid" | "system.backup.password_wrong" | "system.backup.restore_expired" | "system.backup.restore_failed" | "system.backup.restore_running" | "system.backup.too_large" | "system.backup.too_new" | "system.internal.unexpected" | "system.origin.forbidden" | "system.support.busy" | "system.support.no_space" | "system.support.not_found" | "system.time.apply_failed" | "system.time.server_invalid" | "system.time.servers_too_many" | "system.time.zone_invalid" | "system.ups.invalid" | "system.ups.unavailable" | "tls.custom.expired" | "tls.custom.invalid" | "tls.custom.key_mismatch" | "tls.issued.not_found" | "tls.name.invalid" | "tls.name.not_permitted" | "tls.names.missing" | "tls.names.too_many" | "tls.validity.out_of_range" | "update.apply.failed" | "update.apply.running" | "update.channel.invalid" | "update.channel.mismatch" | "update.channel.sequence_old" | "update.channel.signature_invalid" | "update.download.mismatch" | "update.file.architecture" | "update.file.channel" | "update.file.hash_mismatch" | "update.file.invalid" | "update.file.minimum" | "update.file.missing_entry" | "update.file.not_found" | "update.file.older" | "update.file.signature_invalid" | "update.file.too_large" | "update.file.unexpected_entry" | "update.none.available" | "update.rollback.unconfirmed" | "update.snapshot.not_found" | "update.source.invalid" | "update.source.unreachable" | "update.space.insufficient" | "update.system.unsupported" | "users.account.refused" | "users.gid.exhausted" | "users.group.builtin" | "users.group.description_invalid" | "users.group.exists" | "users.group.name_invalid" | "users.group.name_reserved" | "users.group.not_found" | "users.group.refused" | "users.uid.exhausted" | "users.user.exists" | "users.user.last_admin" | "users.user.not_found" | "users.user.self";
+        ErrorCode: "app.app.busy" | "app.app.no_previous" | "app.app.not_found" | "app.arch.unsupported" | "app.backend.endpoint_unknown" | "app.backend.missing" | "app.backend.start_failed" | "app.backend.storage_unavailable" | "app.backend.unavailable" | "app.backend.unsupported" | "app.compose.key_unsupported" | "app.compose.reference_unknown" | "app.compose.right_missing" | "app.compose.right_unused" | "app.compose.storage_mismatch" | "app.compose.value_invalid" | "app.compose.yaml_invalid" | "app.device.missing" | "app.device.unavailable" | "app.docker.unavailable" | "app.elevated.backend_missing" | "app.elevated.confirmation_required" | "app.elevated.root_conflict" | "app.elevated.root_required" | "app.elevated.unsupported" | "app.icon.invalid" | "app.image.mismatch" | "app.image.unavailable" | "app.manifest.cron_invalid" | "app.manifest.duplicate" | "app.manifest.id_invalid" | "app.manifest.id_reserved" | "app.manifest.invalid_json" | "app.manifest.permission_missing" | "app.manifest.pithyx_invalid" | "app.manifest.reference_unknown" | "app.manifest.schema_violation" | "app.manifest.sdk_invalid" | "app.manifest.version_unsupported" | "app.manifest.window_size_invalid" | "app.mapping.invalid" | "app.package.box_too_old" | "app.package.downgrade_unsupported" | "app.package.invalid" | "app.package.layout_invalid" | "app.package.lock_invalid" | "app.package.not_found" | "app.package.too_large" | "app.permission.denied" | "app.permission.not_requested" | "app.pool.fixed" | "app.pool.required" | "app.pool.unavailable" | "app.storage.key_invalid" | "app.storage.not_found" | "app.storage.too_large" | "app.token.invalid" | "auth.account.disabled" | "auth.challenge.expired" | "auth.credentials.invalid" | "auth.csrf.header_missing" | "auth.desktop.not_allowed" | "auth.display_name.invalid" | "auth.passkey.invalid" | "auth.passkey.limit" | "auth.passkey.name_invalid" | "auth.passkey.not_found" | "auth.passkey.unavailable" | "auth.password.too_common" | "auth.password.too_long" | "auth.password.too_short" | "auth.permission.denied" | "auth.rate.limited" | "auth.recovery.invalid" | "auth.session.expired" | "auth.setup.already_done" | "auth.step_up.required" | "auth.totp.already_enabled" | "auth.totp.invalid" | "auth.totp.not_enrolled" | "auth.username.invalid" | "auth.username.reserved" | "backup.browse.closed" | "backup.check.failed" | "backup.destination.invalid" | "backup.destination.unavailable" | "backup.host_key.scan_failed" | "backup.job.busy" | "backup.job.invalid" | "backup.job.name_taken" | "backup.job.not_found" | "backup.job.unsupported" | "backup.repository.exists" | "backup.repository.locked" | "backup.repository.not_found" | "backup.repository.wrong_key" | "backup.restore.failed" | "backup.run.failed" | "backup.server.refused" | "backup.server.rsync_missing" | "backup.source.unavailable" | "backup.source.unsupported" | "backup.target.auth_failed" | "backup.target.host_key_changed" | "backup.target.in_use" | "backup.target.invalid" | "backup.target.name_taken" | "backup.target.not_found" | "backup.target.not_writable" | "backup.target.unreachable" | "backup.version.not_found" | "desktop.device.not_found" | "desktop.file_default.invalid" | "desktop.file_default.limit_reached" | "desktop.item.conflict" | "desktop.item.invalid" | "desktop.item.limit_reached" | "desktop.item.not_found" | "desktop.layout.conflict" | "desktop.layout.invalid" | "desktop.layout.too_large" | "desktop.note.too_long" | "desktop.startup_apps.invalid" | "fileservices.service.unavailable" | "fileservices.workgroup.invalid" | "fs.apps.confirmation_required" | "fs.apps.root_fixed" | "fs.apps.trash_unsupported" | "fs.cursor.invalid" | "fs.entry.access_denied" | "fs.entry.exists" | "fs.entry.is_folder" | "fs.entry.not_folder" | "fs.entry.not_found" | "fs.folder.not_empty" | "fs.io.failed" | "fs.name.invalid" | "fs.operation.into_itself" | "fs.operation.invalid" | "fs.path.invalid" | "fs.quota.exceeded" | "fs.quota.invalid" | "fs.range.not_satisfiable" | "fs.share.data_choice_required" | "fs.share.dataset_name_invalid" | "fs.share.description_invalid" | "fs.share.exists" | "fs.share.folder_dev_only" | "fs.share.invalid" | "fs.share.name_mismatch" | "fs.share.name_reserved" | "fs.share.no_dataset" | "fs.share.not_found" | "fs.share.path_taken" | "fs.share.pool_not_prepared" | "fs.share.read_only" | "fs.share.system" | "fs.share.unavailable" | "fs.thumbnail.not_found" | "fs.thumbnail.too_many" | "fs.trash.retention_invalid" | "fs.upload.incomplete" | "fs.version.disabled" | "fs.version.not_found" | "fs.volume.full" | "fs.volume.read_only" | "homes.choice.invalid" | "homes.home.in_use" | "homes.home.name_mismatch" | "homes.home.not_found" | "homes.move.running" | "homes.pool.no_space" | "homes.pool.taken" | "homes.pool.unavailable" | "homes.pool.unchanged" | "homes.quota.invalid" | "installer.check.failed" | "installer.claim.required" | "installer.claim.taken" | "installer.disk.count" | "installer.disk.unsuitable" | "installer.erase.not_confirmed" | "installer.hostname.invalid" | "installer.install.failed" | "installer.install.running" | "installer.keyboard.invalid" | "installer.reboot.not_ready" | "jobs.job.not_found" | "logs.app.invalid" | "logs.archive.pool_unavailable" | "logs.batch.too_large" | "logs.query.invalid" | "logs.settings.invalid" | "network.address.invalid" | "network.apply.failed" | "network.bond.member_invalid" | "network.bond.members_missing" | "network.bond.primary_invalid" | "network.change.empty" | "network.change.not_found" | "network.change.pending" | "network.config.unreachable" | "network.default_interface.invalid" | "network.dns.invalid" | "network.dns.too_many" | "network.firewall.failed" | "network.gateway.invalid" | "network.global.not_changeable" | "network.host_name.invalid" | "network.interface.duplicate" | "network.interface.kind_invalid" | "network.interface.name_invalid" | "network.interface.not_changeable" | "network.interface.unknown" | "network.mtu.invalid" | "network.search_domain.invalid" | "network.search_domain.too_many" | "network.vlan.duplicate" | "network.vlan.id_invalid" | "network.vlan.parent_invalid" | "notifications.category.not_found" | "notifications.channel.failed" | "notifications.channel.invalid" | "notifications.channel.limit_reached" | "notifications.channel.not_found" | "notifications.event.unknown" | "notifications.language.unsupported" | "notifications.message.invalid" | "notifications.notification.not_found" | "notifications.smtp.invalid" | "notifications.smtp.missing" | "permissions.grant.invalid" | "proxy.access.denied" | "proxy.acme.caa" | "proxy.acme.connection" | "proxy.acme.directory_invalid" | "proxy.acme.dns" | "proxy.acme.email_invalid" | "proxy.acme.failed" | "proxy.acme.name_not_public" | "proxy.acme.name_rejected" | "proxy.acme.not_acme" | "proxy.acme.port_unavailable" | "proxy.acme.rate_limited" | "proxy.acme.running" | "proxy.acme.terms_required" | "proxy.acme.unauthorized" | "proxy.acme.unreachable" | "proxy.acme.wildcard" | "proxy.address.denied" | "proxy.address.invalid" | "proxy.auth.required" | "proxy.basic_auth.invalid" | "proxy.basic_auth.password_missing" | "proxy.certificate.missing" | "proxy.certificate.name_mismatch" | "proxy.domain.invalid" | "proxy.domain.taken" | "proxy.domains.missing" | "proxy.domains.too_many" | "proxy.header.invalid" | "proxy.headers.too_many" | "proxy.host.not_found" | "proxy.host.unknown" | "proxy.limit.out_of_range" | "proxy.loop.detected" | "proxy.redirect.not_found" | "proxy.redirect.status_invalid" | "proxy.redirect.target_invalid" | "proxy.sign_in.address_invalid" | "proxy.sign_in.group_not_found" | "proxy.sign_in.user_not_found" | "proxy.stream.name_invalid" | "proxy.stream.not_found" | "proxy.stream.port_in_use" | "proxy.stream.port_privileged" | "proxy.stream.port_reserved" | "proxy.stream.port_taken" | "proxy.stream.protocol_missing" | "proxy.target.invalid" | "proxy.target.loop" | "proxy.target.on_box" | "proxy.target.timeout" | "proxy.target.unavailable" | "proxy.ticket.target_invalid" | "proxy.websockets.disabled" | "realtime.message.invalid" | "realtime.topic.invalid" | "realtime.topic.unknown" | "realtime.upgrade.required" | "request.body.invalid" | "request.media_type.unsupported" | "request.method.not_allowed" | "request.route.not_found" | "storage.alert.not_found" | "storage.command.failed" | "storage.command.timed_out" | "storage.dataset.compression_invalid" | "storage.dataset.exists" | "storage.dataset.in_use_by_share" | "storage.dataset.limit_invalid" | "storage.dataset.managed" | "storage.dataset.name_invalid" | "storage.dataset.name_mismatch" | "storage.dataset.not_found" | "storage.dataset.property_unsupported" | "storage.dataset.protected" | "storage.dataset.quota_below_used" | "storage.dataset.record_size_invalid" | "storage.dataset.reservation_too_large" | "storage.dataset.unchanged" | "storage.disk.not_found" | "storage.disk.refused" | "storage.encryption.key_invalid" | "storage.encryption.key_required" | "storage.encryption.key_wrong" | "storage.encryption.not_in_vault" | "storage.encryption.unavailable" | "storage.encryption.vault_failed" | "storage.import.device_unknown" | "storage.import.force_required" | "storage.import.not_found" | "storage.import.not_importable" | "storage.import.preview_required" | "storage.plan.action_invalid" | "storage.plan.expired" | "storage.plan.not_found" | "storage.plan.stale" | "storage.pool.disk_count" | "storage.pool.disks_missing" | "storage.pool.encryption_required" | "storage.pool.expanding" | "storage.pool.layout_invalid" | "storage.pool.locked" | "storage.pool.name_invalid" | "storage.pool.name_mismatch" | "storage.pool.name_taken" | "storage.pool.not_encrypted" | "storage.pool.not_found" | "storage.pool.not_locked" | "storage.pool.not_prepared" | "storage.pool.read_only" | "storage.pool.suspended" | "storage.schedule.invalid" | "storage.scrub.not_running" | "storage.scrub.running" | "storage.snapshot.confirmation_mismatch" | "storage.snapshot.dataset_not_found" | "storage.snapshot.exists" | "storage.snapshot.held" | "storage.snapshot.newer_exist" | "storage.snapshot.not_found" | "storage.snapshot.not_pithyx" | "storage.snapshot.schedule_invalid" | "storage.usb.not_found" | "storage.usb.read_only" | "storage.usb.unreadable" | "storage.usb.write_failed" | "storage.vdev.not_found" | "storage.vdev.not_raidz" | "storage.volume.size_invalid" | "storage.volume.too_large" | "storage.zfs.unavailable" | "store.app.not_found" | "store.catalog.architecture_missing" | "store.catalog.built_in" | "store.catalog.busy" | "store.catalog.data_version_decreased" | "store.catalog.exists" | "store.catalog.id_reserved" | "store.catalog.invalid_json" | "store.catalog.mismatch" | "store.catalog.not_found" | "store.catalog.rule_violation" | "store.catalog.schema_violation" | "store.catalog.sequence_old" | "store.catalog.signature_invalid" | "store.catalog.unreachable" | "store.catalog.url_invalid" | "store.catalog.version_unsupported" | "store.package.hash_mismatch" | "system.backup.category_missing" | "system.backup.invalid" | "system.backup.password_wrong" | "system.backup.restore_expired" | "system.backup.restore_failed" | "system.backup.restore_running" | "system.backup.too_large" | "system.backup.too_new" | "system.internal.unexpected" | "system.origin.forbidden" | "system.support.busy" | "system.support.no_space" | "system.support.not_found" | "system.time.apply_failed" | "system.time.server_invalid" | "system.time.servers_too_many" | "system.time.zone_invalid" | "system.ups.invalid" | "system.ups.unavailable" | "tls.custom.expired" | "tls.custom.invalid" | "tls.custom.key_mismatch" | "tls.issued.not_found" | "tls.name.invalid" | "tls.name.not_permitted" | "tls.names.missing" | "tls.names.too_many" | "tls.validity.out_of_range" | "update.apply.failed" | "update.apply.running" | "update.channel.invalid" | "update.channel.mismatch" | "update.channel.sequence_old" | "update.channel.signature_invalid" | "update.download.mismatch" | "update.file.architecture" | "update.file.channel" | "update.file.hash_mismatch" | "update.file.invalid" | "update.file.minimum" | "update.file.missing_entry" | "update.file.not_found" | "update.file.older" | "update.file.signature_invalid" | "update.file.too_large" | "update.file.unexpected_entry" | "update.none.available" | "update.rollback.unconfirmed" | "update.snapshot.not_found" | "update.source.invalid" | "update.source.unreachable" | "update.space.insufficient" | "update.system.unsupported" | "users.account.refused" | "users.gid.exhausted" | "users.group.builtin" | "users.group.description_invalid" | "users.group.exists" | "users.group.name_invalid" | "users.group.name_reserved" | "users.group.not_found" | "users.group.refused" | "users.uid.exhausted" | "users.user.exists" | "users.user.last_admin" | "users.user.not_found" | "users.user.self";
         /** @description A failed client message. `id` is empty when the message could not be parsed. */
         ErrorMessage: {
             code: components["schemas"]["ErrorCode"];
@@ -12323,7 +12417,9 @@ export interface operations {
     };
     DeleteBackupJob: {
         parameters: {
-            query?: never;
+            query?: {
+                data?: boolean;
+            };
             header?: never;
             path: {
                 id: number;
@@ -12697,6 +12793,74 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["BackupVersion"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    CreateBackupPull: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BackupPullCreateRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BackupJobCreated"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    UpdateBackupPull: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BackupPullUpdateRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BackupJob"];
                 };
             };
             /** @description Problem details with a stable error code. */

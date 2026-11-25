@@ -1,0 +1,22 @@
+*deleting   srv/www/sub/old.txt
+              0   0%    0.00kB/s    0:00:00 (xfr#0, to-chk=9/11)              0   0%    0.00kB/s    0:00:00 (xfr#0, to-chk=8/11)>f.s....... srv/www/index.html
+              6   0%    0.00kB/s    0:00:00                6   0%    0.00kB/s    0:00:00 (xfr#2, to-chk=3/11)
+>f+++++++++ srv/www/new.txt
+              8   0%    1.95kB/s    0:00:00 (xfr#3, to-chk=1/11)              8   0%    1.95kB/s    0:00:00 (xfr#3, to-chk=0/11)              8   0%    1.95kB/s    0:00:00 (xfr#3, to-chk=0/11)              8   0%    1.95kB/s    0:00:00 (xfr#3, to-chk=0/11)              8   0%    1.95kB/s    0:00:00 (xfr#3, to-chk=0/11)
+
+Number of files: 11 (reg: 5, dir: 5, link: 1)
+Number of created files: 2 (reg: 2)
+Number of deleted files: 1 (reg: 1)
+Number of regular files transferred: 3
+Total file size: 300,020 bytes
+Total transferred file size: 8 bytes
+Literal data: 6 bytes
+Matched data: 0 bytes
+File list size: 0
+File list generation time: 0.001 seconds
+File list transfer time: 0.000 seconds
+Total bytes sent: 404
+Total bytes received: 114
+
+sent 404 bytes  received 114 bytes  1,036.00 bytes/sec
+total size is 300,020  speedup is 579.19

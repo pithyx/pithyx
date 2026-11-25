@@ -98,6 +98,24 @@ public sealed partial class BackupSsh(ICommandRunner commands)
         return new SftpProbe(error, error is null ? ParseSpace(result.StandardOutput) : null);
     }
 
+    /// <summary>
+    /// Signs in to a server as a pull does and lists the top of the folder its key may read. Null when that worked, else
+    /// the connection's error, <see cref="ErrorCodes.BackupServerRsyncMissing"/> or <see cref="ErrorCodes.BackupServerRefused"/>.
+    /// </summary>
+    public async Task<PithyxException?> ProbeServerAsync(SshEndpoint endpoint, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(endpoint);
+        using var folder = new KeyFolder();
+        try
+        {
+            return BackupRsync.ProbeOutcome(await commands.RunAsync(BackupRsync.Probe(folder, endpoint), cancellationToken));
+        }
+        catch (TimeoutException)
+        {
+            return Unreachable("timeout");
+        }
+    }
+
     /// <summary>The space behind the target's folder; null when the server cannot be reached or does not report it.</summary>
     public async Task<SftpSpace?> SpaceAsync(SshEndpoint endpoint, string path, CancellationToken cancellationToken)
     {

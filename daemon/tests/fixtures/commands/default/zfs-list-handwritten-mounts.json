@@ -1,0 +1,12 @@
+{
+  "command": "zfs",
+  "args": [
+    "list",
+    "-H",
+    "-o",
+    "name,mounted,mountpoint",
+    "-t",
+    "filesystem"
+  ],
+  "exitCode": 0
+}

@@ -30,7 +30,7 @@ public sealed record BackupVersionChange(string Path, BackupChangeKind Change);
 
 /// <summary>A version of a job: a restic snapshot in its repository.</summary>
 /// <param name="Id">Stable id; it stays when the version is protected or released.</param>
-/// <param name="Snapshot">restic's id of the version now, shortened to 8 characters as restic shows it.</param>
+/// <param name="Snapshot">restic's id of the version now, shortened to 8 characters as restic shows it; for a server backup, its ZFS snapshot's name.</param>
 /// <param name="Time">When it was made, UTC.</param>
 /// <param name="Files">Files in it.</param>
 /// <param name="Bytes">Bytes in it.</param>
@@ -210,7 +210,9 @@ public static class ResticVersions
     }
 
     /// <summary>restic's short form of an id, as its own lists show it.</summary>
-    public static string ShortId(string id) => id.Length > 8 ? id[..8] : id;
+    /// <summary>restic's id as restic shows it; a server backup's snapshot name stays whole.</summary>
+    public static string ShortId(string id) =>
+        id.StartsWith(Storage.Snapshots.SnapshotNames.Prefix, StringComparison.Ordinal) || id.Length <= 8 ? id : id[..8];
 
     private static ResticSnapshot? Snapshot(JsonElement snapshot)
     {

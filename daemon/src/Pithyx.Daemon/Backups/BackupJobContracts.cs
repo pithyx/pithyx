@@ -3,12 +3,42 @@ using System.Text.Json.Serialization;
 
 namespace Pithyx.Daemon.Backups;
 
-/// <summary>How a job backs up. Only versioned backups for now (#394); mirrors and pulls come later.</summary>
+/// <summary>How a job backs up. Versioned backups go from this box (#394); pulls come onto it (#396); mirrors come later.</summary>
 public enum BackupJobKind
 {
     /// <summary>restic over SFTP into a repository of the job's own on the target, with versions and retention.</summary>
     Versioned,
+
+    /// <summary>rsync over SSH from a Linux server into a dataset of the job's own, with a ZFS snapshot per run as its version.</summary>
+    Pull,
 }
+
+/// <summary>Whose owners and rights the files of a server backup carry on the box.</summary>
+public enum BackupPullOwners
+{
+    /// <summary>The server's: owners and groups as numbers, modes, ACLs and extended attributes, as needed to put them back there.</summary>
+    Server,
+
+    /// <summary>The shared folder's: the files belong to the box and get the rights of the shared folder they are in.</summary>
+    Box,
+}
+
+/// <summary>What a server backup pulls and where it keeps it.</summary>
+/// <param name="ShareId">The shared folder that holds the destination; set when the backup is made.</param>
+/// <param name="Folder">The destination's name in the shared folder, made by the box as a dataset of its own; set when the backup is made.</param>
+/// <param name="Paths">1 to 32 folders or files on the server, absolute below the folder its key may read (<c>/</c> for all of it).</param>
+/// <param name="Delete">Files gone on the server go from the destination too; the versions keep them.</param>
+/// <param name="Owners">Whose owners and rights the files carry on the box.</param>
+public sealed record BackupPullSettings(long ShareId, string Folder, IReadOnlyList<string> Paths, bool Delete, BackupPullOwners Owners);
+
+/// <summary>A new server backup.</summary>
+/// <param name="ServerId">The server it pulls from.</param>
+/// <param name="Settings">Its name, schedule and retention; no sources, no check schedule, no upload limit. The excludes are rsync patterns.</param>
+/// <param name="Pull">What it pulls and where to.</param>
+public sealed record BackupPullCreateRequest(long ServerId, BackupJobSettings Settings, BackupPullSettings Pull);
+
+/// <summary>The changes to a server backup; its server and destination stay.</summary>
+public sealed record BackupPullUpdateRequest(BackupJobSettings Settings, BackupPullSettings Pull);
 
 /// <summary>A folder a job backs up.</summary>
 /// <param name="ShareId">The shared folder or home, as in Files.</param>
@@ -140,8 +170,8 @@ public sealed record BackupRunList(IReadOnlyList<BackupRun> Runs);
 /// <summary>A backup job.</summary>
 /// <param name="Id">Stable id.</param>
 /// <param name="Kind">How it backs up.</param>
-/// <param name="TargetId">Where it backs up to.</param>
-/// <param name="Repository">The repository's folder below the target's path.</param>
+/// <param name="TargetId">Where it backs up to; for a server backup, the server.</param>
+/// <param name="Repository">The repository's folder below the target's path; empty for a server backup.</param>
 /// <param name="Settings">What it backs up and when.</param>
 /// <param name="CreatedAt">UTC.</param>
 /// <param name="NextRunAt">When the schedule runs it next; null when it is disabled.</param>
@@ -151,7 +181,12 @@ public sealed record BackupRunList(IReadOnlyList<BackupRun> Runs);
 /// <param name="LastSuccessAt">When its last backup run succeeded (or ended with warnings).</param>
 /// <param name="Overdue">It is enabled and had no successful run for longer than its limit.</param>
 /// <param name="ProtectedBytes">The size of its newest version: the bytes its last successful run backed up.</param>
-/// <param name="RepositoryBytes">What its repository takes on the target, as the newest run that measured it found.</param>
+/// <param name="RepositoryBytes">
+/// What its repository takes on the target, as the newest run that measured it found; for a server backup, what its
+/// dataset takes on the pool with every version.
+/// </param>
+/// <param name="Pull">What a server backup pulls and where to; null for a versioned backup.</param>
+/// <param name="Dataset">The dataset that holds a server backup; null for a versioned backup.</param>
 public sealed record BackupJob(
     long Id,
     BackupJobKind Kind,
@@ -166,7 +201,9 @@ public sealed record BackupJob(
     DateTimeOffset? LastSuccessAt,
     bool Overdue,
     long? ProtectedBytes,
-    long? RepositoryBytes);
+    long? RepositoryBytes,
+    BackupPullSettings? Pull,
+    string? Dataset);
 
 /// <summary>Every backup job, by name.</summary>
 public sealed record BackupJobList(IReadOnlyList<BackupJob> Jobs);

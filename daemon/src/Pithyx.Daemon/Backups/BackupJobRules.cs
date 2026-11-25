@@ -20,7 +20,76 @@ public static class BackupJobRules
     /// <summary>The overdue limit without a setting: three times the interval, but at least this.</summary>
     public static readonly TimeSpan MinimumOverdue = TimeSpan.FromDays(2);
 
-    public static BackupJobSettings Check(BackupJobSettings settings)
+    public const int MaxServerPaths = 32;
+    public const int MaxServerPathLength = 1000;
+
+    /// <summary>The settings of a server backup: as a versioned backup's, without sources, check schedule and upload limit.</summary>
+    public static BackupJobSettings CheckPull(BackupJobSettings settings)
+    {
+        ArgumentNullException.ThrowIfNull(settings);
+        if (settings.Sources is { Count: > 0 })
+        {
+            throw Invalid("sources");
+        }
+        if (!string.IsNullOrWhiteSpace(settings.CheckSchedule) || settings.CheckReadPercent != 0)
+        {
+            throw Invalid("checkSchedule");
+        }
+        if (settings.UploadLimitKib != 0)
+        {
+            throw Invalid("uploadLimitKib");
+        }
+        return Check(settings, pull: true);
+    }
+
+    /// <summary>
+    /// What a server backup pulls: 1 to 32 absolute paths below the folder the server's key may read, without
+    /// <c>.</c>, <c>..</c>, empty parts or wildcards (rsync would expand them); the folder's name is checked when the
+    /// backup is made.
+    /// </summary>
+    public static BackupPullSettings CheckPullSettings(BackupPullSettings pull)
+    {
+        ArgumentNullException.ThrowIfNull(pull);
+        if (pull.Paths is not { Count: > 0 and <= MaxServerPaths })
+        {
+            throw Invalid("paths");
+        }
+        var paths = new List<string>();
+        foreach (var input in pull.Paths)
+        {
+            var path = (input ?? "").Trim();
+            if (!path.StartsWith('/') || path.Length > MaxServerPathLength
+                || path.Any(character => char.IsControl(character) || character is '*' or '?' or '[' or '\\'))
+            {
+                throw Invalid("paths");
+            }
+            path = path.Length == 1 ? path : "/" + path.Trim('/');
+            if (path != "/" && path[1..].Split('/').Any(part => part is "" or "." or ".."))
+            {
+                throw Invalid("paths");
+            }
+            if (!paths.Contains(path, StringComparer.Ordinal))
+            {
+                paths.Add(path);
+            }
+        }
+        if (!Enum.IsDefined(pull.Owners))
+        {
+            throw Invalid("owners");
+        }
+        return pull with { Folder = (pull.Folder ?? "").Trim(), Paths = paths };
+    }
+
+    /// <summary>The name of the folder a server backup gets in its shared folder: one dataset name without spaces.</summary>
+    public static string CheckFolder(string? input)
+    {
+        var folder = (input ?? "").Trim();
+        return Storage.Zfs.ZfsPlans.IsDatasetName(folder) && folder is not ("." or "..") ? folder : throw Invalid("folder");
+    }
+
+    public static BackupJobSettings Check(BackupJobSettings settings) => Check(settings, pull: false);
+
+    private static BackupJobSettings Check(BackupJobSettings settings, bool pull)
     {
         ArgumentNullException.ThrowIfNull(settings);
         var name = (settings.Name ?? "").Trim();
@@ -28,7 +97,7 @@ public static class BackupJobRules
         {
             throw Invalid("name");
         }
-        var sources = CheckSources(settings.Sources);
+        var sources = pull ? [] : CheckSources(settings.Sources);
         var schedule = CheckCron(settings.Schedule, "schedule");
         var retention = settings.Retention ?? throw Invalid("retention");
         int[] keeps = [retention.Last, retention.Hourly, retention.Daily, retention.Weekly, retention.Monthly, retention.Yearly];

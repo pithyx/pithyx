@@ -141,6 +141,34 @@ public static partial class ZfsPlans
     /// <summary>Destroys an app's dataset with its snapshots, when an administrator removes the app with its data.</summary>
     public static CommandRequest DestroyAppDataset(string pool, string appId) => new("zfs", ["destroy", "-r", AppDataset(pool, appId)], TimeSpan.FromMinutes(10));
 
+    /// <summary>The user property that names the server backup a dataset belongs to (#396, D420).</summary>
+    public const string BackupJobProperty = "org.pithyx:backup-job";
+
+    /// <summary>
+    /// A server backup's dataset (#396, D420) as a folder of a shared folder's dataset, mounted below it: no setuid
+    /// programs and no device files from a server, and the job's id in <see cref="BackupJobProperty"/>, which the box
+    /// checks before it writes to the dataset or destroys it.
+    /// </summary>
+    public static CommandRequest CreatePullDataset(string parent, string folder, long jobId) =>
+        new("zfs", ["create", "-o", "setuid=off", "-o", "devices=off", "-o", $"{BackupJobProperty}={jobId.ToString(System.Globalization.CultureInfo.InvariantCulture)}", PullDataset(parent, folder)]);
+
+    /// <summary>Destroys a server backup's dataset with its versions, when an administrator deletes the backup with its data.</summary>
+    public static CommandRequest DestroyPullDataset(string dataset)
+    {
+        var at = dataset.LastIndexOf('/');
+        return new("zfs", ["destroy", "-r", PullDataset(at > 0 ? dataset[..at] : "", at > 0 ? dataset[(at + 1)..] : dataset)], TimeSpan.FromMinutes(10));
+    }
+
+    /// <summary>A dataset below <paramref name="parent"/>; both checked so the name never reaches another dataset or a snapshot.</summary>
+    public static string PullDataset(string parent, string folder)
+    {
+        if (string.IsNullOrEmpty(parent) || !parent.Split('/').All(DatasetName().IsMatch) || !DatasetName().IsMatch(folder ?? ""))
+        {
+            throw new ArgumentException($"Not a server backup dataset: {parent}/{folder}.", nameof(folder));
+        }
+        return $"{parent}/{folder}";
+    }
+
     public static string AppDataset(string pool, string appId)
     {
         if (!Apps.Manifest.AppId.IsValid(appId) || !DatasetName().IsMatch(pool))

@@ -40,13 +40,17 @@ function serverOf(fields: Fields): { host: string; port?: number } {
   return port === undefined ? { host } : { host, port };
 }
 
+/** What a target is for: a place backups go to, or a server whose folders the box pulls (#396). */
+export type Purpose = BackupTarget['purpose'];
+
 /** The target as the daemon takes it; the port left out for 22. */
-function requestOf(fields: Fields, hostKey?: string): BackupTargetRequest {
+function requestOf(fields: Fields, purpose: Purpose, hostKey?: string): BackupTargetRequest {
   return {
     ...serverOf(fields),
     name: fields.name.trim(),
     user: fields.user.trim(),
     path: fields.path.trim(),
+    purpose,
     ...(hostKey === undefined ? {} : { hostKey }),
   };
 }
@@ -77,9 +81,11 @@ export function useReplaceTarget() {
 }
 
 function TargetFields({
+  purpose,
   fields,
   onChange,
 }: {
+  purpose: Purpose;
   fields: Fields;
   onChange: (fields: Fields) => void;
 }) {
@@ -117,6 +123,7 @@ function TargetFields({
       />
       <TextField
         label={t('form.user')}
+        {...(purpose === 'server' ? { description: t('serverForm.userHint') } : {})}
         value={fields.user}
         onChange={set('user')}
         autoCapitalize="none"
@@ -124,10 +131,11 @@ function TargetFields({
         isRequired
       />
       <TextField
-        label={t('form.path')}
-        description={t('form.pathHint')}
+        label={t(purpose === 'server' ? 'serverForm.path' : 'form.path')}
+        description={t(purpose === 'server' ? 'serverForm.pathHint' : 'form.pathHint')}
         value={fields.path}
         onChange={set('path')}
+        {...(purpose === 'server' ? { placeholder: '/' } : {})}
         autoCapitalize="none"
         autoComplete="off"
       />
@@ -161,15 +169,26 @@ function HostKeyChoice({
   );
 }
 
-/** A target's public key with a button that copies it. */
-export function PublicKey({ app, publicKey }: { app: PithyxApp; publicKey: string }) {
+/**
+ * A target's public key with a button that copies it; for a server, the whole authorized_keys line that lets the key
+ * only read with rrsync.
+ */
+export function PublicKey({ app, target }: { app: PithyxApp; target: BackupTarget }) {
   const { t } = useTranslation('backup');
   const [copied, setCopied] = useState<'copied' | 'copyFailed' | null>(null);
+  const line = target.purpose === 'server' ? target.authorizedKeys : null;
+  const publicKey = line ?? target.publicKey;
   return (
     <div className={styles.field}>
-      <span className={styles.fieldLabel}>{t('targets.publicKey')}</span>
+      <span className={styles.fieldLabel}>
+        {t(line === null ? 'targets.publicKey' : 'servers.authorizedKeys')}
+      </span>
       <code className={styles.key}>{publicKey}</code>
-      <p className={styles.muted}>{t('targets.publicKeyHint')}</p>
+      <p className={styles.muted}>
+        {line === null
+          ? t('targets.publicKeyHint')
+          : t('servers.authorizedKeysHint', { path: target.path })}
+      </p>
       <div className={styles.row}>
         <Button
           size="sm"
@@ -185,7 +204,7 @@ export function PublicKey({ app, publicKey }: { app: PithyxApp; publicKey: strin
           }}
         >
           <IconCopy size={16} stroke={1.75} aria-hidden />
-          {t('targets.copy')}
+          {t(line === null ? 'targets.copy' : 'servers.copy')}
         </Button>
         {copied !== null && (
           <span className={styles.muted} role="status">
@@ -221,7 +240,7 @@ function TestNow({ app, target }: { app: PithyxApp; target: BackupTarget }) {
       </div>
       {last?.succeeded === true && (
         <p className={styles.success} role="status">
-          {t('targets.testPassed')}
+          {t(target.purpose === 'server' ? 'servers.testPassed' : 'targets.testPassed')}
         </p>
       )}
       {last != null && !last.succeeded && last.errorCode !== null && (
@@ -260,17 +279,26 @@ function closeOn(onClose: () => void) {
 }
 
 /**
- * A new target in three steps: where it is, the host key whose fingerprint the administrator compares and confirms,
- * then the target's public key for the server and a first test.
+ * A new target or server in three steps: where it is, the host key whose fingerprint the administrator compares and
+ * confirms, then the key (for a server its authorized_keys line) for the server and a first test.
  */
-export function AddTargetDialog({ app, onClose }: { app: PithyxApp; onClose: () => void }) {
+export function AddTargetDialog({
+  app,
+  purpose,
+  onClose,
+}: {
+  app: PithyxApp;
+  purpose: Purpose;
+  onClose: () => void;
+}) {
   const { t } = useTranslation('backup');
   const [fields, setFields] = useState<Fields>(EMPTY);
   const [step, setStep] = useState<'details' | 'hostKey'>('details');
   const { scan, chosen, setChosen } = useScan(app);
   const replace = useReplaceTarget();
   const create = useMutation({
-    mutationFn: () => backupsCall(app, 'internal.admin.backups.create', requestOf(fields, chosen)),
+    mutationFn: () =>
+      backupsCall(app, 'internal.admin.backups.create', requestOf(fields, purpose, chosen)),
     onSuccess: replace,
   });
   const saved = create.data;
@@ -324,7 +352,7 @@ export function AddTargetDialog({ app, onClose }: { app: PithyxApp; onClose: () 
     <Dialog
       isOpen
       onOpenChange={closeOn(onClose)}
-      title={t('add.title')}
+      title={t(purpose === 'server' ? 'addServer.title' : 'add.title')}
       size="medium"
       actions={actions}
     >
@@ -332,14 +360,14 @@ export function AddTargetDialog({ app, onClose }: { app: PithyxApp; onClose: () 
         {saved !== undefined ? (
           <>
             <p className={styles.success} role="status">
-              {t('add.saved', { name: saved.name })}
+              {t(purpose === 'server' ? 'addServer.saved' : 'add.saved', { name: saved.name })}
             </p>
-            <PublicKey app={app} publicKey={saved.publicKey} />
+            <PublicKey app={app} target={saved} />
             <TestNow app={app} target={saved} />
           </>
         ) : step === 'details' ? (
           <>
-            <TargetFields fields={fields} onChange={setFields} />
+            <TargetFields purpose={purpose} fields={fields} onChange={setFields} />
             {scan.isError && <ErrorNotice error={describeProblem(scan.error)} />}
           </>
         ) : (
@@ -385,7 +413,7 @@ export function EditTargetDialog({
   const update = useMutation({
     mutationFn: () =>
       backupsCall(app, 'internal.admin.backups.update', {
-        ...requestOf(fields, moved ? chosen : undefined),
+        ...requestOf(fields, target.purpose, moved ? chosen : undefined),
         id: target.id,
       }),
     onSuccess: (saved) => {
@@ -449,7 +477,7 @@ export function EditTargetDialog({
       <div className={styles.form}>
         {step === 'details' ? (
           <>
-            <TargetFields fields={fields} onChange={setFields} />
+            <TargetFields purpose={target.purpose} fields={fields} onChange={setFields} />
             {moved && <p className={styles.muted}>{t('edit.moved')}</p>}
             {scan.isError && <ErrorNotice error={describeProblem(scan.error)} />}
           </>
@@ -592,7 +620,7 @@ export function DeleteTargetDialog({
       }
     >
       <div className={styles.form}>
-        <p>{t('delete.text')}</p>
+        <p>{t(target.purpose === 'server' ? 'deleteServer.text' : 'delete.text')}</p>
         {remove.isError && <ErrorNotice error={describeProblem(remove.error)} />}
       </div>
     </Dialog>

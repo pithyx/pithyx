@@ -54,13 +54,33 @@ public sealed class BackupTargetRulesTests
     {
         var target = BackupTargetRules.Check(new BackupTargetRequest(" Storage box ", "u1.example.de", "u1-sub1", null, "pithyx", "u1.example.de " + Key));
 
-        Assert.Equal(new CheckedTarget("Storage box", "u1.example.de", 22, "u1-sub1", "pithyx", SshHostKeys.Parse(Key)), target);
+        Assert.Equal(new CheckedTarget("Storage box", "u1.example.de", 22, "u1-sub1", "pithyx", SshHostKeys.Parse(Key), BackupTargetPurpose.Target), target);
         AssertInvalid("name", () => BackupTargetRules.Check(new BackupTargetRequest(" ", "h", "u", 22, "", null)));
         AssertInvalid("port", () => BackupTargetRules.Check(new BackupTargetRequest("n", "h", "u", 0, "", null)));
         AssertInvalid("port", () => BackupTargetRules.Check(new BackupTargetRequest("n", "h", "u", 65536, "", null)));
         AssertInvalid("user", () => BackupTargetRules.Check(new BackupTargetRequest("n", "h", "-l", 22, "", null)));
         AssertInvalid("user", () => BackupTargetRules.Check(new BackupTargetRequest("n", "h", "a b", 22, "", null)));
         AssertInvalid("hostKey", () => BackupTargetRules.Check(new BackupTargetRequest("n", "h", "u", 22, "", "ssh-ed25519 nope")));
+    }
+
+    [Fact]
+    public void AServerPathIsAbsoluteWithoutSpacesAndDefaultsToTheRoot()
+    {
+        BackupTargetRequest Server(string? path) => new("Web", "web01.lan", "backup", null, path, null, BackupTargetPurpose.Server);
+
+        Assert.Equal("/", BackupTargetRules.Check(Server(null)).Path);
+        Assert.Equal("/", BackupTargetRules.Check(Server(" ")).Path);
+        Assert.Equal("/srv/www", BackupTargetRules.Check(Server("/srv/www")).Path);
+        Assert.Equal(BackupTargetPurpose.Server, BackupTargetRules.Check(Server("/srv")).Purpose);
+        AssertInvalid("path", () => BackupTargetRules.Check(Server("srv")));
+        AssertInvalid("path", () => BackupTargetRules.Check(Server("/srv/my files")));
+        AssertInvalid("path", () => BackupTargetRules.Check(Server("/srv/../etc")));
+    }
+
+    [Fact]
+    public void AServersKeyMayOnlyRunReadOnlyRrsyncBelowItsPath()
+    {
+        Assert.Equal("restrict,command=\"rrsync -ro /srv\" ssh-ed25519 AAAA box", BackupTargetRules.AuthorizedKeys("/srv", "ssh-ed25519 AAAA box"));
     }
 
     private static void AssertInvalid(string field, Action check)

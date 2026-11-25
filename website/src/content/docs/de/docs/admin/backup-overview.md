@@ -16,13 +16,13 @@ _Die Übersicht einer Box mit drei Backups: eines läuft gerade, eines ist fehlg
 
 ## Werkzeugleiste
 
-- **Backup hinzufügen** fügt ein [Box-Backup](/de/docs/admin/backup-jobs/#ein-box-backup-hinzufügen) hinzu. Ohne Ziel fragt die App zuerst nach einem.
+- **Backup hinzufügen** fragt, was du sichern möchtest: Ordner dieser Box auf ein Ziel, ein [Box-Backup](/de/docs/admin/backup-jobs/#ein-box-backup-hinzufügen), oder einen Linux-Server auf diese Box, ein [Server-Backup](/de/docs/admin/backup-servers/#ein-server-backup-hinzufügen). Ohne Ziel oder Server fragt die App zuerst nach einem.
 - **Alle jetzt sichern** startet jedes eingeschaltete Backup, das gerade weder läuft noch prüft.
 - Der Zeitraum rechts (**Letzte 7 Tage**, **Letzte 30 Tage**, **Letzte 90 Tage**) legt fest, was die Kachel der Läufe und das Diagramm zählen.
 
 ## Kacheln
 
-- **Geschützte Daten**: die Größe der neuesten Version aller Backups zusammen und wie viele Backups es gibt.
+- **Geschützte Daten**: die Größe der neuesten Version aller Backups zusammen, wie viele Backups es gibt und wie viel davon von der Box weg geht und wie viel von Servern auf die Box kommt. Server-Backups belegen nichts auf einem Ziel, deshalb lässt **Belegt auf Zielen** sie weg.
 - **Läufe der letzten 30 Tage** (oder des gewählten Zeitraums): wie viele Läufe und Prüfungen erfolgreich waren, Warnungen als erfolgreich gezählt, von wie vielen. Der Balken zeigt den Anteil der erfolgreichen, der mit Warnungen und der fehlgeschlagenen. Abgebrochene Läufe zählen nicht.
 - **Nächster Lauf**: wann das nächste geplante Backup startet und welches.
 - **Belegt auf Zielen**: was die Repositorys aller Backups auf ihren Zielen belegen und auf wie vielen Zielen. Der Balken darunter zeigt das Ziel mit dem wenigsten freien Platz: wie viel davon belegt ist, wie sein Server es gemeldet hat. Die Box fragt den Server bei jedem [Verbindungstest](/de/docs/admin/backup-targets/) und nach jedem Lauf nach seinem freien Platz.

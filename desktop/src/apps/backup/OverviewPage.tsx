@@ -24,6 +24,7 @@ import {
   IconCalendar,
   IconCircleCheck,
   IconCircleX,
+  IconDownload,
   IconPlayerPlay,
   IconPlus,
   IconShieldCheck,
@@ -213,9 +214,12 @@ function Tiles({
   const locale = useFormatLocale();
   const when = useWhen();
   const number = new Intl.NumberFormat(locale);
-  const protectedBytes = sum(jobs.map((job) => job.protectedBytes));
-  const repositoryBytes = sum(jobs.map((job) => job.repositoryBytes));
-  const usedTargets = new Set(jobs.map((job) => job.targetId));
+  // Server backups land on this box: they protect data but take nothing on a target.
+  const outward = jobs.filter((job) => job.kind !== 'pull');
+  const outBytes = sum(outward.map((job) => job.protectedBytes));
+  const inBytes = sum(jobs.filter((job) => job.kind === 'pull').map((job) => job.protectedBytes));
+  const repositoryBytes = sum(outward.map((job) => job.repositoryBytes));
+  const usedTargets = new Set(outward.map((job) => job.targetId));
   const succeeded = sum(days?.map((day) => day.succeeded) ?? []);
   const warnings = sum(days?.map((day) => day.warnings) ?? []);
   const failed = sum(days?.map((day) => day.failed) ?? []);
@@ -238,14 +242,20 @@ function Tiles({
     <SummaryTiles>
       <SummaryTile
         label={t('overview.protected')}
-        value={formatBytes(protectedBytes, locale)}
+        value={formatBytes(outBytes + inBytes, locale)}
         detail={
           <span className={styles.tileLines}>
             <span>{t('overview.protectedIn', { count: jobs.length })}</span>
             <span className={styles.tileLine}>
               <IconUpload size={14} stroke={1.75} aria-hidden />
-              {t('overview.protectedOut', { size: formatBytes(protectedBytes, locale) })}
+              {t('overview.protectedOut', { size: formatBytes(outBytes, locale) })}
             </span>
+            {jobs.length > outward.length && (
+              <span className={styles.tileLine}>
+                <IconDownload size={14} stroke={1.75} aria-hidden />
+                {t('overview.protectedOnto', { size: formatBytes(inBytes, locale) })}
+              </span>
+            )}
           </span>
         }
       />

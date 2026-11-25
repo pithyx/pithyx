@@ -72,12 +72,15 @@ public sealed class ScriptedCommandRunner : ICommandRunner
             : new CommandResult(127, "", "not scripted", TimeSpan.Zero)));
     }
 
-    /// <summary>Hands each line of the output to <see cref="CommandRequest.OutputLine"/>, as the real runner does.</summary>
+    /// <summary>
+    /// Hands each line of the output to <see cref="CommandRequest.OutputLine"/>, as the real runner does: a line ends at
+    /// a line feed or a carriage return.
+    /// </summary>
     private static CommandResult Streamed(CommandRequest request, CommandResult result)
     {
         if (request.OutputLine is { } onLine)
         {
-            foreach (var line in result.StandardOutput.Split('\n', StringSplitOptions.RemoveEmptyEntries))
+            foreach (var line in result.StandardOutput.Split(['\n', '\r'], StringSplitOptions.RemoveEmptyEntries))
             {
                 onLine(line);
             }

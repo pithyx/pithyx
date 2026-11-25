@@ -45,15 +45,23 @@ function scopes(inside?: string): ParentNode[] {
   return [...holders.reverse(), document];
 }
 
-// Buttons and tabs by the start of their text, icon buttons by their name; rows and options, which start with a date
-// or a time, anywhere in it.
+// Buttons and tabs by the start of their text, the shortest of them ("Server" before "Server-Backups"), icon buttons
+// by their name; rows and options, which start with a date or a time, anywhere in it.
 function byText(root: ParentNode, selector: string, wanted: string): HTMLElement | undefined {
-  return [...root.querySelectorAll<HTMLElement>(selector)].find((element) => {
+  const found = [...root.querySelectorAll<HTMLElement>(selector)].flatMap((element) => {
     const content = element.textContent.trim() || (element.getAttribute('aria-label') ?? '');
-    return element.matches('[role="row"], [role="option"]')
-      ? content.includes(wanted)
-      : content.startsWith(wanted);
+    const row = element.matches('[role="row"], [role="option"]');
+    return (row ? content.includes(wanted) : content.startsWith(wanted))
+      ? [{ element, row, length: content.length }]
+      : [];
   });
+  const first = found[0];
+  if (first === undefined || first.row) {
+    return first?.element;
+  }
+  return found
+    .filter((match) => !match.row)
+    .reduce((best, match) => (match.length < best.length ? match : best)).element;
 }
 
 // The control a visible label names, for React Aria fields (label for=) and native ones (label around the input), in

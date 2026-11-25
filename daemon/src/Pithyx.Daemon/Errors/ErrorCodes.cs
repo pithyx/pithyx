@@ -485,7 +485,8 @@ public static class ErrorCodes
 
     /// <summary>
     /// A setting of a backup job is not valid; <c>params.field</c> names it (name, sources, schedule, retention,
-    /// excludes, checkSchedule, checkReadPercent, uploadLimitKib, downloadLimitKib, overdueHours, repository, existingKey).
+    /// excludes, checkSchedule, checkReadPercent, uploadLimitKib, downloadLimitKib, overdueHours, repository, existingKey;
+    /// for a server backup also paths, destination and folder).
     /// </summary>
     [ErrorStatus(HttpStatusCode.BadRequest)]
     public const string BackupJobInvalid = "backup.job.invalid";
@@ -493,6 +494,14 @@ public static class ErrorCodes
     /// <summary>Another backup job has this name already; <c>params.name</c>.</summary>
     [ErrorStatus(HttpStatusCode.Conflict)]
     public const string BackupJobNameTaken = "backup.job.name_taken";
+
+    /// <summary>
+    /// The backup cannot do this: <c>params.action</c> is <c>check</c>, <c>browse</c>, <c>restore</c> or <c>key</c>,
+    /// which only versioned backups have, or <c>edit</c> for a change meant for the other kind. The versions of a server
+    /// backup are restored in Files.
+    /// </summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string BackupJobUnsupported = "backup.job.unsupported";
 
     /// <summary>No backup job with this id; <c>params.id</c>.</summary>
     [ErrorStatus(HttpStatusCode.NotFound)]
@@ -544,6 +553,34 @@ public static class ErrorCodes
     /// <summary>The shared folder <c>params.share</c> is not a dataset of a pool, so the box cannot take a snapshot to back it up from.</summary>
     [ErrorStatus(HttpStatusCode.Conflict)]
     public const string BackupSourceUnsupported = "backup.source.unsupported";
+
+    /// <summary>
+    /// A server backup's destination <c>params.path</c> in the shared folder <c>params.share</c> cannot be made:
+    /// <c>params.reason</c> is <c>exists</c> (a file or folder has the name already), <c>unsupported</c> (the shared folder
+    /// is not a dataset of a pool) or <c>failed</c> (the dataset could not be created).
+    /// </summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string BackupDestinationInvalid = "backup.destination.invalid";
+
+    /// <summary>
+    /// A server backup's destination is not there now: <c>params.reason</c> is <c>share</c> (its shared folder is gone),
+    /// <c>unavailable</c> (the pool is locked or missing), <c>dataset</c> (its dataset is gone or not mounted) or
+    /// <c>snapshot</c> (the run's version could not be taken);
+    /// <c>params.path</c> names it.
+    /// </summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string BackupDestinationUnavailable = "backup.destination.unavailable";
+
+    /// <summary>The server has no rsync, or no rrsync for the line in its authorized_keys. Install the package rsync there.</summary>
+    [ErrorStatus(HttpStatusCode.BadGateway)]
+    public const string BackupServerRsyncMissing = "backup.server.rsync_missing";
+
+    /// <summary>
+    /// The box signed in, but the server did not hand out the folder <c>params.path</c>: it does not exist, lies outside
+    /// the folder its key may read, or may not be read. The server's message is in the Log Center.
+    /// </summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string BackupServerRefused = "backup.server.refused";
 
     /// <summary>
     /// The server's host keys could not be read; <c>params.reason</c> is <c>dns</c> (the name is unknown) or <c>none</c>

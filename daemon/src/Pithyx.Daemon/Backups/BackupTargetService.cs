@@ -30,7 +30,7 @@ public sealed partial class BackupTargetService(
         SELECT id AS Id, name AS Name, kind AS Kind, host AS Host, port AS Port, user_name AS UserName, path AS Path,
             host_key AS HostKey, ssh_private_key AS PrivateKey, ssh_public_key AS PublicKey, created_at AS CreatedAt,
             tested_at AS TestedAt, test_error_code AS TestErrorCode, test_error_params AS TestErrorParams,
-            space_total_bytes AS SpaceTotalBytes, space_free_bytes AS SpaceFreeBytes, space_at AS SpaceAt
+            space_total_bytes AS SpaceTotalBytes, space_free_bytes AS SpaceFreeBytes, space_at AS SpaceAt, purpose AS Purpose
         FROM backup_targets
         """;
 
@@ -73,11 +73,11 @@ public sealed partial class BackupTargetService(
         {
             id = await connection.ExecuteScalarAsync<long>(new CommandDefinition(
                 """
-                INSERT INTO backup_targets (name, kind, host, port, user_name, path, host_key, ssh_private_key, ssh_public_key, created_at, updated_at)
-                VALUES (@Name, 'sftp', @Host, @Port, @User, @Path, @hostKey, @privateKey, @publicKey, @now, @now)
+                INSERT INTO backup_targets (name, kind, host, port, user_name, path, host_key, ssh_private_key, ssh_public_key, created_at, updated_at, purpose)
+                VALUES (@Name, 'sftp', @Host, @Port, @User, @Path, @hostKey, @privateKey, @publicKey, @now, @now, @purpose)
                 RETURNING id
                 """,
-                new { target.Name, target.Host, target.Port, target.User, target.Path, hostKey = target.HostKey.Key, privateKey, publicKey, now },
+                new { target.Name, target.Host, target.Port, target.User, target.Path, hostKey = target.HostKey.Key, privateKey, publicKey, now, purpose = Text(target.Purpose) },
                 cancellationToken: cancellationToken));
         }
         catch (SqliteException exception) when (exception.SqliteErrorCode == 19)
@@ -89,6 +89,7 @@ public sealed partial class BackupTargetService(
             ["host"] = target.Host,
             ["port"] = BackupTargetRules.Text(target.Port),
             ["hostKey"] = target.HostKey.Fingerprint,
+            ["purpose"] = Text(target.Purpose),
         }, cancellationToken);
         LogCreated(id, target.Host, target.Port, target.HostKey.Fingerprint);
         return View(await RowAsync(connection, id, cancellationToken));
@@ -100,9 +101,10 @@ public sealed partial class BackupTargetService(
     /// </summary>
     public async Task<BackupTarget> UpdateAsync(ClaimsPrincipal caller, long id, BackupTargetRequest request, CancellationToken cancellationToken)
     {
-        var target = BackupTargetRules.Check(request);
+        ArgumentNullException.ThrowIfNull(request);
         await using var connection = await connections.OpenAsync(cancellationToken);
         var row = await RowAsync(connection, id, cancellationToken);
+        var target = BackupTargetRules.Check(request with { Purpose = Purpose(row) });
         var moved = row.Host != target.Host || row.Port != target.Port;
         if (moved && target.HostKey is null)
         {
@@ -161,7 +163,9 @@ public sealed partial class BackupTargetService(
         {
             row = await RowAsync(connection, id, cancellationToken);
         }
-        var (error, space) = await ssh.ProbeAsync(Endpoint(row), row.Path, cancellationToken);
+        var (error, space) = Purpose(row) == BackupTargetPurpose.Server
+            ? new SftpProbe(await ssh.ProbeServerAsync(Endpoint(row), cancellationToken), null)
+            : await ssh.ProbeAsync(Endpoint(row), row.Path, cancellationToken);
         if (error is null)
         {
             LogTestSucceeded(id);
@@ -228,11 +232,18 @@ public sealed partial class BackupTargetService(
         LogDeleted(id);
     }
 
-    /// <summary>The connection details of a target, keys included, for the backup runs.</summary>
-    public async Task<(SshEndpoint Endpoint, string Path)> EndpointAsync(long id, CancellationToken cancellationToken)
+    /// <summary>
+    /// The connection details of a target or server, keys included, for the backup runs. A target of the other purpose
+    /// counts as missing.
+    /// </summary>
+    public async Task<(SshEndpoint Endpoint, string Path)> EndpointAsync(long id, CancellationToken cancellationToken, BackupTargetPurpose purpose = BackupTargetPurpose.Target)
     {
         await using var connection = await connections.OpenAsync(cancellationToken);
         var row = await RowAsync(connection, id, cancellationToken);
+        if (Purpose(row) != purpose)
+        {
+            throw new PithyxException(ErrorCodes.BackupTargetNotFound, new Dictionary<string, object?> { ["id"] = id });
+        }
         return (Endpoint(row), row.Path);
     }
 
@@ -262,6 +273,10 @@ public sealed partial class BackupTargetService(
             new { id, now = SessionService.Format(time.GetUtcNow()) },
             cancellationToken: cancellationToken));
     }
+
+    private static BackupTargetPurpose Purpose(TargetRow row) => row.Purpose == "server" ? BackupTargetPurpose.Server : BackupTargetPurpose.Target;
+
+    private static string Text(BackupTargetPurpose purpose) => purpose == BackupTargetPurpose.Server ? "server" : "target";
 
     private static SshEndpoint Endpoint(TargetRow row) => new(row.Host, (int)row.Port, row.UserName, row.HostKey, row.PrivateKey);
 
@@ -315,7 +330,9 @@ public sealed partial class BackupTargetService(
             row.PublicKey,
             SessionService.Parse(row.CreatedAt),
             test,
-            row is { SpaceTotalBytes: { } total, SpaceFreeBytes: { } free, SpaceAt: { } at } ? new BackupTargetSpace(total, free, SessionService.Parse(at)) : null);
+            row is { SpaceTotalBytes: { } total, SpaceFreeBytes: { } free, SpaceAt: { } at } ? new BackupTargetSpace(total, free, SessionService.Parse(at)) : null,
+            Purpose(row),
+            Purpose(row) == BackupTargetPurpose.Server ? BackupTargetRules.AuthorizedKeys(row.Path, row.PublicKey) : null);
     }
 
     private sealed class TargetRow
@@ -337,6 +354,7 @@ public sealed partial class BackupTargetService(
         public long? SpaceTotalBytes { get; init; }
         public long? SpaceFreeBytes { get; init; }
         public string? SpaceAt { get; init; }
+        public string Purpose { get; init; } = "target";
     }
 
     [LoggerMessage(Level = LogLevel.Information, Message = "Backup target {TargetId} added for {Host} port {Port} with host key {Fingerprint}")]

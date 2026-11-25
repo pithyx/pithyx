@@ -7,7 +7,7 @@ using Pithyx.Daemon.Errors;
 namespace Pithyx.Daemon.Backups;
 
 /// <summary>A target's settings after <see cref="BackupTargetRules.Check"/>.</summary>
-public sealed record CheckedTarget(string Name, string Host, int Port, string User, string Path, BackupHostKey? HostKey);
+public sealed record CheckedTarget(string Name, string Host, int Port, string User, string Path, BackupHostKey? HostKey, BackupTargetPurpose Purpose);
 
 /// <summary>What an administrator may enter for a backup target. Throws <see cref="ErrorCodes.BackupTargetInvalid"/> with the field.</summary>
 public static partial class BackupTargetRules
@@ -33,13 +33,13 @@ public static partial class BackupTargetRules
         {
             throw Invalid("user");
         }
-        var path = CheckPath(request.Path);
+        var path = request.Purpose == BackupTargetPurpose.Server ? CheckServerPath(request.Path) : CheckPath(request.Path);
         BackupHostKey? hostKey = null;
         if (!string.IsNullOrWhiteSpace(request.HostKey))
         {
             hostKey = SshHostKeys.Parse(request.HostKey) ?? throw Invalid("hostKey");
         }
-        return new CheckedTarget(name, host, port, user, path, hostKey);
+        return new CheckedTarget(name, host, port, user, path, hostKey, request.Purpose);
     }
 
     /// <summary>A host name (lowercased), an IPv4 address or an IPv6 address without brackets.</summary>
@@ -93,6 +93,19 @@ public static partial class BackupTargetRules
         }
         return (absolute ? "/" : "") + string.Join('/', parts);
     }
+
+    /// <summary>
+    /// The folder a server's key may read below: absolute, <c>/</c> when left out, and without spaces, because it stands
+    /// unquoted in the <c>rrsync</c> command of the key's authorized_keys line.
+    /// </summary>
+    public static string CheckServerPath(string? input)
+    {
+        var path = CheckPath(string.IsNullOrWhiteSpace(input) ? "/" : input);
+        return path.StartsWith('/') && !path.Contains(' ', StringComparison.Ordinal) ? path : throw Invalid("path");
+    }
+
+    /// <summary>The authorized_keys line of a server: the key may only run rsync's <c>rrsync</c>, read-only, below <paramref name="path"/>.</summary>
+    public static string AuthorizedKeys(string path, string publicKey) => $"restrict,command=\"rrsync -ro {path}\" {publicKey}";
 
     /// <summary>The folders from the outermost to <paramref name="path"/> itself, for creating it step by step.</summary>
     public static IReadOnlyList<string> Ancestry(string path)

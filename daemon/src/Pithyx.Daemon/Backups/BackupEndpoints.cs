@@ -94,13 +94,25 @@ public static class BackupEndpoints
                 TypedResults.Ok(await service.UpdateAsync(id, request, cancellationToken)))
             .WithName("UpdateBackupJob")
             .WithDescription("Administrators only. Changes what a job backs up and when; its target, repository and key stay.");
-        jobs.MapDelete("/{id:long}", async Task<NoContent> (long id, BackupJobService service, HttpContext context, CancellationToken cancellationToken) =>
+        jobs.MapDelete("/{id:long}", async Task<NoContent> (long id, BackupJobService service, HttpContext context, CancellationToken cancellationToken, bool? data) =>
             {
-                await service.DeleteAsync(context.User, id, cancellationToken);
+                await service.DeleteAsync(context.User, id, cancellationToken, data == true);
                 return TypedResults.NoContent();
             })
             .WithName("DeleteBackupJob")
-            .WithDescription("Administrators only. Deletes the job, its runs and its key. The repository stays on the target; without the key nobody can read it.");
+            .WithDescription("Administrators only. Deletes the job, its runs and its key. The repository stays on the target; without the key nobody can read it. A server backup's folder stays in its shared folder with its versions, unless data=true destroys it with them.");
+        var pulls = backups.MapGroup("/pulls");
+        pulls.MapPost("", async Task<Created<BackupJobCreated>> (BackupPullCreateRequest request, BackupJobService service, HttpContext context, CancellationToken cancellationToken) =>
+            {
+                var created = await service.CreatePullAsync(context.User, request, cancellationToken);
+                return TypedResults.Created($"/api/backups/jobs/{created.Job.Id}", created);
+            })
+            .WithName("CreateBackupPull")
+            .WithDescription("Administrators only. Makes a server backup (#396): its folder in the shared folder as a dataset of its own, given the shared folder's owner, mode and ACL, which rsync over SSH fills from the server on its schedule. The server is a backup target of the purpose server. The answer's key is always null.");
+        pulls.MapPut("/{id:long}", async Task<Ok<BackupJob>> (long id, BackupPullUpdateRequest request, BackupJobService service, CancellationToken cancellationToken) =>
+                TypedResults.Ok(await service.UpdatePullAsync(id, request, cancellationToken)))
+            .WithName("UpdateBackupPull")
+            .WithDescription("Administrators only. Changes what a server backup pulls and when; its server and its folder stay (shareId and folder are ignored).");
         jobs.MapGet("/{id:long}/runs", async Task<Ok<BackupRunList>> (long id, BackupJobService service, CancellationToken cancellationToken, int? limit) =>
                 TypedResults.Ok(await service.RunsAsync(id, limit ?? 50, cancellationToken)))
             .WithName("ListBackupRuns")

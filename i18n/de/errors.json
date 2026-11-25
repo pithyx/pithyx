@@ -171,9 +171,10 @@
     },
     "job": {
       "busy": "Das Backup {name} läuft gerade. Warte, bis es fertig ist, oder brich es ab.",
-      "invalid": "Diese Einstellung des Backups ist ungültig: {field, select, name {Name} sources {Ordner} schedule {Zeitplan} checkSchedule {Prüfplan} retention {aufbewahrte Versionen} excludes {Ausschlüsse} checkReadPercent {gelesener Anteil der Daten} uploadLimitKib {Upload-Grenze} downloadLimitKib {Download-Grenze} overdueHours {überfällig nach} repository {Repository-Ordner} existingKey {Repository-Schlüssel} other {{field}}}.",
+      "invalid": "Diese Einstellung des Backups ist ungültig: {field, select, name {Name} sources {Ordner} schedule {Zeitplan} checkSchedule {Prüfplan} retention {aufbewahrte Versionen} excludes {Ausschlüsse} checkReadPercent {gelesener Anteil der Daten} uploadLimitKib {Upload-Grenze} downloadLimitKib {Download-Grenze} overdueHours {überfällig nach} repository {Repository-Ordner} existingKey {Repository-Schlüssel} paths {Ordner auf dem Server} destination {Ziel} folder {Ordnername} other {{field}}}.",
       "name_taken": "Ein anderes Backup heißt schon {name}.",
-      "not_found": "Dieses Backup gibt es nicht mehr."
+      "not_found": "Dieses Backup gibt es nicht mehr.",
+      "unsupported": "{action, select, check {Server-Backups haben hier keine Prüfung; der Scrub des Pools prüft ihre Daten.} key {Server-Backups haben keinen Repository-Schlüssel.} edit {Dieses Backup ist von der anderen Art; ändere es in seinem eigenen Dialog.} other {Server-Backups werden nicht hier wiederhergestellt. Stell ihre Versionen in Dateien mit Vorherige Versionen wieder her.}}"
     },
     "repository": {
       "exists": "In {path} liegt schon ein Repository. Um es zu nutzen, verbinde es mit seinem Schlüssel, statt ein neues anzulegen.",
@@ -193,6 +194,14 @@
     },
     "version": {
       "not_found": "Diese Version gibt es nicht mehr. Die Aufbewahrung des Backups hat sie vielleicht gelöscht."
+    },
+    "destination": {
+      "invalid": "Der Ordner {path} lässt sich in {share} nicht anlegen ({reason, select, exists {etwas heißt schon so; wähle einen anderen Namen} unsupported {der freigegebene Ordner liegt nicht auf einem Pool} other {das Dataset ließ sich nicht anlegen}}).",
+      "unavailable": "Das Ziel {path} ist nicht verfügbar ({reason, select, share {sein freigegebener Ordner ist weg} unavailable {sein Pool ist gesperrt oder fehlt} snapshot {die Version konnte nicht angelegt werden} other {sein Dataset ist weg oder nicht eingehängt}})."
+    },
+    "server": {
+      "rsync_missing": "Auf dem Server fehlt rsync oder rrsync für die Zeile in seiner authorized_keys. Installiere dort das Paket rsync.",
+      "refused": "Die Box hat sich angemeldet, aber der Server gibt {path} nicht heraus: Der Ordner fehlt, liegt außerhalb des Ordners, den der Schlüssel lesen darf, oder darf nicht gelesen werden. Die Meldung des Servers steht im Log Center."
     }
   },
   "desktop": {

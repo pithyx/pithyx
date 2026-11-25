@@ -78,7 +78,10 @@
     "runningCount": "{count, plural, one {# läuft} other {# laufen}}",
     "out": "Von der Box weg",
     "jobs": "Box-Backups",
-    "targets": "Ziele"
+    "targets": "Ziele",
+    "in": "Auf die Box",
+    "pulls": "Server-Backups",
+    "servers": "Server"
   },
   "jobs": {
     "title": "Box-Backups",
@@ -248,10 +251,12 @@
     "in": "Auf die Box"
   },
   "route": {
-    "to": "nach"
+    "to": "nach",
+    "server": "{server}: {paths}"
   },
   "kinds": {
-    "versioned": "Versioniert"
+    "versioned": "Versioniert",
+    "pull": "Versioniert"
   },
   "schedule": {
     "off": "Nur von Hand",
@@ -339,6 +344,7 @@
     "protected": "Geschützte Daten",
     "protectedIn": "{count, plural, one {in # Backup} other {in # Backups}}",
     "protectedOut": "{size} von der Box weg",
+    "protectedOnto": "{size} auf die Box",
     "runs": {
       "week": "Läufe der letzten 7 Tage",
       "month": "Läufe der letzten 30 Tage",
@@ -510,5 +516,96 @@
     "runningPercent": "Wird wiederhergestellt … {percent} %",
     "done": "Wiederhergestellt.",
     "doneCounts": "Wiederhergestellt: {restored} zurückgelegt, {replaced} ersetzt, {renamed} neben der aktuellen abgelegt, {skipped} ausgelassen."
+  },
+  "pulls": {
+    "title": "Server-Backups",
+    "toolbar": "Server-Backups",
+    "add": "Server-Backup hinzufügen",
+    "list": "Server-Backups",
+    "intro": "Ordner von Linux-Servern, die diese Box über SSH mit rsync in einen Ordner eines freigegebenen Ordners abholt und mit Versionen als ZFS-Snapshots aufbewahrt. Auf dem Server läuft nichts von Pithyx.",
+    "emptyTitle": "Noch kein Server-Backup",
+    "empty": "Füge das erste Backup eines Linux-Servers auf diese Box hinzu.",
+    "noTargetsTitle": "Noch kein Server",
+    "noTargets": "Ein Server-Backup braucht einen Server, von dem es liest. Füge zuerst einen Server hinzu.",
+    "runNow": "Jetzt abholen",
+    "server": "Server",
+    "paths": "Ordner auf dem Server",
+    "destination": "Ordner auf dieser Box",
+    "dataset": "Dataset",
+    "options": "Optionen",
+    "deleteOn": "Entfernt, was der Server entfernt hat",
+    "deleteOff": "Behält, was der Server entfernt hat",
+    "owners": {
+      "server": "Besitzer und Rechte wie auf dem Server",
+      "box": "Gehört der Box"
+    }
+  },
+  "servers": {
+    "title": "Server",
+    "toolbar": "Server",
+    "add": "Server hinzufügen",
+    "list": "Server",
+    "loading": "Server werden geladen",
+    "intro": "Ein Server ist ein Linux-Rechner, dessen Ordner die Box über SSH auf sich abholt. Jeder Server bekommt einen eigenen Schlüssel, der nur mit rsync unterhalb eines Ordners lesen darf, und die Box verbindet sich nur mit dem Server, dessen Host-Schlüssel du bestätigt hast.",
+    "emptyTitle": "Noch kein Server",
+    "empty": "Füge den Linux-Server hinzu, dessen Ordner die Box sichern soll.",
+    "readsBelow": "Liest unterhalb von {path}",
+    "authorizedKeys": "Zeile für authorized_keys",
+    "authorizedKeysHint": "Trag diese Zeile in die Datei .ssh/authorized_keys des Benutzers auf dem Server ein. Damit kann der Schlüssel nur mit rrsync unterhalb von {path} lesen: keine Shell, kein Schreiben, keine Weiterleitung. Der Server braucht rsync und dessen Hilfsskript rrsync, das aktuelle Distributionen mit rsync installieren.",
+    "copy": "Zeile kopieren",
+    "testPassed": "Die Box hat sich angemeldet und rsync hat den Ordner aufgelistet."
+  },
+  "serverForm": {
+    "path": "Ordner, den der Schlüssel lesen darf",
+    "pathHint": "Absolut und ohne Leerzeichen, / für den ganzen Server. Die Backups wählen Ordner darunter.",
+    "userHint": "Damit jede Datei mit ihren Besitzern gesichert wird, melde dich als root an; der Schlüssel bleibt so oder so nur lesend."
+  },
+  "addServer": {
+    "title": "Server hinzufügen",
+    "saved": "{name} ist gespeichert. Trag seine Zeile in die authorized_keys auf dem Server ein und teste dann die Verbindung."
+  },
+  "deleteServer": {
+    "text": "Die Box vergisst den Server und seinen Schlüssel. Entferne seine Zeile auch aus den authorized_keys auf dem Server; die Server-Backups auf dieser Box bleiben erhalten."
+  },
+  "pullForm": {
+    "addTitle": "Server-Backup hinzufügen",
+    "create": "Erstellen",
+    "server": "Server",
+    "serverPlaceholder": "Server wählen",
+    "paths": "Ordner auf dem Server",
+    "pathsHint": "Ein Pfad pro Zeile, mit / am Anfang, ab dem Ordner, den der Schlüssel des Servers lesen darf: mit / dort zum Beispiel /etc oder /srv/www. Jeder landet mit diesem Pfad im Ordner auf dieser Box.",
+    "share": "Freigegebener Ordner",
+    "sharePlaceholder": "Freigegebenen Ordner wählen",
+    "folder": "Name des Ordners",
+    "folderHint": "Die Box legt diesen Ordner im freigegebenen Ordner als eigenes Dataset an. Buchstaben, Ziffern, Punkte, Bindestriche und Unterstriche, keine Leerzeichen.",
+    "readable": "Alle, die den freigegebenen Ordner öffnen dürfen, können die kopierten Dateien lesen. Wähl für einen Server mit Geheimnissen einen, den nur Administratoren öffnen können.",
+    "fixed": "Holt von {server} nach {destination}. Der Server und der Ordner auf dieser Box bleiben; für andere füge ein neues Backup hinzu.",
+    "delete": "Entfernen, was auf dem Server entfernt wurde",
+    "deleteHint": "Aus behält Dateien auf dieser Box, die auf dem Server weg sind. Die Versionen behalten sie so oder so.",
+    "owners": "Besitzer und Rechte",
+    "ownersServer": "Wie auf dem Server: Benutzer- und Gruppen-IDs, Rechte, ACLs und erweiterte Attribute",
+    "ownersBox": "Gehören der Box, mit den Rechten des freigegebenen Ordners",
+    "schedule": "Holt ab",
+    "excludesHint": "Ein rsync-Muster pro Zeile, zum Beispiel *.tmp oder /var/cache/."
+  },
+  "deleteJobPull": {
+    "text": "Die Box vergisst das Backup und seine Läufe. Der Ordner {destination} mit seinen Versionen bleibt, außer du löschst ihn mit.",
+    "data": "Auch den Ordner und alle seine Versionen löschen",
+    "dataHint": "Löscht das Dataset {dataset} mit jedem Snapshot. Das lässt sich nicht rückgängig machen."
+  },
+  "chooser": {
+    "title": "Was möchtest du sichern?",
+    "out": {
+      "title": "Ordner dieser Box sichern",
+      "text": "Freigegebene Ordner und Home-Ordner gehen auf ein Ziel außerhalb der Box.",
+      "point1": "auf einen SFTP-Server oder eine zweite Box",
+      "point2": "verschlüsselt, mit Versionen"
+    },
+    "in": {
+      "title": "Einen Linux-Server auf die Box sichern",
+      "text": "Die Box holt Ordner eines Servers über SSH ab und legt sie mit Versionen auf einem Pool ab.",
+      "point1": "auf dem Server müssen nur SSH und rsync laufen",
+      "point2": "frühere Versionen direkt in Dateien"
+    }
   }
 }

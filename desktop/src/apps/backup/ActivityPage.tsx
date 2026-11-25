@@ -16,7 +16,7 @@ import {
 } from '../sdk/backups';
 import { describeProblem, formatDate } from '../storage/shared';
 import { clock, daysAgo, jobOfBoard, useActiveRuns, useHistory, type BoardJob } from './data';
-import { DirectionTag, Route, directionOf } from './Direction';
+import { DirectionTag, Route, directionOf, type RouteParts } from './Direction';
 import {
   RUN_TONES,
   RunError,
@@ -46,14 +46,12 @@ function RunningRun({
   app,
   board,
   job,
-  target,
   route,
 }: {
   app: PithyxApp;
   board: BoardJob;
   job: BackupJob | undefined;
-  target: BackupTarget | undefined;
-  route: string;
+  route: RouteParts | undefined;
 }) {
   const { t } = useTranslation('backup');
   const locale = useFormatLocale();
@@ -109,7 +107,7 @@ function RunningRun({
       </div>
       <span className={styles.badgeRow}>
         <DirectionTag direction={directionOf(job?.kind ?? 'versioned')} />
-        <Route from={route} to={target?.name ?? ''} />
+        {route !== undefined && <Route {...route} />}
       </span>
       {run !== undefined && board.state === 'running' && <RunProgress run={run} board={board} />}
       {board.state === 'running' && (
@@ -198,12 +196,14 @@ export function RunningPanel({
                 app={app}
                 board={entry}
                 job={job}
-                target={
+                route={
                   job === undefined
                     ? undefined
-                    : targets?.find((target) => target.id === job.targetId)
+                    : route(
+                        job,
+                        targets?.find((target) => target.id === job.targetId),
+                      )
                 }
-                route={job === undefined ? '' : route(job)}
               />
             );
           })}
@@ -217,13 +217,11 @@ export function RunningPanel({
 function RunDetails({
   run,
   job,
-  target,
   route,
 }: {
   run: BackupRun;
   job: BackupJob | undefined;
-  target: BackupTarget | undefined;
-  route: string;
+  route: RouteParts | undefined;
 }) {
   const { t } = useTranslation('backup');
   const locale = useFormatLocale();
@@ -235,7 +233,7 @@ function RunDetails({
     <div className={styles.details}>
       <div className={styles.detailsHead}>
         <span className={styles.detailsName}>{job?.settings.name ?? t('activity.deletedJob')}</span>
-        <Route from={route} to={target?.name ?? ''} />
+        {route !== undefined && <Route {...route} />}
         <span className={styles.muted}>
           {run.finishedAt === null
             ? formatDate(run.startedAt, locale)
@@ -539,8 +537,9 @@ export function ActivityPage({
             <RunDetails
               run={selected}
               job={selectedJob}
-              target={targetOf(selectedJob)}
-              route={selectedJob === undefined ? '' : route(selectedJob)}
+              route={
+                selectedJob === undefined ? undefined : route(selectedJob, targetOf(selectedJob))
+              }
             />
           )
         }

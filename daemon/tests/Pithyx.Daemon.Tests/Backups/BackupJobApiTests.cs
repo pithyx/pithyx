@@ -389,7 +389,7 @@ public sealed class BackupJobApiTests : IAsyncLifetime
         _backup = new CommandResult(1, "", "Fatal: unexpected\n", TimeSpan.Zero);
         _factory.Time.Advance(TimeSpan.FromDays(3) + TimeSpan.FromHours(1));
         await _daemon.Services.GetRequiredService<BackupScheduler>().TickAsync(Token);
-        await JobTestSupport.WaitUntilAsync(async () => (await RunsAsync(id)).All(run => run.GetProperty("state").GetString() != "running"), "the scheduled run to end");
+        await JobTestSupport.WaitUntilAsync(async () => await RunsAsync(id) is { Count: > 0 } runs && runs.All(run => run.GetProperty("state").GetString() != "running"), "the scheduled run to end");
         await service.NotifyOverdueAsync(Token);
         await service.NotifyOverdueAsync(Token);
 
